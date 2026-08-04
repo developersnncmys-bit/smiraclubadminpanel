@@ -1,0 +1,33 @@
+import {
+  LayoutDashboard,
+  Users,
+  CalendarCheck,
+  Package,
+  UserRound,
+  ListTodo,
+  FileText,
+  ReceiptIndianRupee,
+  Wallet,
+  Building2,
+  Megaphone,
+  UsersRound,
+  PieChart,
+  Settings,
+} from 'lucide-react';
+
+export const nav = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/enquiries', label: 'Enquiries', icon: Users, badgeKey: 'enquiries' },
+  { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
+  { to: '/packages', label: 'Packages', icon: Package },
+  { to: '/customers', label: 'Customers', icon: UserRound },
+  { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
+  { to: '/quotations', label: 'Quotations', icon: FileText },
+  { to: '/invoices', label: 'Invoices', icon: ReceiptIndianRupee },
+  { to: '/payments', label: 'Payments', icon: Wallet },
+  { to: '/suppliers', label: 'Suppliers', icon: Building2 },
+  { to: '/campaigns', label: 'Campaigns', icon: Megaphone, tag: 'NEW' },
+  { to: '/team', label: 'Team', icon: UsersRound },
+  { to: '/reports', label: 'Reports', icon: PieChart },
+  { to: '/settings', label: 'Settings', icon: Settings },
+];

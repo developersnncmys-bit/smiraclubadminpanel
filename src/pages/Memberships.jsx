@@ -14,7 +14,6 @@ import {
   Zap,
   UserPlus,
   IndianRupee,
-  MonitorSmartphone,
   ShieldCheck,
   ArrowRight,
 } from 'lucide-react';
@@ -23,7 +22,6 @@ import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import StatCard from '../components/ui/StatCard.jsx';
-import Modal from '../components/ui/Modal.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
@@ -34,8 +32,8 @@ const STATUSES = ['New', 'Quoted', 'Active', 'Cancelled'];
 
 /**
  * Tier accents stay deliberately quiet inside the panel — a hairline bar and a
- * small icon tile. The saturated gradient is reserved for the website preview,
- * where a marketing look actually belongs.
+ * small icon tile. `gradient` is stored on the plan for the public website to
+ * use; nothing in the panel renders it.
  */
 const ACCENTS = {
   slate: { bar: 'bg-slate-400', tile: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400', gradient: 'from-slate-600 to-slate-800' },
@@ -91,7 +89,6 @@ export default function Memberships() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [draftFeature, setDraftFeature] = useState({});
 
   const autoQuote = settings.membership?.autoQuote ?? true;
@@ -301,9 +298,6 @@ export default function Memberships() {
         title="Memberships"
         subtitle="Plans published on your website · signups arrive here and are quoted automatically"
       >
-        <button className="btn-ghost" onClick={() => setPreviewOpen(true)}>
-          <MonitorSmartphone size={16} /> Website preview
-        </button>
         <button className="btn-ghost" onClick={simulateSignup}>
           <Sparkles size={16} /> Simulate signup
         </button>
@@ -563,92 +557,6 @@ export default function Memberships() {
           ]}
         />
       </div>
-
-      {/* Website preview -------------------------------------------------- */}
-      <Modal
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        title="Website preview"
-        subtitle="How the published plans render on your public pricing page"
-        size="xl"
-        footer={
-          <button className="btn-primary" onClick={() => setPreviewOpen(false)}>
-            Close preview
-          </button>
-        }
-      >
-        <div className="rounded-2xl bg-ink-900 p-6 sm:p-8">
-          <p className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-brand-300">
-            {settings.agency.name}
-          </p>
-          <h3 className="mt-2 text-center font-display text-2xl font-extrabold text-white">
-            Travel more, pay less — every single trip
-          </h3>
-          <p className="mx-auto mt-2 max-w-lg text-center text-sm text-white/60">
-            Pick a membership and unlock member-only pricing, priority support and a consultant who
-            knows your travel style.
-          </p>
-
-          <div className="mt-7 grid gap-4 md:grid-cols-3">
-            {published.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative flex flex-col rounded-2xl bg-white p-5 ${
-                  plan.popular ? 'ring-2 ring-brand-400 md:-mt-3 md:mb-3' : ''
-                }`}
-              >
-                {plan.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-600 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-glow">
-                    Most popular
-                  </span>
-                )}
-
-                <div className={`h-1 w-10 rounded-full bg-gradient-to-r ${plan.gradient}`} />
-                <p className="mt-3 font-display text-lg font-extrabold text-ink-900">{plan.name}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-ink-500">{plan.tagline}</p>
-
-                <div className="mt-4 flex items-end gap-1.5">
-                  <span className="font-display text-3xl font-extrabold leading-none text-ink-900">
-                    {inr(plan.price)}
-                  </span>
-                  <span className="pb-0.5 text-xs font-semibold text-ink-500">
-                    /{String(plan.billing || '').toLowerCase()}
-                  </span>
-                </div>
-
-                <ul className="mt-4 flex-1 space-y-2">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm leading-snug text-ink-700">
-                      <Check size={14} className="mt-0.5 shrink-0 text-brand-600" strokeWidth={3} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  className={`btn mt-5 w-full ${
-                    plan.popular ? 'btn-primary' : 'border border-ink-900/10 bg-white text-ink-800'
-                  }`}
-                  onClick={() => toast('This button belongs to the public website', 'info')}
-                >
-                  Choose {plan.name.split(' ')[0]}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {published.length === 0 && (
-            <p className="py-10 text-center text-sm text-white/60">
-              No plans are published — the pricing section would be empty.
-            </p>
-          )}
-
-          <p className="mt-6 text-center text-xs text-white/50">
-            Selecting a plan sends the customer's details straight to this panel
-            {autoQuote ? ' and raises a quotation automatically.' : ' for a manual quotation.'}
-          </p>
-        </div>
-      </Modal>
 
       <FormModal
         open={formOpen}

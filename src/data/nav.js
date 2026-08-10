@@ -52,7 +52,7 @@ export const navGroups = [
     ],
   },
   {
-    section: 'People',
+    section: 'Travellers',
     items: [
       { to: '/customers', label: 'Customers', icon: UserRound },
       { to: '/team', label: 'Team', icon: UsersRound },
@@ -61,10 +61,16 @@ export const navGroups = [
     ],
   },
   {
+    // Hidden at the client's request — Settings is still reachable from the
+    // account menu. Drop `hidden` to put the tab back.
     section: 'System',
+    hidden: true,
     items: [{ to: '/settings', label: 'Settings', icon: Settings }],
   },
 ];
+
+/** Groups that actually get a tab in the header. */
+export const visibleNavGroups = navGroups.filter((g) => !g.hidden);
 
 /** Flat list, kept for anything that just needs every destination. */
 export const nav = navGroups.flatMap((g) => g.items);

@@ -64,8 +64,8 @@ export default function DataTable({
   const current = Math.min(page, pages);
   const slice = filtered.slice((current - 1) * pageSize, current * pageSize);
 
-  const toggleFilter = (key, value) => {
-    setActive((prev) => ({ ...prev, [key]: prev[key] === value ? '' : value }));
+  const clearFilter = (key) => {
+    setActive((prev) => ({ ...prev, [key]: '' }));
     setPage(1);
   };
 
@@ -73,6 +73,7 @@ export default function DataTable({
   const toggleAll = () => setSelected(allOnPageSelected ? [] : slice.map((r) => r.id));
 
   const activeExternal = Object.entries(externalFilter).filter(([, v]) => v);
+  const activeFilters = Object.entries(active).filter(([, v]) => v);
 
   return (
     <div className="card overflow-hidden">
@@ -165,35 +166,30 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Quick chips */}
-      {filters.length > 0 && (
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-ink-900/[0.07] px-3.5 py-2.5">
-          {filters.map((f) =>
-            f.options.map((opt) => {
-              const on = active[f.key] === opt;
-              return (
-                <button
-                  key={`${f.key}-${opt}`}
-                  onClick={() => toggleFilter(f.key, opt)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    on
-                      ? 'bg-ink-900 text-white'
-                      : 'border border-ink-900/10 bg-white text-ink-600 hover:border-ink-900/20 hover:text-ink-900'
-                  }`}
-                >
-                  {opt}
-                </button>
-              );
-            })
-          )}
-          {Object.values(active).some(Boolean) && (
+      {/* Only the filters actually in use are shown — no wall of chips. */}
+      {activeFilters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-ink-900/[0.07] px-3.5 py-2.5">
+          <span className="eyebrow">Filtered by</span>
+          {activeFilters.map(([key, val]) => (
             <button
-              onClick={() => setActive({})}
-              className="shrink-0 px-2 text-xs font-semibold text-ink-500 underline underline-offset-2 hover:text-brand-700"
+              key={key}
+              onClick={() => clearFilter(key)}
+              className="chip bg-brand-50 text-brand-700 ring-1 ring-brand-600/15 hover:bg-brand-100"
+              title="Remove this filter"
             >
-              Clear
+              {val}
+              <X size={12} />
             </button>
-          )}
+          ))}
+          <button
+            onClick={() => {
+              setActive({});
+              setPage(1);
+            }}
+            className="px-1 text-xs font-semibold text-ink-500 underline underline-offset-2 hover:text-brand-700"
+          >
+            Clear all
+          </button>
         </div>
       )}
 

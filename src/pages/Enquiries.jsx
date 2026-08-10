@@ -41,7 +41,7 @@ export default function Enquiries() {
   const [statusFor, setStatusFor] = useState(null);
   const [pipeline, setPipeline] = useState('');
 
-  // Top bar "New enquiry" lands here with ?new=1
+  // A ?new=1 deep link opens the create form straight away.
   useEffect(() => {
     if (params.get('new')) {
       setEditing(null);

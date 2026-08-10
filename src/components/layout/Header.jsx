@@ -5,7 +5,6 @@ import {
   Search,
   Bell,
   RefreshCw,
-  Plus,
   CalendarRange,
   UsersRound,
   X,
@@ -18,7 +17,7 @@ import {
   RotateCcw,
   LifeBuoy,
 } from 'lucide-react';
-import { navGroups } from '../../data/nav.js';
+import { navGroups, visibleNavGroups } from '../../data/nav.js';
 import { useApp } from '../../store/AppStore.jsx';
 
 const seedNotifications = [
@@ -193,7 +192,7 @@ export default function Header({ onOpenMobile }) {
         {/* Section tabs — the first level of navigation. Labels are kept short
             so all six always fit without the row turning into a scroller. */}
         <nav className="no-scrollbar -mb-px ml-1 hidden min-w-0 flex-1 items-stretch gap-0.5 self-stretch overflow-x-auto lg:flex">
-          {navGroups.map((group) => {
+          {visibleNavGroups.map((group) => {
             const on = group === activeGroup;
             return (
               <button
@@ -464,12 +463,9 @@ export default function Header({ onOpenMobile }) {
             </select>
           </label>
 
+          {/* No primary action here — every page owns its own create button. */}
           <button className="icon-btn h-8 w-8" onClick={refresh} title="Refresh data">
             <RefreshCw size={14} />
-          </button>
-
-          <button className="btn-primary btn-sm" onClick={() => navigate('/enquiries?new=1')}>
-            <Plus size={14} /> <span className="hidden sm:inline">New enquiry</span>
           </button>
         </div>
       </div>
@@ -508,7 +504,7 @@ export function MobileNav({ open, onClose }) {
         </div>
 
         <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-4">
-          {navGroups.map((group, gi) => (
+          {visibleNavGroups.map((group, gi) => (
             <div key={group.section} className={gi === 0 ? '' : 'mt-5'}>
               <p className="eyebrow mb-1.5 px-3">{group.section}</p>
               <div className="space-y-0.5">

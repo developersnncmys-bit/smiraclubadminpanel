@@ -6,7 +6,7 @@ export default function SourceDonut() {
   const total = sources.reduce((s, x) => s + x.value, 0);
 
   return (
-    <Card title="Enquiry sources" subtitle="Where this week's enquiries came from">
+    <Card eyebrow="Attribution" title="Enquiry sources" subtitle="Where this week's enquiries came from">
       <div className="flex flex-col items-center gap-4 sm:flex-row">
         <div className="relative h-[190px] w-[190px] shrink-0">
           <ResponsiveContainer width="100%" height="100%">

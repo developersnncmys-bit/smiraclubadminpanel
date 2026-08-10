@@ -132,7 +132,7 @@ export default function Reports() {
       <Card title="Sales snapshot" subtitle="Current period totals">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {trends.sales.stats.map((s) => (
-            <div key={s.label} className="rounded-xl border border-ink-900/5 bg-surface-soft/60 px-4 py-3.5">
+            <div key={s.label} className="rounded-xl border border-ink-900/[0.07] bg-surface-soft/60 px-4 py-3.5">
               <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">{s.label}</p>
               <p className="mt-1 font-display text-xl font-extrabold text-ink-900">{s.value}</p>
             </div>

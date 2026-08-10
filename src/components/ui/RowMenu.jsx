@@ -28,7 +28,7 @@ export default function RowMenu({ items = [] }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-xl bg-white py-1 shadow-lift ring-1 ring-ink-900/5">
+        <div className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-xl bg-white py-1 shadow-lift ring-1 ring-ink-900/[0.07]">
           {items.map(({ label, icon: Icon, onClick, danger }) => (
             <button
               key={label}

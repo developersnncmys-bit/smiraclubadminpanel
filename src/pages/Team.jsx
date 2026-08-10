@@ -169,7 +169,7 @@ export default function Team() {
             </div>
 
             {m.bookings > 0 && (
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-ink-900/5 pt-4 text-center">
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-ink-900/[0.07] pt-4 text-center">
                 <div>
                   <p className="font-display text-lg font-extrabold">{m.enquiries}</p>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Enquiries</p>

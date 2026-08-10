@@ -91,7 +91,7 @@ export default function Payments() {
           <button
             onClick={() => receipt(r)}
             title="Download receipt"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-brand-300 hover:text-brand-700"
+            className="icon-btn"
           >
             <Download size={14} />
           </button>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Send, Eye, Download, Pencil, Trash2, CheckCircle2, CalendarPlus } from 'lucide-react';
+import { Plus, Send, Eye, Download, Pencil, Trash2, CheckCircle2, CalendarPlus, Check } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -56,6 +56,7 @@ export default function Quotations() {
       `Amount   : ${inr(r.amount)}`,
       `Valid till: ${r.validTill}`,
       `Consultant: ${r.owner}`,
+      ...(r.inclusions?.length ? ['', 'INCLUSIONS', ...r.inclusions.map((f) => ` - ${f}`)] : []),
     ].join('\n');
     downloadText(`${r.id}.txt`, text);
     toast(`${r.id} downloaded`);
@@ -86,7 +87,14 @@ export default function Quotations() {
       render: (r) => (
         <div>
           <p className="font-bold text-ink-900">{r.customer}</p>
-          <p className="text-xs text-ink-500">{r.pkg}</p>
+          <p className="flex items-center gap-1.5 text-xs text-ink-500">
+            {r.pkg}
+            {r.source === 'Membership' && (
+              <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-brand-700">
+                Auto
+              </span>
+            )}
+          </p>
         </div>
       ),
     },
@@ -103,21 +111,21 @@ export default function Quotations() {
           <button
             onClick={() => setViewing(r)}
             title="Preview"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-brand-300 hover:text-brand-700"
+            className="icon-btn"
           >
             <Eye size={14} />
           </button>
           <button
             onClick={() => sendQuote(r)}
             title="Send"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-sky-400 hover:text-sky-600"
+            className="icon-btn hover:border-sky-300 hover:text-sky-600"
           >
             <Send size={14} />
           </button>
           <button
             onClick={() => downloadQuote(r)}
             title="Download"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-brand-300 hover:text-brand-700"
+            className="icon-btn"
           >
             <Download size={14} />
           </button>
@@ -219,12 +227,27 @@ export default function Quotations() {
                 ['Per person', inr(Math.round(viewing.amount / (viewing.pax || 1)))],
                 ['GSTIN', settings.agency.gstin],
               ].map(([k, v]) => (
-                <div key={k} className="rounded-xl border border-ink-900/5 bg-surface-soft/60 px-4 py-3">
+                <div key={k} className="rounded-xl border border-ink-900/[0.07] bg-surface-soft/60 px-4 py-3">
                   <dt className="text-[11px] font-bold uppercase tracking-wide text-ink-500">{k}</dt>
                   <dd className="mt-0.5 text-sm font-bold text-ink-900">{v}</dd>
                 </div>
               ))}
             </dl>
+
+            {/* Membership quotes carry the plan features they were raised from */}
+            {viewing.inclusions?.length > 0 && (
+              <div className="rounded-xl border border-ink-900/[0.07] bg-white p-4">
+                <p className="eyebrow mb-2">What's included</p>
+                <ul className="grid gap-2 sm:grid-cols-2">
+                  {viewing.inclusions.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-ink-700">
+                      <Check size={15} className="mt-0.5 shrink-0 text-brand-600" strokeWidth={2.6} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </Modal>

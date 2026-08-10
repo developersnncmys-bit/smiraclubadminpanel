@@ -18,7 +18,7 @@ export default function Toaster() {
         return (
           <div
             key={t.id}
-            className="pointer-events-auto flex items-center gap-3 overflow-hidden rounded-xl bg-white pr-3 shadow-lift ring-1 ring-ink-900/5"
+            className="pointer-events-auto flex items-center gap-3 overflow-hidden rounded-xl bg-white pr-3 shadow-lift ring-1 ring-ink-900/[0.07]"
           >
             <span className={`h-full w-1 self-stretch ${skin.bar}`} />
             <Icon size={17} className={`shrink-0 ${skin.tint}`} />

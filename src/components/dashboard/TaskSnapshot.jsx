@@ -19,6 +19,7 @@ export default function TaskSnapshot() {
 
   return (
     <Card
+      eyebrow="Operations"
       title="Task board"
       subtitle="What the team owes customers right now"
       action={
@@ -32,7 +33,7 @@ export default function TaskSnapshot() {
           <button
             key={key}
             onClick={() => navigate('/tasks')}
-            className="rounded-xl border border-ink-900/5 p-3 text-left transition hover:border-brand-300 hover:bg-brand-50/40"
+            className="rounded-xl border border-ink-900/[0.07] p-3 text-left transition hover:border-brand-300 hover:bg-brand-50/40"
           >
             <span className={`mb-2 grid h-8 w-8 place-items-center rounded-lg ${tone}`}>
               <Icon size={16} strokeWidth={2.3} />
@@ -49,7 +50,7 @@ export default function TaskSnapshot() {
         {priority.map((t) => (
           <li
             key={t.id}
-            className="flex items-center gap-3 rounded-xl border border-ink-900/5 p-3 transition hover:border-brand-300 hover:bg-brand-50/40"
+            className="flex items-center gap-3 rounded-xl border border-ink-900/[0.07] p-3 transition hover:border-brand-300 hover:bg-brand-50/40"
           >
             <input
               type="checkbox"

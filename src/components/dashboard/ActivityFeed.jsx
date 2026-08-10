@@ -11,7 +11,7 @@ const dots = {
 
 export default function ActivityFeed() {
   return (
-    <Card title="Recent activity" subtitle="Live feed across the team">
+    <Card eyebrow="Audit trail" title="Recent activity" subtitle="Live feed across the team">
       <ol className="relative space-y-5 pl-5">
         <span className="absolute left-[5px] top-2 bottom-2 w-px bg-ink-900/10" />
         {activityFeed.map((a) => (

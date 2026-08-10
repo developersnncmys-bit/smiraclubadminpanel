@@ -45,10 +45,14 @@ export default {
           soft: '#eef2f7',
         },
       },
+      // A restrained, layered shadow scale. Surfaces sit close to the page;
+      // only overlays are allowed to float.
       boxShadow: {
-        card: '0 1px 2px rgba(11,21,36,0.04), 0 8px 28px -12px rgba(11,21,36,0.12)',
-        lift: '0 20px 45px -20px rgba(11,21,36,0.28)',
-        glow: '0 18px 40px -18px rgba(20,165,140,0.55)',
+        xs: '0 1px 2px rgba(11,21,36,0.05)',
+        card: '0 1px 2px rgba(11,21,36,0.04), 0 2px 6px -1px rgba(11,21,36,0.05)',
+        raised: '0 2px 4px rgba(11,21,36,0.04), 0 8px 20px -8px rgba(11,21,36,0.12)',
+        lift: '0 24px 48px -16px rgba(11,21,36,0.20)',
+        glow: '0 6px 16px -6px rgba(11,132,114,0.45)',
       },
       backgroundImage: {
         'app-aurora':

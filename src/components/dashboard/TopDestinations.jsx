@@ -8,6 +8,7 @@ export default function TopDestinations() {
 
   return (
     <Card
+      eyebrow="Demand"
       title="Top destinations"
       subtitle="Bookings and revenue this quarter"
       action={

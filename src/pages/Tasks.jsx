@@ -88,7 +88,7 @@ export default function Tasks() {
       </PageHeader>
 
       <div className="card overflow-hidden">
-        <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-ink-900/5 p-4">
+        <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-ink-900/[0.07] p-4">
           {buckets.map(({ key, label, icon: Icon }) => {
             const n = scoped.filter((t) => t.bucket === key).length;
             const on = bucket === key;
@@ -98,7 +98,7 @@ export default function Tasks() {
                 onClick={() => setBucket(key)}
                 className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
                   on
-                    ? 'bg-brand-600 text-white shadow-glow'
+                    ? 'bg-ink-900 text-white'
                     : 'border border-ink-900/10 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-700'
                 }`}
               >
@@ -117,7 +117,7 @@ export default function Tasks() {
         </div>
 
         {showFilter && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-ink-900/5 bg-surface-soft/60 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2 border-b border-ink-900/[0.07] bg-surface-soft/60 px-4 py-3">
             <span className="text-xs font-bold uppercase tracking-wide text-ink-500">Priority</span>
             {PRIORITIES.map((p) => (
               <button
@@ -143,7 +143,7 @@ export default function Tasks() {
           </div>
         )}
 
-        <div className="divide-y divide-ink-900/5">
+        <div className="divide-y divide-ink-900/[0.07]">
           {list.map((t) => (
             <div key={t.id} className="flex flex-wrap items-start gap-4 p-5 transition hover:bg-brand-50/40">
               <input

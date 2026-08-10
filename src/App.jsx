@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Enquiries from './pages/Enquiries.jsx';
 import Bookings from './pages/Bookings.jsx';
 import Packages from './pages/Packages.jsx';
+import Memberships from './pages/Memberships.jsx';
 import Customers from './pages/Customers.jsx';
 import Tasks from './pages/Tasks.jsx';
 import Quotations from './pages/Quotations.jsx';
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="enquiries" element={<Enquiries />} />
         <Route path="bookings" element={<Bookings />} />
         <Route path="packages" element={<Packages />} />
+        <Route path="memberships" element={<Memberships />} />
         <Route path="customers" element={<Customers />} />
         <Route path="tasks" element={<Tasks />} />
         <Route path="quotations" element={<Quotations />} />

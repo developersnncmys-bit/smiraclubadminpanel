@@ -87,7 +87,7 @@ export default function Campaigns() {
             onClick={() => setChannel(c)}
             className={`rounded-full px-3.5 py-2 text-xs font-bold transition ${
               channel === c
-                ? 'bg-brand-600 text-white shadow-glow'
+                ? 'bg-ink-900 text-white'
                 : 'border border-ink-900/10 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-700'
             }`}
           >
@@ -162,7 +162,7 @@ export default function Campaigns() {
                 </div>
               </div>
 
-              <div className="mt-4 flex gap-2 border-t border-ink-900/5 pt-4">
+              <div className="mt-4 flex gap-2 border-t border-ink-900/[0.07] pt-4">
                 <button
                   className="btn-soft flex-1 py-2 text-xs"
                   onClick={() =>

@@ -110,14 +110,14 @@ export default function Invoices() {
           <button
             onClick={() => downloadInvoice(r)}
             title="Download"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-brand-300 hover:text-brand-700"
+            className="icon-btn"
           >
             <Download size={14} />
           </button>
           <button
             onClick={() => toast(`${r.id} emailed to ${r.customer}`)}
             title="Send"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-sky-400 hover:text-sky-600"
+            className="icon-btn hover:border-sky-300 hover:text-sky-600"
           >
             <Send size={14} />
           </button>

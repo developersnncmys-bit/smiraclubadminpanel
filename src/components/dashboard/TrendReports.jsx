@@ -30,7 +30,7 @@ const statTones = {
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-ink-900/5 bg-white/95 px-3.5 py-2.5 shadow-lift backdrop-blur">
+    <div className="rounded-xl border border-ink-900/[0.07] bg-white/95 px-3.5 py-2.5 shadow-lift backdrop-blur">
       <p className="mb-1.5 text-xs font-bold text-ink-900">{label}</p>
       {payload.map((p) => (
         <p key={p.name} className="flex items-center gap-2 text-xs text-ink-600">
@@ -67,12 +67,12 @@ export default function TrendReports() {
 
   return (
     <section className="card overflow-hidden">
-      <header className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4">
         <div>
-          <h2 className="font-display text-lg font-extrabold">Business Reports</h2>
-          <p className="text-sm text-ink-500">Performance across enquiries, calls, activity and sales</p>
+          <p className="eyebrow">Analytics</p>
+          <h2 className="mt-1 font-display text-base font-extrabold text-ink-900">Business reports</h2>
         </div>
-        <p className="text-xs text-ink-400">Click the + button to add more reports</p>
+        <p className="text-xs text-ink-400">Use + to add another report tab</p>
       </header>
 
       {/* Report workspace tabs */}
@@ -104,14 +104,14 @@ export default function TrendReports() {
         </button>
       </div>
 
-      <div className="border-t border-ink-900/5">
-        <div className="flex items-start gap-4 px-5 py-5">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-ocean text-white shadow-glow">
-            <TrendingUp size={22} strokeWidth={2.3} />
+      <div className="border-t border-ink-900/[0.07]">
+        <div className="flex items-start gap-3.5 px-5 py-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+            <TrendingUp size={19} strokeWidth={2.3} />
           </span>
           <div>
-            <h3 className="font-display text-xl font-extrabold">{activeReport}</h3>
-            <p className="text-sm text-ink-500">
+            <h3 className="font-display text-base font-extrabold text-ink-900">{activeReport}</h3>
+            <p className="mt-0.5 text-sm text-ink-500">
               {activeReport === 'Trends & Analytics'
                 ? 'Visualise performance trends across enquiries, calls, activities and sales'
                 : `Custom report · connect this to your live data to populate ${activeReport.toLowerCase()}`}
@@ -121,14 +121,14 @@ export default function TrendReports() {
       </div>
 
       {/* Metric tabs */}
-      <div className="no-scrollbar flex overflow-x-auto border-y border-ink-900/5 bg-surface-soft/50">
+      <div className="no-scrollbar flex overflow-x-auto border-y border-ink-900/[0.07] bg-surface-soft/50">
         {tabs.map(({ key, label, icon: Icon }) => {
           const on = tab === key;
           return (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`flex flex-1 shrink-0 items-center justify-center gap-2 whitespace-nowrap px-5 py-4 text-sm font-bold transition ${
+              className={`flex flex-1 shrink-0 items-center justify-center gap-2 whitespace-nowrap px-5 py-3 text-sm font-bold transition ${
                 on
                   ? 'border-b-2 border-brand-600 bg-white text-brand-700'
                   : 'border-b-2 border-transparent text-ink-500 hover:text-ink-800'

@@ -15,9 +15,10 @@ export default function UpcomingDepartures() {
 
   return (
     <Card
+      eyebrow="Operations"
       title="Upcoming departures"
       subtitle="Next groups leaving — check documents and balances"
-      bodyClass="divide-y divide-ink-900/5"
+      bodyClass="divide-y divide-ink-900/[0.07]"
       action={
         <Link to="/bookings" className="text-sm font-semibold text-brand-700 hover:underline">
           Open bookings
@@ -32,8 +33,8 @@ export default function UpcomingDepartures() {
             onClick={() => navigate('/bookings')}
             className="flex w-full flex-wrap items-center gap-3 px-5 py-4 text-left transition hover:bg-brand-50/40"
           >
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-ocean text-white">
-              <Plane size={18} strokeWidth={2.3} className="-rotate-45" />
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+              <Plane size={17} strokeWidth={2.3} className="-rotate-45" />
             </span>
 
             <div className="min-w-[170px] flex-1">

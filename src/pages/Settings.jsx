@@ -150,7 +150,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="mt-5 flex justify-end gap-2.5 border-t border-ink-900/5 pt-5">
+              <div className="mt-5 flex justify-end gap-2.5 border-t border-ink-900/[0.07] pt-5">
                 <button className="btn-ghost" onClick={() => setAgency(settings.agency)}>
                   Discard
                 </button>
@@ -163,7 +163,7 @@ export default function Settings() {
 
           {tab === 'notifications' && (
             <Card title="Notifications" subtitle="Choose what the team gets alerted about">
-              <ul className="divide-y divide-ink-900/5">
+              <ul className="divide-y divide-ink-900/[0.07]">
                 {[
                   ['newEnquiry', 'New enquiry received', 'Ping the assigned consultant instantly'],
                   ['payment', 'Payment received', 'Alert accounts when money lands'],
@@ -185,7 +185,7 @@ export default function Settings() {
 
           {tab === 'integrations' && (
             <Card title="Integrations" subtitle="Connect the tools your agency already runs on">
-              <ul className="divide-y divide-ink-900/5">
+              <ul className="divide-y divide-ink-900/[0.07]">
                 {Object.entries(settings.integrations).map(([name, connected]) => (
                   <li key={name} className="flex flex-wrap items-center gap-4 py-4 first:pt-0 last:pb-0">
                     <span className="grid h-11 w-11 place-items-center rounded-xl bg-surface-soft text-ink-600">
@@ -248,7 +248,7 @@ export default function Settings() {
                   ['Next invoice', '01 Sep 2026'],
                   ['Storage', '4.2 GB / 25 GB'],
                 ].map(([k, v]) => (
-                  <div key={k} className="rounded-xl border border-ink-900/5 bg-surface-soft/60 px-4 py-3.5">
+                  <div key={k} className="rounded-xl border border-ink-900/[0.07] bg-surface-soft/60 px-4 py-3.5">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">{k}</p>
                     <p className="mt-1 font-display text-lg font-extrabold text-ink-900">{v}</p>
                   </div>
@@ -279,7 +279,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <ul className="mt-5 divide-y divide-ink-900/5 border-t border-ink-900/5">
+              <ul className="mt-5 divide-y divide-ink-900/[0.07] border-t border-ink-900/[0.07]">
                 {[
                   ['twoFactor', 'Two-factor authentication', 'Require an OTP on every new device'],
                   ['restrictExport', 'Restrict export', 'Only owners can export customer lists'],

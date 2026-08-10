@@ -77,9 +77,9 @@ export default function DataTable({
   return (
     <div className="card overflow-hidden">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 p-4">
-        <div className="relative min-w-[240px] flex-1">
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+      <div className="flex flex-wrap items-center gap-2.5 border-b border-ink-900/[0.07] p-3.5">
+        <div className="relative min-w-[220px] flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
           <input
             value={query}
             onChange={(e) => {
@@ -87,7 +87,7 @@ export default function DataTable({
               setPage(1);
             }}
             placeholder={searchPlaceholder}
-            className="input pl-10 pr-9"
+            className="input py-2 pl-9 pr-9"
           />
           {query && (
             <button
@@ -99,18 +99,22 @@ export default function DataTable({
           )}
         </div>
 
+        <span className="hidden whitespace-nowrap text-xs font-semibold text-ink-500 sm:block">
+          {filtered.length} {filtered.length === 1 ? 'record' : 'records'}
+        </span>
+
         {toolbar}
 
         {filters.length > 0 && (
           <button
             onClick={() => setShowPanel((s) => !s)}
-            className={`btn ${
+            className={`btn py-2 ${
               showPanel || Object.values(active).some(Boolean)
-                ? 'bg-brand-50 text-brand-700'
+                ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-600/20'
                 : 'btn-ghost'
             }`}
           >
-            <SlidersHorizontal size={16} /> Filters
+            <SlidersHorizontal size={15} /> Filters
             {Object.values(active).filter(Boolean).length > 0 && (
               <span className="rounded-full bg-brand-600 px-1.5 text-[11px] font-bold text-white">
                 {Object.values(active).filter(Boolean).length}
@@ -119,14 +123,14 @@ export default function DataTable({
           </button>
         )}
 
-        <button className="btn-ghost" onClick={() => downloadCsv(exportName, filtered, columns)}>
-          <Download size={16} /> Export
+        <button className="btn-ghost py-2" onClick={() => downloadCsv(exportName, filtered, columns)}>
+          <Download size={15} /> Export
         </button>
       </div>
 
       {/* Advanced filter panel */}
       {showPanel && filters.length > 0 && (
-        <div className="grid gap-4 border-t border-ink-900/5 bg-surface-soft/50 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 border-t border-ink-900/[0.07] bg-surface-soft/50 p-4 sm:grid-cols-2 lg:grid-cols-4">
           {filters.map((f) => (
             <div key={f.key}>
               <label className="label">{f.label || f.key}</label>
@@ -163,7 +167,7 @@ export default function DataTable({
 
       {/* Quick chips */}
       {filters.length > 0 && (
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-y border-ink-900/5 bg-surface-soft/60 px-4 py-2.5">
+        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-ink-900/[0.07] px-3.5 py-2.5">
           {filters.map((f) =>
             f.options.map((opt) => {
               const on = active[f.key] === opt;
@@ -173,8 +177,8 @@ export default function DataTable({
                   onClick={() => toggleFilter(f.key, opt)}
                   className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                     on
-                      ? 'bg-brand-600 text-white shadow-glow'
-                      : 'border border-ink-900/10 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-700'
+                      ? 'bg-ink-900 text-white'
+                      : 'border border-ink-900/10 bg-white text-ink-600 hover:border-ink-900/20 hover:text-ink-900'
                   }`}
                 >
                   {opt}
@@ -243,10 +247,10 @@ export default function DataTable({
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[820px] border-collapse">
-          <thead className="bg-surface-soft/70">
+          <thead className="sticky top-0 z-10 bg-surface-soft/95 backdrop-blur">
             <tr>
               {selectable && (
-                <th className="w-12 px-5 py-3.5">
+                <th className="w-11 border-b border-ink-900/[0.07] px-5 py-3">
                   <input
                     type="checkbox"
                     checked={allOnPageSelected}
@@ -262,15 +266,15 @@ export default function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-ink-900/5">
+          <tbody className="divide-y divide-ink-900/[0.07]">
             {slice.map((row) => (
               <tr
                 key={row.id}
                 onClick={() => onRowClick?.(row)}
-                className={`group transition hover:bg-brand-50/40 ${onRowClick ? 'cursor-pointer' : ''}`}
+                className={`group transition-colors hover:bg-surface-soft/70 ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {selectable && (
-                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selected.includes(row.id)}
@@ -309,7 +313,7 @@ export default function DataTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-900/5 px-5 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-900/[0.07] bg-surface-soft/40 px-5 py-3">
         <div className="flex items-center gap-2 text-sm text-ink-500">
           <span>Rows</span>
           <select

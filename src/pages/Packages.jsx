@@ -85,7 +85,7 @@ export default function Packages() {
               onClick={() => setType(t)}
               className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition ${
                 type === t
-                  ? 'bg-brand-600 text-white shadow-glow'
+                  ? 'bg-ink-900 text-white'
                   : 'border border-ink-900/10 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-700'
               }`}
             >
@@ -132,14 +132,14 @@ export default function Packages() {
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-3 border-t border-ink-900/5 pt-4">
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-ink-900/[0.07] pt-4">
                 <Badge tone={p.seats <= 8 ? 'rose' : 'green'} dot>
                   {p.seats} seats left
                 </Badge>
                 <div className="flex gap-1.5">
                   <button
                     onClick={() => duplicate('packages', p.id)}
-                    className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-brand-300 hover:text-brand-700"
+                    className="icon-btn"
                     title="Duplicate"
                   >
                     <Copy size={14} />
@@ -149,14 +149,14 @@ export default function Packages() {
                       setEditing(p);
                       setFormOpen(true);
                     }}
-                    className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-brand-300 hover:text-brand-700"
+                    className="icon-btn"
                     title="Edit"
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => setConfirm(p)}
-                    className="grid h-8 w-8 place-items-center rounded-lg border border-ink-900/10 text-ink-500 transition hover:border-rose-400 hover:text-rose-600"
+                    className="icon-btn-danger"
                     title="Delete"
                   >
                     <Trash2 size={14} />

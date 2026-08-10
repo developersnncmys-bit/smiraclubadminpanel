@@ -220,6 +220,11 @@ export const tasks = [
 
 // -- Quotations, invoices, payments -----------------------------------------
 export const quotations = [
+  // Auto-generated from website membership signups — inclusions are snapshotted
+  // from the plan at the moment the quotation was raised.
+  { id: 'QUO-1190', customer: 'Vikas Rane', pkg: 'Gold Voyager membership (Yearly)', pax: 3, amount: 35396, validTill: '04 Aug 2026', status: 'Accepted', owner: 'Sneha', source: 'Membership', planId: 'MEM-02', inclusions: ['10% off on every holiday package', 'Dedicated travel consultant', '24×7 on-trip emergency helpline'] },
+  { id: 'QUO-1189', customer: 'Rohan Bhatt', pkg: 'Gold Voyager membership (Yearly)', pax: 2, amount: 23598, validTill: '10 Aug 2026', status: 'Sent', owner: 'Sneha', source: 'Membership', planId: 'MEM-02', inclusions: ['10% off on every holiday package', 'Dedicated travel consultant', '24×7 on-trip emergency helpline'] },
+  { id: 'QUO-1188', customer: 'Meher Shaikh', pkg: 'Silver Explorer membership (Yearly)', pax: 1, amount: 5899, validTill: '09 Aug 2026', status: 'Viewed', owner: 'Ritik', source: 'Membership', planId: 'MEM-01', inclusions: ['5% off on every holiday package', 'Priority enquiry response within 4 hours', 'Dedicated WhatsApp support desk'] },
   { id: 'QUO-1187', customer: 'Ridhima Param', pkg: 'Maldives Overwater Luxury', pax: 2, amount: 336000, validTill: '12 Aug 2026', status: 'Sent', owner: 'Sneha' },
   { id: 'QUO-1186', customer: 'Sitaram Parab', pkg: 'Singapore + Malaysia Combo', pax: 4, amount: 305600, validTill: '10 Aug 2026', status: 'Viewed', owner: 'Ritik' },
   { id: 'QUO-1185', customer: 'Divya Sharma', pkg: 'Swiss Alps Grand Tour', pax: 2, amount: 424000, validTill: '18 Aug 2026', status: 'Sent', owner: 'Kabir' },
@@ -235,6 +240,97 @@ export const quotationTone = {
   Accepted: 'green',
   Expired: 'rose',
 };
+
+// -- Membership plans -------------------------------------------------------
+// Three plans published on the public website. The agency edits the feature
+// list here and the website pricing page renders whatever is marked published.
+
+export const MEMBERSHIP_GST = 18;
+
+export const memberships = [
+  {
+    id: 'MEM-01',
+    name: 'Silver Explorer',
+    tagline: 'For first-time travellers testing the waters',
+    price: 4999,
+    billing: 'Yearly',
+    discount: 5,
+    gradient: 'from-slate-600 to-slate-800',
+    accent: 'slate',
+    popular: false,
+    published: true,
+    members: 24,
+    features: [
+      '5% off on every holiday package',
+      'Priority enquiry response within 4 hours',
+      'Dedicated WhatsApp support desk',
+      'Free travel insurance quotation',
+    ],
+  },
+  {
+    id: 'MEM-02',
+    name: 'Gold Voyager',
+    tagline: 'Our most-picked plan for families who travel twice a year',
+    price: 9999,
+    billing: 'Yearly',
+    discount: 10,
+    gradient: 'from-amber-500 to-orange-600',
+    accent: 'amber',
+    popular: true,
+    published: true,
+    members: 41,
+    features: [
+      '10% off on every holiday package',
+      'Dedicated travel consultant',
+      'Free visa documentation assistance',
+      'Complimentary airport transfers',
+      '24×7 on-trip emergency helpline',
+    ],
+  },
+  {
+    id: 'MEM-03',
+    name: 'Platinum Elite',
+    tagline: 'Concierge-level travel for frequent flyers',
+    price: 24999,
+    billing: 'Yearly',
+    discount: 15,
+    gradient: 'from-violet-600 to-indigo-700',
+    accent: 'violet',
+    popular: false,
+    published: true,
+    members: 12,
+    features: [
+      '15% off on every holiday package',
+      'Complimentary airport lounge access',
+      'Free hotel upgrades subject to availability',
+      'Personal itinerary designer',
+      'Zero cancellation fee once a year',
+      'Family add-on members at 50%',
+    ],
+  },
+];
+
+// Signups captured on the website pricing page and pushed into the panel.
+export const memberSignups = [
+  { id: 'MSU-04', name: 'Ananya Deshmukh', email: 'ananya.d@gmail.com', phone: '+91 98330 21145', city: 'Pune', planId: 'MEM-03', plan: 'Platinum Elite', members: 4, source: 'Website', received: '04 Aug 2026', status: 'New', quote: '' },
+  { id: 'MSU-03', name: 'Rohan Bhatt', email: 'rohan.bhatt@outlook.com', phone: '+91 99201 55420', city: 'Mumbai', planId: 'MEM-02', plan: 'Gold Voyager', members: 2, source: 'Website', received: '03 Aug 2026', status: 'Quoted', quote: 'QUO-1189' },
+  { id: 'MSU-02', name: 'Meher Shaikh', email: 'meher.s@gmail.com', phone: '+91 97027 66311', city: 'Nashik', planId: 'MEM-01', plan: 'Silver Explorer', members: 1, source: 'Website', received: '02 Aug 2026', status: 'Quoted', quote: 'QUO-1188' },
+  { id: 'MSU-01', name: 'Vikas Rane', email: 'vikas.rane@gmail.com', phone: '+91 98194 30078', city: 'Thane', planId: 'MEM-02', plan: 'Gold Voyager', members: 3, source: 'Website', received: '28 Jul 2026', status: 'Active', quote: 'QUO-1190' },
+];
+
+export const signupTone = {
+  New: 'amber',
+  Quoted: 'sky',
+  Active: 'green',
+  Cancelled: 'rose',
+};
+
+/** Membership fee for a plan and member count, with GST applied. */
+export function membershipAmount(plan, members = 1) {
+  const subtotal = Number(plan?.price || 0) * Math.max(1, Number(members) || 1);
+  const tax = Math.round((subtotal * MEMBERSHIP_GST) / 100);
+  return { subtotal, tax, total: subtotal + tax };
+}
 
 export const invoices = [
   { id: 'INV-4412', customer: 'Ajay Panchmukh', booking: 'BKG-8821', issued: '02 Aug 2026', due: '10 Aug 2026', amount: 286800, paid: 286800, status: 'Paid' },

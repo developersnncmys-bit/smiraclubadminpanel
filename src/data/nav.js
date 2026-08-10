@@ -3,6 +3,7 @@ import {
   Users,
   CalendarCheck,
   Package,
+  Crown,
   UserRound,
   ListTodo,
   FileText,
@@ -15,19 +16,55 @@ import {
   Settings,
 } from 'lucide-react';
 
-export const nav = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/enquiries', label: 'Enquiries', icon: Users, badgeKey: 'enquiries' },
-  { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
-  { to: '/packages', label: 'Packages', icon: Package },
-  { to: '/customers', label: 'Customers', icon: UserRound },
-  { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
-  { to: '/quotations', label: 'Quotations', icon: FileText },
-  { to: '/invoices', label: 'Invoices', icon: ReceiptIndianRupee },
-  { to: '/payments', label: 'Payments', icon: Wallet },
-  { to: '/suppliers', label: 'Suppliers', icon: Building2 },
-  { to: '/campaigns', label: 'Campaigns', icon: Megaphone, tag: 'NEW' },
-  { to: '/team', label: 'Team', icon: UsersRound },
-  { to: '/reports', label: 'Reports', icon: PieChart },
-  { to: '/settings', label: 'Settings', icon: Settings },
+/**
+ * Sidebar navigation grouped the way the agency actually works, so a 15-item
+ * rail reads as five short lists instead of one long one.
+ */
+export const navGroups = [
+  {
+    section: 'Workspace',
+    items: [
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
+    ],
+  },
+  {
+    section: 'Sales',
+    items: [
+      { to: '/enquiries', label: 'Enquiries', icon: Users, badgeKey: 'enquiries' },
+      { to: '/quotations', label: 'Quotations', icon: FileText },
+      { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
+    ],
+  },
+  {
+    section: 'Catalogue',
+    items: [
+      { to: '/packages', label: 'Packages', icon: Package },
+      { to: '/memberships', label: 'Memberships', icon: Crown, badgeKey: 'memberships' },
+      { to: '/suppliers', label: 'Suppliers', icon: Building2 },
+    ],
+  },
+  {
+    section: 'Finance',
+    items: [
+      { to: '/invoices', label: 'Invoices', icon: ReceiptIndianRupee },
+      { to: '/payments', label: 'Payments', icon: Wallet },
+    ],
+  },
+  {
+    section: 'People',
+    items: [
+      { to: '/customers', label: 'Customers', icon: UserRound },
+      { to: '/team', label: 'Team', icon: UsersRound },
+      { to: '/campaigns', label: 'Campaigns', icon: Megaphone, tag: 'NEW' },
+      { to: '/reports', label: 'Reports', icon: PieChart },
+    ],
+  },
+  {
+    section: 'System',
+    items: [{ to: '/settings', label: 'Settings', icon: Settings }],
+  },
 ];
+
+/** Flat list, kept for anything that just needs every destination. */
+export const nav = navGroups.flatMap((g) => g.items);

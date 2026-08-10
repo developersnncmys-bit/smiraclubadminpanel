@@ -3,9 +3,7 @@ import { Users, CalendarCheck, Luggage, IndianRupee, RefreshCw, Mail } from 'luc
 import PageHeader from '../components/ui/PageHeader.jsx';
 import StatCard from '../components/ui/StatCard.jsx';
 import TrendReports from '../components/dashboard/TrendReports.jsx';
-import SourceDonut from '../components/dashboard/SourceDonut.jsx';
 import TopDestinations from '../components/dashboard/TopDestinations.jsx';
-import UpcomingDepartures from '../components/dashboard/UpcomingDepartures.jsx';
 import TaskSnapshot from '../components/dashboard/TaskSnapshot.jsx';
 import ActivityFeed from '../components/dashboard/ActivityFeed.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
@@ -125,13 +123,6 @@ export default function Dashboard() {
       </div>
 
       {/* Insight grid */}
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <UpcomingDepartures />
-        </div>
-        <SourceDonut />
-      </div>
-
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <TopDestinations />
         <TaskSnapshot />

@@ -9,7 +9,7 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { quotationTone, inr } from '../data/mockData.js';
-import { downloadText } from '../lib/csv.js';
+import { quotationPdf } from '../lib/pdf.js';
 
 const STATUSES = ['Draft', 'Sent', 'Viewed', 'Accepted', 'Expired'];
 
@@ -44,22 +44,8 @@ export default function Quotations() {
   };
 
   const downloadQuote = (r) => {
-    const text = [
-      `${settings.agency.name}`,
-      `${settings.agency.address}`,
-      `GSTIN: ${settings.agency.gstin}`,
-      '',
-      `QUOTATION ${r.id}`,
-      `Customer : ${r.customer}`,
-      `Package  : ${r.pkg}`,
-      `Travellers: ${r.pax}`,
-      `Amount   : ${inr(r.amount)}`,
-      `Valid till: ${r.validTill}`,
-      `Consultant: ${r.owner}`,
-      ...(r.inclusions?.length ? ['', 'INCLUSIONS', ...r.inclusions.map((f) => ` - ${f}`)] : []),
-    ].join('\n');
-    downloadText(`${r.id}.txt`, text);
-    toast(`${r.id} downloaded`);
+    quotationPdf(r, settings);
+    toast(`${r.id}.pdf downloaded`);
   };
 
   const convert = (r) => {
@@ -124,7 +110,7 @@ export default function Quotations() {
           </button>
           <button
             onClick={() => downloadQuote(r)}
-            title="Download"
+            title="Download PDF"
             className="icon-btn"
           >
             <Download size={14} />
@@ -194,7 +180,7 @@ export default function Quotations() {
         footer={
           <>
             <button className="btn-ghost" onClick={() => downloadQuote(viewing)}>
-              <Download size={16} /> Download
+              <Download size={16} /> Download PDF
             </button>
             <button
               className="btn-primary"

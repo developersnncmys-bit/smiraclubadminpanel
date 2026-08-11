@@ -3,9 +3,6 @@ import { Users, CalendarCheck, Luggage, IndianRupee, RefreshCw, Mail } from 'luc
 import PageHeader from '../components/ui/PageHeader.jsx';
 import StatCard from '../components/ui/StatCard.jsx';
 import TrendReports from '../components/dashboard/TrendReports.jsx';
-import TopDestinations from '../components/dashboard/TopDestinations.jsx';
-import TaskSnapshot from '../components/dashboard/TaskSnapshot.jsx';
-import ActivityFeed from '../components/dashboard/ActivityFeed.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { kpis, shortInr, inr } from '../data/mockData.js';
 
@@ -120,13 +117,6 @@ export default function Dashboard() {
       {/* Business reports */}
       <div className="mt-6">
         <TrendReports />
-      </div>
-
-      {/* Insight grid */}
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        <TopDestinations />
-        <TaskSnapshot />
-        <ActivityFeed />
       </div>
     </>
   );

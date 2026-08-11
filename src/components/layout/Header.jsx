@@ -13,7 +13,6 @@ import {
   Clock3,
   ChevronDown,
   LogOut,
-  UserCog,
   RotateCcw,
   LifeBuoy,
 } from 'lucide-react';
@@ -358,13 +357,8 @@ export default function Header({ onOpenMobile }) {
                     {auth?.role} · {settings.agency.name}
                   </p>
                 </div>
-                <NavLink
-                  to="/settings"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-ink-700 hover:bg-surface-soft"
-                >
-                  <UserCog size={15} /> Account settings
-                </NavLink>
+                {/* Account settings hidden with the System tab — restore both
+                    together when the client asks for Settings back. */}
                 <button
                   onClick={() => {
                     setMenuOpen(false);

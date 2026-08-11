@@ -14,6 +14,15 @@ export const shortInr = (n) => {
   return inr(n);
 };
 
+/** '2026-09-02' -> '02 Sep 2026'. Leaves already-formatted dates alone. */
+export const formatDate = (value) => {
+  if (!value) return '';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime())
+    ? String(value)
+    : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
 export const days = [
   '29 Jul', '30 Jul', '31 Jul', '01 Aug', '02 Aug', '03 Aug', '04 Aug',
 ];
@@ -149,14 +158,14 @@ export const sources = [
 
 // -- Packages ---------------------------------------------------------------
 export const packages = [
-  { id: 'PKG-01', name: 'Bali Honeymoon Escape', destination: 'Bali, Indonesia', nights: 6, price: 92500, type: 'Honeymoon', rating: 4.8, sold: 42, seats: 8, gradient: 'from-brand-500 to-ocean' },
-  { id: 'PKG-02', name: 'Maldives Overwater Luxury', destination: 'Malé, Maldives', nights: 5, price: 168000, type: 'Luxury', rating: 4.9, sold: 24, seats: 4, gradient: 'from-ocean to-grape' },
-  { id: 'PKG-03', name: 'Kerala Backwaters Family', destination: 'Kochi · Alleppey', nights: 5, price: 34500, type: 'Family', rating: 4.6, sold: 78, seats: 22, gradient: 'from-brand-600 to-brand-300' },
-  { id: 'PKG-04', name: 'Dubai City & Desert', destination: 'Dubai, UAE', nights: 4, price: 58900, type: 'City break', rating: 4.5, sold: 61, seats: 15, gradient: 'from-gold to-coral' },
-  { id: 'PKG-05', name: 'Swiss Alps Grand Tour', destination: 'Zurich · Interlaken', nights: 8, price: 212000, type: 'Luxury', rating: 4.9, sold: 18, seats: 6, gradient: 'from-grape to-ocean' },
-  { id: 'PKG-06', name: 'Thailand Island Hopper', destination: 'Phuket · Krabi', nights: 6, price: 47800, type: 'Group', rating: 4.4, sold: 95, seats: 30, gradient: 'from-coral to-gold' },
-  { id: 'PKG-07', name: 'Ladakh Road Expedition', destination: 'Leh · Nubra · Pangong', nights: 7, price: 39900, type: 'Adventure', rating: 4.7, sold: 53, seats: 12, gradient: 'from-brand-700 to-brand-400' },
-  { id: 'PKG-08', name: 'Singapore + Malaysia Combo', destination: 'Singapore · KL', nights: 6, price: 76400, type: 'Family', rating: 4.5, sold: 37, seats: 18, gradient: 'from-ocean to-brand-400' },
+  { id: 'PKG-01', name: 'Bali Honeymoon Escape', destination: 'Bali, Indonesia', startDate: '2026-09-02', days: 7, nights: 6, price: 92500, type: 'Honeymoon', rating: 4.8, sold: 42, seats: 8, gradient: 'from-brand-500 to-ocean' },
+  { id: 'PKG-02', name: 'Maldives Overwater Luxury', destination: 'Malé, Maldives', startDate: '2026-09-15', days: 6, nights: 5, price: 168000, type: 'Luxury', rating: 4.9, sold: 24, seats: 4, gradient: 'from-ocean to-grape' },
+  { id: 'PKG-03', name: 'Kerala Backwaters Family', destination: 'Kochi · Alleppey', startDate: '2026-08-24', days: 6, nights: 5, price: 34500, type: 'Family', rating: 4.6, sold: 78, seats: 22, gradient: 'from-brand-600 to-brand-300' },
+  { id: 'PKG-04', name: 'Dubai City & Desert', destination: 'Dubai, UAE', startDate: '2026-09-11', days: 5, nights: 4, price: 58900, type: 'City break', rating: 4.5, sold: 61, seats: 15, gradient: 'from-gold to-coral' },
+  { id: 'PKG-05', name: 'Swiss Alps Grand Tour', destination: 'Zurich · Interlaken', startDate: '2026-10-05', days: 9, nights: 8, price: 212000, type: 'Luxury', rating: 4.9, sold: 18, seats: 6, gradient: 'from-grape to-ocean' },
+  { id: 'PKG-06', name: 'Thailand Island Hopper', destination: 'Phuket · Krabi', startDate: '2026-08-20', days: 7, nights: 6, price: 47800, type: 'Group', rating: 4.4, sold: 95, seats: 30, gradient: 'from-coral to-gold' },
+  { id: 'PKG-07', name: 'Ladakh Road Expedition', destination: 'Leh · Nubra · Pangong', startDate: '2026-09-26', days: 8, nights: 7, price: 39900, type: 'Adventure', rating: 4.7, sold: 53, seats: 12, gradient: 'from-brand-700 to-brand-400' },
+  { id: 'PKG-08', name: 'Singapore + Malaysia Combo', destination: 'Singapore · KL', startDate: '2026-10-18', days: 7, nights: 6, price: 76400, type: 'Family', rating: 4.5, sold: 37, seats: 18, gradient: 'from-ocean to-brand-400' },
 ];
 
 export const topDestinations = [

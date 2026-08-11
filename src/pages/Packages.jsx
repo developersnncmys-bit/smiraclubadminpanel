@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Plus, Star, Moon, MapPin, Users, Pencil, Copy, Search, Trash2 } from 'lucide-react';
+import { Plus, Star, Moon, MapPin, Users, Pencil, Copy, Search, Trash2, CalendarDays } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { inr } from '../data/mockData.js';
+import { inr, formatDate } from '../data/mockData.js';
 
 const TYPES = ['Honeymoon', 'Luxury', 'Family', 'Group', 'Adventure', 'City break'];
 const GRADIENTS = [
@@ -35,6 +35,8 @@ export default function Packages() {
     { name: 'name', label: 'Package name', type: 'text', required: true, full: true },
     { name: 'destination', label: 'Destination', type: 'text', required: true },
     { name: 'type', label: 'Type', type: 'select', options: TYPES },
+    { name: 'startDate', label: 'Departure date', type: 'date', required: true },
+    { name: 'days', label: 'Days', type: 'number', required: true, help: 'Usually one more than the nights' },
     { name: 'nights', label: 'Nights', type: 'number', required: true },
     { name: 'price', label: 'Price per person (₹)', type: 'number', required: true },
     { name: 'seats', label: 'Seats available', type: 'number' },
@@ -42,11 +44,13 @@ export default function Packages() {
   ];
 
   const save = (values) => {
+    // A 3-night trip is a 4-day trip unless the agency says otherwise.
+    const withDays = { ...values, days: Number(values.days) || Number(values.nights) + 1 };
     if (editing) {
-      update('packages', editing.id, values);
+      update('packages', editing.id, withDays);
     } else {
       create('packages', {
-        ...values,
+        ...withDays,
         sold: 0,
         rating: values.rating || 4.5,
         gradient: GRADIENTS[packages.length % GRADIENTS.length],
@@ -100,8 +104,13 @@ export default function Packages() {
           <article key={p.id} className="card card-hover group overflow-hidden">
             <div className={`relative h-32 bg-gradient-to-br ${p.gradient || GRADIENTS[0]}`}>
               <div className="absolute inset-0 bg-[radial-gradient(120%_100%_at_0%_0%,rgba(255,255,255,0.35),transparent_60%)]" />
-              <div className="absolute left-4 top-4 flex gap-2">
+              <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                 <span className="chip bg-white/25 text-white backdrop-blur">{p.type}</span>
+                {p.startDate && (
+                  <span className="chip bg-white/25 text-white backdrop-blur">
+                    <CalendarDays size={12} /> {formatDate(p.startDate)}
+                  </span>
+                )}
               </div>
               <div className="absolute right-4 top-4 chip bg-white/90 text-ink-900">
                 <Star size={12} className="fill-amber-400 text-amber-400" />
@@ -123,8 +132,9 @@ export default function Packages() {
                   <p className="text-xs text-ink-500">per person</p>
                 </div>
                 <div className="text-right">
-                  <p className="flex items-center justify-end gap-1.5 text-sm font-semibold text-ink-700">
-                    <Moon size={14} className="text-ink-400" /> {p.nights} nights
+                  <p className="flex items-center justify-end gap-1.5 whitespace-nowrap text-sm font-semibold text-ink-700">
+                    <Moon size={14} className="shrink-0 text-ink-400" />
+                    {p.days || p.nights + 1} days · {p.nights} nights
                   </p>
                   <p className="mt-1 flex items-center justify-end gap-1.5 text-sm font-semibold text-ink-700">
                     <Users size={14} className="text-ink-400" /> {p.sold} sold

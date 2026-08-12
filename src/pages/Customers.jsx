@@ -13,6 +13,8 @@ import {
   Crown,
   FileText,
   MapPin,
+  Gift,
+  Home,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader.jsx';
@@ -24,7 +26,14 @@ import Modal from '../components/ui/Modal.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp, phoneDigits } from '../store/AppStore.jsx';
-import { inr, formatDate, signupTone, membershipAmount } from '../data/mockData.js';
+import {
+  inr,
+  formatDate,
+  signupTone,
+  membershipAmount,
+  pointsWorth,
+  pointsEarned,
+} from '../data/mockData.js';
 
 const TIERS = ['Platinum', 'Gold', 'Silver'];
 const SPECIAL_LABELS = ['Anniversary', 'Spouse birthday', 'Child birthday', 'Other'];
@@ -83,11 +92,21 @@ function DateRow({ icon: Icon, label, value, note, tone = 'brand' }) {
 
 export default function Customers() {
   const navigate = useNavigate();
-  const { customers, memberSignups, memberships, quotations, bookings, create, update, remove } =
-    useApp();
+  const {
+    customers,
+    memberSignups,
+    memberships,
+    quotations,
+    bookings,
+    create,
+    update,
+    remove,
+    adjustPoints,
+  } = useApp();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [pointsFor, setPointsFor] = useState(null);
   const [confirm, setConfirm] = useState(null);
 
   /** The website membership a traveller signed up for, if any. */
@@ -106,6 +125,7 @@ export default function Customers() {
     { name: 'phone', label: 'Phone', type: 'tel', required: true },
     { name: 'email', label: 'Email', type: 'email', required: true },
     { name: 'city', label: 'City', type: 'text' },
+    { name: 'address', label: 'Address', type: 'textarea', full: true, placeholder: 'Flat / street / area, city, PIN' },
     { name: 'dob', label: 'Date of birth', type: 'date' },
     { name: 'specialLabel', label: 'Special date is a', type: 'select', options: SPECIAL_LABELS },
     { name: 'special', label: 'Special date', type: 'date', help: 'Used for greetings and offers' },
@@ -170,6 +190,18 @@ export default function Customers() {
       header: 'Lifetime value',
       render: (r) => <span className="font-bold text-brand-700 num">{inr(r.spend)}</span>,
     },
+    {
+      key: 'points',
+      header: 'Points',
+      render: (r) =>
+        r.points ? (
+          <span className="chip bg-brand-50 text-brand-700 ring-1 ring-brand-600/15">
+            <Gift size={11} /> <span className="num">{Number(r.points).toLocaleString('en-IN')}</span>
+          </span>
+        ) : (
+          <span className="text-ink-400">—</span>
+        ),
+    },
     { key: 'tier', header: 'Tier', render: (r) => <Badge tone={tierTone[r.tier]}>{r.tier}</Badge> },
     {
       key: 'actions',
@@ -203,6 +235,7 @@ export default function Customers() {
   ];
 
   const membership = membershipFor(viewing);
+  const profile = viewing ? customers.find((c) => c.id === viewing.id) || viewing : null;
   const customerQuotes = viewing
     ? quotations.filter((q) => q.customer === viewing.name).slice(0, 4)
     : [];
@@ -261,27 +294,27 @@ export default function Customers() {
           </>
         }
       >
-        {viewing && (
+        {profile && (
           <div className="space-y-5">
             {/* Identity */}
             <div className="flex flex-wrap items-center gap-4">
-              <Avatar name={viewing.name} size="lg" />
+              <Avatar name={profile.name} size="lg" />
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 font-display text-lg font-extrabold text-ink-900">
-                  {viewing.name}
-                  <Badge tone={tierTone[viewing.tier]}>{viewing.tier}</Badge>
-                  {viewing.source && (
-                    <Badge tone={viewing.source === 'Website' ? 'sky' : 'slate'}>
-                      <Globe size={11} /> {viewing.source}
+                  {profile.name}
+                  <Badge tone={tierTone[profile.tier]}>{profile.tier}</Badge>
+                  {profile.source && (
+                    <Badge tone={profile.source === 'Website' ? 'sky' : 'slate'}>
+                      <Globe size={11} /> {profile.source}
                     </Badge>
                   )}
                 </p>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-500">
                   <span className="inline-flex items-center gap-1.5">
-                    <Phone size={13} /> {viewing.phone}
+                    <Phone size={13} /> {profile.phone}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Mail size={13} /> {viewing.email}
+                    <Mail size={13} /> {profile.email}
                   </span>
                 </p>
               </div>
@@ -293,33 +326,78 @@ export default function Customers() {
                 icon={Cake}
                 label="Date of birth"
                 value={
-                  viewing.dob
-                    ? `${formatDate(viewing.dob)}${yearsSince(viewing.dob) !== null ? ` · ${yearsSince(viewing.dob)} yrs` : ''}`
+                  profile.dob
+                    ? `${formatDate(profile.dob)}${yearsSince(profile.dob) !== null ? ` · ${yearsSince(profile.dob)} yrs` : ''}`
                     : ''
                 }
-                note={countdown(daysUntilNext(viewing.dob))}
+                note={countdown(daysUntilNext(profile.dob))}
               />
               <DateRow
                 icon={Heart}
                 tone="rose"
-                label={viewing.specialLabel || 'Special date'}
-                value={viewing.special ? formatDate(viewing.special) : ''}
-                note={countdown(daysUntilNext(viewing.special))}
+                label={profile.specialLabel || 'Special date'}
+                value={profile.special ? formatDate(profile.special) : ''}
+                note={countdown(daysUntilNext(profile.special))}
               />
+            </div>
+
+            {/* Address */}
+            <div className="flex items-start gap-3 rounded-xl border border-ink-900/[0.07] px-3.5 py-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-500">
+                <Home size={16} />
+              </span>
+              <div className="min-w-0">
+                <p className="eyebrow">Address</p>
+                <p className="mt-0.5 text-sm leading-relaxed text-ink-800">
+                  {profile.address || 'Not recorded'}
+                </p>
+              </div>
             </div>
 
             {/* Value */}
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { label: 'Trips taken', value: viewing.trips ?? 0 },
-                { label: 'Lifetime value', value: inr(viewing.spend) },
-                { label: 'Latest trip', value: viewing.last || '—' },
+                { label: 'Trips taken', value: profile.trips ?? 0 },
+                { label: 'Lifetime value', value: inr(profile.spend) },
+                { label: 'Latest trip', value: profile.last || '—' },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl bg-surface-soft px-4 py-3">
                   <p className="eyebrow">{s.label}</p>
                   <p className="mt-1 font-display text-lg font-extrabold text-ink-900">{s.value}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Reward points */}
+            <div>
+              <p className="eyebrow mb-2">Reward points</p>
+              <div className="flex flex-wrap items-center gap-4 rounded-xl border border-brand-600/20 bg-brand-50/60 px-4 py-3.5">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+                  <Gift size={20} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-2xl font-extrabold leading-none text-ink-900 num">
+                    {Number(profile.points || 0).toLocaleString('en-IN')}
+                    <span className="ml-1.5 text-sm font-bold text-ink-500">points</span>
+                  </p>
+                  <p className="mt-1 text-xs text-ink-600">
+                    Worth {inr(pointsWorth(profile.points))} off the next trip
+                    {membership?.plan
+                      ? ` · earns ${membership.plan.rewardRate || 0} pts per ₹100 on ${membership.plan.name}`
+                      : ' · joins a plan to start earning'}
+                  </p>
+                </div>
+                <button className="btn-ghost btn-sm shrink-0" onClick={() => setPointsFor(profile)}>
+                  <Gift size={14} /> Add or redeem
+                </button>
+              </div>
+              {membership?.plan && profile.spend > 0 && (
+                <p className="mt-1.5 text-xs text-ink-400">
+                  A ₹{Number(profile.spend).toLocaleString('en-IN')} spend on this plan is worth{' '}
+                  {pointsEarned(profile.spend, membership.plan.rewardRate).toLocaleString('en-IN')}{' '}
+                  points.
+                </p>
+              )}
             </div>
 
             {/* Membership taken on the website */}
@@ -449,6 +527,36 @@ export default function Customers() {
           editing || { tier: 'Silver', trips: 0, spend: 0, specialLabel: 'Anniversary', source: 'Website' }
         }
         submitLabel={editing ? 'Save changes' : 'Add customer'}
+      />
+
+      {/* Earn or redeem points */}
+      <FormModal
+        open={Boolean(pointsFor)}
+        onClose={() => setPointsFor(null)}
+        onSubmit={(values) => {
+          const amount = Math.abs(Number(values.points) || 0);
+          adjustPoints(pointsFor.id, values.action === 'Redeem' ? -amount : amount, values.reason);
+        }}
+        title="Reward points"
+        subtitle={
+          pointsFor
+            ? `${pointsFor.name} · balance ${Number(pointsFor.points || 0).toLocaleString('en-IN')} pts`
+            : ''
+        }
+        fields={[
+          { name: 'action', label: 'Action', type: 'select', options: ['Add', 'Redeem'] },
+          { name: 'points', label: 'Points', type: 'number', required: true },
+          {
+            name: 'reason',
+            label: 'Reason',
+            type: 'text',
+            full: true,
+            placeholder: 'Booking BKG-8821, festive offer, goodwill…',
+          },
+        ]}
+        initial={{ action: 'Add', points: '', reason: '' }}
+        submitLabel="Apply"
+        size="md"
       />
 
       <ConfirmDialog

@@ -12,6 +12,7 @@ import {
   UserPlus,
   IndianRupee,
   ShieldCheck,
+  Gift,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import StatCard from '../components/ui/StatCard.jsx';
@@ -139,6 +140,8 @@ export default function Memberships() {
     { name: 'billing', label: 'Billing cycle', type: 'select', options: BILLING },
     { name: 'price', label: 'Price per member (₹)', type: 'number', required: true },
     { name: 'discount', label: 'Package discount (%)', type: 'number', help: 'Members get this off every package' },
+    { name: 'rewardRate', label: 'Reward points per ₹100', type: 'number', help: '1 point = ₹1 off a future trip' },
+    { name: 'welcomeBonus', label: 'Welcome bonus points', type: 'number', help: 'Credited the day they join' },
     { name: 'tagline', label: 'Tagline shown on the website', type: 'text', full: true },
   ];
 
@@ -150,6 +153,8 @@ export default function Memberships() {
       create('memberships', {
         ...values,
         features: [],
+        rewardRate: Number(values.rewardRate) || 1,
+        welcomeBonus: Number(values.welcomeBonus) || 0,
         published: false,
         popular: false,
         members: 0,
@@ -302,11 +307,30 @@ export default function Memberships() {
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <span className={`chip ${variant.pill}`}>{plan.discount}% off packages</span>
+                  <span className={`chip ${variant.pill}`}>
+                    <Gift size={11} /> {plan.rewardRate || 0} pts / ₹100
+                  </span>
                   <span className={`chip ${variant.pill}`}>{plan.members} members</span>
                 </div>
               </div>
 
               <div className="flex flex-1 flex-col border-t border-ink-900/[0.07] px-5 pb-5 pt-4">
+                {/* How the reward actually pays out, in the member's words */}
+                <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-brand-50 px-3 py-2.5">
+                  <Gift size={15} className="mt-0.5 shrink-0 text-brand-600" />
+                  <p className="text-xs leading-relaxed text-brand-900">
+                    Earns <b>{plan.rewardRate || 0} points</b> per ₹100 spent
+                    {plan.welcomeBonus ? (
+                      <>
+                        {' '}
+                        and <b>{Number(plan.welcomeBonus).toLocaleString('en-IN')} points</b> on
+                        joining
+                      </>
+                    ) : null}
+                    . 1 point = ₹1 off the next trip.
+                  </p>
+                </div>
+
                 <div className="flex items-center justify-between gap-3">
                   <Eyebrow>Included in this plan</Eyebrow>
                   <span className="text-xs font-semibold text-ink-400">

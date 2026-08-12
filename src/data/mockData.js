@@ -203,14 +203,18 @@ export const bookingStatusTone = {
 
 // -- Customers --------------------------------------------------------------
 export const customers = [
-  { id: 'CUS-501', name: 'Ajay Panchmukh', phone: '+91 88790 12234', email: 'ajay.p@yahoo.com', city: 'Pune', trips: 4, spend: 742000, tier: 'Platinum', last: '20 Aug 2026' },
-  { id: 'CUS-502', name: 'Meera Iyer', phone: '+91 98211 55420', email: 'meera.iyer@gmail.com', city: 'Mumbai', trips: 3, spend: 688000, tier: 'Platinum', last: '15 Sep 2026' },
-  { id: 'CUS-503', name: 'Vikram Shetty', phone: '+91 99870 11223', email: 'vikram.s@gmail.com', city: 'Bengaluru', trips: 2, spend: 371000, tier: 'Gold', last: '02 Sep 2026' },
-  { id: 'CUS-504', name: 'Priya Nair', phone: '+91 90040 88991', email: 'priya.nair@gmail.com', city: 'Kochi', trips: 3, spend: 298000, tier: 'Gold', last: '24 Aug 2026' },
-  { id: 'CUS-505', name: 'Farhan Qureshi', phone: '+91 98333 21100', email: 'farhan.q@gmail.com', city: 'Hyderabad', trips: 2, spend: 254000, tier: 'Gold', last: '11 Sep 2026' },
-  { id: 'CUS-506', name: 'Tanvi Joshi', phone: '+91 97655 43210', email: 'tanvi.joshi@gmail.com', city: 'Nashik', trips: 1, spend: 143400, tier: 'Silver', last: '18 Jul 2026' },
-  { id: 'CUS-507', name: 'Rahul Menon', phone: '+91 98860 77120', email: 'rahul.menon@gmail.com', city: 'Chennai', trips: 1, spend: 424000, tier: 'Gold', last: '05 Nov 2026' },
-  { id: 'CUS-508', name: 'Anita Deshmukh', phone: '+91 91450 20033', email: 'anita.d@gmail.com', city: 'Nagpur', trips: 2, spend: 267000, tier: 'Silver', last: '06 Oct 2026' },
+  { id: 'CUS-512', name: 'Ananya Deshmukh', phone: '+91 98330 21145', email: 'ananya.d@gmail.com', city: 'Pune', trips: 0, spend: 0, tier: 'Silver', last: '—', dob: '1994-06-19', special: '2022-03-08', specialLabel: 'Anniversary', source: 'Website' },
+  { id: 'CUS-511', name: 'Rohan Bhatt', phone: '+91 99201 55420', email: 'rohan.bhatt@outlook.com', city: 'Mumbai', trips: 1, spend: 96000, tier: 'Silver', last: '12 Jul 2026', dob: '1989-01-24', special: '2017-05-21', specialLabel: 'Anniversary', source: 'Website' },
+  { id: 'CUS-510', name: 'Meher Shaikh', phone: '+91 97027 66311', email: 'meher.s@gmail.com', city: 'Nashik', trips: 1, spend: 78500, tier: 'Silver', last: '02 Jun 2026', dob: '1996-10-03', special: '2024-02-11', specialLabel: 'Spouse birthday', source: 'Website' },
+  { id: 'CUS-509', name: 'Vikas Rane', phone: '+91 98194 30078', email: 'vikas.rane@gmail.com', city: 'Thane', trips: 2, spend: 214000, tier: 'Gold', last: '28 Jul 2026', dob: '1986-04-12', special: '2013-09-30', specialLabel: 'Anniversary', source: 'Website' },
+  { id: 'CUS-501', name: 'Ajay Panchmukh', phone: '+91 88790 12234', email: 'ajay.p@yahoo.com', city: 'Pune', trips: 4, spend: 742000, tier: 'Platinum', last: '20 Aug 2026', dob: '1984-03-18', special: '2011-11-27', specialLabel: 'Anniversary', source: 'Referral' },
+  { id: 'CUS-502', name: 'Meera Iyer', phone: '+91 98211 55420', email: 'meera.iyer@gmail.com', city: 'Mumbai', trips: 3, spend: 688000, tier: 'Platinum', last: '15 Sep 2026', dob: '1990-07-05', special: '2016-02-14', specialLabel: 'Anniversary', source: 'Instagram' },
+  { id: 'CUS-503', name: 'Vikram Shetty', phone: '+91 99870 11223', email: 'vikram.s@gmail.com', city: 'Bengaluru', trips: 2, spend: 371000, tier: 'Gold', last: '02 Sep 2026', dob: '1987-12-01', special: '2019-06-09', specialLabel: 'Anniversary', source: 'Walk-in' },
+  { id: 'CUS-504', name: 'Priya Nair', phone: '+91 90040 88991', email: 'priya.nair@gmail.com', city: 'Kochi', trips: 3, spend: 298000, tier: 'Gold', last: '24 Aug 2026', dob: '1992-09-23', special: '2021-01-30', specialLabel: 'Anniversary', source: 'Website' },
+  { id: 'CUS-505', name: 'Farhan Qureshi', phone: '+91 98333 21100', email: 'farhan.q@gmail.com', city: 'Hyderabad', trips: 2, spend: 254000, tier: 'Gold', last: '11 Sep 2026', dob: '1985-05-14', special: '2014-08-22', specialLabel: 'Anniversary', source: 'Google Ads' },
+  { id: 'CUS-506', name: 'Tanvi Joshi', phone: '+91 97655 43210', email: 'tanvi.joshi@gmail.com', city: 'Nashik', trips: 1, spend: 143400, tier: 'Silver', last: '18 Jul 2026', dob: '1995-11-08', special: '2023-04-16', specialLabel: 'Spouse birthday', source: 'Instagram' },
+  { id: 'CUS-507', name: 'Rahul Menon', phone: '+91 98860 77120', email: 'rahul.menon@gmail.com', city: 'Chennai', trips: 1, spend: 424000, tier: 'Gold', last: '05 Nov 2026', dob: '1981-02-27', special: '2009-10-11', specialLabel: 'Anniversary', source: 'Referral' },
+  { id: 'CUS-508', name: 'Anita Deshmukh', phone: '+91 91450 20033', email: 'anita.d@gmail.com', city: 'Nagpur', trips: 2, spend: 267000, tier: 'Silver', last: '06 Oct 2026', dob: '1993-08-30', special: '2018-12-05', specialLabel: 'Child birthday', source: 'Walk-in' },
 ];
 
 // -- Tasks ------------------------------------------------------------------

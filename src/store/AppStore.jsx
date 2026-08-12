@@ -10,8 +10,8 @@ import * as seed from '../data/mockData.js';
  */
 
 // Bumped whenever the seed gains fields older snapshots cannot supply — v3
-// added membership plans, v4 added package departure dates and day counts.
-const KEY = 'smira-club-admin:v4';
+// added membership plans, v4 package departure dates, v5 traveller key dates.
+const KEY = 'smira-club-admin:v5';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -338,11 +338,36 @@ export function AppProvider({ children }) {
       const id = nextId('memberSignups');
       const signup = { ...payload, id, status: 'New', quote: '' };
       create('memberSignups', signup, { silent: true });
+
+      // Anyone who signs up on the website becomes a traveller record too, so
+      // the desk has one profile per person rather than two half-profiles.
+      const known = db.customers.some((c) => phoneDigits(c.phone) === phoneDigits(signup.phone));
+      if (!known) {
+        create(
+          'customers',
+          {
+            name: signup.name,
+            phone: signup.phone,
+            email: signup.email,
+            city: signup.city || '',
+            trips: 0,
+            spend: 0,
+            tier: 'Silver',
+            last: '—',
+            dob: '',
+            special: '',
+            specialLabel: 'Anniversary',
+            source: 'Website',
+          },
+          { silent: true }
+        );
+      }
+
       toast(`${signup.name} selected ${signup.plan} on the website`, 'info');
       if (db.settings.membership?.autoQuote) generateMembershipQuote(signup);
       return signup;
     },
-    [nextId, create, toast, db.settings, generateMembershipQuote]
+    [nextId, create, toast, db.settings, db.customers, generateMembershipQuote]
   );
 
   const signOut = useCallback(() => {

@@ -17,19 +17,20 @@ import {
 } from 'lucide-react';
 
 /**
- * Sidebar navigation grouped the way the agency actually works, so a 15-item
- * rail reads as five short lists instead of one long one.
+ * The header's two navigation levels. Sections are named after the everyday
+ * word for the work inside them, so a section and its first page can share a
+ * name — "Bookings > Bookings" reads fine and beats inventing jargon.
  */
 export const navGroups = [
   {
-    section: 'Workspace',
+    section: 'Home',
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
     ],
   },
   {
-    section: 'Sales',
+    section: 'Bookings',
     items: [
       { to: '/enquiries', label: 'Enquiries', icon: Users, badgeKey: 'enquiries' },
       { to: '/quotations', label: 'Quotations', icon: FileText },
@@ -37,7 +38,7 @@ export const navGroups = [
     ],
   },
   {
-    section: 'Catalogue',
+    section: 'Packages',
     items: [
       { to: '/packages', label: 'Packages', icon: Package },
       { to: '/memberships', label: 'Memberships', icon: Crown, badgeKey: 'memberships' },

@@ -118,6 +118,7 @@ export default function Memberships() {
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [draftFeature, setDraftFeature] = useState({});
+  const [draftGift, setDraftGift] = useState({});
 
   const dearest = Math.max(0, ...memberships.map((p) => Number(p.price) || 0));
   const variantOf = (plan) => {
@@ -140,8 +141,6 @@ export default function Memberships() {
     { name: 'billing', label: 'Billing cycle', type: 'select', options: BILLING },
     { name: 'price', label: 'Price per member (₹)', type: 'number', required: true },
     { name: 'discount', label: 'Package discount (%)', type: 'number', help: 'Members get this off every package' },
-    { name: 'rewardRate', label: 'Reward points per ₹100', type: 'number', help: '1 point = ₹1 off a future trip' },
-    { name: 'welcomeBonus', label: 'Welcome bonus points', type: 'number', help: 'Credited the day they join' },
     { name: 'tagline', label: 'Tagline shown on the website', type: 'text', full: true },
   ];
 
@@ -153,8 +152,7 @@ export default function Memberships() {
       create('memberships', {
         ...values,
         features: [],
-        rewardRate: Number(values.rewardRate) || 1,
-        welcomeBonus: Number(values.welcomeBonus) || 0,
+        gifts: [],
         published: false,
         popular: false,
         members: 0,
@@ -176,6 +174,28 @@ export default function Memberships() {
     });
     setDraftFeature((d) => ({ ...d, [plan.id]: '' }));
   };
+
+  const addGift = (plan) => {
+    const text = (draftGift[plan.id] || '').trim();
+    if (!text) return;
+    const gifts = plan.gifts || [];
+    if (gifts.some((g) => g.toLowerCase() === text.toLowerCase())) {
+      toast('That gift is already on this plan', 'info');
+      return;
+    }
+    update('memberships', plan.id, { gifts: [...gifts, text] }, {
+      message: `Gift added to ${plan.name}`,
+    });
+    setDraftGift((d) => ({ ...d, [plan.id]: '' }));
+  };
+
+  const removeGift = (plan, index) =>
+    update(
+      'memberships',
+      plan.id,
+      { gifts: (plan.gifts || []).filter((_, i) => i !== index) },
+      { message: `Gift removed from ${plan.name}` }
+    );
 
   const removeFeature = (plan, index) =>
     update(
@@ -308,27 +328,61 @@ export default function Memberships() {
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <span className={`chip ${variant.pill}`}>{plan.discount}% off packages</span>
                   <span className={`chip ${variant.pill}`}>
-                    <Gift size={11} /> {plan.rewardRate || 0} pts / ₹100
+                    <Gift size={11} /> {(plan.gifts || []).length} gifts
                   </span>
                   <span className={`chip ${variant.pill}`}>{plan.members} members</span>
                 </div>
               </div>
 
               <div className="flex flex-1 flex-col border-t border-ink-900/[0.07] px-5 pb-5 pt-4">
-                {/* How the reward actually pays out, in the member's words */}
-                <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-brand-50 px-3 py-2.5">
-                  <Gift size={15} className="mt-0.5 shrink-0 text-brand-600" />
-                  <p className="text-xs leading-relaxed text-brand-900">
-                    Earns <b>{plan.rewardRate || 0} points</b> per ₹100 spent
-                    {plan.welcomeBonus ? (
-                      <>
-                        {' '}
-                        and <b>{Number(plan.welcomeBonus).toLocaleString('en-IN')} points</b> on
-                        joining
-                      </>
-                    ) : null}
-                    . 1 point = ₹1 off the next trip.
-                  </p>
+                {/* Gifts the agency actually hands over to members */}
+                <div className="mb-4 rounded-lg bg-brand-50 px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-800">
+                      <Gift size={13} /> Gifts for members
+                    </p>
+                    <span className="text-xs font-semibold text-brand-700/70">
+                      {(plan.gifts || []).length}
+                    </span>
+                  </div>
+
+                  <ul className="mt-2 space-y-1">
+                    {(plan.gifts || []).map((g, i) => (
+                      <li key={g} className="group flex items-start gap-2 rounded px-1 py-0.5">
+                        <Gift size={12} className="mt-1 shrink-0 text-brand-600" />
+                        <span className="flex-1 text-xs leading-snug text-brand-900">{g}</span>
+                        <button
+                          onClick={() => removeGift(plan, i)}
+                          title="Remove gift"
+                          className="shrink-0 text-brand-700/40 opacity-0 transition hover:text-rose-600 focus:opacity-100 group-hover:opacity-100"
+                        >
+                          <X size={13} />
+                        </button>
+                      </li>
+                    ))}
+                    {(plan.gifts || []).length === 0 && (
+                      <li className="px-1 py-1 text-xs text-brand-800/70">
+                        No gifts yet — add the first one below.
+                      </li>
+                    )}
+                  </ul>
+
+                  <div className="mt-2 flex gap-1.5">
+                    <input
+                      value={draftGift[plan.id] || ''}
+                      onChange={(e) => setDraftGift((d) => ({ ...d, [plan.id]: e.target.value }))}
+                      onKeyDown={(e) => e.key === 'Enter' && addGift(plan)}
+                      placeholder="Add a gift…"
+                      className="input border-brand-600/20 bg-white py-1.5 text-xs"
+                    />
+                    <button
+                      onClick={() => addGift(plan)}
+                      className="btn-soft shrink-0 px-2.5 py-1.5"
+                      title="Add gift"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">

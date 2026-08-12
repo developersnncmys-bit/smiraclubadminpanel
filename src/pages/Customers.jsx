@@ -31,8 +31,7 @@ import {
   formatDate,
   signupTone,
   membershipAmount,
-  pointsWorth,
-  pointsEarned,
+  giftKey,
 } from '../data/mockData.js';
 
 const TIERS = ['Platinum', 'Gold', 'Silver'];
@@ -101,12 +100,11 @@ export default function Customers() {
     create,
     update,
     remove,
-    adjustPoints,
+    toggleGift,
   } = useApp();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
-  const [pointsFor, setPointsFor] = useState(null);
   const [confirm, setConfirm] = useState(null);
 
   /** The website membership a traveller signed up for, if any. */
@@ -191,16 +189,34 @@ export default function Customers() {
       render: (r) => <span className="font-bold text-brand-700 num">{inr(r.spend)}</span>,
     },
     {
-      key: 'points',
-      header: 'Points',
-      render: (r) =>
-        r.points ? (
-          <span className="chip bg-brand-50 text-brand-700 ring-1 ring-brand-600/15">
-            <Gift size={11} /> <span className="num">{Number(r.points).toLocaleString('en-IN')}</span>
+      key: 'gifts',
+      header: 'Gifts',
+      csv: (r) => {
+        const m = membershipFor(r);
+        return m?.plan ? `${(r.giftsGiven || []).length}/${m.plan.gifts?.length || 0}` : '';
+      },
+      render: (r) => {
+        const m = membershipFor(r);
+        if (!m?.plan) return <span className="text-ink-400">—</span>;
+        const total = m.plan.gifts?.length || 0;
+        const given = (r.giftsGiven || []).length;
+        const done = total > 0 && given >= total;
+        return (
+          <span
+            className={`chip ${
+              done
+                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15'
+                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/15'
+            }`}
+            title={done ? 'All gifts handed over' : `${total - given} still to give`}
+          >
+            <Gift size={11} />
+            <span className="num">
+              {given}/{total}
+            </span>
           </span>
-        ) : (
-          <span className="text-ink-400">—</span>
-        ),
+        );
+      },
     },
     { key: 'tier', header: 'Tier', render: (r) => <Badge tone={tierTone[r.tier]}>{r.tier}</Badge> },
     {
@@ -236,6 +252,8 @@ export default function Customers() {
 
   const membership = membershipFor(viewing);
   const profile = viewing ? customers.find((c) => c.id === viewing.id) || viewing : null;
+  const planGifts = membership?.plan?.gifts || [];
+  const givenGifts = profile?.giftsGiven || [];
   const customerQuotes = viewing
     ? quotations.filter((q) => q.customer === viewing.name).slice(0, 4)
     : [];
@@ -368,37 +386,51 @@ export default function Customers() {
               ))}
             </div>
 
-            {/* Reward points */}
-            <div>
-              <p className="eyebrow mb-2">Reward points</p>
-              <div className="flex flex-wrap items-center gap-4 rounded-xl border border-brand-600/20 bg-brand-50/60 px-4 py-3.5">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
-                  <Gift size={20} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-display text-2xl font-extrabold leading-none text-ink-900 num">
-                    {Number(profile.points || 0).toLocaleString('en-IN')}
-                    <span className="ml-1.5 text-sm font-bold text-ink-500">points</span>
-                  </p>
-                  <p className="mt-1 text-xs text-ink-600">
-                    Worth {inr(pointsWorth(profile.points))} off the next trip
-                    {membership?.plan
-                      ? ` · earns ${membership.plan.rewardRate || 0} pts per ₹100 on ${membership.plan.name}`
-                      : ' · joins a plan to start earning'}
-                  </p>
+            {/* Membership gifts the desk hands over */}
+            {membership?.plan && (
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="eyebrow">Gifts on {membership.plan.name}</p>
+                  <span className="text-xs font-semibold text-ink-400">
+                    {givenGifts.length} of {planGifts.length} given
+                  </span>
                 </div>
-                <button className="btn-ghost btn-sm shrink-0" onClick={() => setPointsFor(profile)}>
-                  <Gift size={14} /> Add or redeem
-                </button>
+
+                <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+                  {planGifts.map((gift) => {
+                    const record = givenGifts.find((g) => giftKey(g.gift) === giftKey(gift));
+                    return (
+                      <li key={gift} className="flex items-center gap-3 px-4 py-2.5">
+                        <span
+                          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                            record ? 'bg-emerald-50 text-emerald-600' : 'bg-surface-soft text-ink-400'
+                          }`}
+                        >
+                          <Gift size={15} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-ink-800">{gift}</span>
+                          <span className="block text-xs text-ink-500">
+                            {record ? `Given on ${record.date}` : 'Not given yet'}
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => toggleGift(profile.id, gift)}
+                          className={record ? 'btn-ghost btn-sm shrink-0' : 'btn-primary btn-sm shrink-0'}
+                        >
+                          {record ? 'Undo' : 'Mark given'}
+                        </button>
+                      </li>
+                    );
+                  })}
+                  {planGifts.length === 0 && (
+                    <li className="px-4 py-4 text-sm text-ink-500">
+                      This plan has no gifts set up yet.
+                    </li>
+                  )}
+                </ul>
               </div>
-              {membership?.plan && profile.spend > 0 && (
-                <p className="mt-1.5 text-xs text-ink-400">
-                  A ₹{Number(profile.spend).toLocaleString('en-IN')} spend on this plan is worth{' '}
-                  {pointsEarned(profile.spend, membership.plan.rewardRate).toLocaleString('en-IN')}{' '}
-                  points.
-                </p>
-              )}
-            </div>
+            )}
 
             {/* Membership taken on the website */}
             <div>
@@ -529,35 +561,6 @@ export default function Customers() {
         submitLabel={editing ? 'Save changes' : 'Add customer'}
       />
 
-      {/* Earn or redeem points */}
-      <FormModal
-        open={Boolean(pointsFor)}
-        onClose={() => setPointsFor(null)}
-        onSubmit={(values) => {
-          const amount = Math.abs(Number(values.points) || 0);
-          adjustPoints(pointsFor.id, values.action === 'Redeem' ? -amount : amount, values.reason);
-        }}
-        title="Reward points"
-        subtitle={
-          pointsFor
-            ? `${pointsFor.name} · balance ${Number(pointsFor.points || 0).toLocaleString('en-IN')} pts`
-            : ''
-        }
-        fields={[
-          { name: 'action', label: 'Action', type: 'select', options: ['Add', 'Redeem'] },
-          { name: 'points', label: 'Points', type: 'number', required: true },
-          {
-            name: 'reason',
-            label: 'Reason',
-            type: 'text',
-            full: true,
-            placeholder: 'Booking BKG-8821, festive offer, goodwill…',
-          },
-        ]}
-        initial={{ action: 'Add', points: '', reason: '' }}
-        submitLabel="Apply"
-        size="md"
-      />
 
       <ConfirmDialog
         open={Boolean(confirm)}

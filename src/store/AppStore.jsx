@@ -11,8 +11,8 @@ import * as seed from '../data/mockData.js';
 
 // Bumped whenever the seed gains fields older snapshots cannot supply — v3
 // added membership plans, v4 package departure dates, v5 traveller key dates,
-// v6 addresses and reward points.
-const KEY = 'smira-club-admin:v6';
+// v6 addresses, v7 membership gifts.
+const KEY = 'smira-club-admin:v7';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -342,19 +342,8 @@ export function AppProvider({ children }) {
 
       // Anyone who signs up on the website becomes a traveller record too, so
       // the desk has one profile per person rather than two half-profiles.
-      const plan = db.memberships.find((p) => p.id === signup.planId);
-      const welcome = Number(plan?.welcomeBonus || 0);
-      const existing = db.customers.find((c) => phoneDigits(c.phone) === phoneDigits(signup.phone));
-      if (existing) {
-        if (welcome) {
-          update(
-            'customers',
-            existing.id,
-            { points: Number(existing.points || 0) + welcome },
-            { silent: true }
-          );
-        }
-      } else {
+      const known = db.customers.some((c) => phoneDigits(c.phone) === phoneDigits(signup.phone));
+      if (!known) {
         create(
           'customers',
           {
@@ -370,7 +359,7 @@ export function AppProvider({ children }) {
             special: '',
             specialLabel: 'Anniversary',
             address: '',
-            points: welcome,
+            giftsGiven: [],
             source: 'Website',
           },
           { silent: true }
@@ -381,30 +370,39 @@ export function AppProvider({ children }) {
       if (db.settings.membership?.autoQuote) generateMembershipQuote(signup);
       return signup;
     },
-    [nextId, create, update, toast, db.settings, db.customers, db.memberships, generateMembershipQuote]
+    [nextId, create, toast, db.settings, db.customers, generateMembershipQuote]
   );
 
   /**
-   * Credits or spends reward points. A redemption is capped at the balance,
-   * so the desk can never push a traveller into negative points.
+   * Records a membership gift as handed over, or takes it back if it was
+   * ticked by mistake. Stamped with the day it was given so the desk can see
+   * what was done and when.
    */
-  const adjustPoints = useCallback(
-    (customerId, delta, reason) => {
+  const toggleGift = useCallback(
+    (customerId, gift) => {
       const customer = db.customers.find((c) => c.id === customerId);
-      if (!customer) return 0;
-      const balance = Number(customer.points || 0);
-      const applied = delta < 0 ? -Math.min(balance, Math.abs(delta)) : Math.round(delta);
-      if (!applied) {
-        toast('No points to redeem', 'info');
-        return 0;
+      if (!customer) return;
+      const list = customer.giftsGiven || [];
+      const already = list.some((g) => seed.giftKey(g.gift) === seed.giftKey(gift));
+
+      if (already) {
+        update(
+          'customers',
+          customerId,
+          { giftsGiven: list.filter((g) => seed.giftKey(g.gift) !== seed.giftKey(gift)) },
+          { silent: true }
+        );
+        toast(`“${gift}” marked as not given yet`, 'info');
+        return;
       }
-      update('customers', customerId, { points: balance + applied }, { silent: true });
-      toast(
-        applied > 0
-          ? `${applied} points added for ${customer.name}${reason ? ` — ${reason}` : ''}`
-          : `${Math.abs(applied)} points redeemed for ${customer.name}${reason ? ` — ${reason}` : ''}`
-      );
-      return applied;
+
+      const date = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      update('customers', customerId, { giftsGiven: [...list, { gift, date }] }, { silent: true });
+      toast(`“${gift}” given to ${customer.name}`);
     },
     [db.customers, update, toast]
   );
@@ -458,7 +456,7 @@ export function AppProvider({ children }) {
       signOut,
       generateMembershipQuote,
       receiveMemberSignup,
-      adjustPoints,
+      toggleGift,
     }),
     [
       db,
@@ -482,7 +480,7 @@ export function AppProvider({ children }) {
       signOut,
       generateMembershipQuote,
       receiveMemberSignup,
-      adjustPoints,
+      toggleGift,
     ]
   );
 

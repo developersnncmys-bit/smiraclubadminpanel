@@ -45,6 +45,48 @@ const ACCENTS = {
 const ACCENT_KEYS = ['brand', 'sky', 'amber', 'violet', 'slate'];
 const accentOf = (plan) => ACCENTS[plan.accent] || ACCENTS.brand;
 
+/**
+ * The plans must not read as three identical cards. The plan marked popular
+ * gets the raised gold treatment, the dearest of the rest gets the dark
+ * premium header, and everything else stays a plain white card — so the
+ * hierarchy is obvious at a glance and survives the agency editing prices.
+ */
+const VARIANTS = {
+  plain: {
+    card: 'card',
+    head: 'bg-white px-5 pb-5 pt-5',
+    tile: 'bg-slate-100 text-slate-600',
+    name: 'text-ink-900',
+    id: 'text-ink-500',
+    tagline: 'text-ink-500',
+    price: 'text-ink-900',
+    note: 'text-ink-500',
+    pill: 'bg-slate-100 text-slate-600',
+  },
+  highlight: {
+    card: 'card ring-2 ring-amber-400 shadow-raised xl:-mt-3 xl:mb-3',
+    head: 'bg-gradient-to-br from-amber-50 to-orange-50 border-b border-amber-500/25 px-5 pb-5 pt-5',
+    tile: 'bg-amber-400 text-white',
+    name: 'text-ink-900',
+    id: 'text-amber-700',
+    tagline: 'text-ink-600',
+    price: 'text-ink-900',
+    note: 'text-amber-800',
+    pill: 'bg-amber-100 text-amber-800',
+  },
+  premium: {
+    card: 'card',
+    head: 'bg-gradient-to-br from-ink-900 via-ink-800 to-grape px-5 pb-5 pt-5',
+    tile: 'bg-white/15 text-white',
+    name: 'text-white',
+    id: 'text-white/55',
+    tagline: 'text-white/70',
+    price: 'text-white',
+    note: 'text-white/70',
+    pill: 'bg-white/15 text-white',
+  },
+};
+
 // Stand-ins for real website traffic so the incoming flow can be demonstrated.
 const VISITORS = [
   { name: 'Pooja Ramteke', email: 'pooja.r@gmail.com', phone: '+91 98700 41182', city: 'Nagpur' },
@@ -90,6 +132,13 @@ export default function Memberships() {
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [draftFeature, setDraftFeature] = useState({});
+
+  const dearest = Math.max(0, ...memberships.map((p) => Number(p.price) || 0));
+  const variantOf = (plan) => {
+    if (plan.popular) return 'highlight';
+    if (memberships.length > 1 && Number(plan.price) === dearest) return 'premium';
+    return 'plain';
+  };
 
   const autoQuote = settings.membership?.autoQuote ?? true;
   const validityDays = settings.membership?.validityDays ?? 7;
@@ -334,58 +383,64 @@ export default function Memberships() {
 
       <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
         {memberships.map((plan) => {
-          const accent = accentOf(plan);
+          const variant = VARIANTS[variantOf(plan)];
+          const isPremium = variantOf(plan) === 'premium';
           return (
             <article
               key={plan.id}
-              className={`card flex flex-col overflow-hidden transition ${
-                plan.popular ? 'ring-1 ring-brand-600/25' : ''
-              }`}
+              className={`flex flex-col overflow-hidden transition ${variant.card}`}
             >
-              <span className={`h-1 w-full shrink-0 ${accent.bar}`} />
+              {plan.popular && (
+                <p className="flex items-center justify-center gap-1.5 bg-amber-400 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-900">
+                  <Crown size={12} /> Most popular
+                </p>
+              )}
 
-              <div className="flex items-start justify-between gap-3 px-5 pt-5">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${accent.tile}`}>
-                    <Crown size={18} strokeWidth={2.2} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate font-display text-base font-extrabold text-ink-900">
-                      {plan.name}
-                    </p>
-                    <p className="truncate text-xs text-ink-500">{plan.id}</p>
+              {/* Skinned head — this is what makes each tier look its part */}
+              <div className={variant.head}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${variant.tile}`}>
+                      <Crown size={18} strokeWidth={2.2} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className={`truncate font-display text-base font-extrabold ${variant.name}`}>
+                        {plan.name}
+                      </p>
+                      <p className={`truncate text-xs ${variant.id}`}>{plan.id}</p>
+                    </div>
                   </div>
+                  {isPremium && (
+                    <span className={`chip shrink-0 ${variant.pill}`}>Top tier</span>
+                  )}
                 </div>
-                {plan.popular && (
-                  <Badge tone="teal" className="shrink-0">
-                    <Crown size={11} /> Most popular
-                  </Badge>
-                )}
+
+                <p className={`mt-3 line-clamp-2 text-sm leading-relaxed ${variant.tagline}`}>
+                  {plan.tagline}
+                </p>
+
+                <div className="mt-4 flex items-end gap-2">
+                  <span className={`font-display text-3xl font-extrabold leading-none ${variant.price}`}>
+                    {inr(plan.price)}
+                  </span>
+                  <span className={`pb-0.5 text-xs font-semibold ${variant.note}`}>
+                    per member · {String(plan.billing || '').toLowerCase()}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className={`chip ${variant.pill}`}>{plan.discount}% off packages</span>
+                  <span className={`chip ${variant.pill}`}>{plan.members} members</span>
+                </div>
               </div>
 
-              <p className="mt-3 line-clamp-2 px-5 text-sm leading-relaxed text-ink-500">
-                {plan.tagline}
-              </p>
-
-              <div className="mt-4 flex items-end gap-2 px-5">
-                <span className="font-display text-3xl font-extrabold leading-none text-ink-900">
-                  {inr(plan.price)}
-                </span>
-                <span className="pb-0.5 text-xs font-semibold text-ink-500">
-                  per member · {String(plan.billing || '').toLowerCase()}
-                </span>
-              </div>
-
-              <div className="mx-5 mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-y border-ink-900/[0.07] py-2.5 text-xs font-semibold text-ink-600">
-                <span>{plan.discount}% package discount</span>
-                <span className="text-ink-300">·</span>
-                <span>{plan.members} members</span>
-                <span className="text-ink-300">·</span>
-                <span>{plan.features.length} features</span>
-              </div>
-
-              <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-                <Eyebrow>Included in this plan</Eyebrow>
+              <div className="flex flex-1 flex-col border-t border-ink-900/[0.07] px-5 pb-5 pt-4">
+                <div className="flex items-center justify-between gap-3">
+                  <Eyebrow>Included in this plan</Eyebrow>
+                  <span className="text-xs font-semibold text-ink-400">
+                    {plan.features.length} features
+                  </span>
+                </div>
 
                 <ul className="mt-2.5 space-y-1">
                   {plan.features.map((f, i) => (

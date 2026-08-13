@@ -28,7 +28,7 @@ export default function Quotations() {
     { name: 'pkg', label: 'Package / itinerary', type: 'text', required: true },
     { name: 'pax', label: 'Travellers', type: 'number', required: true },
     { name: 'amount', label: 'Amount (₹)', type: 'number', required: true },
-    { name: 'validTill', label: 'Valid till', type: 'text', placeholder: '31 Aug 2026' },
+    { name: 'validTill', label: 'Valid till', type: 'date' },
     { name: 'status', label: 'Status', type: 'select', options: STATUSES },
     { name: 'owner', label: 'Owner', type: 'select', options: consultants },
   ];

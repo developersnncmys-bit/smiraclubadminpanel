@@ -15,7 +15,7 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { invoiceTone, inr } from '../data/mockData.js';
-import { downloadText } from '../lib/csv.js';
+import { invoicePdf } from '../lib/pdf.js';
 
 const STATUSES = ['Paid', 'Partial', 'Overdue', 'Draft'];
 const MODES = ['UPI', 'Card', 'Cash', 'Bank transfer'];
@@ -36,8 +36,8 @@ export default function Invoices() {
   const fields = [
     { name: 'customer', label: 'Customer', type: 'text', required: true },
     { name: 'booking', label: 'Booking', type: 'select', options: bookings.map((b) => b.id) },
-    { name: 'issued', label: 'Issue date', type: 'text', required: true, placeholder: '04 Aug 2026' },
-    { name: 'due', label: 'Due date', type: 'text', required: true, placeholder: '18 Aug 2026' },
+    { name: 'issued', label: 'Issue date', type: 'date', required: true },
+    { name: 'due', label: 'Due date', type: 'date', required: true },
     { name: 'amount', label: 'Amount (₹)', type: 'number', required: true },
     { name: 'paid', label: 'Already paid (₹)', type: 'number' },
     { name: 'status', label: 'Status', type: 'select', options: STATUSES },
@@ -49,22 +49,8 @@ export default function Invoices() {
   };
 
   const downloadInvoice = (r) => {
-    const text = [
-      settings.agency.name,
-      settings.agency.address,
-      `GSTIN: ${settings.agency.gstin}`,
-      '',
-      `INVOICE ${r.id}`,
-      `Customer : ${r.customer}`,
-      `Booking  : ${r.booking}`,
-      `Issued   : ${r.issued}`,
-      `Due      : ${r.due}`,
-      `Amount   : ${inr(r.amount)}`,
-      `Paid     : ${inr(r.paid)}`,
-      `Balance  : ${inr(r.amount - r.paid)}`,
-    ].join('\n');
-    downloadText(`${r.id}.txt`, text);
-    toast(`${r.id} downloaded`);
+    invoicePdf(r, settings);
+    toast(`${r.id}.pdf downloaded`);
   };
 
   // Bill → received → balance, in that order, so a row reads like a sentence.
@@ -127,7 +113,7 @@ export default function Invoices() {
               <BadgeIndianRupee size={13} /> Record payment
             </button>
           )}
-          <button onClick={() => downloadInvoice(r)} title="Download" className="icon-btn">
+          <button onClick={() => downloadInvoice(r)} title="Download PDF" className="icon-btn">
             <Download size={14} />
           </button>
           <RowMenu
@@ -239,7 +225,7 @@ export default function Invoices() {
         fields={[
           { name: 'amount', label: 'Amount (₹)', type: 'number', required: true },
           { name: 'mode', label: 'Mode', type: 'select', options: MODES },
-          { name: 'date', label: 'Date', type: 'text', placeholder: '04 Aug 2026' },
+          { name: 'date', label: 'Date', type: 'date' },
         ]}
         initial={{ amount: payFor ? payFor.amount - payFor.paid : 0, mode: 'UPI', date: '04 Aug 2026' }}
         submitLabel="Record payment"

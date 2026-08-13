@@ -220,3 +220,127 @@ export function quotationPdf(quote, settings, { save = true } = {}) {
   if (save) doc.save(`${quote.id}.pdf`);
   return doc;
 }
+
+/**
+ * Invoice PDF — the same letterhead as the quotation, then a plain bill:
+ * what was sold, what it costs, what has been paid and what is still due.
+ */
+export function invoicePdf(invoice, settings, { save = true } = {}) {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const agency = settings?.agency || {};
+  const balance = Math.max(0, Number(invoice.amount || 0) - Number(invoice.paid || 0));
+  let y = M + 6;
+
+  // -- Letterhead ----------------------------------------------------------
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(17);
+  doc.setTextColor(...INK);
+  doc.text(agency.name || 'Smira Club', M, y);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  const address = doc.splitTextToSize(agency.address || '', 260);
+  doc.text(address, M, y + 16);
+
+  let metaY = y + 16 + address.length * 11 + 2;
+  [
+    agency.gstin && `GSTIN ${agency.gstin}`,
+    [agency.phone, agency.email].filter(Boolean).join('  ·  '),
+  ]
+    .filter(Boolean)
+    .forEach((line) => {
+      doc.text(line, M, metaY);
+      metaY += 11;
+    });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(...BRAND);
+  doc.text('INVOICE', RIGHT, y + 2, { align: 'right' });
+
+  doc.setFontSize(10.5);
+  doc.setTextColor(...INK);
+  doc.text(invoice.id, RIGHT, y + 20, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  doc.text(`Issued  ${invoice.issued || today()}`, RIGHT, y + 34, { align: 'right' });
+  if (invoice.due) doc.text(`Due  ${invoice.due}`, RIGHT, y + 46, { align: 'right' });
+
+  y = Math.max(metaY, y + 58) + 6;
+  rule(doc, y, BRAND, 1.6);
+  y += 26;
+
+  // -- Billed to -----------------------------------------------------------
+  eyebrow(doc, 'Billed to', M, y);
+  eyebrow(doc, 'Booking', RIGHT, y, 'right');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(...INK);
+  doc.text(invoice.customer || '—', M, y + 16);
+  doc.text(invoice.booking || '—', RIGHT, y + 16, { align: 'right' });
+  y += 40;
+
+  // -- The bill ------------------------------------------------------------
+  const COL_AMT = RIGHT;
+
+  doc.setFillColor(...SOFT);
+  doc.rect(M, y, RIGHT - M, 22, 'F');
+  eyebrow(doc, 'Description', M + 10, y + 14);
+  eyebrow(doc, 'Amount', COL_AMT - 10, y + 14, 'right');
+  y += 22;
+
+  const lines = [
+    [`Travel services for booking ${invoice.booking || '—'}`, rs(invoice.amount)],
+    ['Amount received', `- ${rs(invoice.paid)}`],
+  ];
+  doc.setFontSize(10);
+  lines.forEach(([label, value], i) => {
+    doc.setFont('helvetica', i === 0 ? 'bold' : 'normal');
+    doc.setTextColor(...(i === 0 ? INK : MUTED));
+    doc.text(label, M + 10, y + 18);
+    doc.text(value, COL_AMT - 10, y + 18, { align: 'right' });
+    y += 26;
+  });
+
+  rule(doc, y + 4);
+  y += 22;
+
+  // -- Balance -------------------------------------------------------------
+  doc.setFillColor(...(balance > 0 ? BRAND : [16, 122, 87]));
+  doc.rect(COL_AMT - 230, y - 2, 230, 34, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
+  doc.text(balance > 0 ? 'BALANCE DUE' : 'PAID IN FULL', COL_AMT - 220, y + 19, { charSpace: 0.8 });
+  doc.setFontSize(14);
+  doc.text(rs(balance), COL_AMT - 12, y + 20, { align: 'right' });
+  y += 58;
+
+  // -- Terms + footer ------------------------------------------------------
+  eyebrow(doc, 'Payment terms', M, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  const terms = doc.splitTextToSize(
+    balance > 0
+      ? `Please pay ${rs(balance)} by ${invoice.due || 'the due date above'}. Payment can be made by UPI, card, ` +
+          `cash or bank transfer. Quote the invoice number ${invoice.id} with your payment.`
+      : `This invoice is settled in full. No further payment is due. Thank you.`,
+    RIGHT - M
+  );
+  doc.text(terms, M, y + 14);
+
+  const footY = PAGE.h - 42;
+  rule(doc, footY - 14);
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text(`${agency.name || 'Smira Club'}  ·  ${agency.phone || ''}`, M, footY);
+  doc.text('This is a computer-generated invoice', RIGHT, footY, { align: 'right' });
+
+  if (save) doc.save(`${invoice.id}.pdf`);
+  return doc;
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Modal from './Modal.jsx';
+import { toISODate, formatDate } from '../../data/mockData.js';
 
 /**
  * Schema-driven add/edit dialog shared by every record page.
@@ -28,6 +29,8 @@ export default function FormModal({
         if (initial[f.name] !== undefined) defaults[f.name] = initial[f.name];
         else if (f.type === 'select') defaults[f.name] = f.options?.[0] ?? '';
         else defaults[f.name] = '';
+        // The picker only understands ISO, records keep "02 Sep 2026".
+        if (f.type === 'date') defaults[f.name] = toISODate(defaults[f.name]);
       });
       setValues(defaults);
       setErrors({});
@@ -51,7 +54,10 @@ export default function FormModal({
     }
     const cleaned = { ...values };
     fields.forEach((f) => {
-      if (f.type === 'number') cleaned[f.name] = Number(cleaned[f.name] || 0);
+      // Counts and money are never negative, whatever was typed or pasted.
+      if (f.type === 'number') cleaned[f.name] = Math.max(0, Number(cleaned[f.name] || 0));
+      // Hand dates back in the readable form the tables and PDFs print.
+      if (f.type === 'date' && cleaned[f.name]) cleaned[f.name] = formatDate(cleaned[f.name]);
     });
     onSubmit(cleaned);
     onClose();
@@ -110,6 +116,8 @@ export default function FormModal({
                 type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
                 className="input"
                 placeholder={f.placeholder}
+                min={f.type === 'number' ? (f.min ?? 0) : undefined}
+                step={f.type === 'number' ? f.step : undefined}
                 value={values[f.name] ?? ''}
                 onChange={(e) => set(f.name, e.target.value)}
               />

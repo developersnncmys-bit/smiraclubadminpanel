@@ -14,13 +14,26 @@ export const shortInr = (n) => {
   return inr(n);
 };
 
-/** '2026-09-02' -> '02 Sep 2026'. Leaves already-formatted dates alone. */
+/** '02 Sep 2026' -> '2026-09-02', the only format a date input accepts. */
+export const toISODate = (value) => {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+// Spelled out rather than left to toLocaleDateString, which renders September
+// as "Sept" in some engines and "Sep" in others.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** '2026-09-02' -> '02 Sep 2026'. Leaves unparseable values alone. */
 export const formatDate = (value) => {
   if (!value) return '';
   const d = new Date(value);
-  return Number.isNaN(d.getTime())
-    ? String(value)
-    : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  if (Number.isNaN(d.getTime())) return String(value);
+  return `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 };
 
 export const days = [

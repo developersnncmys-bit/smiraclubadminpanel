@@ -31,7 +31,7 @@ export default function Bookings() {
     { name: 'customer', label: 'Customer', type: 'text', required: true },
     { name: 'pkg', label: 'Package', type: 'select', options: packages.map((p) => p.name) },
     { name: 'destination', label: 'Destination', type: 'text', required: true },
-    { name: 'departure', label: 'Departure', type: 'text', required: true, placeholder: '20 Aug 2026' },
+    { name: 'departure', label: 'Departure', type: 'date', required: true },
     { name: 'nights', label: 'Nights', type: 'number' },
     { name: 'pax', label: 'Travellers', type: 'number', required: true },
     { name: 'amount', label: 'Total value (₹)', type: 'number', required: true },

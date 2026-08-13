@@ -29,7 +29,7 @@ export default function Payments() {
     { name: 'invoice', label: 'Against invoice', type: 'select', options: invoices.map((i) => i.id) },
     { name: 'amount', label: 'Amount (₹)', type: 'number', required: true },
     { name: 'mode', label: 'Mode', type: 'select', options: MODES },
-    { name: 'date', label: 'Date', type: 'text', required: true, placeholder: '04 Aug 2026' },
+    { name: 'date', label: 'Date', type: 'date', required: true },
   ];
 
   const receipt = (r) => {

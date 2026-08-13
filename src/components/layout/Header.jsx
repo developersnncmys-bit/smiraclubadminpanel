@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, NavLink } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, NavLink } from 'react-router-dom';
 import {
   Menu,
   Search,
@@ -14,9 +14,7 @@ import {
   ChevronDown,
   LogOut,
   RotateCcw,
-  LifeBuoy,
 } from 'lucide-react';
-import { navGroups, visibleNavGroups } from '../../data/nav.js';
 import { useApp } from '../../store/AppStore.jsx';
 
 const seedNotifications = [
@@ -72,13 +70,10 @@ function LiveClock() {
  */
 export default function Header({ onOpenMobile }) {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const {
     enquiries,
     bookings,
     customers,
-    tasks,
-    memberSignups,
     owner,
     setOwner,
     range,
@@ -102,29 +97,6 @@ export default function Header({ onOpenMobile }) {
   const menuRef = useRef(null);
 
   const unread = notifications.filter((n) => !n.read).length;
-
-  const counts = {
-    enquiries: enquiries.filter((e) => ['New', 'Contacted'].includes(e.status)).length,
-    tasks: tasks.filter((t) => t.bucket === 'today' || t.bucket === 'overdue').length,
-    memberships: memberSignups.filter((s) => s.status === 'New').length,
-  };
-
-  // Which section owns the page being viewed — longest matching path wins so
-  // "/memberships" never resolves to the "/" dashboard entry.
-  const activeGroup = useMemo(() => {
-    let best = navGroups[0];
-    let bestLen = -1;
-    navGroups.forEach((g) =>
-      g.items.forEach((item) => {
-        const match = item.to === '/' ? pathname === '/' : pathname.startsWith(item.to);
-        if (match && item.to.length > bestLen) {
-          best = g;
-          bestLen = item.to.length;
-        }
-      })
-    );
-    return best;
-  }, [pathname]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -188,29 +160,42 @@ export default function Header({ onOpenMobile }) {
           </span>
         </NavLink>
 
-        {/* Section tabs — the first level of navigation. Labels are kept short
-            so all six always fit without the row turning into a scroller. */}
-        <nav className="no-scrollbar -mb-px ml-1 hidden min-w-0 flex-1 items-stretch gap-0.5 self-stretch overflow-x-auto lg:flex">
-          {visibleNavGroups.map((group) => {
-            const on = group === activeGroup;
-            return (
-              <button
-                key={group.section}
-                onClick={() => navigate(group.items[0].to)}
-                className={`relative shrink-0 whitespace-nowrap border-b-2 px-3 pb-3 pt-4 text-sm font-bold transition-colors ${
-                  on
-                    ? 'border-brand-600 text-ink-900'
-                    : 'border-transparent text-ink-500 hover:text-ink-900'
-                }`}
-              >
-                {group.section}
-              </button>
-            );
-          })}
-        </nav>
-
         <div className="ml-auto flex items-center gap-2 py-2">
-          {/* Global search — an icon so the section tabs keep their room */}
+          {/* Which slice of the business every page should show */}
+          <label className="relative hidden xl:block">
+            <CalendarRange size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
+            <select
+              value={range}
+              onChange={(e) => setRange(e.target.value)}
+              className="cursor-pointer appearance-none rounded-lg border border-ink-900/10 bg-white py-2 pl-7 pr-7 text-sm font-semibold text-ink-700 outline-none transition hover:border-ink-900/20"
+            >
+              {['Today', 'Last 7 days', 'Last 30 days', 'This quarter', 'This year'].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="relative hidden xl:block">
+            <UsersRound size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
+            <select
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              className="cursor-pointer appearance-none rounded-lg border border-ink-900/10 bg-white py-2 pl-7 pr-7 text-sm font-semibold text-ink-700 outline-none transition hover:border-ink-900/20"
+            >
+              <option>All team members</option>
+              {team
+                .filter((t) => t.bookings > 0)
+                .map((t) => (
+                  <option key={t.id}>{t.name}</option>
+                ))}
+            </select>
+          </label>
+
+          <button className="icon-btn h-9 w-9" onClick={refresh} title="Refresh data">
+            <RefreshCw size={16} />
+          </button>
+
+          {/* Global search — an icon, so the row stays short */}
           <div className="relative" ref={searchBoxRef}>
             <button
               onClick={() => setSearchOpen((o) => !o)}
@@ -384,167 +369,6 @@ export default function Header({ onOpenMobile }) {
         </div>
       </div>
 
-      {/* Row 2 — pages inside the active section, then the workspace filters */}
-      <div className="flex items-center gap-2 border-b border-ink-900/[0.07] bg-surface-soft/60 px-4 py-2 sm:px-5">
-        <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-          {activeGroup.items.map(({ to, label, icon: Icon, badgeKey, tag }) => {
-            const badge = badgeKey ? counts[badgeKey] : null;
-            return (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === '/'}
-                className={({ isActive }) =>
-                  `flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                    isActive
-                      ? 'bg-white text-brand-700 shadow-xs ring-1 ring-ink-900/[0.07]'
-                      : 'text-ink-600 hover:bg-white/70 hover:text-ink-900'
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon size={15} strokeWidth={2.2} className={isActive ? 'text-brand-600' : 'text-ink-400'} />
-                    {label}
-                    {badge > 0 && (
-                      <span
-                        className={`num rounded-full px-1.5 text-[11px] font-bold ${
-                          isActive ? 'bg-brand-600 text-white' : 'bg-ink-900/[0.07] text-ink-600'
-                        }`}
-                      >
-                        {badge}
-                      </span>
-                    )}
-                    {tag && (
-                      <span className="rounded-full bg-sky-50 px-1.5 text-[10px] font-extrabold tracking-wide text-sky-700 ring-1 ring-sky-600/15">
-                        {tag}
-                      </span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
-        </nav>
-
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <label className="relative hidden xl:block">
-            <CalendarRange size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
-            <select
-              value={range}
-              onChange={(e) => setRange(e.target.value)}
-              className="cursor-pointer appearance-none rounded-lg border border-ink-900/10 bg-white py-1.5 pl-7 pr-7 text-sm font-semibold text-ink-700 outline-none transition hover:border-ink-900/20"
-            >
-              {['Today', 'Last 7 days', 'Last 30 days', 'This quarter', 'This year'].map((o) => (
-                <option key={o}>{o}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="relative hidden xl:block">
-            <UsersRound size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
-            <select
-              value={owner}
-              onChange={(e) => setOwner(e.target.value)}
-              className="cursor-pointer appearance-none rounded-lg border border-ink-900/10 bg-white py-1.5 pl-7 pr-7 text-sm font-semibold text-ink-700 outline-none transition hover:border-ink-900/20"
-            >
-              <option>All team members</option>
-              {team
-                .filter((t) => t.bookings > 0)
-                .map((t) => (
-                  <option key={t.id}>{t.name}</option>
-                ))}
-            </select>
-          </label>
-
-          {/* No primary action here — every page owns its own create button. */}
-          <button className="icon-btn h-8 w-8" onClick={refresh} title="Refresh data">
-            <RefreshCw size={14} />
-          </button>
-        </div>
-      </div>
     </header>
-  );
-}
-
-/** Full navigation for small screens, where the tab rows cannot fit. */
-export function MobileNav({ open, onClose }) {
-  const { enquiries, tasks, memberSignups, toast } = useApp();
-
-  const counts = {
-    enquiries: enquiries.filter((e) => ['New', 'Contacted'].includes(e.status)).length,
-    tasks: tasks.filter((t) => t.bucket === 'today' || t.bucket === 'overdue').length,
-    memberships: memberSignups.filter((s) => s.status === 'New').length,
-  };
-
-  return (
-    <div className={`fixed inset-0 z-40 lg:hidden ${open ? '' : 'pointer-events-none'}`}>
-      <div
-        onClick={onClose}
-        className={`absolute inset-0 bg-ink-900/40 backdrop-blur-sm transition-opacity ${
-          open ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
-      <aside
-        className={`absolute inset-y-0 left-0 flex w-[272px] flex-col bg-white shadow-lift transition-transform duration-300 ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between border-b border-ink-900/[0.07] px-4 py-3">
-          <span className="font-display text-base font-extrabold text-ink-900">Menu</span>
-          <button onClick={onClose} className="icon-btn h-8 w-8">
-            <X size={17} />
-          </button>
-        </div>
-
-        <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-4">
-          {visibleNavGroups.map((group, gi) => (
-            <div key={group.section} className={gi === 0 ? '' : 'mt-5'}>
-              <p className="eyebrow mb-1.5 px-3">{group.section}</p>
-              <div className="space-y-0.5">
-                {group.items.map(({ to, label, icon: Icon, badgeKey }) => {
-                  const badge = badgeKey ? counts[badgeKey] : null;
-                  return (
-                    <NavLink
-                      key={to}
-                      to={to}
-                      end={to === '/'}
-                      onClick={onClose}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                          isActive
-                            ? 'bg-brand-50 text-brand-800'
-                            : 'text-ink-600 hover:bg-surface-soft hover:text-ink-900'
-                        }`
-                      }
-                    >
-                      <Icon size={18} strokeWidth={2.1} className="shrink-0 text-ink-400" />
-                      <span className="flex-1 truncate">{label}</span>
-                      {badge > 0 && (
-                        <span className="num rounded-full bg-ink-900/[0.06] px-1.5 py-0.5 text-[11px] font-bold text-ink-600">
-                          {badge}
-                        </span>
-                      )}
-                    </NavLink>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        <div className="border-t border-ink-900/[0.07] px-3 py-3">
-          <button
-            onClick={() => {
-              onClose();
-              toast('Support chat opened — our team replies within 10 minutes', 'info');
-            }}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ink-600 hover:bg-surface-soft"
-          >
-            <LifeBuoy size={18} strokeWidth={2.1} className="text-ink-400" /> Help & support
-          </button>
-        </div>
-      </aside>
-    </div>
   );
 }

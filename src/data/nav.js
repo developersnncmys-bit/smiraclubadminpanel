@@ -57,7 +57,8 @@ export const navGroups = [
     items: [
       { to: '/customers', label: 'Customers', icon: UserRound },
       { to: '/team', label: 'Team', icon: UsersRound },
-      { to: '/campaigns', label: 'Campaigns', icon: Megaphone, tag: 'NEW' },
+      // Hidden at the client's request — drop `hidden` to bring it back.
+      { to: '/campaigns', label: 'Campaigns', icon: Megaphone, hidden: true },
       { to: '/reports', label: 'Reports', icon: PieChart },
     ],
   },
@@ -70,8 +71,11 @@ export const navGroups = [
   },
 ];
 
-/** Groups that actually get a tab in the header. */
-export const visibleNavGroups = navGroups.filter((g) => !g.hidden);
+/** What the sidebar shows: hidden groups and hidden pages are dropped. */
+export const visibleNavGroups = navGroups
+  .filter((g) => !g.hidden)
+  .map((g) => ({ ...g, items: g.items.filter((i) => !i.hidden) }))
+  .filter((g) => g.items.length > 0);
 
 /** Flat list, kept for anything that just needs every destination. */
 export const nav = navGroups.flatMap((g) => g.items);

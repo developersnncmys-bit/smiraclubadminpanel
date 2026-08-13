@@ -1,8 +1,21 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import Card from '../ui/Card.jsx';
-import { sources } from '../../data/mockData.js';
+import { sourceColours } from '../../data/mockData.js';
+import { useApp } from '../../store/AppStore.jsx';
 
 export default function SourceDonut() {
+  const { enquiries } = useApp();
+
+  // Counted from the enquiries themselves, so the donut can never disagree
+  // with the list it describes.
+  const tally = enquiries.reduce((acc, e) => {
+    const key = e.source || 'Other';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const sources = Object.entries(tally)
+    .map(([name, value]) => ({ name, value, color: sourceColours[name] || '#96a2b4' }))
+    .sort((a, b) => b.value - a.value);
   const total = sources.reduce((s, x) => s + x.value, 0);
 
   return (

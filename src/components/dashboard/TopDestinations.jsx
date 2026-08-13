@@ -1,10 +1,24 @@
 import { MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Card from '../ui/Card.jsx';
-import { topDestinations, shortInr } from '../../data/mockData.js';
+import { shortInr } from '../../data/mockData.js';
+import { useApp } from '../../store/AppStore.jsx';
 
 export default function TopDestinations() {
-  const max = Math.max(...topDestinations.map((d) => d.bookings));
+  const { bookings } = useApp();
+
+  // Rolled up from the bookings on file, so it always matches them.
+  const tally = bookings.reduce((acc, b) => {
+    const key = b.destination || b.pkg || 'Unknown';
+    acc[key] = acc[key] || { name: key, bookings: 0, revenue: 0 };
+    acc[key].bookings += 1;
+    acc[key].revenue += Number(b.amount || 0);
+    return acc;
+  }, {});
+  const topDestinations = Object.values(tally)
+    .sort((a, b) => b.bookings - a.bookings || b.revenue - a.revenue)
+    .slice(0, 6);
+  const max = Math.max(1, ...topDestinations.map((d) => d.bookings));
 
   return (
     <Card

@@ -9,10 +9,9 @@ import * as seed from '../data/mockData.js';
  * demo survives a page refresh, and `resetDemo()` puts the seed data back.
  */
 
-// Bumped whenever the seed gains fields older snapshots cannot supply — v3
-// added membership plans, v4 package departure dates, v5 traveller key dates,
-// v6 addresses, v7 membership gifts.
-const KEY = 'smira-club-admin:v7';
+// Bump whenever the seed changes shape or size, so a saved snapshot cannot
+// keep showing records the demo no longer has.
+const KEY = 'smira-club-admin:v8';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 

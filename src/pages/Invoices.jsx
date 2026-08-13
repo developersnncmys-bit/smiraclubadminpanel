@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import {
   Plus,
-  ReceiptIndianRupee,
-  Wallet,
-  AlertCircle,
   Download,
   Send,
   Pencil,
@@ -13,12 +10,11 @@ import {
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
-import StatCard from '../components/ui/StatCard.jsx';
 import RowMenu from '../components/ui/RowMenu.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { invoiceTone, inr, shortInr } from '../data/mockData.js';
+import { invoiceTone, inr } from '../data/mockData.js';
 import { downloadText } from '../lib/csv.js';
 
 const STATUSES = ['Paid', 'Partial', 'Overdue', 'Draft'];
@@ -34,6 +30,8 @@ export default function Invoices() {
   const billed = invoices.reduce((s, i) => s + i.amount, 0);
   const collected = invoices.reduce((s, i) => s + i.paid, 0);
   const outstanding = billed - collected;
+  const collectedPct = billed ? Math.round((collected / billed) * 100) : 0;
+  const openCount = invoices.filter((i) => i.amount - i.paid > 0).length;
 
   const fields = [
     { name: 'customer', label: 'Customer', type: 'text', required: true },
@@ -69,61 +67,72 @@ export default function Invoices() {
     toast(`${r.id} downloaded`);
   };
 
+  // Bill → received → balance, in that order, so a row reads like a sentence.
   const columns = [
-    { key: 'id', header: 'Invoice', render: (r) => <span className="font-bold text-brand-700">{r.id}</span> },
     {
       key: 'customer',
       header: 'Customer',
       render: (r) => (
-        <div>
-          <p className="font-bold text-ink-900">{r.customer}</p>
-          <p className="text-xs text-ink-500">{r.booking}</p>
+        <div className="min-w-0">
+          <p className="truncate font-bold text-ink-900">{r.customer}</p>
+          <p className="truncate text-xs text-ink-500">
+            {r.id} · {r.booking}
+          </p>
         </div>
       ),
     },
-    { key: 'issued', header: 'Issued' },
     {
-      key: 'due',
-      header: 'Due date',
-      render: (r) => <span className={r.status === 'Overdue' ? 'font-semibold text-rose-600' : ''}>{r.due}</span>,
+      key: 'amount',
+      header: 'Bill amount',
+      render: (r) => <span className="num font-bold text-ink-900">{inr(r.amount)}</span>,
     },
-    { key: 'amount', header: 'Amount', render: (r) => <span className="font-bold text-ink-900">{inr(r.amount)}</span> },
+    {
+      key: 'paid',
+      header: 'Received',
+      render: (r) => (
+        <span className="num font-semibold text-emerald-700">{r.paid ? inr(r.paid) : '—'}</span>
+      ),
+    },
     {
       key: 'balance',
-      header: 'Balance',
+      header: 'Still to pay',
       csv: (r) => r.amount - r.paid,
       render: (r) => {
         const bal = r.amount - r.paid;
-        return (
-          <span className={`font-bold ${bal > 0 ? 'text-orange-600' : 'text-emerald-600'}`}>
-            {bal > 0 ? inr(bal) : '—'}
-          </span>
+        return bal > 0 ? (
+          <span className="num font-bold text-orange-600">{inr(bal)}</span>
+        ) : (
+          <span className="text-sm font-semibold text-emerald-700">Nothing</span>
         );
       },
+    },
+    {
+      key: 'due',
+      header: 'Due by',
+      render: (r) => (
+        <span className={`whitespace-nowrap ${r.status === 'Overdue' ? 'font-bold text-rose-600' : ''}`}>
+          {r.due}
+        </span>
+      ),
     },
     { key: 'status', header: 'Status', render: (r) => <Badge tone={invoiceTone[r.status]} dot>{r.status}</Badge> },
     {
       key: 'actions',
       header: '',
       render: (r) => (
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => downloadInvoice(r)}
-            title="Download"
-            className="icon-btn"
-          >
+        <div className="flex justify-end gap-1.5">
+          {/* The one thing this page is for, on the row itself */}
+          {r.amount - r.paid > 0 && (
+            <button onClick={() => setPayFor(r)} className="btn-primary btn-sm whitespace-nowrap">
+              <BadgeIndianRupee size={13} /> Record payment
+            </button>
+          )}
+          <button onClick={() => downloadInvoice(r)} title="Download" className="icon-btn">
             <Download size={14} />
-          </button>
-          <button
-            onClick={() => toast(`${r.id} emailed to ${r.customer}`)}
-            title="Send"
-            className="icon-btn hover:border-sky-300 hover:text-sky-600"
-          >
-            <Send size={14} />
           </button>
           <RowMenu
             items={[
-              { label: 'Record payment', icon: BadgeIndianRupee, onClick: () => setPayFor(r) },
+              { label: 'Email to customer', icon: Send, onClick: () => toast(`${r.id} emailed to ${r.customer}`) },
               { label: 'Edit invoice', icon: Pencil, onClick: () => { setEditing(r); setFormOpen(true); } },
               { label: 'Delete', icon: Trash2, danger: true, onClick: () => setConfirm([r.id]) },
             ]}
@@ -135,7 +144,7 @@ export default function Invoices() {
 
   return (
     <>
-      <PageHeader title="Invoices" subtitle="Billing across all confirmed bookings">
+      <PageHeader title="Invoices" subtitle="What you have billed, and what is still to come in">
         <button
           className="btn-primary"
           onClick={() => {
@@ -147,10 +156,34 @@ export default function Invoices() {
         </button>
       </PageHeader>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard icon={ReceiptIndianRupee} label="Total billed" value={shortInr(billed)} skin="brand" />
-        <StatCard icon={Wallet} label="Collected" value={shortInr(collected)} />
-        <StatCard icon={AlertCircle} label="Outstanding" value={shortInr(outstanding)} />
+      {/* The whole page in one sentence, then the same thing as a bar */}
+      <div className="card mb-6 p-5">
+        <div className="grid gap-5 sm:grid-cols-3">
+          {[
+            { label: 'Billed to customers', value: billed, note: `${invoices.length} invoices`, tone: 'text-ink-900' },
+            { label: 'Money received', value: collected, note: 'Paid in full or part', tone: 'text-emerald-700' },
+            { label: 'Still to collect', value: outstanding, note: `${openCount} invoices open`, tone: 'text-orange-600' },
+          ].map((s) => (
+            <div key={s.label}>
+              <p className="text-sm font-semibold text-ink-500">{s.label}</p>
+              <p className={`mt-1 font-display text-2xl font-extrabold num ${s.tone}`}>{inr(s.value)}</p>
+              <p className="mt-0.5 text-xs text-ink-400">{s.note}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 border-t border-ink-900/[0.07] pt-4">
+          <div className="h-2.5 overflow-hidden rounded-full bg-surface-soft">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${collectedPct}%` }}
+            />
+          </div>
+          <p className="mt-2 text-sm text-ink-600">
+            You have received <b>{collectedPct}%</b> of everything you billed.
+            {outstanding > 0 && ` ${inr(outstanding)} is still with customers.`}
+          </p>
+        </div>
       </div>
 
       <DataTable

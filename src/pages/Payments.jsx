@@ -18,6 +18,12 @@ export default function Payments() {
   const [formOpen, setFormOpen] = useState(false);
   const [confirm, setConfirm] = useState(null);
 
+  const successful = payments.filter((p) => p.status !== 'Refunded');
+  const received = successful.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const refunded = payments
+    .filter((p) => p.status === 'Refunded')
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+
   const fields = [
     { name: 'customer', label: 'Customer', type: 'text', required: true },
     { name: 'invoice', label: 'Against invoice', type: 'select', options: invoices.map((i) => i.id) },
@@ -76,8 +82,10 @@ export default function Payments() {
       key: 'amount',
       header: 'Amount',
       render: (r) => (
-        <span className={`font-bold ${r.status === 'Refunded' ? 'text-rose-600' : 'text-emerald-600'}`}>
-          {r.status === 'Refunded' ? '-' : '+'}
+        <span
+          className={`num font-bold ${r.status === 'Refunded' ? 'text-rose-600' : 'text-emerald-700'}`}
+        >
+          {r.status === 'Refunded' ? '− ' : '+ '}
           {inr(r.amount)}
         </span>
       ),
@@ -113,11 +121,42 @@ export default function Payments() {
 
   return (
     <>
-      <PageHeader title="Payments" subtitle="Every receipt and refund recorded against invoices">
+      <PageHeader title="Payments" subtitle="Every rupee received, and what it was for">
         <button className="btn-primary" onClick={() => setFormOpen(true)}>
           <Plus size={16} /> Record payment
         </button>
       </PageHeader>
+
+      <div className="card mb-6 p-5">
+        <div className="grid gap-5 sm:grid-cols-3">
+          {[
+            {
+              label: 'Received',
+              value: received,
+              note: `${successful.length} payments`,
+              tone: 'text-emerald-700',
+            },
+            {
+              label: 'Refunded',
+              value: refunded,
+              note: `${payments.length - successful.length} refunds`,
+              tone: 'text-rose-600',
+            },
+            { label: 'Net in hand', value: received - refunded, note: 'Received less refunds', tone: 'text-ink-900' },
+          ].map((s) => (
+            <div key={s.label}>
+              <p className="text-sm font-semibold text-ink-500">{s.label}</p>
+              <p className={`mt-1 font-display text-2xl font-extrabold num ${s.tone}`}>{inr(s.value)}</p>
+              <p className="mt-0.5 text-xs text-ink-400">{s.note}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-5 border-t border-ink-900/[0.07] pt-4 text-sm text-ink-600">
+          Each payment here is applied to its invoice, so recording one reduces that invoice's
+          balance straight away.
+        </p>
+      </div>
 
       <DataTable
         columns={columns}

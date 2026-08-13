@@ -80,7 +80,7 @@ try {
 }
 
 console.log(failed ? '\\n' + failed + ' route(s) failed' : '\\nall routes rendered their content');
-process.exit(failed ? 1 : 0);
+globalThis.__smokeFailed = failed;
 `;
 
 writeFileSync('.smoke-entry.jsx', entry);
@@ -114,6 +114,12 @@ globalThis.localStorage = {
 };
 globalThis.document = { addEventListener() {}, removeEventListener() {}, body: { style: {} } };
 
-await import('./.smoke-bundle.mjs');
-unlinkSync('.smoke-entry.jsx');
-unlinkSync('.smoke-bundle.mjs');
+try {
+  await import('./.smoke-bundle.mjs');
+} finally {
+  // Clean up even when a route throws, so the temp files never reach git.
+  unlinkSync('.smoke-entry.jsx');
+  unlinkSync('.smoke-bundle.mjs');
+}
+
+process.exit(globalThis.__smokeFailed ? 1 : 0);

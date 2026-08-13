@@ -9,6 +9,8 @@ import {
   CalendarPlus,
   Crown,
   Gift,
+  Check,
+  FileText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader.jsx';

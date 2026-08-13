@@ -7,14 +7,8 @@ import {
   Pencil,
   Trash2,
   CalendarPlus,
-  Cake,
-  Heart,
-  Globe,
   Crown,
-  FileText,
-  MapPin,
   Gift,
-  Home,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader.jsx';
@@ -72,19 +66,19 @@ function countdown(days) {
   return `in ${days} days`;
 }
 
-/** One date row inside the detail sheet. */
-function DateRow({ icon: Icon, label, value, note, tone = 'brand' }) {
-  const tones = { brand: 'bg-brand-50 text-brand-700', rose: 'bg-rose-50 text-rose-600' };
+/** Label-and-value line in the profile sheet. */
+function Row({ label, value, note }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-ink-900/[0.07] px-3.5 py-3">
-      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${tones[tone]}`}>
-        <Icon size={16} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="eyebrow">{label}</p>
-        <p className="mt-0.5 truncate text-sm font-bold text-ink-900">{value || 'Not recorded'}</p>
-      </div>
-      {note && <span className="chip shrink-0 bg-surface-soft text-ink-600">{note}</span>}
+    <div className="flex items-start gap-4 px-4 py-2.5">
+      <dt className="w-32 shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-wide text-ink-400">
+        {label}
+      </dt>
+      <dd className="min-w-0 flex-1 text-sm leading-relaxed text-ink-800">
+        {value === 0 || value ? value : <span className="text-ink-400">Not recorded</span>}
+      </dd>
+      {note && (
+        <span className="shrink-0 pt-0.5 text-xs font-semibold text-brand-700">{note}</span>
+      )}
     </div>
   );
 }
@@ -314,83 +308,92 @@ export default function Customers() {
       >
         {profile && (
           <div className="space-y-5">
-            {/* Identity */}
-            <div className="flex flex-wrap items-center gap-4">
+            {/* Who they are */}
+            <div className="flex items-center gap-3.5">
               <Avatar name={profile.name} size="lg" />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0">
                 <p className="flex flex-wrap items-center gap-2 font-display text-lg font-extrabold text-ink-900">
                   {profile.name}
                   <Badge tone={tierTone[profile.tier]}>{profile.tier}</Badge>
                   {profile.source && (
                     <Badge tone={profile.source === 'Website' ? 'sky' : 'slate'}>
-                      <Globe size={11} /> {profile.source}
+                      {profile.source}
                     </Badge>
                   )}
                 </p>
-                <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-500">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Phone size={13} /> {profile.phone}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Mail size={13} /> {profile.email}
-                  </span>
+                <p className="mt-0.5 truncate text-sm text-ink-500">
+                  {profile.phone} · {profile.email}
                 </p>
               </div>
             </div>
 
-            {/* Key dates the desk sells on */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <DateRow
-                icon={Cake}
-                label="Date of birth"
+            {/* Everything about them, in one quiet list */}
+            <dl className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+              <Row label="Address" value={profile.address} />
+              <Row
+                label="Birthday"
                 value={
                   profile.dob
-                    ? `${formatDate(profile.dob)}${yearsSince(profile.dob) !== null ? ` · ${yearsSince(profile.dob)} yrs` : ''}`
+                    ? `${formatDate(profile.dob)}${
+                        yearsSince(profile.dob) !== null ? ` · ${yearsSince(profile.dob)} yrs` : ''
+                      }`
                     : ''
                 }
                 note={countdown(daysUntilNext(profile.dob))}
               />
-              <DateRow
-                icon={Heart}
-                tone="rose"
+              <Row
                 label={profile.specialLabel || 'Special date'}
                 value={profile.special ? formatDate(profile.special) : ''}
                 note={countdown(daysUntilNext(profile.special))}
               />
-            </div>
+              <Row label="Trips taken" value={profile.trips ?? 0} />
+              <Row label="Lifetime value" value={inr(profile.spend)} />
+              <Row label="Latest trip" value={profile.last} />
+            </dl>
 
-            {/* Address */}
-            <div className="flex items-start gap-3 rounded-xl border border-ink-900/[0.07] px-3.5 py-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-500">
-                <Home size={16} />
-              </span>
-              <div className="min-w-0">
-                <p className="eyebrow">Address</p>
-                <p className="mt-0.5 text-sm leading-relaxed text-ink-800">
-                  {profile.address || 'Not recorded'}
-                </p>
-              </div>
-            </div>
-
-            {/* Value */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { label: 'Trips taken', value: profile.trips ?? 0 },
-                { label: 'Lifetime value', value: inr(profile.spend) },
-                { label: 'Latest trip', value: profile.last || '—' },
-              ].map((s) => (
-                <div key={s.label} className="rounded-xl bg-surface-soft px-4 py-3">
-                  <p className="eyebrow">{s.label}</p>
-                  <p className="mt-1 font-display text-lg font-extrabold text-ink-900">{s.value}</p>
+            {/* Membership, in one line */}
+            <div>
+              <p className="eyebrow mb-2">Membership</p>
+              {membership ? (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-brand-600/20 bg-brand-50/60 px-4 py-3">
+                  <Crown size={16} className="shrink-0 text-brand-600" />
+                  <span className="font-display text-sm font-extrabold text-ink-900">
+                    {membership.signup.plan}
+                  </span>
+                  <Badge tone={signupTone[membership.signup.status]} dot>
+                    {membership.signup.status}
+                  </Badge>
+                  <span className="text-sm text-ink-600">
+                    {membership.signup.members}{' '}
+                    {membership.signup.members === 1 ? 'member' : 'members'}
+                    {membership.plan
+                      ? ` · ${inr(membershipAmount(membership.plan, membership.signup.members).total)}`
+                      : ''}
+                  </span>
+                  {membership.signup.quote && (
+                    <button
+                      onClick={() => navigate('/quotations')}
+                      className="ml-auto text-sm font-bold text-brand-700 hover:underline"
+                    >
+                      {membership.signup.quote}
+                    </button>
+                  )}
                 </div>
-              ))}
+              ) : (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-ink-900/15 px-4 py-3">
+                  <p className="flex-1 text-sm text-ink-500">No membership yet.</p>
+                  <button className="btn-ghost btn-sm" onClick={() => navigate('/memberships')}>
+                    View plans
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Membership gifts the desk hands over */}
+            {/* Gifts — tap a row to tick it off */}
             {membership?.plan && (
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <p className="eyebrow">Gifts on {membership.plan.name}</p>
+                  <p className="eyebrow">Gifts</p>
                   <span className="text-xs font-semibold text-ink-400">
                     {givenGifts.length} of {planGifts.length} given
                   </span>
@@ -400,25 +403,31 @@ export default function Customers() {
                   {planGifts.map((gift) => {
                     const record = givenGifts.find((g) => giftKey(g.gift) === giftKey(gift));
                     return (
-                      <li key={gift} className="flex items-center gap-3 px-4 py-2.5">
-                        <span
-                          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
-                            record ? 'bg-emerald-50 text-emerald-600' : 'bg-surface-soft text-ink-400'
-                          }`}
-                        >
-                          <Gift size={15} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-semibold text-ink-800">{gift}</span>
-                          <span className="block text-xs text-ink-500">
-                            {record ? `Given on ${record.date}` : 'Not given yet'}
-                          </span>
-                        </span>
+                      <li key={gift}>
                         <button
                           onClick={() => toggleGift(profile.id, gift)}
-                          className={record ? 'btn-ghost btn-sm shrink-0' : 'btn-primary btn-sm shrink-0'}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-surface-soft"
+                          title={record ? 'Mark as not given' : 'Mark as given'}
                         >
-                          {record ? 'Undo' : 'Mark given'}
+                          <span
+                            className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border transition ${
+                              record
+                                ? 'border-brand-600 bg-brand-600 text-white'
+                                : 'border-ink-900/20 text-transparent'
+                            }`}
+                          >
+                            <Check size={13} strokeWidth={3} />
+                          </span>
+                          <span
+                            className={`min-w-0 flex-1 text-sm ${
+                              record ? 'text-ink-500 line-through' : 'font-semibold text-ink-800'
+                            }`}
+                          >
+                            {gift}
+                          </span>
+                          <span className="shrink-0 text-xs text-ink-400">
+                            {record ? record.date : 'Tap to give'}
+                          </span>
                         </button>
                       </li>
                     );
@@ -429,119 +438,6 @@ export default function Customers() {
                     </li>
                   )}
                 </ul>
-              </div>
-            )}
-
-            {/* Membership taken on the website */}
-            <div>
-              <p className="eyebrow mb-2">Membership</p>
-              {membership ? (
-                <div className="overflow-hidden rounded-xl border border-brand-600/20">
-                  <div className="flex flex-wrap items-center justify-between gap-3 bg-brand-50 px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-600 text-white">
-                        <Crown size={16} />
-                      </span>
-                      <div>
-                        <p className="font-display text-sm font-extrabold text-ink-900">
-                          {membership.signup.plan}
-                        </p>
-                        <p className="text-xs text-ink-600">
-                          {membership.signup.members}{' '}
-                          {membership.signup.members === 1 ? 'member' : 'members'} · taken on the{' '}
-                          {String(membership.signup.source || 'website').toLowerCase()}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge tone={signupTone[membership.signup.status]} dot>
-                      {membership.signup.status}
-                    </Badge>
-                  </div>
-
-                  <div className="grid gap-x-6 gap-y-3 px-4 py-3.5 sm:grid-cols-3">
-                    <div>
-                      <p className="eyebrow">Signed up</p>
-                      <p className="mt-0.5 text-sm font-bold text-ink-900">
-                        {membership.signup.received}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="eyebrow">Fee</p>
-                      <p className="mt-0.5 text-sm font-bold text-ink-900">
-                        {membership.plan
-                          ? inr(membershipAmount(membership.plan, membership.signup.members).total)
-                          : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="eyebrow">Quotation</p>
-                      {membership.signup.quote ? (
-                        <button
-                          onClick={() => navigate('/quotations')}
-                          className="mt-0.5 inline-flex items-center gap-1.5 text-sm font-bold text-brand-700 hover:underline"
-                        >
-                          <FileText size={13} /> {membership.signup.quote}
-                        </button>
-                      ) : (
-                        <p className="mt-0.5 text-sm font-semibold text-ink-400">Not generated</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {membership.plan?.features?.length > 0 && (
-                    <div className="border-t border-ink-900/[0.07] px-4 py-3">
-                      <p className="eyebrow mb-1.5">Plan benefits</p>
-                      <ul className="grid gap-1.5 sm:grid-cols-2">
-                        {membership.plan.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2 text-sm text-ink-700">
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-ink-900/15 px-4 py-4">
-                  <p className="flex-1 text-sm text-ink-500">
-                    No membership taken yet. Members get package discounts and priority support.
-                  </p>
-                  <button className="btn-ghost btn-sm" onClick={() => navigate('/memberships')}>
-                    View plans
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Paper trail */}
-            {(customerQuotes.length > 0 || customerTrips > 0) && (
-              <div>
-                <p className="eyebrow mb-2">Recent quotations</p>
-                {customerQuotes.length === 0 ? (
-                  <p className="text-sm text-ink-500">
-                    {customerTrips} booking{customerTrips === 1 ? '' : 's'} on record.
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07]">
-                    {customerQuotes.map((q) => (
-                      <li key={q.id} className="flex items-center gap-3 px-4 py-2.5">
-                        <MapPin size={14} className="shrink-0 text-ink-400" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-ink-800">
-                            {q.pkg}
-                          </span>
-                          <span className="block text-xs text-ink-500">
-                            {q.id} · valid till {q.validTill}
-                          </span>
-                        </span>
-                        <span className="num shrink-0 text-sm font-bold text-ink-900">
-                          {inr(q.amount)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
             )}
           </div>

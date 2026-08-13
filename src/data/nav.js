@@ -30,19 +30,19 @@ export const navGroups = [
     ],
   },
   {
-    section: 'Bookings',
-    items: [
-      { to: '/enquiries', label: 'Enquiries', icon: Users, badgeKey: 'enquiries' },
-      { to: '/quotations', label: 'Quotations', icon: FileText },
-      { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
-    ],
-  },
-  {
     section: 'Packages',
     items: [
       { to: '/packages', label: 'Packages', icon: Package },
       { to: '/memberships', label: 'Memberships', icon: Crown, badgeKey: 'memberships' },
       { to: '/suppliers', label: 'Suppliers', icon: Building2 },
+    ],
+  },
+  {
+    section: 'Bookings',
+    items: [
+      { to: '/enquiries', label: 'Enquiries', icon: Users, badgeKey: 'enquiries' },
+      { to: '/quotations', label: 'Quotations', icon: FileText },
+      { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
     ],
   },
   {

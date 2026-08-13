@@ -209,7 +209,7 @@ export default function Quotations() {
                 ['Customer', viewing.customer],
                 ['Package', viewing.pkg],
                 ['Status', viewing.status],
-                ['Consultant', viewing.owner],
+                ['Team', viewing.owner],
                 ['Per person', inr(Math.round(viewing.amount / (viewing.pax || 1)))],
                 ['GSTIN', settings.agency.gstin],
               ].map(([k, v]) => (

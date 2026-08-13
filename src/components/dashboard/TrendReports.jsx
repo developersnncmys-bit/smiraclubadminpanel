@@ -43,7 +43,7 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-const REPORT_PRESETS = ['Consultant scorecard', 'Destination mix', 'Payment ageing', 'Source ROI'];
+const REPORT_PRESETS = ['Team scorecard', 'Destination mix', 'Payment ageing', 'Source ROI'];
 
 export default function TrendReports() {
   const [tab, setTab] = useState('enquiries');

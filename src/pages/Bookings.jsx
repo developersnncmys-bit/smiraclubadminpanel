@@ -37,7 +37,7 @@ export default function Bookings() {
     { name: 'amount', label: 'Total value (₹)', type: 'number', required: true },
     { name: 'paid', label: 'Amount paid (₹)', type: 'number' },
     { name: 'status', label: 'Status', type: 'select', options: STATUSES },
-    { name: 'owner', label: 'Consultant', type: 'select', options: consultants },
+    { name: 'owner', label: 'Team member', type: 'select', options: consultants },
   ];
 
   const save = (values) => {
@@ -118,7 +118,7 @@ export default function Bookings() {
       header: 'Status',
       render: (r) => <Badge tone={bookingStatusTone[r.status]} dot>{r.status}</Badge>,
     },
-    { key: 'owner', header: 'Consultant', render: (r) => <span className="font-semibold text-ink-700">{r.owner}</span> },
+    { key: 'owner', header: 'Team', render: (r) => <span className="font-semibold text-ink-700">{r.owner}</span> },
     {
       key: 'actions',
       header: '',
@@ -163,7 +163,7 @@ export default function Bookings() {
         searchPlaceholder="Search by booking ID, customer or package…"
         filters={[
           { key: 'status', label: 'Status', options: STATUSES },
-          { key: 'owner', label: 'Consultant', options: consultants },
+          { key: 'owner', label: 'Team', options: consultants },
         ]}
         exportName="smira-club-bookings"
         emptyLabel="No bookings match this view"

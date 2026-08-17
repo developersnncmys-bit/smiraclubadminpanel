@@ -13,72 +13,90 @@ import {
   RefreshCw,
   Mail,
   ArrowRight,
-  Hammer,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
-import { inr } from '../data/mockData.js';
+import { inr, shortInr } from '../data/mockData.js';
 
 /**
- * One card per overview in the client's dashboard sheet, in their order:
- * team, sales, bookings, membership, partners, communication, support,
- * reports, payment, alerts. Each card shows a few live numbers and opens the
- * page behind it; the ones we have not built say so.
+ * One card per overview on the client's dashboard sheet. Each leads with a
+ * single headline figure, then the two or three numbers that explain it —
+ * a shape that reads in a glance instead of a list of equal rows.
  */
 
-function Overview({ icon: Icon, eyebrow, title, rows, footer, to, soon, tone = 'brand' }) {
+const TONES = {
+  brand: { bar: 'bg-brand-500', tile: 'bg-brand-50 text-brand-700', hero: 'text-brand-700' },
+  sky: { bar: 'bg-sky-500', tile: 'bg-sky-50 text-sky-700', hero: 'text-sky-700' },
+  violet: { bar: 'bg-violet-500', tile: 'bg-violet-50 text-violet-700', hero: 'text-violet-700' },
+  amber: { bar: 'bg-amber-400', tile: 'bg-amber-50 text-amber-700', hero: 'text-amber-700' },
+  emerald: { bar: 'bg-emerald-500', tile: 'bg-emerald-50 text-emerald-700', hero: 'text-emerald-700' },
+  rose: { bar: 'bg-rose-500', tile: 'bg-rose-50 text-rose-600', hero: 'text-rose-600' },
+  slate: { bar: 'bg-ink-900/10', tile: 'bg-slate-100 text-slate-500', hero: 'text-ink-400' },
+};
+
+function Overview({ icon: Icon, eyebrow, title, tone = 'brand', hero, stats = [], footer, to, soon, blurb }) {
   const navigate = useNavigate();
-  const tones = {
-    brand: 'bg-brand-50 text-brand-700',
-    sky: 'bg-sky-50 text-sky-700',
-    violet: 'bg-violet-50 text-violet-700',
-    amber: 'bg-amber-50 text-amber-700',
-    rose: 'bg-rose-50 text-rose-600',
-    slate: 'bg-slate-100 text-slate-500',
-  };
+  const t = TONES[soon ? 'slate' : tone];
+  const cols = stats.length === 3 ? 'grid-cols-3' : 'grid-cols-2';
 
   return (
-    <section className={`card flex flex-col p-5 ${soon ? 'opacity-80' : 'card-hover'}`}>
-      <div className="flex items-start gap-3">
-        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[soon ? 'slate' : tone]}`}>
-          <Icon size={18} strokeWidth={2.2} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="eyebrow">{eyebrow}</p>
-          <h2 className="mt-0.5 font-display text-[0.95rem] font-extrabold leading-tight text-ink-900">
-            {title}
-          </h2>
-        </div>
-        {soon && (
-          <span className="chip shrink-0 bg-ink-900/[0.06] text-ink-500">
-            <Hammer size={11} /> Soon
+    <section
+      className={`card flex flex-col overflow-hidden ${soon ? '' : 'card-hover'}`}
+    >
+      <span className={`h-1 w-full shrink-0 ${t.bar}`} />
+
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-center gap-3">
+          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${t.tile}`}>
+            <Icon size={18} strokeWidth={2.2} />
           </span>
-        )}
-      </div>
-
-      <dl className="mt-4 flex-1 space-y-2.5">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-baseline justify-between gap-3">
-            <dt className="text-sm text-ink-500">{r.label}</dt>
-            <dd
-              className={`num shrink-0 font-display text-base font-extrabold ${
-                r.alert ? 'text-rose-600' : 'text-ink-900'
-              }`}
-            >
-              {r.value}
-            </dd>
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow">{eyebrow}</p>
+            <h2 className="mt-0.5 font-display text-[0.95rem] font-extrabold leading-tight text-ink-900">
+              {title}
+            </h2>
           </div>
-        ))}
-      </dl>
+          {soon && <span className="chip shrink-0 bg-ink-900/[0.06] text-ink-500">Soon</span>}
+        </div>
 
-      {footer}
+        {soon ? (
+          <p className="mt-5 flex-1 text-sm leading-relaxed text-ink-500">{blurb}</p>
+        ) : (
+          <>
+            {/* The one number this card exists to show */}
+            <div className="mt-5">
+              <p className={`font-display text-[2.35rem] font-extrabold leading-none tracking-tight num ${hero.tone ? TONES[hero.tone].hero : 'text-ink-900'}`}>
+                {hero.value}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-ink-500">{hero.label}</p>
+            </div>
 
-      <button
-        onClick={() => navigate(to)}
-        className="mt-4 inline-flex items-center gap-1.5 self-start text-sm font-bold text-brand-700 hover:underline"
-      >
-        {soon ? 'See what is planned' : 'Open'} <ArrowRight size={14} />
-      </button>
+            {stats.length > 0 && (
+              <div className={`mt-4 grid gap-2 ${cols}`}>
+                {stats.map((s) => (
+                  <div key={s.label} className="rounded-xl bg-surface-soft px-3 py-2.5">
+                    <p className={`num font-display text-base font-extrabold ${s.alert ? 'text-rose-600' : 'text-ink-900'}`}>
+                      {s.value}
+                    </p>
+                    <p className="mt-0.5 text-[11px] font-semibold leading-tight text-ink-500">
+                      {s.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {footer}
+          </>
+        )}
+
+        <button
+          onClick={() => navigate(to)}
+          className="mt-5 inline-flex items-center gap-1.5 self-start text-sm font-bold text-brand-700 hover:underline"
+        >
+          {soon ? 'See what is planned' : 'Open'} <ArrowRight size={14} />
+        </button>
+      </div>
     </section>
   );
 }
@@ -87,7 +105,6 @@ export default function Dashboard() {
   const {
     enquiries,
     bookings,
-    quotations,
     invoices,
     tasks,
     packages,
@@ -104,39 +121,37 @@ export default function Dashboard() {
   const scopedEnquiries = byOwner(enquiries, owner);
   const scopedBookings = byOwner(bookings, owner);
 
-  // -- Sales ----------------------------------------------------------------
   const total = scopedEnquiries.length;
   const newLeads = scopedEnquiries.filter((e) => e.status === 'New').length;
   const booked = scopedEnquiries.filter((e) => e.status === 'Booked').length;
   const conversion = total ? Math.round((booked / total) * 100) : 0;
 
-  // -- Bookings -------------------------------------------------------------
   const bookedValue = scopedBookings.reduce((s, b) => s + Number(b.amount || 0), 0);
   const travellers = scopedBookings.reduce((s, b) => s + Number(b.pax || 0), 0);
   const upcoming = scopedBookings.filter((b) =>
     ['Confirmed', 'Part paid', 'Pending'].includes(b.status)
   ).length;
 
-  // -- Money ----------------------------------------------------------------
   const billed = invoices.reduce((s, i) => s + Number(i.amount || 0), 0);
   const collected = invoices.reduce((s, i) => s + Number(i.paid || 0), 0);
   const outstanding = Math.max(0, billed - collected);
   const collectedPct = billed ? Math.round((collected / billed) * 100) : 0;
 
-  // -- Alerts, all counted from real records --------------------------------
   const overdueInvoices = invoices.filter((i) => i.status === 'Overdue').length;
   const overdueTasks = tasks.filter((t) => t.bucket === 'overdue').length;
   const lowSeats = packages.filter((p) => Number(p.seats) <= 8).length;
   const awaitingQuote = memberSignups.filter((s) => s.status === 'New').length;
   const alertCount = overdueInvoices + overdueTasks + lowSeats + awaitingQuote;
 
-  // -- Team -----------------------------------------------------------------
   const activeTeam = team.filter((t) => t.status === 'Active').length;
   const busiest = [...team].sort((a, b) => (b.revenue || 0) - (a.revenue || 0))[0];
 
   return (
     <>
-      <PageHeader title="Dashboard" subtitle={`Every part of the business at a glance · ${range.toLowerCase()}`}>
+      <PageHeader
+        title="Dashboard"
+        subtitle={`Every part of the business at a glance · ${range.toLowerCase()}`}
+      >
         <button className="btn-ghost" onClick={refresh}>
           <RefreshCw size={16} /> Refresh
         </button>
@@ -154,9 +169,9 @@ export default function Dashboard() {
           eyebrow="Team"
           title="Team status"
           to="/team"
-          rows={[
-            { label: 'People on the desk', value: team.length },
-            { label: 'Active right now', value: activeTeam },
+          hero={{ value: team.length, label: 'People on the desk' }}
+          stats={[
+            { label: 'Active now', value: activeTeam },
             { label: 'Busiest desk', value: busiest ? busiest.name.split(' ')[0] : '—' },
           ]}
         />
@@ -167,10 +182,10 @@ export default function Dashboard() {
           title="Sales & leads"
           to="/enquiries"
           tone="sky"
-          rows={[
-            { label: 'Enquiries received', value: total },
-            { label: 'Waiting for a first call', value: newLeads, alert: newLeads > 0 },
-            { label: 'Turned into trips', value: `${conversion}%` },
+          hero={{ value: total, label: 'Enquiries received' }}
+          stats={[
+            { label: 'Need a first call', value: newLeads, alert: newLeads > 0 },
+            { label: 'Became trips', value: `${conversion}%` },
           ]}
         />
 
@@ -179,10 +194,10 @@ export default function Dashboard() {
           eyebrow="Operations"
           title="Bookings"
           to="/bookings"
-          rows={[
-            { label: 'Trips confirmed', value: scopedBookings.length },
+          hero={{ value: shortInr(bookedValue), label: 'Booked value' }}
+          stats={[
+            { label: 'Trips', value: scopedBookings.length },
             { label: 'Yet to travel', value: upcoming },
-            { label: 'Booked value', value: inr(bookedValue) },
             { label: 'Travellers', value: travellers },
           ]}
         />
@@ -193,62 +208,10 @@ export default function Dashboard() {
           title="Membership"
           to="/memberships"
           tone="amber"
-          rows={[
-            { label: 'Plans live on the website', value: memberships.filter((p) => p.published).length },
+          hero={{ value: memberships.filter((p) => p.published).length, label: 'Plans live on the website' }}
+          stats={[
             { label: 'Members', value: memberSignups.filter((s) => s.status === 'Active').length },
-            { label: 'Signups awaiting a quote', value: awaitingQuote, alert: awaitingQuote > 0 },
-          ]}
-        />
-
-        <Overview
-          icon={Globe2}
-          eyebrow="Partners"
-          title="Partners"
-          to="/partners"
-          soon
-          rows={[
-            { label: 'Partner accounts', value: '—' },
-            { label: 'Bookings sourced', value: '—' },
-            { label: 'Commission owed', value: '—' },
-          ]}
-        />
-
-        <Overview
-          icon={MessageSquare}
-          eyebrow="Engagement"
-          title="Communication"
-          to="/communication"
-          soon
-          rows={[
-            { label: 'Messages sent', value: '—' },
-            { label: 'Awaiting a reply', value: '—' },
-            { label: 'Templates in use', value: '—' },
-          ]}
-        />
-
-        <Overview
-          icon={Headphones}
-          eyebrow="Service"
-          title="Support & complaints"
-          to="/support"
-          soon
-          rows={[
-            { label: 'Open tickets', value: '—' },
-            { label: 'Breaching today', value: '—' },
-            { label: 'Resolved this month', value: '—' },
-          ]}
-        />
-
-        <Overview
-          icon={PieChart}
-          eyebrow="Insights"
-          title="Reports & analytics"
-          to="/reports"
-          tone="violet"
-          rows={[
-            { label: 'Booked value', value: inr(bookedValue) },
-            { label: 'Money collected', value: inr(collected) },
-            { label: 'Enquiry to booking', value: `${conversion}%` },
+            { label: 'Awaiting a quote', value: awaitingQuote, alert: awaitingQuote > 0 },
           ]}
         />
 
@@ -257,10 +220,11 @@ export default function Dashboard() {
           eyebrow="Finance"
           title="Payment overview"
           to="/invoices"
-          rows={[
-            { label: 'Billed', value: inr(billed) },
-            { label: 'Received', value: inr(collected) },
-            { label: 'Still to collect', value: inr(outstanding), alert: outstanding > 0 },
+          tone="emerald"
+          hero={{ value: inr(outstanding), label: 'Still to collect', tone: outstanding > 0 ? 'rose' : 'emerald' }}
+          stats={[
+            { label: 'Billed', value: shortInr(billed) },
+            { label: 'Received', value: shortInr(collected) },
           ]}
           footer={
             <div className="mt-4">
@@ -278,19 +242,56 @@ export default function Dashboard() {
           title="Alerts"
           to="/alerts"
           tone="rose"
-          rows={[
+          hero={{
+            value: alertCount,
+            label: alertCount === 1 ? 'thing needs chasing' : 'things need chasing',
+            tone: alertCount > 0 ? 'rose' : 'emerald',
+          }}
+          stats={[
             { label: 'Invoices overdue', value: overdueInvoices, alert: overdueInvoices > 0 },
             { label: 'Tasks overdue', value: overdueTasks, alert: overdueTasks > 0 },
-            { label: 'Packages nearly full', value: lowSeats },
-            { label: 'Signups without a quote', value: awaitingQuote, alert: awaitingQuote > 0 },
+            { label: 'Seats low', value: lowSeats },
           ]}
-          footer={
-            <p className="mt-4 rounded-xl bg-surface-soft px-3.5 py-2.5 text-xs text-ink-600">
-              {alertCount === 0
-                ? 'Nothing needs chasing right now.'
-                : `${alertCount} ${alertCount === 1 ? 'thing needs' : 'things need'} chasing today.`}
-            </p>
-          }
+        />
+
+        <Overview
+          icon={PieChart}
+          eyebrow="Insights"
+          title="Reports & analytics"
+          to="/reports"
+          tone="violet"
+          hero={{ value: `${conversion}%`, label: 'Enquiries that became trips' }}
+          stats={[
+            { label: 'Booked', value: shortInr(bookedValue) },
+            { label: 'Collected', value: shortInr(collected) },
+          ]}
+        />
+
+        <Overview
+          icon={Globe2}
+          eyebrow="Partners"
+          title="Partners"
+          to="/partners"
+          soon
+          blurb="Agents and resellers who bring you business, with the commission owed on each booking they source."
+        />
+
+        <Overview
+          icon={MessageSquare}
+          eyebrow="Engagement"
+          title="Communication"
+          to="/communication"
+          soon
+          blurb="Every WhatsApp, email and SMS sent to a traveller, kept in one thread against their booking."
+        />
+
+        <Overview
+          icon={Headphones}
+          eyebrow="Service"
+          title="Support & complaints"
+          to="/support"
+          soon
+          blurb="Tickets raised during and after a trip, with an owner and a deadline on each one."
         />
       </div>
     </>

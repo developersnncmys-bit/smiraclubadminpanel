@@ -15,7 +15,7 @@ function NavList({ counts, onNavigate }) {
           <p className="eyebrow mb-1.5 px-3">{group.section}</p>
 
           <div className="space-y-0.5">
-            {group.items.map(({ to, label, icon: Icon, badgeKey, tag }) => {
+            {group.items.map(({ to, label, icon: Icon, badgeKey, tag, planned }) => {
               const badge = badgeKey ? counts[badgeKey] : null;
               return (
                 <NavLink
@@ -41,7 +41,17 @@ function NavList({ counts, onNavigate }) {
                         strokeWidth={2.1}
                         className={`shrink-0 ${isActive ? 'text-brand-700' : 'text-ink-400'}`}
                       />
-                      <span className="flex-1 truncate">{label}</span>
+                      <span className={`flex-1 truncate ${planned ? 'text-ink-400' : ''}`}>
+                        {label}
+                      </span>
+                      {planned && (
+                        <span
+                          className="shrink-0 rounded-full bg-ink-900/[0.06] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-400"
+                          title="Planned — not built yet"
+                        >
+                          Soon
+                        </span>
+                      )}
                       {badge > 0 && (
                         <span
                           className={`num rounded-full px-1.5 py-0.5 text-[11px] font-bold ${

@@ -1,0 +1,173 @@
+import {
+  Bell,
+  Boxes,
+  Brain,
+  Cable,
+  FileInput,
+  Gift,
+  Globe2,
+  Headphones,
+  Image,
+  Megaphone,
+  MessageSquare,
+  Newspaper,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Umbrella,
+  UserCog,
+  Workflow,
+} from 'lucide-react';
+
+/**
+ * Modules from the client's product map that are planned but not built yet.
+ * Each one gets a real route and a page saying what it will do, so the
+ * navigation shows the whole product without pretending the screens exist.
+ */
+export const plannedModules = [
+  {
+    to: '/alerts',
+    label: 'Alerts',
+    icon: Bell,
+    blurb: 'One place for every warning the desk should act on.',
+    points: [
+      'Departures with documents still missing',
+      'Invoices past their due date',
+      'Enquiries nobody has touched for days',
+      'Supplier confirmations still pending',
+    ],
+  },
+  {
+    to: '/inventory',
+    label: 'Travel Inventory',
+    icon: Boxes,
+    blurb: 'Seats, rooms and vehicles you hold, and what is left to sell.',
+    points: [
+      'Allotments held with each supplier',
+      'Seats sold against seats blocked',
+      'Release dates before allotment is lost',
+      'Rate contracts per season',
+    ],
+  },
+  {
+    to: '/lifestyle',
+    label: 'Lifestyle',
+    icon: Umbrella,
+    blurb: 'The add-ons sold alongside a trip.',
+    points: ['Visa and insurance', 'Airport lounge and transfers', 'Events, dining and experiences', 'Foreign exchange'],
+  },
+  {
+    to: '/partners',
+    label: 'Partners',
+    icon: Globe2,
+    blurb: 'Agents and resellers who bring you business.',
+    points: ['Partner accounts and commission slabs', 'Bookings sourced per partner', 'Commission owed and paid', 'Partner login for their own leads'],
+  },
+  {
+    to: '/communication',
+    label: 'Communication',
+    icon: MessageSquare,
+    blurb: 'Every message sent to a traveller, in one thread.',
+    points: ['WhatsApp, email and SMS history', 'Templates for itineraries and reminders', 'Delivery and read receipts', 'Replies routed to the right consultant'],
+  },
+  {
+    to: '/support',
+    label: 'Support & Complaints',
+    icon: Headphones,
+    blurb: 'Tickets raised during and after a trip.',
+    points: ['Complaint logged against a booking', 'Owner and resolution deadline', 'Escalation when a promise is missed', 'Resolution notes kept on the customer'],
+  },
+  {
+    to: '/offers',
+    label: 'Offers & Promotions',
+    icon: Megaphone,
+    blurb: 'Discount codes and seasonal offers.',
+    points: ['Promo codes with limits and expiry', 'Offers tied to a package or plan', 'Member-only pricing', 'Usage and revenue per offer'],
+  },
+  {
+    to: '/rewards',
+    label: 'Reward & Refer',
+    icon: Gift,
+    blurb: 'Referrals, on top of the membership gifts.',
+    points: ['Referral link per traveller', 'Reward when a referral books', 'Gift history across memberships', 'Payout or credit tracking'],
+  },
+  {
+    to: '/automation',
+    label: 'Automation',
+    icon: Workflow,
+    blurb: 'Rules that do the routine work for you.',
+    points: ['Auto-assign enquiries by destination', 'Payment reminder before the due date', 'Birthday and anniversary greetings', 'Follow-up task when a quote goes quiet'],
+  },
+  {
+    to: '/ai',
+    label: 'AI Features',
+    icon: Brain,
+    blurb: 'Assistance built into the daily work.',
+    points: ['Draft an itinerary from an enquiry', 'Suggest a price from past bookings', 'Summarise a long chat thread', 'Flag enquiries likely to book'],
+  },
+  {
+    to: '/cms',
+    label: 'Website CMS',
+    icon: Newspaper,
+    blurb: 'What the public website shows, edited here.',
+    points: ['Pages and package listings', 'Membership pricing section', 'Enquiry forms that feed this panel', 'Publish without a developer'],
+  },
+  {
+    to: '/blogs',
+    label: 'Blogs',
+    icon: FileInput,
+    blurb: 'Travel writing that brings in search traffic.',
+    points: ['Draft, schedule and publish', 'Categories and destination tags', 'Author per post', 'Linked to the packages mentioned'],
+  },
+  {
+    to: '/banners',
+    label: 'Banners',
+    icon: Image,
+    blurb: 'Home page and campaign artwork.',
+    points: ['Hero and offer banners', 'Schedule a start and end date', 'Different artwork for mobile', 'Click tracking per banner'],
+  },
+  {
+    to: '/seo',
+    label: 'SEO',
+    icon: Search,
+    blurb: 'How the website reads to search engines.',
+    points: ['Titles and descriptions per page', 'Keywords per destination', 'Sitemap and redirects', 'Search ranking over time'],
+  },
+  {
+    to: '/forms',
+    label: 'Forms',
+    icon: Sparkles,
+    blurb: 'Forms on the website and where they land.',
+    points: ['Enquiry, callback and newsletter forms', 'Fields configured without code', 'Routing to a consultant', 'Spam filtering'],
+  },
+  {
+    to: '/notifications',
+    label: 'Notifications',
+    icon: Bell,
+    blurb: 'What the panel tells the team, and when.',
+    points: ['In-app, email and WhatsApp alerts', 'Per-role notification rules', 'Quiet hours', 'A record of what was sent'],
+  },
+  {
+    to: '/roles',
+    label: 'Users & Roles',
+    icon: ShieldCheck,
+    blurb: 'Who can see and do what.',
+    points: ['Roles for owner, consultant and accounts', 'Page-level permissions', 'Restrict exports and deletions', 'Login history'],
+  },
+  {
+    to: '/profile',
+    label: 'Profile',
+    icon: UserCog,
+    blurb: 'Your own account details.',
+    points: ['Name, photo and contact', 'Password and two-factor', 'Signature used on quotations', 'Personal notification choices'],
+  },
+  {
+    to: '/api',
+    label: 'API',
+    icon: Cable,
+    blurb: 'Connections to the systems around this one.',
+    points: ['Keys for the website to post enquiries', 'Payment gateway and accounting hooks', 'GDS and supplier feeds', 'Webhook log'],
+  },
+];
+
+export const moduleByPath = Object.fromEntries(plannedModules.map((m) => [m.to, m]));

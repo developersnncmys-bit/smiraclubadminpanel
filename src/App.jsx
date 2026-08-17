@@ -17,6 +17,8 @@ import Campaigns from './pages/Campaigns.jsx';
 import Team from './pages/Team.jsx';
 import Reports from './pages/Reports.jsx';
 import Settings from './pages/Settings.jsx';
+import Planned from './pages/Planned.jsx';
+import { plannedModules } from './data/modules.js';
 
 export default function App() {
   return (
@@ -45,6 +47,11 @@ export default function App() {
         <Route path="team" element={<Team />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
+        {/* Modules the client has scoped but we have not built yet */}
+        {plannedModules.map((m) => (
+          <Route key={m.to} path={m.to.slice(1)} element={<Planned />} />
+        ))}
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

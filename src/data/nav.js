@@ -9,40 +9,55 @@ import {
   FileText,
   ReceiptIndianRupee,
   Wallet,
-  Building2,
-  Megaphone,
   UsersRound,
   PieChart,
   Settings,
 } from 'lucide-react';
+import { moduleByPath } from './modules.js';
+
+/** Pulls a planned module into the nav by its path. */
+const planned = (path) => {
+  const m = moduleByPath[path];
+  if (!m) throw new Error(`No planned module for ${path}`);
+  return { to: m.to, label: m.label, icon: m.icon, planned: true };
+};
 
 /**
- * The header's two navigation levels. Sections are named after the everyday
- * word for the work inside them, so a section and its first page can share a
- * name — "Bookings > Bookings" reads fine and beats inventing jargon.
+ * The client's product map, in the order they listed it. Pages marked
+ * `planned` route to a placeholder that says the screen is not built yet.
  */
 export const navGroups = [
   {
-    section: 'Home',
+    section: 'Overview',
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
+      planned('/alerts'),
     ],
   },
   {
-    section: 'Packages',
+    section: 'Sales & leads',
     items: [
-      { to: '/packages', label: 'Packages', icon: Package },
-      { to: '/memberships', label: 'Memberships', icon: Crown, badgeKey: 'memberships' },
-      { to: '/suppliers', label: 'Suppliers', icon: Building2 },
-    ],
-  },
-  {
-    section: 'Bookings',
-    items: [
-      { to: '/enquiries', label: 'Enquiries', icon: Users, badgeKey: 'enquiries' },
+      { to: '/enquiries', label: 'Sales & Leads', icon: Users, badgeKey: 'enquiries' },
       { to: '/quotations', label: 'Quotations', icon: FileText },
       { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
+    ],
+  },
+  {
+    section: 'Travel',
+    items: [
+      { to: '/packages', label: 'Packages', icon: Package },
+      planned('/inventory'),
+      { to: '/suppliers', label: 'Suppliers', icon: UsersRound },
+      planned('/lifestyle'),
+    ],
+  },
+  {
+    section: 'Membership',
+    items: [
+      { to: '/memberships', label: 'Membership Plans', icon: Crown, badgeKey: 'memberships' },
+      { to: '/customers', label: 'Members', icon: UserRound },
+      planned('/rewards'),
     ],
   },
   {
@@ -53,21 +68,36 @@ export const navGroups = [
     ],
   },
   {
-    section: 'Travellers',
+    section: 'Engagement',
     items: [
-      { to: '/customers', label: 'Customers', icon: UserRound },
-      { to: '/team', label: 'Team', icon: UsersRound },
-      // Hidden at the client's request — drop `hidden` to bring it back.
-      { to: '/campaigns', label: 'Campaigns', icon: Megaphone, hidden: true },
-      { to: '/reports', label: 'Reports', icon: PieChart },
+      planned('/communication'),
+      planned('/support'),
+      planned('/offers'),
+      planned('/notifications'),
     ],
   },
   {
-    // Hidden at the client's request — Settings is still reachable from the
-    // account menu. Drop `hidden` to put the tab back.
+    section: 'Website',
+    items: [planned('/cms'), planned('/blogs'), planned('/banners'), planned('/seo'), planned('/forms')],
+  },
+  {
+    section: 'Team & reports',
+    items: [
+      { to: '/team', label: 'Team Status', icon: UsersRound },
+      planned('/partners'),
+      { to: '/reports', label: 'Reports & Analytics', icon: PieChart },
+    ],
+  },
+  {
     section: 'System',
-    hidden: true,
-    items: [{ to: '/settings', label: 'Settings', icon: Settings }],
+    items: [
+      planned('/automation'),
+      planned('/ai'),
+      planned('/roles'),
+      planned('/api'),
+      planned('/profile'),
+      { to: '/settings', label: 'Settings', icon: Settings },
+    ],
   },
 ];
 

@@ -6,10 +6,17 @@
 import { build } from 'esbuild';
 import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 
+// Planned modules are read straight from the registry, so a new one is
+// covered here the moment it is added.
+const PLANNED = [
+  ...readFileSync('./src/data/modules.js', 'utf8').matchAll(/to: '(\/[a-z]+)'/g),
+].map((m) => m[1]);
+
 const ROUTES = [
   '/', '/enquiries', '/quotations', '/bookings', '/packages', '/memberships',
   '/suppliers', '/invoices', '/payments', '/customers', '/team', '/campaigns',
   '/reports', '/settings', '/tasks', '/login',
+  ...PLANNED,
 ];
 
 // A string that only appears once the real page rendered, so a silent
@@ -30,6 +37,7 @@ const MARKERS = {
   '/reports': 'Reports',
   '/settings': 'Settings',
   '/tasks': 'Tasks',
+  ...Object.fromEntries(PLANNED.map((p) => [p, 'Not built yet'])),
 };
 
 const entry = `

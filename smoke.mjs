@@ -22,7 +22,7 @@ const ROUTES = [
 // A string that only appears once the real page rendered, so a silent
 // redirect to /login cannot pass as success.
 const MARKERS = {
-  '/': 'What needs your attention',
+  '/': 'Payment overview',
   '/enquiries': 'Add enquiry',
   '/quotations': 'New quotation',
   '/bookings': 'Bookings',

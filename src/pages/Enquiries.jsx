@@ -20,6 +20,7 @@ import RowMenu from '../components/ui/RowMenu.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
+import SalesInsights from '../components/sales/SalesInsights.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, inr } from '../data/mockData.js';
 
@@ -31,7 +32,7 @@ const digits = (phone) => String(phone).replace(/[^\d]/g, '');
 export default function Enquiries() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { enquiries, team, owner, create, update, updateMany, remove, toast } = useApp();
+  const { enquiries, bookings, team, owner, create, update, updateMany, remove, toast } = useApp();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -195,11 +196,10 @@ export default function Enquiries() {
     },
   ];
 
-  const counts = enquiryStatuses.map((s) => ({ status: s, n: rows.filter((e) => e.status === s).length }));
 
   return (
     <>
-      <PageHeader title="Enquiries" subtitle={`${rows.length} enquiries in your pipeline`}>
+      <PageHeader title="Sales & Leads" subtitle={`${rows.length} enquiries in your pipeline`}>
         <button className="btn-ghost" onClick={() => setImportOpen(true)}>
           <Upload size={16} /> Import
         </button>
@@ -214,20 +214,23 @@ export default function Enquiries() {
         </button>
       </PageHeader>
 
-      {/* Pipeline strip — click a card to filter the table */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {counts.map(({ status, n }) => (
-          <button
-            key={status}
-            onClick={() => setPipeline((p) => (p === status ? '' : status))}
-            className={`card card-hover px-4 py-3.5 text-left transition ${
-              pipeline === status ? 'ring-2 ring-brand-500' : ''
-            }`}
-          >
-            <Badge tone={statusTone[status]}>{status}</Badge>
-            <p className="mt-2 font-display text-2xl font-extrabold">{n}</p>
-          </button>
-        ))}
+      <SalesInsights
+        rows={rows}
+        bookings={bookings}
+        team={team}
+        activeStatus={pipeline}
+        onPickStatus={(status) => setPipeline((p) => (p === status ? '' : status))}
+        actions={{
+          add: () => { setEditing(null); setFormOpen(true); },
+          importLeads: () => setImportOpen(true),
+          assign: () => setAssignFor(rows.filter((e) => e.owner === 'Unassigned').map((e) => e.id)),
+          broadcast: () => toast(`WhatsApp broadcast queued for ${rows.length} leads`),
+          exportCsv: () => toast('Use Export on the table below for a CSV of this view', 'info'),
+        }}
+      />
+
+      <div className="mt-6">
+        <h2 className="eyebrow mb-3">All leads</h2>
       </div>
 
       <DataTable

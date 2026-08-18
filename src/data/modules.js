@@ -58,9 +58,9 @@ export const plannedModules = [
   },
   {
     to: '/partners',
-    label: 'Partners',
+    label: 'Vendors',
     icon: Globe2,
-    blurb: 'Agents and resellers who bring you business.',
+    blurb: 'The vendors you buy from, and what you owe them.',
     points: ['Partner accounts and commission slabs', 'Bookings sourced per partner', 'Commission owed and paid', 'Partner login for their own leads'],
   },
   {

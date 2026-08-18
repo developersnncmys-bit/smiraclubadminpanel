@@ -7,14 +7,14 @@ const TYPES = ['Sub-agent', 'Corporate', 'Affiliate'];
 const STATUS = ['Active', 'On hold', 'Closed'];
 const tone = { Active: 'green', 'On hold': 'amber', Closed: 'slate' };
 
-/** Agents and resellers who bring business, and what they are owed. */
+/** The vendors the agency buys from, and what is still owed to them. */
 export default function Partners() {
   return (
     <RecordsPage
       collection="partners"
-      title="Partners"
-      subtitle="Agents and resellers who send you business"
-      addLabel="Add partner"
+      title="Vendors"
+      subtitle="The vendors you buy from, and what you owe them"
+      addLabel="Add vendor"
       searchKeys={['name', 'contact', 'city', 'phone']}
       filters={[
         { key: 'type', label: 'Type', options: TYPES },
@@ -23,7 +23,7 @@ export default function Partners() {
       initial={{ type: 'Sub-agent', status: 'Active', commission: 8 }}
       defaults={{ bookings: 0, sourced: 0, owed: 0, paid: 0 }}
       stats={(rows) => [
-        { label: 'Partners', value: rows.length, hint: `${rows.filter((r) => r.status === 'Active').length} active` },
+        { label: 'Vendors', value: rows.length, hint: `${rows.filter((r) => r.status === 'Active').length} active` },
         { label: 'Bookings sourced', value: rows.reduce((s, r) => s + Number(r.bookings || 0), 0) },
         { label: 'Business brought in', value: shortInr(rows.reduce((s, r) => s + Number(r.sourced || 0), 0)) },
         {
@@ -34,7 +34,7 @@ export default function Partners() {
         },
       ]}
       fields={[
-        { name: 'name', label: 'Partner name', type: 'text', required: true },
+        { name: 'name', label: 'Vendor name', type: 'text', required: true },
         { name: 'type', label: 'Type', type: 'select', options: TYPES },
         { name: 'contact', label: 'Contact person', type: 'text' },
         { name: 'phone', label: 'Phone', type: 'tel' },
@@ -45,7 +45,7 @@ export default function Partners() {
       columns={[
         {
           key: 'name',
-          header: 'Partner',
+          header: 'Vendor',
           render: (r) => (
             <div className="flex items-center gap-3">
               <Avatar name={r.name} size="sm" />

@@ -3,7 +3,7 @@
 // Same rule as the main dataset: fake, but internally consistent.
 // ---------------------------------------------------------------------------
 
-// -- Partners ---------------------------------------------------------------
+// -- Vendors (the client calls these partners) -------------------------------
 export const partners = [
   { id: 'PTR-01', name: 'Wanderlust Travels', type: 'Sub-agent', city: 'Nashik', contact: 'Nilesh Pawar', phone: '+91 98220 41155', commission: 8, bookings: 14, sourced: 1180000, owed: 42400, paid: 52000, status: 'Active' },
   { id: 'PTR-02', name: 'Skyline Corporate Desk', type: 'Corporate', city: 'Mumbai', contact: 'Farah Khan', phone: '+91 99674 22013', commission: 5, bookings: 22, sourced: 2640000, owed: 0, paid: 132000, status: 'Active' },
@@ -34,11 +34,12 @@ export const lifestyle = [
 
 // -- Automation rules -------------------------------------------------------
 export const automations = [
-  { id: 'AUT-01', name: 'Assign website enquiries by destination', trigger: 'New enquiry from Website', action: 'Assign to the destination specialist', runs: 46, lastRun: '04 Aug 2026', status: 'On' },
-  { id: 'AUT-02', name: 'Payment reminder before due date', trigger: 'Invoice due in 3 days', action: 'Send WhatsApp reminder to the customer', runs: 118, lastRun: '04 Aug 2026', status: 'On' },
-  { id: 'AUT-03', name: 'Birthday greeting', trigger: "Traveller's birthday", action: 'Send greeting with a member offer', runs: 74, lastRun: '03 Aug 2026', status: 'On' },
-  { id: 'AUT-04', name: 'Quote gone quiet', trigger: 'Quotation not viewed for 4 days', action: 'Create a follow-up task for the owner', runs: 31, lastRun: '02 Aug 2026', status: 'On' },
-  { id: 'AUT-05', name: 'Document chase before departure', trigger: '10 days before departure', action: 'Ask for passport and visa copies', runs: 22, lastRun: '01 Aug 2026', status: 'Off' },
+  { id: 'AUT-01', name: 'Ringing rules', description: 'Chase leads whose phone rang but nobody answered', trigger: 'Call ends without an answer', conditions: ['Enquiry status is New', 'Enquiry status is Contacted'], days: [{ day: 1, actions: ['Send WhatsApp: sorry we missed you'] }, { day: 3, actions: ['Create a call-back task for the owner'] }], runs: 2496, completed: 2496, errors: 0, leads: 2496, lastRun: 'a month ago', status: 'Active' },
+  { id: 'AUT-02', name: 'Not interested rules', description: 'Park leads that said no, and keep them for a later offer', trigger: 'Enquiry marked Lost', conditions: ['Reason is Not interested'], days: [{ day: 1, actions: ['Move to the nurture list'] }, { day: 30, actions: ['Send seasonal offer'] }], runs: 2200, completed: 2200, errors: 0, leads: 2200, lastRun: '22 days ago', status: 'Active' },
+  { id: 'AUT-03', name: 'Not valid number rules', description: 'Flag enquiries where the number does not connect', trigger: 'Call fails twice', conditions: ['Number is unreachable'], days: [{ day: 1, actions: ['Tag the enquiry Bad number', 'Ask the consultant to verify by email'] }], runs: 791, completed: 791, errors: 0, leads: 791, lastRun: 'a month ago', status: 'Active' },
+  { id: 'AUT-04', name: 'Interested rules', description: 'Move interested leads to a quotation quickly', trigger: 'Enquiry marked Interested', conditions: ['Budget is above 50,000'], days: [{ day: 1, actions: ['Create a quotation draft', 'Notify the assigned consultant'] }, { day: 2, actions: ['Send the itinerary on WhatsApp'] }], runs: 258, completed: 258, errors: 0, leads: 258, lastRun: 'a month ago', status: 'Active' },
+  { id: 'AUT-05', name: 'Silver member rules', description: 'Welcome new Silver members and hand over their gift', trigger: 'Membership signup received', conditions: ['Plan is Silver Explorer'], days: [{ day: 1, actions: ['Send the welcome message', 'Create a task to post the travel kit'] }], runs: 2, completed: 2, errors: 0, leads: 2, lastRun: 'a month ago', status: 'Active' },
+  { id: 'AUT-06', name: 'Payment reminder', description: 'Remind travellers before an invoice falls due', trigger: 'Invoice due in 3 days', conditions: ['Balance is above 0'], days: [{ day: 1, actions: ['Send WhatsApp payment reminder'] }, { day: 3, actions: ['Call the traveller', 'Notify accounts'] }], runs: 118, completed: 114, errors: 4, leads: 118, lastRun: 'yesterday', status: 'Draft' },
 ];
 
 // -- Notification rules -----------------------------------------------------
@@ -90,12 +91,14 @@ export const referrals = [
 
 // -- Website forms ----------------------------------------------------------
 export const forms = [
-  { id: 'FRM-01', name: 'Enquiry form', placement: 'Every package page', fields: 7, submissions: 168, routesTo: 'Sales & leads', spam: 12, status: 'Live' },
-  { id: 'FRM-02', name: 'Request a callback', placement: 'Header button', fields: 3, submissions: 94, routesTo: 'Sales & leads', spam: 8, status: 'Live' },
-  { id: 'FRM-03', name: 'Membership signup', placement: 'Pricing page', fields: 5, submissions: 41, routesTo: 'Membership', spam: 2, status: 'Live' },
-  { id: 'FRM-04', name: 'Newsletter', placement: 'Footer', fields: 1, submissions: 612, routesTo: 'Campaigns', spam: 46, status: 'Live' },
-  { id: 'FRM-05', name: 'Group tour interest', placement: 'Group tours page', fields: 6, submissions: 0, routesTo: 'Sales & leads', spam: 0, status: 'Draft' },
+  { id: 'FRM-01', name: 'Enquiry form', description: 'Main enquiry form on every package page', listName: 'Default lead list', responses: 168, lastResponse: '2 hours ago', createdBy: 'Dushyant Kale', createdOn: '12 Jun 2026', status: 'Live' },
+  { id: 'FRM-02', name: 'Request a callback', description: 'Short form behind the header button', listName: 'Callback list', responses: 94, lastResponse: 'yesterday', createdBy: 'Sneha Kulkarni', createdOn: '02 Jul 2026', status: 'Live' },
+  { id: 'FRM-03', name: 'Membership signup', description: 'Plan selection on the pricing page', listName: 'Membership list', responses: 41, lastResponse: '4 hours ago', createdBy: 'Dushyant Kale', createdOn: '18 Jul 2026', status: 'Live' },
+  { id: 'FRM-04', name: 'Newsletter', description: 'Footer email capture', listName: 'Newsletter list', responses: 612, lastResponse: '20 minutes ago', createdBy: 'Ritik Sharma', createdOn: '05 Mar 2026', status: 'Live' },
+  { id: 'FRM-05', name: 'Group tour interest', description: 'Enquiry form for group departures', listName: 'Default lead list', responses: 0, lastResponse: 'never', createdBy: 'Kabir Menon', createdOn: '01 Aug 2026', status: 'Draft' },
 ];
+
+export const formLists = ['Default lead list', 'Callback list', 'Membership list', 'Newsletter list'];
 
 // -- Blog -------------------------------------------------------------------
 export const blogs = [

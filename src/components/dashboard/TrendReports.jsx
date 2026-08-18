@@ -9,8 +9,10 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { Users, PhoneCall, Activity, IndianRupee, TrendingUp, Plus, X } from 'lucide-react';
+import { Users, PhoneCall, Activity, IndianRupee, TrendingUp, Plus, X, ArrowRight } from 'lucide-react';
+import Modal from '../ui/Modal.jsx';
 import { trends } from '../../data/mockData.js';
+import { reportCatalogue, allReports } from '../../data/reportCatalogue.js';
 
 const tabs = [
   { key: 'enquiries', label: 'Enquiries Trend', icon: Users },
@@ -43,19 +45,17 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-const REPORT_PRESETS = ['Team scorecard', 'Destination mix', 'Payment ageing', 'Source ROI'];
-
 export default function TrendReports() {
   const [tab, setTab] = useState('enquiries');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [reports, setReports] = useState(['Trends & Analytics']);
   const [activeReport, setActiveReport] = useState('Trends & Analytics');
   const data = trends[tab];
 
-  const addReport = () => {
-    const next = REPORT_PRESETS.find((r) => !reports.includes(r));
-    if (!next) return;
-    setReports((r) => [...r, next]);
-    setActiveReport(next);
+  const addReport = (name) => {
+    if (!reports.includes(name)) setReports((r) => [...r, name]);
+    setActiveReport(name);
+    setPickerOpen(false);
   };
 
   const closeReport = (name) => {
@@ -95,9 +95,8 @@ export default function TrendReports() {
           </span>
         ))}
         <button
-          onClick={addReport}
-          disabled={reports.length === REPORT_PRESETS.length + 1}
-          title="Add report"
+          onClick={() => setPickerOpen(true)}
+          title="Add a report"
           className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-dashed border-ink-900/15 text-ink-500 transition hover:border-brand-400 hover:text-brand-600 disabled:opacity-40"
         >
           <Plus size={16} />
@@ -112,9 +111,8 @@ export default function TrendReports() {
           <div>
             <h3 className="font-display text-base font-extrabold text-ink-900">{activeReport}</h3>
             <p className="mt-0.5 text-sm text-ink-500">
-              {activeReport === 'Trends & Analytics'
-                ? 'Visualise performance trends across enquiries, calls, activities and sales'
-                : `Custom report · connect this to your live data to populate ${activeReport.toLowerCase()}`}
+              {allReports.find((r) => r.name === activeReport)?.blurb ||
+                'Visualise performance trends across enquiries, calls, activities and sales'}
             </p>
           </div>
         </div>
@@ -201,6 +199,58 @@ export default function TrendReports() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      {/* Pick a report to pin as a tab */}
+      <Modal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title="Select report"
+        subtitle="Pin a report to the dashboard as its own tab"
+        size="xl"
+      >
+        <div className="space-y-7">
+          {reportCatalogue.map((group) => (
+            <div key={group.section}>
+              <h4 className="font-display text-sm font-extrabold text-ink-900">{group.section}</h4>
+              <div className="mt-1 h-px bg-ink-900/[0.07]" />
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {group.reports.map((r) => {
+                  const added = reports.includes(r.name);
+                  return (
+                    <button
+                      key={r.name}
+                      onClick={() => addReport(r.name)}
+                      className={`card card-hover flex flex-col overflow-hidden text-left ${
+                        added ? 'ring-1 ring-brand-600/30' : ''
+                      }`}
+                    >
+                      <span className={`h-1 w-full shrink-0 ${r.bar}`} />
+                      <span className="flex flex-1 flex-col p-4">
+                        <span className="flex items-start gap-3">
+                          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${r.tile}`}>
+                            <r.icon size={17} strokeWidth={2.2} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-display text-sm font-extrabold text-ink-900">
+                              {r.name}
+                            </span>
+                            <span className="mt-1 block text-xs leading-relaxed text-ink-500">
+                              {r.blurb}
+                            </span>
+                          </span>
+                        </span>
+                        <span className="mt-3 inline-flex items-center gap-1.5 self-end text-xs font-bold text-brand-700">
+                          {added ? 'Already added' : 'Click to view'} <ArrowRight size={12} />
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Modal>
     </section>
   );
 }

@@ -16,7 +16,14 @@ import {
 } from 'lucide-react';
 import { moduleByPath } from './modules.js';
 
-/** Pulls a planned module into the nav by its path. */
+/** A module that is built: same icon and label, no Soon badge. */
+const built = (path, label) => {
+  const m = moduleByPath[path];
+  if (!m) throw new Error(`No module for ${path}`);
+  return { to: m.to, label: label || m.label, icon: m.icon };
+};
+
+/** Pulls a still-to-build module into the nav by its path. */
 const planned = (path, label) => {
   const m = moduleByPath[path];
   if (!m) throw new Error(`No planned module for ${path}`);
@@ -38,25 +45,25 @@ export const navGroups = [
       { to: '/bookings', label: 'Booking', icon: CalendarCheck },
       { to: '/memberships', label: 'Membership', icon: Crown, badgeKey: 'memberships' },
       { to: '/customers', label: 'Members', icon: UserRound },
-      planned('/partners'),
+      built('/partners'),
       { to: '/reports', label: 'Report & Analytics', icon: PieChart },
-      planned('/inventory', 'Travel Inventory'),
-      planned('/lifestyle'),
-      planned('/automation'),
+      built('/inventory', 'Travel Inventory'),
+      built('/lifestyle'),
+      built('/automation'),
       { to: '/payments', label: 'Payment', icon: Wallet },
       planned('/cms', 'Website CMS'),
-      planned('/profile'),
-      planned('/notifications'),
+      built('/profile'),
+      built('/notifications'),
       { to: '/settings', label: 'Setting', icon: Settings },
-      planned('/offers', 'Offers & Promotions'),
-      planned('/roles', 'Users & Roles'),
-      planned('/rewards', 'Reward & Refer'),
+      built('/offers', 'Offers & Promotions'),
+      built('/roles', 'Users & Roles'),
+      built('/rewards', 'Reward & Refer'),
       planned('/ai', 'AI features'),
-      planned('/forms', 'Form'),
-      planned('/blogs'),
-      planned('/banners'),
-      planned('/seo'),
-      planned('/api'),
+      built('/forms', 'Form'),
+      built('/blogs'),
+      built('/banners'),
+      built('/seo'),
+      built('/api'),
     ],
   },
   {

@@ -17,8 +17,29 @@ import Campaigns from './pages/Campaigns.jsx';
 import Team from './pages/Team.jsx';
 import Reports from './pages/Reports.jsx';
 import Settings from './pages/Settings.jsx';
+import Partners from './pages/Partners.jsx';
+import Inventory from './pages/Inventory.jsx';
+import Lifestyle from './pages/Lifestyle.jsx';
+import Automation from './pages/Automation.jsx';
+import NotificationsPage from './pages/Notifications.jsx';
+import Offers from './pages/Offers.jsx';
+import Roles from './pages/Roles.jsx';
+import Rewards from './pages/Rewards.jsx';
+import Forms from './pages/Forms.jsx';
+import Blogs from './pages/Blogs.jsx';
+import Banners from './pages/Banners.jsx';
+import Seo from './pages/Seo.jsx';
+import ApiKeys from './pages/ApiKeys.jsx';
+import Profile from './pages/Profile.jsx';
 import Planned from './pages/Planned.jsx';
 import { plannedModules } from './data/modules.js';
+
+// Modules that now have a real page, so they skip the placeholder.
+const BUILT = [
+  '/partners', '/inventory', '/lifestyle', '/automation', '/notifications',
+  '/offers', '/roles', '/rewards', '/forms', '/blogs', '/banners', '/seo',
+  '/api', '/profile',
+];
 
 export default function App() {
   return (
@@ -47,10 +68,28 @@ export default function App() {
         <Route path="team" element={<Team />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
-        {/* Modules the client has scoped but we have not built yet */}
-        {plannedModules.map((m) => (
-          <Route key={m.to} path={m.to.slice(1)} element={<Planned />} />
-        ))}
+        {/* Modules built out from the client's product map */}
+        <Route path="partners" element={<Partners />} />
+        <Route path="inventory" element={<Inventory />} />
+        <Route path="lifestyle" element={<Lifestyle />} />
+        <Route path="automation" element={<Automation />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="offers" element={<Offers />} />
+        <Route path="roles" element={<Roles />} />
+        <Route path="rewards" element={<Rewards />} />
+        <Route path="forms" element={<Forms />} />
+        <Route path="blogs" element={<Blogs />} />
+        <Route path="banners" element={<Banners />} />
+        <Route path="seo" element={<Seo />} />
+        <Route path="api" element={<ApiKeys />} />
+        <Route path="profile" element={<Profile />} />
+
+        {/* Still to build — these fall through to the placeholder */}
+        {plannedModules
+          .filter((m) => !BUILT.includes(m.to))
+          .map((m) => (
+            <Route key={m.to} path={m.to.slice(1)} element={<Planned />} />
+          ))}
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

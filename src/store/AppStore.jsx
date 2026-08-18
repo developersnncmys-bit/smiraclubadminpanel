@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import * as seed from '../data/mockData.js';
+import * as extra from '../data/modulesData.js';
 
 /**
  * Single client-side store for the whole panel.
@@ -11,7 +12,7 @@ import * as seed from '../data/mockData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v10';
+const KEY = 'smira-club-admin:v11';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -29,6 +30,19 @@ const PREFIX = {
   team: 'USR',
   memberships: 'MEM',
   memberSignups: 'MSU',
+  partners: 'PTR',
+  inventory: 'INV',
+  lifestyle: 'LIF',
+  automations: 'AUT',
+  notificationRules: 'NTF',
+  offers: 'OFR',
+  roles: 'ROL',
+  referrals: 'REF',
+  forms: 'FRM',
+  blogs: 'BLG',
+  banners: 'BNR',
+  seoPages: 'SEO',
+  apiKeys: 'API',
 };
 
 export const SINGULAR = {
@@ -45,6 +59,19 @@ export const SINGULAR = {
   team: 'Team member',
   memberships: 'Membership plan',
   memberSignups: 'Membership signup',
+  partners: 'Partner',
+  inventory: 'Inventory block',
+  lifestyle: 'Add-on',
+  automations: 'Automation',
+  notificationRules: 'Notification rule',
+  offers: 'Offer',
+  roles: 'Role',
+  referrals: 'Referral',
+  forms: 'Form',
+  blogs: 'Post',
+  banners: 'Banner',
+  seoPages: 'SEO entry',
+  apiKeys: 'API key',
 };
 
 const seedState = () => ({
@@ -61,6 +88,19 @@ const seedState = () => ({
   team: seed.team,
   memberships: seed.memberships,
   memberSignups: seed.memberSignups,
+  partners: extra.partners,
+  inventory: extra.inventory,
+  lifestyle: extra.lifestyle,
+  automations: extra.automations,
+  notificationRules: extra.notificationRules,
+  offers: extra.offers,
+  roles: extra.roles,
+  referrals: extra.referrals,
+  forms: extra.forms,
+  blogs: extra.blogs,
+  banners: extra.banners,
+  seoPages: extra.seoPages,
+  apiKeys: extra.apiKeys,
   settings: {
     membership: { autoQuote: true, validityDays: 7 },
     agency: {

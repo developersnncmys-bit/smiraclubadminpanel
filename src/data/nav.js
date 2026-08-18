@@ -30,7 +30,10 @@ export const navGroups = [
   {
     section: 'Overview',
     items: [
+      // Team Status sits directly under Dashboard, the order on the client's
+      // sheet, so it is the second thing anyone sees.
       { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/team', label: 'Team Status', icon: UsersRound },
       { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
       planned('/alerts'),
     ],
@@ -81,9 +84,8 @@ export const navGroups = [
     items: [planned('/cms'), planned('/blogs'), planned('/banners'), planned('/seo'), planned('/forms')],
   },
   {
-    section: 'Team & reports',
+    section: 'Insights',
     items: [
-      { to: '/team', label: 'Team Status', icon: UsersRound },
       planned('/partners'),
       { to: '/reports', label: 'Reports & Analytics', icon: PieChart },
     ],

@@ -11,8 +11,9 @@ function NavList({ counts, onNavigate }) {
   return (
     <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-4">
       {visibleNavGroups.map((group, i) => (
-        <div key={group.section} className={i === 0 ? '' : 'mt-5'}>
-          <p className="eyebrow mb-1.5 px-3">{group.section}</p>
+        <div key={group.section || i} className={i === 0 ? '' : 'mt-5'}>
+          {/* A flat list has no section label */}
+          {group.section && <p className="eyebrow mb-1.5 px-3">{group.section}</p>}
 
           <div className="space-y-0.5">
             {group.items.map(({ to, label, icon: Icon, badgeKey, tag, planned }) => {

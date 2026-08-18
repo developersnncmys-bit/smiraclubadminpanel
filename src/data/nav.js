@@ -1,104 +1,69 @@
 import {
   LayoutDashboard,
+  UsersRound,
+  ListTodo,
   Users,
+  FileText,
   CalendarCheck,
-  Package,
   Crown,
   UserRound,
-  ListTodo,
-  FileText,
+  PieChart,
+  Package,
+  Building2,
   ReceiptIndianRupee,
   Wallet,
-  UsersRound,
-  PieChart,
   Settings,
 } from 'lucide-react';
 import { moduleByPath } from './modules.js';
 
 /** Pulls a planned module into the nav by its path. */
-const planned = (path) => {
+const planned = (path, label) => {
   const m = moduleByPath[path];
   if (!m) throw new Error(`No planned module for ${path}`);
-  return { to: m.to, label: m.label, icon: m.icon, planned: true };
+  return { to: m.to, label: label || m.label, icon: m.icon, planned: true };
 };
 
 /**
- * The client's product map, in the order they listed it. Pages marked
- * `planned` route to a placeholder that says the screen is not built yet.
+ * One flat list in the order of the client's sheet tabs — Dashboard, Team
+ * Status, Sales & Leads, Booking and so on. The four pages we built that
+ * their sheet does not name (Tasks, Quotations, Packages, Suppliers) sit
+ * directly after the tab they belong to, so the sequence still reads down
+ * the page the way the sheet reads across.
  */
 export const navGroups = [
   {
-    section: 'Overview',
+    section: '',
     items: [
-      // Team Status sits directly under Dashboard, the order on the client's
-      // sheet, so it is the second thing anyone sees.
       { to: '/', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/team', label: 'Team Status', icon: UsersRound },
       { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
-      planned('/alerts'),
-    ],
-  },
-  {
-    section: 'Sales & leads',
-    items: [
       { to: '/enquiries', label: 'Sales & Leads', icon: Users, badgeKey: 'enquiries' },
       { to: '/quotations', label: 'Quotations', icon: FileText },
-      { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
-    ],
-  },
-  {
-    section: 'Travel',
-    items: [
-      { to: '/packages', label: 'Packages', icon: Package },
-      planned('/inventory'),
-      { to: '/suppliers', label: 'Suppliers', icon: UsersRound },
-      planned('/lifestyle'),
-    ],
-  },
-  {
-    section: 'Membership',
-    items: [
-      { to: '/memberships', label: 'Membership Plans', icon: Crown, badgeKey: 'memberships' },
+      { to: '/bookings', label: 'Booking', icon: CalendarCheck },
+      { to: '/memberships', label: 'Membership', icon: Crown, badgeKey: 'memberships' },
       { to: '/customers', label: 'Members', icon: UserRound },
-      planned('/rewards'),
-    ],
-  },
-  {
-    section: 'Finance',
-    items: [
-      { to: '/invoices', label: 'Invoices', icon: ReceiptIndianRupee },
-      { to: '/payments', label: 'Payments', icon: Wallet },
-    ],
-  },
-  {
-    section: 'Engagement',
-    items: [
-      planned('/communication'),
-      planned('/support'),
-      planned('/offers'),
-      planned('/notifications'),
-    ],
-  },
-  {
-    section: 'Website',
-    items: [planned('/cms'), planned('/blogs'), planned('/banners'), planned('/seo'), planned('/forms')],
-  },
-  {
-    section: 'Insights',
-    items: [
       planned('/partners'),
-      { to: '/reports', label: 'Reports & Analytics', icon: PieChart },
-    ],
-  },
-  {
-    section: 'System',
-    items: [
+      { to: '/reports', label: 'Report & Analytics', icon: PieChart },
+      planned('/inventory'),
+      { to: '/packages', label: 'Packages', icon: Package },
+      { to: '/suppliers', label: 'Suppliers', icon: Building2 },
+      planned('/lifestyle'),
       planned('/automation'),
-      planned('/ai'),
-      planned('/roles'),
-      planned('/api'),
+      { to: '/invoices', label: 'Invoices', icon: ReceiptIndianRupee },
+      { to: '/payments', label: 'Payment', icon: Wallet },
+      planned('/cms'),
       planned('/profile'),
-      { to: '/settings', label: 'Settings', icon: Settings },
+      planned('/notifications'),
+      { to: '/settings', label: 'Setting', icon: Settings },
+      planned('/offers'),
+      planned('/roles'),
+      planned('/rewards'),
+      planned('/ai'),
+      planned('/forms', 'Form'),
+      planned('/blogs'),
+      planned('/banners'),
+      planned('/seo'),
+      planned('/api'),
     ],
   },
 ];

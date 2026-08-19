@@ -14,14 +14,29 @@ export const partners = [
 
 // -- Travel inventory -------------------------------------------------------
 export const inventory = [
-  { id: 'TIV-01', item: 'Ayana Resort — Bali', kind: 'Hotels', supplier: 'Bali Sunrise DMC', season: 'Sep – Nov 2026', held: 20, sold: 12, release: '15 Aug 2026', cost: 42000, status: 'Confirmed' },
-  { id: 'TIV-02', item: 'Atlantis The Palm — Dubai', kind: 'Hotels', supplier: 'Gulf Stays LLC', season: 'Oct – Dec 2026', held: 14, sold: 9, release: '20 Sep 2026', cost: 36500, status: 'Confirmed' },
-  { id: 'TIV-03', item: 'Bali Honeymoon Escape — 7D/6N', kind: 'Packages', supplier: 'Bali Sunrise DMC', season: 'Sep – Nov 2026', held: 25, sold: 18, release: '01 Sep 2026', cost: 68000, status: 'Confirmed' },
-  { id: 'TIV-04', item: 'Kerala Backwaters Family — 6D/5N', kind: 'Packages', supplier: 'Kerala Houseboat Collective', season: 'Aug – Oct 2026', held: 30, sold: 22, release: '10 Aug 2026', cost: 24500, status: 'Confirmed' },
-  { id: 'TIV-05', item: 'Private pool villa — Seminyak', kind: 'Villas', supplier: 'Bali Sunrise DMC', season: 'Sep – Dec 2026', held: 8, sold: 8, release: '05 Sep 2026', cost: 54000, status: 'Sold out' },
-  { id: 'TIV-06', item: 'Beach villa — Alibaug', kind: 'Villas', supplier: 'Konkan Retreats', season: 'All year', held: 6, sold: 2, release: '30 Aug 2026', cost: 28000, status: 'Provisional' },
-  { id: 'TIV-07', item: 'Airport lounge passes', kind: 'Lifestyle', supplier: 'DreamFolks', season: 'All year', held: 100, sold: 61, release: '—', cost: 800, status: 'Confirmed' },
-  { id: 'TIV-08', item: 'Schengen visa appointment slots', kind: 'Lifestyle', supplier: 'VFS partner desk', season: 'Sep – Nov 2026', held: 40, sold: 12, release: '25 Aug 2026', cost: 2700, status: 'Provisional' },
+  // Hotels — what the room is, what it costs a night, how many are free
+  { id: 'TIV-01', kind: 'Hotels', name: 'Ayana Resort & Spa', location: 'Jimbaran, Bali', stars: 5, roomType: 'Ocean view suite', mealPlan: 'Breakfast included', rooms: 20, booked: 12, price: 42000, supplier: 'Bali Sunrise DMC', status: 'Available' },
+  { id: 'TIV-02', kind: 'Hotels', name: 'Atlantis The Palm', location: 'Palm Jumeirah, Dubai', stars: 5, roomType: 'Deluxe king', mealPlan: 'Half board', rooms: 14, booked: 9, price: 36500, supplier: 'Gulf Stays LLC', status: 'Limited' },
+  { id: 'TIV-03', kind: 'Hotels', name: 'Taj Malabar', location: 'Willingdon Island, Kochi', stars: 5, roomType: 'Harbour view', mealPlan: 'Breakfast included', rooms: 18, booked: 6, price: 14500, supplier: 'Kerala Houseboat Collective', status: 'Available' },
+  { id: 'TIV-04', kind: 'Hotels', name: 'The Oberoi', location: 'Nariman Point, Mumbai', stars: 5, roomType: 'Premier sea view', mealPlan: 'Room only', rooms: 10, booked: 10, price: 28000, supplier: 'Direct contract', status: 'Sold out' },
+
+  // Packages — the trip itself: how long, what it costs a head, seats left
+  { id: 'TIV-05', kind: 'Packages', name: 'Bali Honeymoon Escape', location: 'Bali, Indonesia', days: 7, nights: 6, departure: '02 Sep 2026', seats: 25, booked: 18, price: 92500, supplier: 'Bali Sunrise DMC', status: 'Available' },
+  { id: 'TIV-06', kind: 'Packages', name: 'Kerala Backwaters Family', location: 'Kochi · Alleppey', days: 6, nights: 5, departure: '24 Aug 2026', seats: 30, booked: 22, price: 34500, supplier: 'Kerala Houseboat Collective', status: 'Limited' },
+  { id: 'TIV-07', kind: 'Packages', name: 'Dubai City & Desert', location: 'Dubai, UAE', days: 5, nights: 4, departure: '11 Sep 2026', seats: 24, booked: 9, price: 58900, supplier: 'Gulf Stays LLC', status: 'Available' },
+  { id: 'TIV-08', kind: 'Packages', name: 'Maldives Overwater Luxury', location: 'Malé, Maldives', days: 6, nights: 5, departure: '15 Sep 2026', seats: 12, booked: 12, price: 168000, supplier: 'Island Escapes DMC', status: 'Sold out' },
+
+  // Villas — bedrooms and how many people sleep there
+  { id: 'TIV-09', kind: 'Villas', name: 'Villa Seminyak — private pool', location: 'Seminyak, Bali', bedrooms: 3, guests: 6, price: 54000, nights: 1, supplier: 'Bali Sunrise DMC', status: 'Sold out', booked: 8, rooms: 8 },
+  { id: 'TIV-10', kind: 'Villas', name: 'Casa Alibaug — beachfront', location: 'Alibaug, Maharashtra', bedrooms: 4, guests: 10, price: 28000, nights: 1, supplier: 'Konkan Retreats', status: 'Available', booked: 2, rooms: 6 },
+  { id: 'TIV-11', kind: 'Villas', name: 'Coorg Estate Bungalow', location: 'Madikeri, Coorg', bedrooms: 3, guests: 8, price: 18500, nights: 1, supplier: 'Western Ghats Stays', status: 'Available', booked: 3, rooms: 5 },
+  { id: 'TIV-12', kind: 'Villas', name: 'Lakeview Villa — Udaipur', location: 'Udaipur, Rajasthan', bedrooms: 5, guests: 12, price: 46000, nights: 1, supplier: 'Rajasthan Heritage Homes', status: 'Limited', booked: 3, rooms: 4 },
+
+  // Lifestyle — the extras, and who provides them
+  { id: 'TIV-13', kind: 'Lifestyle', name: 'Airport lounge pass', category: 'Lounge', location: 'All Indian airports', price: 1200, rooms: 100, booked: 61, supplier: 'DreamFolks', status: 'Available' },
+  { id: 'TIV-14', kind: 'Lifestyle', name: 'Schengen visa filing', category: 'Visa', location: 'Mumbai centre', price: 4500, rooms: 40, booked: 12, supplier: 'VFS partner desk', status: 'Available' },
+  { id: 'TIV-15', kind: 'Lifestyle', name: 'Private airport transfer', category: 'Transfer', location: 'Dubai', price: 3200, rooms: 30, booked: 24, supplier: 'Gulf Transfers LLC', status: 'Limited' },
+  { id: 'TIV-16', kind: 'Lifestyle', name: 'Candlelight beach dinner', category: 'Experience', location: 'Jimbaran, Bali', price: 8500, rooms: 20, booked: 17, supplier: 'Bali Sunrise DMC', status: 'Limited' },
 ];
 
 // -- Lifestyle add-ons ------------------------------------------------------

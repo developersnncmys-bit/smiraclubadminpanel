@@ -38,7 +38,7 @@ const MARKERS = {
   '/settings': 'Settings',
   '/tasks': 'Tasks',
   '/partners': 'The vendors you buy from',
-  '/inventory': 'Travel Inventory',
+  '/inventory': 'Everything the agency sells',
   '/lifestyle': 'Add-ons sold alongside a trip',
   '/automation': 'Automation rules',
   '/notifications': 'What the panel tells the team',

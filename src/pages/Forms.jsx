@@ -189,6 +189,7 @@ export default function Forms() {
             ]}
             exportName="smira-club-forms"
             emptyLabel="No forms match this view"
+        defaultView="cards"
             onRowClick={openEdit}
           />
         </>

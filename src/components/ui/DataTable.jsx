@@ -9,6 +9,8 @@ import {
   Download,
   Inbox,
   X,
+  LayoutGrid,
+  Rows3,
 } from 'lucide-react';
 import { downloadCsv } from '../../lib/csv.js';
 
@@ -32,6 +34,7 @@ export default function DataTable({
   emptyLabel = 'Nothing here yet',
   externalFilter = {},
   onClearExternal,
+  defaultView = 'table',
 }) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState({});
@@ -39,6 +42,7 @@ export default function DataTable({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [selected, setSelected] = useState([]);
+  const [view, setView] = useState(defaultView);
 
   // Rows can disappear after a delete — drop them from the selection too.
   useEffect(() => {
@@ -123,6 +127,26 @@ export default function DataTable({
             )}
           </button>
         )}
+
+        {/* Cards read better for a handful of rich records; the table wins
+            when you want to compare many rows at a glance. */}
+        <div className="flex shrink-0 items-center rounded-lg border border-ink-900/10 bg-white p-0.5 shadow-xs">
+          {[
+            { key: 'cards', icon: LayoutGrid, label: 'Card view' },
+            { key: 'table', icon: Rows3, label: 'Table view' },
+          ].map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              onClick={() => setView(key)}
+              title={label}
+              className={`grid h-8 w-8 place-items-center rounded-md transition ${
+                view === key ? 'bg-brand-50 text-brand-700' : 'text-ink-400 hover:text-ink-700'
+              }`}
+            >
+              <Icon size={15} />
+            </button>
+          ))}
+        </div>
 
         <button className="btn-ghost py-2" onClick={() => downloadCsv(exportName, filtered, columns)}>
           <Download size={15} /> Export
@@ -240,7 +264,49 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Table */}
+      {view === 'cards' ? (
+        <div className="grid gap-4 p-4 sm:grid-cols-2 2xl:grid-cols-3">
+          {slice.map((row) => {
+            const [lead, ...rest] = columns.filter((c) => c.key !== 'actions');
+            const actions = columns.find((c) => c.key === 'actions');
+            return (
+              <article
+                key={row.id}
+                onClick={() => onRowClick?.(row)}
+                className={`card flex flex-col p-4 ${onRowClick ? 'card-hover cursor-pointer' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">{lead?.render ? lead.render(row) : row[lead?.key]}</div>
+                  {actions && (
+                    <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {actions.render(row)}
+                    </div>
+                  )}
+                </div>
+
+                <dl className="mt-4 grid flex-1 grid-cols-2 gap-x-4 gap-y-3 border-t border-ink-900/[0.07] pt-3.5">
+                  {rest.map((c) => (
+                    <div key={c.key} className="min-w-0">
+                      <dt className="eyebrow truncate">{c.header}</dt>
+                      <dd className="mt-1 text-sm text-ink-800">
+                        {c.render ? c.render(row) : (row[c.key] ?? '—')}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </article>
+            );
+          })}
+
+          {slice.length === 0 && (
+            <div className="col-span-full px-5 py-16 text-center">
+              <Inbox size={30} className="mx-auto mb-3 text-ink-400" />
+              <p className="text-sm font-semibold text-ink-600">{emptyLabel}</p>
+              <p className="mt-1 text-xs text-ink-400">Try clearing the search or filters.</p>
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="overflow-x-auto">
         <table className="w-full min-w-[820px] border-collapse">
           <thead className="sticky top-0 z-10 bg-surface-soft/95 backdrop-blur">
@@ -307,6 +373,7 @@ export default function DataTable({
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Pagination */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-900/[0.07] bg-surface-soft/40 px-5 py-3">

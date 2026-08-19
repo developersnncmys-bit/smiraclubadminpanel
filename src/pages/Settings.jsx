@@ -15,11 +15,13 @@ import Badge from '../components/ui/Badge.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
 
+// Integrations and Plan & billing are hidden at the client's request; their
+// panels are still below, so dropping the hidden flag brings them back.
 const tabs = [
   { key: 'agency', label: 'Agency profile', icon: Building2 },
   { key: 'notifications', label: 'Notifications', icon: Bell },
-  { key: 'integrations', label: 'Integrations', icon: Plug },
-  { key: 'billing', label: 'Plan & billing', icon: CreditCard },
+  { key: 'integrations', label: 'Integrations', icon: Plug, hidden: true },
+  { key: 'billing', label: 'Plan & billing', icon: CreditCard, hidden: true },
   { key: 'security', label: 'Security', icon: ShieldCheck },
 ];
 
@@ -83,7 +85,7 @@ export default function Settings() {
 
       <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
         <nav className="card h-fit p-2">
-          {tabs.map(({ key, label, icon: Icon }) => (
+          {tabs.filter((t) => !t.hidden).map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}

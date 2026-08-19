@@ -106,6 +106,7 @@ export default function RecordsPage({
         filters={filters}
         exportName={exportName || `smira-club-${collection}`}
         emptyLabel={emptyLabel}
+        defaultView="cards"
         onRowClick={openEdit}
       />
 

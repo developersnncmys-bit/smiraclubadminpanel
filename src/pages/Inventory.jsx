@@ -312,6 +312,7 @@ export default function Inventory() {
         filters={[{ key: 'status', label: 'Status', options: STATUS }]}
         exportName={`smira-club-${tab.toLowerCase()}`}
         emptyLabel={`No ${tab.toLowerCase()} yet`}
+        defaultView="cards"
         onRowClick={(r) => {
           setEditing(r);
           setFormOpen(true);

@@ -278,6 +278,7 @@ export default function Automation() {
         filters={[{ key: 'status', label: 'Status', options: STATUS }]}
         exportName="smira-club-automation-rules"
         emptyLabel="No automation rules yet"
+        defaultView="cards"
         onRowClick={openEdit}
       />
 

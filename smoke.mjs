@@ -23,7 +23,7 @@ const ROUTES = [
 // redirect to /login cannot pass as success.
 const MARKERS = {
   '/': 'Business reports',
-  '/enquiries': 'Add enquiry',
+  '/enquiries': 'Sales overview',
   '/quotations': 'New quotation',
   '/bookings': 'Bookings',
   '/packages': 'Create package',
@@ -34,7 +34,7 @@ const MARKERS = {
   '/customers': 'Add customer',
   '/team': 'Heavy workload',
   '/campaigns': 'Campaigns',
-  '/reports': 'Lead analytics',
+  '/reports': 'Booked against collected',
   '/settings': 'Settings',
   '/tasks': 'Tasks',
   '/partners': 'The vendors you buy from',

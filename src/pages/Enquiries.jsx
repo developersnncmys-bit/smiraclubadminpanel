@@ -11,6 +11,9 @@ import {
   Trash2,
   UserCheck,
   Tag,
+  LayoutGrid,
+  Rows3,
+  X,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -21,8 +24,10 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import LeadDetails from '../components/sales/LeadDetails.jsx';
+import SalesOverview from '../components/sales/SalesOverview.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, inr } from '../data/mockData.js';
+import { downloadCsv } from '../lib/csv.js';
 
 const SOURCES = ['Instagram', 'Website', 'Google Ads', 'Referral', 'Walk-in', 'WhatsApp'];
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
@@ -32,7 +37,7 @@ const digits = (phone) => String(phone).replace(/[^\d]/g, '');
 export default function Enquiries() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { enquiries, team, owner, create, update, updateMany, remove, toast } = useApp();
+  const { enquiries, bookings, team, owner, create, update, updateMany, remove, toast } = useApp();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -41,6 +46,8 @@ export default function Enquiries() {
   const [assignFor, setAssignFor] = useState(null); // ids awaiting an owner
   const [statusFor, setStatusFor] = useState(null);
   const [viewing, setViewing] = useState(null); // the lead panel
+  const [view, setView] = useState('leads'); // 'leads' | 'overview'
+  const [stage, setStage] = useState(null); // funnel stage the list is pinned to
 
   // A ?new=1 deep link opens the create form straight away.
   useEffect(() => {
@@ -53,6 +60,38 @@ export default function Enquiries() {
   }, [params, setParams]);
 
   const rows = byOwner(enquiries, owner);
+  const listRows = stage ? rows.filter((e) => e.status === stage) : rows;
+
+  // The funnel hands the list a stage; the list says so and can drop it.
+  const openStage = (status) => {
+    setStage(status);
+    setView('leads');
+  };
+
+  const quickActions = {
+    add: () => { setEditing(null); setFormOpen(true); },
+    importLeads: () => setImportOpen(true),
+    assign: () => {
+      const ids = rows.filter((e) => e.owner === 'Unassigned').map((e) => e.id);
+      if (!ids.length) return toast('Every lead already has an owner', 'info');
+      setAssignFor(ids);
+    },
+    broadcast: () => toast('WhatsApp blast goes out with the messaging work', 'info'),
+    showList: () => { setStage(null); setView('leads'); },
+    exportLeads: () =>
+      downloadCsv('smira-club-enquiries', rows, [
+        { key: 'id', header: 'Enquiry' },
+        { key: 'name', header: 'Client' },
+        { key: 'phone', header: 'Phone' },
+        { key: 'destination', header: 'Destination' },
+        { key: 'pax', header: 'Travellers' },
+        { key: 'budget', header: 'Budget' },
+        { key: 'status', header: 'Status' },
+        { key: 'source', header: 'Source' },
+        { key: 'owner', header: 'Owner' },
+      ]),
+  };
+
   const owners = ['Unassigned', ...team.filter((t) => t.bookings > 0).map((t) => t.name.split(' ')[0])];
 
   const fields = [
@@ -199,7 +238,14 @@ export default function Enquiries() {
 
   return (
     <>
-      <PageHeader title="Sales & Leads" subtitle={`${rows.length} enquiries in your pipeline`}>
+      <PageHeader
+        title="Sales & Leads"
+        subtitle={
+          view === 'leads'
+            ? `${rows.length} enquiries in your pipeline`
+            : "Every sales block on one board"
+        }
+      >
         <button className="btn-ghost" onClick={() => setImportOpen(true)}>
           <Upload size={16} /> Import
         </button>
@@ -214,9 +260,50 @@ export default function Enquiries() {
         </button>
       </PageHeader>
 
+      {/* Two ways to look at the same leads */}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        {[
+          { key: 'leads', label: 'Leads', icon: Rows3, count: rows.length },
+          { key: 'overview', label: 'Sales overview', icon: LayoutGrid },
+        ].map((v) => (
+          <button
+            key={v.key}
+            onClick={() => setView(v.key)}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+              view === v.key
+                ? 'bg-ink-900 text-white shadow-sm'
+                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
+            }`}
+          >
+            <v.icon size={15} /> {v.label}
+            {v.count != null && (
+              <span className={`num ${view === v.key ? 'text-white/60' : 'text-ink-400'}`}>{v.count}</span>
+            )}
+          </button>
+        ))}
+
+        {stage && view === 'leads' && (
+          <button className="chip border-brand-600 bg-brand-50 text-brand-700" onClick={() => setStage(null)}>
+            Stage: {stage} <X size={13} />
+          </button>
+        )}
+      </div>
+
+      {view === 'overview' && (
+        <SalesOverview
+          rows={rows}
+          bookings={bookings}
+          team={team}
+          onPickStatus={openStage}
+          onOpen={(lead) => setViewing(lead)}
+          actions={quickActions}
+        />
+      )}
+
+      {view === 'leads' && (
       <DataTable
         columns={columns}
-        rows={rows}
+        rows={listRows}
         searchKeys={['name', 'phone', 'email', 'destination', 'id']}
         searchPlaceholder="Search by name, phone, email or destination…"
         filters={[
@@ -234,6 +321,7 @@ export default function Enquiries() {
           { label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) },
         ]}
       />
+      )}
 
       <FormModal
         open={formOpen}

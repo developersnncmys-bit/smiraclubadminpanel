@@ -14,7 +14,6 @@ import SourceDonut from '../components/dashboard/SourceDonut.jsx';
 import TopDestinations from '../components/dashboard/TopDestinations.jsx';
 import { inr, shortInr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
-import SalesInsights from '../components/sales/SalesInsights.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 
 // No month-by-month history in the demo store, so the trend is seeded.
@@ -36,7 +35,7 @@ const tooltipStyle = {
 };
 
 export default function Reports() {
-  const { enquiries, bookings, invoices, team, owner, range, toast } = useApp();
+  const { enquiries, bookings, invoices, owner, range, toast } = useApp();
 
   const scopedEnquiries = byOwner(enquiries, owner);
   const scopedBookings = byOwner(bookings, owner);
@@ -189,15 +188,6 @@ export default function Reports() {
         <TopDestinations />
       </div>
 
-      {/* The sales blocks the client listed — the lead table itself stays on Sales & Leads. */}
-      <div className="mt-8">
-        <p className="eyebrow">Sales and leads</p>
-        <h2 className="mt-1 font-display text-lg font-extrabold text-ink-900">Lead analytics</h2>
-        <p className="mb-4 mt-0.5 text-sm text-ink-500">
-          Funnel, sources, team and follow-ups for the same period
-        </p>
-        <SalesInsights rows={scopedEnquiries} bookings={scopedBookings} team={team} />
-      </div>
     </>
   );
 }

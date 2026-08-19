@@ -9,18 +9,19 @@ import {
   Send,
   AlertTriangle,
   Trophy,
-  ClipboardList,
+  Search,
+  Download,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
-import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import RowMenu from '../components/ui/RowMenu.jsx';
-import Modal from '../components/ui/Modal.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
+import MemberDetails from '../components/team/MemberDetails.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr } from '../data/mockData.js';
+import { downloadCsv } from '../lib/csv.js';
 
 const ROLES = [
   'Owner',
@@ -46,25 +47,50 @@ function workloadOf(m) {
   return { label: 'Free', tone: 'slate' };
 }
 
-const num = (v) => <span className="num font-semibold text-ink-800">{v ?? 0}</span>;
+/** Thin progress line used twice on every card. */
+function Line({ pct, tone = 'bg-brand-500' }) {
+  return (
+    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-soft">
+      <div
+        className={`h-full rounded-full transition-all ${tone}`}
+        style={{ width: `${Math.min(pct, 100)}%` }}
+      />
+    </div>
+  );
+}
+
+/** One counter in the card's activity strip. */
+function Tick({ label, value, alert }) {
+  return (
+    <div className="text-center">
+      <p className={`num font-display text-lg font-extrabold ${alert ? 'text-rose-600' : 'text-ink-900'}`}>
+        {value ?? 0}
+      </p>
+      <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-400">{label}</p>
+    </div>
+  );
+}
 
 /**
- * Team Status as the client keeps it — every column from their sheet, in
- * their order, on one scrollable table. The tasks column opens the person's
- * task list rather than trying to fit it in a cell.
+ * Team status as a board of people rather than a nineteen-column table.
+ * Each card carries the live picture; the panel behind it holds the rest of
+ * the client's sheet — activity, targets, productivity and their task list.
  */
 export default function Team() {
   const { team, tasks, create, update, remove, toast } = useApp();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
-  const [tasksFor, setTasksFor] = useState(null);
+  const [viewing, setViewing] = useState(null);
+  const [query, setQuery] = useState('');
+  const [lens, setLens] = useState('All');
 
   // Ranking follows revenue rather than being stored.
   const ranked = [...team]
     .filter((m) => Number(m.revenue || 0) > 0)
     .sort((a, b) => b.revenue - a.revenue)
     .map((m) => m.id);
+  const rankOf = (m) => ranked.indexOf(m.id) + 1;
 
   const tasksOf = (m) => tasks.filter((t) => t.owner === m.name.split(' ')[0]);
 
@@ -75,6 +101,61 @@ export default function Team() {
     0
   );
   const teamAlerts = team.reduce((s, m) => s + Number(m.alerts || 0), 0);
+
+  const lenses = [
+    { key: 'All', label: 'Everyone', count: team.length },
+    { key: 'Online', label: 'Online', count: online },
+    { key: 'Present', label: 'Present today', count: present },
+    { key: 'Alerts', label: 'Needs attention', count: team.filter((m) => m.alerts > 0).length },
+    { key: 'Heavy', label: 'Heavy workload', count: team.filter((m) => workloadOf(m).label === 'Heavy').length },
+  ];
+
+  const matches = (m) => {
+    if (lens === 'Online' && m.live !== 'Online') return false;
+    if (lens === 'Present' && m.attendance !== 'Present') return false;
+    if (lens === 'Alerts' && !(m.alerts > 0)) return false;
+    if (lens === 'Heavy' && workloadOf(m).label !== 'Heavy') return false;
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return [m.name, m.role, m.email, m.phone, m.activity].some((v) =>
+      String(v || '').toLowerCase().includes(q)
+    );
+  };
+
+  const rows = team.filter(matches);
+
+  const exportTeam = () =>
+    downloadCsv(
+      'smira-club-team-status',
+      team.map((m) => ({
+        ...m,
+        tasks: `${m.tasksDone}/${m.tasksTotal}`,
+        workload: workloadOf(m).label,
+        rank: rankOf(m) || '',
+        achievement: m.target ? `${Math.round((m.revenue / m.target) * 100)}%` : '',
+      })),
+      [
+        { key: 'name', header: 'Member' },
+        { key: 'role', header: 'Role' },
+        { key: 'live', header: 'Live status' },
+        { key: 'attendance', header: 'Attendance' },
+        { key: 'activity', header: 'Current activity' },
+        { key: 'lastActive', header: 'Last active' },
+        { key: 'tasks', header: "Today's tasks" },
+        { key: 'leads', header: 'Lead workload' },
+        { key: 'followUps', header: 'Follow-ups' },
+        { key: 'calls', header: 'Calls' },
+        { key: 'presentations', header: 'Presentations' },
+        { key: 'visits', header: 'Customer visits' },
+        { key: 'bookings', header: 'Sales / closings' },
+        { key: 'revenue', header: 'Revenue' },
+        { key: 'achievement', header: 'Target vs achievement' },
+        { key: 'productivity', header: 'Productivity score' },
+        { key: 'alerts', header: 'Alerts' },
+        { key: 'rank', header: 'Team ranking' },
+        { key: 'workload', header: 'Workload level' },
+      ]
+    );
 
   const fields = [
     { name: 'name', label: 'Full name', type: 'text', required: true },
@@ -101,221 +182,18 @@ export default function Team() {
       });
   };
 
-  // Columns follow the client's sheet, left to right.
-  const columns = [
-    {
-      key: 'name',
-      header: 'Member',
-      className: 'whitespace-nowrap',
-      render: (m) => (
-        <div className="flex items-center gap-3">
-          <span className="relative shrink-0">
-            <Avatar name={m.name} size="sm" />
-            <span
-              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-white ${
-                liveDot[m.live] || liveDot.Offline
-              }`}
-            />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-bold text-ink-900">{m.name}</p>
-            <p className="truncate text-xs text-ink-500">{m.role}</p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'live',
-      header: 'Live status',
-      render: (m) => (
-        <span className="inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-ink-700">
-          <span className={`h-2 w-2 rounded-full ${liveDot[m.live] || liveDot.Offline}`} />
-          {m.live}
-        </span>
-      ),
-    },
-    {
-      key: 'attendance',
-      header: 'Attendance',
-      render: (m) => <Badge tone={attendanceTone[m.attendance] || 'slate'}>{m.attendance}</Badge>,
-    },
-    {
-      key: 'activity',
-      header: 'Current activity',
-      render: (m) => (
-        <p className="max-w-[220px] truncate text-sm text-ink-700" title={m.activity}>
-          {m.activity || '—'}
-        </p>
-      ),
-    },
-    {
-      key: 'lastActive',
-      header: 'Last active',
-      render: (m) => <span className="whitespace-nowrap text-sm text-ink-500">{m.lastActive}</span>,
-    },
-    {
-      key: 'tasksDone',
-      header: "Today's tasks",
-      csv: (m) => `${m.tasksDone}/${m.tasksTotal}`,
-      render: (m) => {
-        const pct = m.tasksTotal ? Math.round((m.tasksDone / m.tasksTotal) * 100) : 0;
-        return (
-          <div className="w-[92px]">
-            <p className="num text-sm font-semibold text-ink-800">
-              {m.tasksDone}/{m.tasksTotal}
-            </p>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-soft">
-              <div className="h-full rounded-full bg-brand-500" style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        );
-      },
-    },
-    { key: 'leads', header: 'Lead workload', render: (m) => num(m.leads) },
-    { key: 'followUps', header: 'Follow-ups', render: (m) => num(m.followUps) },
-    { key: 'calls', header: 'Calls', render: (m) => num(m.calls) },
-    { key: 'presentations', header: 'Presentations', render: (m) => num(m.presentations) },
-    { key: 'visits', header: 'Customer visits', render: (m) => num(m.visits) },
-    {
-      key: 'bookings',
-      header: 'Sales / closings',
-      render: (m) => <span className="num font-bold text-ink-900">{m.bookings ?? 0}</span>,
-    },
-    {
-      key: 'revenue',
-      header: 'Revenue',
-      render: (m) => (
-        <span className="num whitespace-nowrap font-bold text-brand-700">
-          {m.revenue ? inr(m.revenue) : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'target',
-      header: 'Target vs achievement',
-      csv: (m) => (m.target ? `${Math.round((m.revenue / m.target) * 100)}%` : ''),
-      render: (m) => {
-        if (!m.target) return <span className="text-ink-400">No target</span>;
-        const pct = Math.round((m.revenue / m.target) * 100);
-        return (
-          <div className="w-[140px]">
-            <p className="flex items-baseline justify-between gap-2 text-xs">
-              <span className="num font-bold text-ink-900">{pct}%</span>
-              <span className="text-ink-500">of {shortInr(m.target)}</span>
-            </p>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-soft">
-              <div
-                className={`h-full rounded-full ${pct >= 100 ? 'bg-emerald-500' : 'bg-brand-500'}`}
-                style={{ width: `${Math.min(pct, 100)}%` }}
-              />
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      key: 'productivity',
-      header: 'Productivity',
-      render: (m) => (
-        <Badge tone={m.productivity >= 80 ? 'green' : m.productivity >= 60 ? 'amber' : 'slate'}>
-          {m.productivity ?? 0}
-        </Badge>
-      ),
-    },
-    {
-      key: 'alerts',
-      header: 'Alerts',
-      render: (m) =>
-        m.alerts > 0 ? (
-          <Badge tone="rose" dot>
-            <AlertTriangle size={11} /> {m.alerts}
-          </Badge>
-        ) : (
-          <span className="text-ink-400">—</span>
-        ),
-    },
-    {
-      key: 'rank',
-      header: 'Team ranking',
-      csv: (m) => (ranked.indexOf(m.id) >= 0 ? `#${ranked.indexOf(m.id) + 1}` : ''),
-      render: (m) => {
-        const i = ranked.indexOf(m.id);
-        if (i < 0) return <span className="text-ink-400">—</span>;
-        return i === 0 ? (
-          <Badge tone="amber">
-            <Trophy size={11} /> #1
-          </Badge>
-        ) : (
-          <span className="num font-bold text-ink-700">#{i + 1}</span>
-        );
-      },
-    },
-    {
-      key: 'workload',
-      header: 'Workload level',
-      csv: (m) => workloadOf(m).label,
-      render: (m) => {
-        const w = workloadOf(m);
-        return <Badge tone={w.tone}>{w.label}</Badge>;
-      },
-    },
-    {
-      key: 'tasks',
-      header: 'Tasks',
-      csv: (m) => tasksOf(m).length,
-      render: (m) => {
-        const list = tasksOf(m);
-        return (
-          <button
-            onClick={() => setTasksFor(m)}
-            disabled={list.length === 0}
-            className="btn-ghost btn-sm whitespace-nowrap disabled:opacity-40"
-          >
-            <ClipboardList size={13} /> {list.length ? `View ${list.length}` : 'None'}
-          </button>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      header: 'Quick actions',
-      render: (m) => (
-        <div className="flex justify-end gap-1.5">
-          <a href={`tel:${digits(m.phone)}`} title="Call" className="icon-btn hover:border-emerald-400 hover:text-emerald-600">
-            <Phone size={14} />
-          </a>
-          <a
-            href={`https://wa.me/${digits(m.phone)}`}
-            target="_blank"
-            rel="noreferrer"
-            title="WhatsApp"
-            className="icon-btn hover:border-emerald-400 hover:text-emerald-600"
-          >
-            <MessageCircle size={14} />
-          </a>
-          <RowMenu
-            items={[
-              { label: 'Edit member', icon: Pencil, onClick: () => { setEditing(m); setFormOpen(true); } },
-              ...(m.status === 'Invited'
-                ? [{ label: 'Resend invite', icon: Send, onClick: () => toast(`Invite resent to ${m.email}`) }]
-                : []),
-              {
-                label: m.status === 'Disabled' ? 'Enable access' : 'Disable access',
-                icon: ShieldCheck,
-                onClick: () =>
-                  update('team', m.id, { status: m.status === 'Disabled' ? 'Active' : 'Disabled' }),
-              },
-              { label: 'Remove', icon: Trash2, danger: true, onClick: () => setConfirm(m) },
-            ]}
-          />
-        </div>
-      ),
-    },
-  ];
+  const openEdit = (m) => {
+    setViewing(null);
+    setEditing(m);
+    setFormOpen(true);
+  };
 
   return (
     <>
       <PageHeader title="Team status" subtitle="Who is on, what they are doing, and how they are tracking">
+        <button className="btn-ghost" onClick={exportTeam}>
+          <Download size={16} /> Export
+        </button>
         <button
           className="btn-primary"
           onClick={() => {
@@ -327,7 +205,7 @@ export default function Team() {
         </button>
       </PageHeader>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: 'Online now', value: `${online} of ${team.length}`, tone: 'text-emerald-700' },
           { label: 'Present today', value: present, tone: 'text-ink-900' },
@@ -341,61 +219,204 @@ export default function Team() {
         ))}
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={team}
-        selectable={false}
-        pageSize={10}
-        searchKeys={['name', 'email', 'phone', 'role', 'activity']}
-        searchPlaceholder="Search the team…"
-        filters={[
-          { key: 'live', label: 'Live status', options: LIVE },
-          { key: 'attendance', label: 'Attendance', options: ATTENDANCE },
-          { key: 'role', label: 'Role', options: ROLES },
-        ]}
-        exportName="smira-club-team-status"
-        emptyLabel="No team members match this view"
-      />
+      {/* Search on the left, the five ways the desk looks at itself on the right */}
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[220px] flex-1">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <input
+            className="input pl-10"
+            placeholder="Search the team…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {lenses.map((l) => (
+            <button
+              key={l.key}
+              onClick={() => setLens(l.key)}
+              className={`chip ${
+                lens === l.key
+                  ? 'border-brand-600 bg-brand-50 text-brand-700'
+                  : 'text-ink-600 hover:text-ink-900'
+              }`}
+            >
+              {l.label}
+              <span className="num ml-1.5 text-ink-400">{l.count}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* That person's task list */}
-      <Modal
-        open={Boolean(tasksFor)}
-        onClose={() => setTasksFor(null)}
-        title={tasksFor ? `${tasksFor.name.split(' ')[0]}'s tasks` : ''}
-        subtitle={tasksFor ? `${tasksOf(tasksFor).length} on their list` : ''}
-        size="md"
-        footer={
-          <button className="btn-ghost" onClick={() => setTasksFor(null)}>
-            Close
-          </button>
-        }
-      >
-        {tasksFor && (
-          <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-            {tasksOf(tasksFor).map((t) => (
-              <li key={t.id} className="px-4 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-ink-900">{t.title}</p>
-                    <p className="mt-0.5 text-xs text-ink-500">
-                      {t.customer} · due {t.due}
-                    </p>
+      {/* One card per person */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+        {rows.map((m) => {
+          const w = workloadOf(m);
+          const rank = rankOf(m);
+          const taskPct = m.tasksTotal ? Math.round((m.tasksDone / m.tasksTotal) * 100) : 0;
+          const targetPct = m.target ? Math.round((m.revenue / m.target) * 100) : 0;
+          return (
+            <article
+              key={m.id}
+              onClick={() => setViewing(m)}
+              className="card cursor-pointer p-5 transition hover:-translate-y-0.5 hover:shadow-lift"
+            >
+              {/* Who, and what they are on */}
+              <div className="flex items-start gap-3">
+                <span className="relative shrink-0">
+                  <Avatar name={m.name} />
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-2 ring-white ${
+                      liveDot[m.live] || liveDot.Offline
+                    }`}
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-display text-base font-extrabold text-ink-900">
+                        {m.name}
+                      </p>
+                      <p className="truncate text-sm text-ink-500">{m.role}</p>
+                    </div>
+                    <div
+                      className="flex shrink-0 items-center gap-1.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {rank === 1 && (
+                        <Badge tone="amber">
+                          <Trophy size={11} /> #1
+                        </Badge>
+                      )}
+                      <a href={`tel:${digits(m.phone)}`} title="Call" className="icon-btn h-8 w-8">
+                        <Phone size={14} />
+                      </a>
+                      <a
+                        href={`https://wa.me/${digits(m.phone)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="WhatsApp"
+                        className="icon-btn h-8 w-8 hover:border-emerald-400 hover:text-emerald-600"
+                      >
+                        <MessageCircle size={14} />
+                      </a>
+                      <RowMenu
+                        items={[
+                          { label: 'Edit member', icon: Pencil, onClick: () => openEdit(m) },
+                          ...(m.status === 'Invited'
+                            ? [{ label: 'Resend invite', icon: Send, onClick: () => toast(`Invite resent to ${m.email}`) }]
+                            : []),
+                          {
+                            label: m.status === 'Disabled' ? 'Enable access' : 'Disable access',
+                            icon: ShieldCheck,
+                            onClick: () =>
+                              update('team', m.id, {
+                                status: m.status === 'Disabled' ? 'Active' : 'Disabled',
+                              }),
+                          },
+                          { label: 'Remove', icon: Trash2, danger: true, onClick: () => setConfirm(m) },
+                        ]}
+                      />
+                    </div>
                   </div>
-                  <Badge
-                    tone={t.bucket === 'overdue' ? 'rose' : t.bucket === 'done' ? 'green' : 'sky'}
-                    dot
-                  >
-                    {t.bucket}
-                  </Badge>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Badge tone={m.live === 'Online' ? 'green' : m.live === 'Away' ? 'amber' : 'slate'} dot>
+                      {m.live}
+                    </Badge>
+                    <Badge tone={attendanceTone[m.attendance] || 'slate'}>{m.attendance}</Badge>
+                    <Badge tone={w.tone}>{w.label}</Badge>
+                    {m.alerts > 0 && (
+                      <Badge tone="rose" dot>
+                        <AlertTriangle size={11} /> {m.alerts}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              </li>
-            ))}
-            {tasksOf(tasksFor).length === 0 && (
-              <li className="px-4 py-5 text-sm text-ink-500">Nothing assigned right now.</li>
-            )}
-          </ul>
-        )}
-      </Modal>
+              </div>
+
+              <p className="mt-4 truncate rounded-xl bg-surface-soft px-3.5 py-2.5 text-sm text-ink-700">
+                {m.activity || 'Nothing on right now'}
+                <span className="ml-2 text-xs text-ink-400">· {m.lastActive}</span>
+              </p>
+
+              {/* The two lines that matter: today's list, and the year's number */}
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="flex items-baseline justify-between gap-2 text-xs font-semibold text-ink-500">
+                    Today&rsquo;s tasks
+                    <span className="num text-ink-900">
+                      {m.tasksDone}/{m.tasksTotal}
+                    </span>
+                  </p>
+                  <Line pct={taskPct} />
+                </div>
+                <div>
+                  <p className="flex items-baseline justify-between gap-2 text-xs font-semibold text-ink-500">
+                    {m.target ? `Target ${shortInr(m.target)}` : 'No target'}
+                    <span className="num text-ink-900">{m.target ? `${targetPct}%` : '—'}</span>
+                  </p>
+                  <Line
+                    pct={targetPct}
+                    tone={targetPct >= 100 ? 'bg-emerald-500' : 'bg-brand-500'}
+                  />
+                </div>
+              </div>
+
+              {/* Everything the sheet counts, in one strip */}
+              <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-ink-900/[0.07] py-3 sm:grid-cols-6">
+                <Tick label="Leads" value={m.leads} />
+                <Tick label="Follow" value={m.followUps} />
+                <Tick label="Calls" value={m.calls} />
+                <Tick label="Itin." value={m.presentations} />
+                <Tick label="Visits" value={m.visits} />
+                <Tick label="Closed" value={m.bookings} />
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="text-ink-500">
+                  Revenue{' '}
+                  <b className="num text-brand-700">{m.revenue ? inr(m.revenue) : '—'}</b>
+                </span>
+                <span className="text-ink-500">
+                  Productivity{' '}
+                  <b
+                    className={`num ${
+                      m.productivity >= 80
+                        ? 'text-emerald-600'
+                        : m.productivity >= 60
+                          ? 'text-amber-600'
+                          : 'text-ink-700'
+                    }`}
+                  >
+                    {m.productivity ?? 0}
+                  </b>
+                  {rank > 0 && <span className="num ml-2 text-ink-400">· #{rank}</span>}
+                </span>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {rows.length === 0 && (
+        <div className="card mt-4 border-dashed p-14 text-center text-sm text-ink-500">
+          No team member matches this view.
+        </div>
+      )}
+
+      {viewing && (
+        <MemberDetails
+          member={viewing}
+          list={rows}
+          rank={rankOf(viewing)}
+          workload={workloadOf(viewing)}
+          tasks={tasksOf(viewing)}
+          onClose={() => setViewing(null)}
+          onJump={(i) => setViewing(rows[i])}
+          onEdit={openEdit}
+        />
+      )}
 
       <FormModal
         open={formOpen}

@@ -21,7 +21,6 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import LeadDetails from '../components/sales/LeadDetails.jsx';
-import SalesInsights from '../components/sales/SalesInsights.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, inr } from '../data/mockData.js';
 
@@ -33,7 +32,7 @@ const digits = (phone) => String(phone).replace(/[^\d]/g, '');
 export default function Enquiries() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { enquiries, bookings, team, owner, create, update, updateMany, remove, toast } = useApp();
+  const { enquiries, team, owner, create, update, updateMany, remove, toast } = useApp();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -41,7 +40,6 @@ export default function Enquiries() {
   const [importOpen, setImportOpen] = useState(false);
   const [assignFor, setAssignFor] = useState(null); // ids awaiting an owner
   const [statusFor, setStatusFor] = useState(null);
-  const [pipeline, setPipeline] = useState('');
   const [viewing, setViewing] = useState(null); // the lead panel
 
   // A ?new=1 deep link opens the create form straight away.
@@ -216,25 +214,6 @@ export default function Enquiries() {
         </button>
       </PageHeader>
 
-      <SalesInsights
-        rows={rows}
-        bookings={bookings}
-        team={team}
-        activeStatus={pipeline}
-        onPickStatus={(status) => setPipeline((p) => (p === status ? '' : status))}
-        actions={{
-          add: () => { setEditing(null); setFormOpen(true); },
-          importLeads: () => setImportOpen(true),
-          assign: () => setAssignFor(rows.filter((e) => e.owner === 'Unassigned').map((e) => e.id)),
-          broadcast: () => toast(`WhatsApp broadcast queued for ${rows.length} leads`),
-          exportCsv: () => toast('Use Export on the table below for a CSV of this view', 'info'),
-        }}
-      />
-
-      <div className="mt-6">
-        <h2 className="eyebrow mb-3">All leads</h2>
-      </div>
-
       <DataTable
         columns={columns}
         rows={rows}
@@ -246,8 +225,6 @@ export default function Enquiries() {
           { key: 'label', label: 'Label', options: LABELS },
           { key: 'owner', label: 'Owner', options: owners },
         ]}
-        externalFilter={{ status: pipeline }}
-        onClearExternal={() => setPipeline('')}
         exportName="smira-club-enquiries"
         emptyLabel="No enquiries match this view"
         onRowClick={(r) => setViewing(r)}

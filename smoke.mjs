@@ -31,7 +31,7 @@ const MARKERS = {
   '/suppliers': 'Suppliers',
   '/invoices': 'Invoices',
   '/payments': 'Payments',
-  '/customers': 'Add customer',
+  '/customers': 'Membership plans',
   '/team': 'Heavy workload',
   '/campaigns': 'Campaigns',
   '/reports': 'Booked against collected',

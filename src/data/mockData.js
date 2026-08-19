@@ -146,22 +146,8 @@ export const statusTone = {
 };
 
 export const enquiries = [
-  { id: 'ENQ-2041', name: 'Siddhesh Rane', phone: '+91 98201 44521', email: 'siddhesh.r@gmail.com', destination: 'Bali', pax: 2, travelDate: '18 Sep 2026', budget: 185000, status: 'Interested', source: 'Instagram', owner: 'Ritik', label: 'Honeymoon', created: '04 Aug 2026' },
+  { id: 'ENQ-2041', name: 'Siddhesh Rane', phone: '+91 98201 44521', email: 'siddhesh.r@gmail.com', destination: 'Bali', pax: 2, travelDate: '18 Sep 2026', budget: 185000, status: 'Interested', source: 'Instagram', owner: 'Kabir', label: 'Honeymoon', created: '04 Aug 2026' },
   { id: 'ENQ-2040', name: 'Jayashree Patil', phone: '+91 90045 88120', email: 'jaya.patil@outlook.com', destination: 'Kerala', pax: 4, travelDate: '02 Oct 2026', budget: 96000, status: 'New', source: 'Website', owner: 'Unassigned', label: 'Family', created: '04 Aug 2026' },
-  { id: 'ENQ-2039', name: 'Ridhima Param', phone: '+91 98670 21188', email: 'ridhima.p@gmail.com', destination: 'Maldives', pax: 2, travelDate: '25 Dec 2026', budget: 340000, status: 'Quoted', source: 'Referral', owner: 'Sneha', label: 'Luxury', created: '03 Aug 2026' },
-  { id: 'ENQ-2038', name: 'Aadarsh Bhatia', phone: '+91 99303 76540', email: 'aadarsh938@gmail.com', destination: 'Dubai', pax: 3, travelDate: '11 Sep 2026', budget: 148000, status: 'Contacted', source: 'Google Ads', owner: 'Ritik', label: 'Shopping', created: '03 Aug 2026' },
-  { id: 'ENQ-2037', name: 'Divya Sharma', phone: '+91 90821 33012', email: 'divya.sharma@gmail.com', destination: 'Switzerland', pax: 2, travelDate: '05 Nov 2026', budget: 420000, status: 'Interested', source: 'Walk-in', owner: 'Kabir', label: 'Anniversary', created: '02 Aug 2026' },
-  { id: 'ENQ-2036', name: 'Ajay Panchmukh', phone: '+91 88790 12234', email: 'ajay.p@yahoo.com', destination: 'Thailand', pax: 6, travelDate: '20 Aug 2026', budget: 210000, status: 'Booked', source: 'WhatsApp', owner: 'Sneha', label: 'Group', created: '02 Aug 2026' },
-  { id: 'ENQ-2035', name: 'Suhas Bansode', phone: '+91 97654 44001', email: 'suhas.b@gmail.com', destination: 'Ladakh', pax: 5, travelDate: '15 Sep 2026', budget: 165000, status: 'Interested', source: 'Instagram', owner: 'Kabir', label: 'Adventure', created: '01 Aug 2026' },
-  { id: 'ENQ-2034', name: 'Sitaram Parab', phone: '+91 90210 87766', email: 'sitaram.parab@gmail.com', destination: 'Singapore', pax: 4, travelDate: '28 Sep 2026', budget: 232000, status: 'Quoted', source: 'Website', owner: 'Ritik', label: 'Family', created: '01 Aug 2026' },
-  { id: 'ENQ-2033', name: 'Mahendra Mandhare', phone: '+91 98922 55410', email: 'mahendra.m@gmail.com', destination: 'Vietnam', pax: 2, travelDate: '09 Oct 2026', budget: 118000, status: 'Contacted', source: 'Referral', owner: 'Sneha', label: 'Couple', created: '31 Jul 2026' },
-  { id: 'ENQ-2032', name: 'Sulekha Chavan', phone: '+91 91234 09876', email: 'sulekha.c@gmail.com', destination: 'Andaman', pax: 3, travelDate: '22 Aug 2026', budget: 142000, status: 'Lost', source: 'Google Ads', owner: 'Kabir', label: 'Beach', created: '31 Jul 2026', lostReason: 'Went with another agent' },
-  { id: 'ENQ-2031', name: 'Neha Kulkarni', phone: '+91 99872 31145', email: 'neha.k@gmail.com', destination: 'Europe', pax: 2, travelDate: '14 Dec 2026', budget: 560000, status: 'Interested', source: 'Instagram', owner: 'Sneha', label: 'Luxury', created: '30 Jul 2026' },
-  { id: 'ENQ-2030', name: 'Rohan Desai', phone: '+91 98111 44329', email: 'rohan.desai@gmail.com', destination: 'Bhutan', pax: 4, travelDate: '03 Nov 2026', budget: 178000, status: 'New', source: 'Website', owner: 'Unassigned', label: 'Family', created: '30 Jul 2026' },
-  { id: 'ENQ-2029', name: 'Farhan Qureshi', phone: '+91 98203 71190', email: 'farhan.q@gmail.com', destination: 'Turkey', pax: 2, travelDate: '12 Oct 2026', budget: 264000, status: 'Lost', source: 'Instagram', owner: 'Sneha', label: 'Couple', created: '29 Jul 2026', lostReason: 'Budget too high' },
-  { id: 'ENQ-2028', name: 'Pooja Salvi', phone: '+91 90040 66218', email: 'pooja.salvi@gmail.com', destination: 'Goa', pax: 5, travelDate: '18 Aug 2026', budget: 74000, status: 'Lost', source: 'Website', owner: 'Ritik', label: 'Family', created: '29 Jul 2026', lostReason: 'Trip postponed' },
-  { id: 'ENQ-2027', name: 'Girish Naik', phone: '+91 99870 11245', email: 'girish.naik@gmail.com', destination: 'Sri Lanka', pax: 3, travelDate: '06 Sep 2026', budget: 132000, status: 'Lost', source: 'Google Ads', owner: 'Kabir', label: 'Family', created: '28 Jul 2026', lostReason: 'No response after quote' },
-  { id: 'ENQ-2026', name: 'Anita Rao', phone: '+91 98335 90021', email: 'anita.rao@gmail.com', destination: 'Rajasthan', pax: 2, travelDate: '24 Nov 2026', budget: 88000, status: 'Lost', source: 'Referral', owner: 'Sneha', label: 'Couple', created: '28 Jul 2026', lostReason: 'Budget too high' },
 ];
 
 /** Brand colour per enquiry source; the counts come from the live list. */
@@ -178,28 +164,12 @@ export const sourceColours = {
 export const packages = [
   { id: 'PKG-01', name: 'Bali Honeymoon Escape', destination: 'Bali, Indonesia', startDate: '2026-09-02', days: 7, nights: 6, price: 92500, type: 'Honeymoon', rating: 4.8, sold: 42, seats: 8, gradient: 'from-brand-500 to-ocean' },
   { id: 'PKG-02', name: 'Maldives Overwater Luxury', destination: 'Malé, Maldives', startDate: '2026-09-15', days: 6, nights: 5, price: 168000, type: 'Luxury', rating: 4.9, sold: 24, seats: 4, gradient: 'from-ocean to-grape' },
-  { id: 'PKG-03', name: 'Kerala Backwaters Family', destination: 'Kochi · Alleppey', startDate: '2026-08-24', days: 6, nights: 5, price: 34500, type: 'Family', rating: 4.6, sold: 78, seats: 22, gradient: 'from-brand-600 to-brand-300' },
-  { id: 'PKG-04', name: 'Dubai City & Desert', destination: 'Dubai, UAE', startDate: '2026-09-11', days: 5, nights: 4, price: 58900, type: 'City break', rating: 4.5, sold: 61, seats: 15, gradient: 'from-gold to-coral' },
-  { id: 'PKG-05', name: 'Swiss Alps Grand Tour', destination: 'Zurich · Interlaken', startDate: '2026-10-05', days: 9, nights: 8, price: 212000, type: 'Luxury', rating: 4.9, sold: 18, seats: 6, gradient: 'from-grape to-ocean' },
-  { id: 'PKG-06', name: 'Thailand Island Hopper', destination: 'Phuket · Krabi', startDate: '2026-08-20', days: 7, nights: 6, price: 47800, type: 'Group', rating: 4.4, sold: 95, seats: 30, gradient: 'from-coral to-gold' },
-  { id: 'PKG-07', name: 'Ladakh Road Expedition', destination: 'Leh · Nubra · Pangong', startDate: '2026-09-26', days: 8, nights: 7, price: 39900, type: 'Adventure', rating: 4.7, sold: 53, seats: 12, gradient: 'from-brand-700 to-brand-400' },
-  { id: 'PKG-08', name: 'Singapore + Malaysia Combo', destination: 'Singapore · KL', startDate: '2026-10-18', days: 7, nights: 6, price: 76400, type: 'Family', rating: 4.5, sold: 37, seats: 18, gradient: 'from-ocean to-brand-400' },
 ];
 
 // -- Bookings ---------------------------------------------------------------
 export const bookings = [
-  { id: 'BKG-8821', customer: 'Ajay Panchmukh', pkg: 'Thailand Island Hopper', destination: 'Phuket · Krabi', departure: '20 Aug 2026', nights: 6, pax: 6, amount: 286800, paid: 286800, status: 'Confirmed', owner: 'Sneha' },
-  { id: 'BKG-8820', customer: 'Priya Nair', pkg: 'Kerala Backwaters Family', destination: 'Kochi · Alleppey', departure: '24 Aug 2026', nights: 5, pax: 4, amount: 138000, paid: 70000, status: 'Part paid', owner: 'Ritik' },
-  { id: 'BKG-8819', customer: 'Vikram Shetty', pkg: 'Bali Honeymoon Escape', destination: 'Bali, Indonesia', departure: '02 Sep 2026', nights: 6, pax: 2, amount: 185000, paid: 185000, status: 'Confirmed', owner: 'Kabir' },
-  { id: 'BKG-8818', customer: 'Farhan Qureshi', pkg: 'Dubai City & Desert', destination: 'Dubai, UAE', departure: '11 Sep 2026', nights: 4, pax: 3, amount: 176700, paid: 50000, status: 'Part paid', owner: 'Ritik' },
-  { id: 'BKG-8817', customer: 'Meera Iyer', pkg: 'Maldives Overwater Luxury', destination: 'Malé, Maldives', departure: '15 Sep 2026', nights: 5, pax: 2, amount: 336000, paid: 336000, status: 'Confirmed', owner: 'Sneha' },
-  { id: 'BKG-8816', customer: 'Suhas Bansode', pkg: 'Ladakh Road Expedition', destination: 'Leh · Pangong', departure: '15 Sep 2026', nights: 7, pax: 5, amount: 199500, paid: 100000, status: 'Part paid', owner: 'Kabir' },
-  { id: 'BKG-8815', customer: 'Sitaram Parab', pkg: 'Singapore + Malaysia Combo', destination: 'Singapore · KL', departure: '28 Sep 2026', nights: 6, pax: 4, amount: 305600, paid: 0, status: 'Pending', owner: 'Ritik' },
-  { id: 'BKG-8814', customer: 'Anita Deshmukh', pkg: 'Bali Honeymoon Escape', destination: 'Bali, Indonesia', departure: '06 Oct 2026', nights: 6, pax: 2, amount: 185000, paid: 90000, status: 'Part paid', owner: 'Sneha' },
-  { id: 'BKG-8813', customer: 'Rahul Menon', pkg: 'Swiss Alps Grand Tour', destination: 'Zurich · Interlaken', departure: '05 Nov 2026', nights: 8, pax: 2, amount: 424000, paid: 150000, status: 'Part paid', owner: 'Kabir' },
-  { id: 'BKG-8812', customer: 'Tanvi Joshi', pkg: 'Thailand Island Hopper', destination: 'Phuket · Krabi', departure: '18 Jul 2026', nights: 6, pax: 3, amount: 143400, paid: 143400, status: 'Completed', owner: 'Sneha' },
-  { id: 'BKG-8811', customer: 'Imran Shaikh', pkg: 'Dubai City & Desert', destination: 'Dubai, UAE', departure: '09 Jul 2026', nights: 4, pax: 5, amount: 294500, paid: 294500, status: 'Completed', owner: 'Ritik' },
-  { id: 'BKG-8810', customer: 'Kiran Rao', pkg: 'Kerala Backwaters Family', destination: 'Kochi · Alleppey', departure: '01 Jul 2026', nights: 5, pax: 2, amount: 69000, paid: 20000, status: 'Cancelled', owner: 'Kabir' },
+  { id: 'BKG-8821', customer: 'Rohan Bhatt', pkg: 'Bali Honeymoon Escape', destination: 'Bali, Indonesia', departure: '02 Sep 2026', nights: 6, pax: 2, amount: 185000, paid: 185000, status: 'Confirmed', owner: 'Sneha' },
+  { id: 'BKG-8820', customer: 'Ananya Deshmukh', pkg: 'Maldives Overwater Luxury', destination: 'Malé, Maldives', departure: '15 Sep 2026', nights: 5, pax: 2, amount: 336000, paid: 150000, status: 'Part paid', owner: 'Kabir' },
 ];
 
 export const bookingStatusTone = {
@@ -212,47 +182,22 @@ export const bookingStatusTone = {
 
 // -- Customers --------------------------------------------------------------
 export const customers = [
-  { id: 'CUS-512', name: 'Ananya Deshmukh', phone: '+91 98330 21145', email: 'ananya.d@gmail.com', city: 'Pune', trips: 0, spend: 0, tier: 'Silver', last: '—', dob: '1994-06-19', special: '2022-03-08', specialLabel: 'Anniversary', source: 'Website', address: '31 Koregaon Park Annexe, Pune 411001', giftsGiven: [] },
-  { id: 'CUS-511', name: 'Rohan Bhatt', phone: '+91 99201 55420', email: 'rohan.bhatt@outlook.com', city: 'Mumbai', trips: 1, spend: 96000, tier: 'Silver', last: '12 Jul 2026', dob: '1989-01-24', special: '2017-05-21', specialLabel: 'Anniversary', source: 'Website', address: 'A-1202 Oberoi Splendor, Jogeshwari East, Mumbai 400060', giftsGiven: [{ gift: 'Welcome travel kit on joining', date: '05 Aug 2026' }] },
-  { id: 'CUS-510', name: 'Meher Shaikh', phone: '+91 97027 66311', email: 'meher.s@gmail.com', city: 'Nashik', trips: 1, spend: 78500, tier: 'Silver', last: '02 Jun 2026', dob: '1996-10-03', special: '2024-02-11', specialLabel: 'Spouse birthday', source: 'Website', address: '9 College Road, Nashik 422005', giftsGiven: [{ gift: 'Welcome travel kit on joining', date: '04 Aug 2026' }] },
-  { id: 'CUS-509', name: 'Vikas Rane', phone: '+91 98194 30078', email: 'vikas.rane@gmail.com', city: 'Thane', trips: 2, spend: 214000, tier: 'Gold', last: '28 Jul 2026', dob: '1986-04-12', special: '2013-09-30', specialLabel: 'Anniversary', source: 'Website', address: '104 Hiranandani Estate, Ghodbunder Road, Thane 400607', giftsGiven: [{ gift: 'Welcome travel kit on joining', date: '30 Jul 2026' }, { gift: 'Free airport transfer on the first trip', date: '02 Aug 2026' }] },
-  { id: 'CUS-501', name: 'Ajay Panchmukh', phone: '+91 88790 12234', email: 'ajay.p@yahoo.com', city: 'Pune', trips: 4, spend: 742000, tier: 'Platinum', last: '20 Aug 2026', dob: '1984-03-18', special: '2011-11-27', specialLabel: 'Anniversary', source: 'Referral', address: '12 Rosewood Society, Baner Road, Pune 411045', giftsGiven: [] },
-  { id: 'CUS-502', name: 'Meera Iyer', phone: '+91 98211 55420', email: 'meera.iyer@gmail.com', city: 'Mumbai', trips: 3, spend: 688000, tier: 'Platinum', last: '15 Sep 2026', dob: '1990-07-05', special: '2016-02-14', specialLabel: 'Anniversary', source: 'Instagram', address: 'B-704 Seaview Heights, Carter Road, Bandra West, Mumbai 400050', giftsGiven: [] },
-  { id: 'CUS-503', name: 'Vikram Shetty', phone: '+91 99870 11223', email: 'vikram.s@gmail.com', city: 'Bengaluru', trips: 2, spend: 371000, tier: 'Gold', last: '02 Sep 2026', dob: '1987-12-01', special: '2019-06-09', specialLabel: 'Anniversary', source: 'Walk-in', address: '48 Brigade Meadows, Kanakapura Road, Bengaluru 560062', giftsGiven: [] },
-  { id: 'CUS-504', name: 'Priya Nair', phone: '+91 90040 88991', email: 'priya.nair@gmail.com', city: 'Kochi', trips: 3, spend: 298000, tier: 'Gold', last: '24 Aug 2026', dob: '1992-09-23', special: '2021-01-30', specialLabel: 'Anniversary', source: 'Website', address: 'Villa 9, Marine Drive Enclave, Kochi 682031', giftsGiven: [] },
-  { id: 'CUS-505', name: 'Farhan Qureshi', phone: '+91 98333 21100', email: 'farhan.q@gmail.com', city: 'Hyderabad', trips: 2, spend: 254000, tier: 'Gold', last: '11 Sep 2026', dob: '1985-05-14', special: '2014-08-22', specialLabel: 'Anniversary', source: 'Google Ads', address: '3-6-140 Himayatnagar, Hyderabad 500029', giftsGiven: [] },
-  { id: 'CUS-506', name: 'Tanvi Joshi', phone: '+91 97655 43210', email: 'tanvi.joshi@gmail.com', city: 'Nashik', trips: 1, spend: 143400, tier: 'Silver', last: '18 Jul 2026', dob: '1995-11-08', special: '2023-04-16', specialLabel: 'Spouse birthday', source: 'Instagram', address: '22 Gangapur Road, Nashik 422013', giftsGiven: [] },
-  { id: 'CUS-507', name: 'Rahul Menon', phone: '+91 98860 77120', email: 'rahul.menon@gmail.com', city: 'Chennai', trips: 1, spend: 424000, tier: 'Gold', last: '05 Nov 2026', dob: '1981-02-27', special: '2009-10-11', specialLabel: 'Anniversary', source: 'Referral', address: 'Flat 5C, Adyar Riverside, Chennai 600020', giftsGiven: [] },
-  { id: 'CUS-508', name: 'Anita Deshmukh', phone: '+91 91450 20033', email: 'anita.d@gmail.com', city: 'Nagpur', trips: 2, spend: 267000, tier: 'Silver', last: '06 Oct 2026', dob: '1993-08-30', special: '2018-12-05', specialLabel: 'Child birthday', source: 'Walk-in', address: '17 Dharampeth Extension, Nagpur 440010', giftsGiven: [] },
+  { id: 'CUS-512', name: 'Ananya Deshmukh', phone: '+91 98330 21145', email: 'ananya.d@gmail.com', city: 'Pune', trips: 1, spend: 336000, tier: 'Gold', last: '04 Aug 2026', dob: '1994-06-19', special: '2022-03-08', specialLabel: 'Anniversary', source: 'Website', address: '31 Koregaon Park Annexe, Pune 411001', giftsGiven: [] },
+  { id: 'CUS-511', name: 'Rohan Bhatt', phone: '+91 99201 55420', email: 'rohan.bhatt@outlook.com', city: 'Mumbai', trips: 1, spend: 185000, tier: 'Gold', last: '28 Jul 2026', dob: '1989-01-24', special: '2017-05-21', specialLabel: 'Anniversary', source: 'Website', address: 'A-1202 Oberoi Splendor, Jogeshwari East, Mumbai 400060', giftsGiven: [{ gift: 'Welcome travel kit on joining', date: '05 Aug 2026' }] },
 ];
 
 // -- Tasks ------------------------------------------------------------------
 export const tasks = [
-  { id: 'TSK-311', title: 'Share revised Bali itinerary', customer: 'Siddhesh Rane', type: 'Send itinerary', due: '04 Aug 2026, 11:45 am', owner: 'Ritik', bucket: 'today', priority: 'High', note: 'Client wants a pool villa option and a private candlelight dinner added.' },
-  { id: 'TSK-310', title: 'Collect passport copies', customer: 'Ajay Panchmukh', type: 'Documents', due: '04 Aug 2026, 04:30 pm', owner: 'Sneha', bucket: 'today', priority: 'High', note: '2 of 6 passports still pending. Visa filing deadline is 08 Aug.' },
-  { id: 'TSK-309', title: 'Follow-up call for Maldives quote', customer: 'Ridhima Param', type: 'Call', due: '05 Aug 2026, 10:00 am', owner: 'Sneha', bucket: 'upcoming', priority: 'Medium', note: 'Quote sent 03 Aug. Compare with competitor pricing before the call.' },
-  { id: 'TSK-308', title: 'Confirm hotel with DMC', customer: 'Meera Iyer', type: 'Supplier', due: '06 Aug 2026, 12:00 pm', owner: 'Kabir', bucket: 'upcoming', priority: 'High', note: 'Awaiting written confirmation for the overwater villa upgrade.' },
-  { id: 'TSK-307', title: 'Send balance payment reminder', customer: 'Sitaram Parab', type: 'Payment', due: '07 Aug 2026, 09:30 am', owner: 'Ritik', bucket: 'upcoming', priority: 'Medium', note: '₹3,05,600 fully outstanding, departure in 8 weeks.' },
-  { id: 'TSK-306', title: 'Visa appointment slot booking', customer: 'Rahul Menon', type: 'Visa', due: '02 Aug 2026, 03:00 pm', owner: 'Kabir', bucket: 'overdue', priority: 'High', note: 'Schengen slots filling fast — escalate to the visa desk.' },
-  { id: 'TSK-305', title: 'Re-engage lost enquiry', customer: 'Sulekha Chavan', type: 'Call', due: '01 Aug 2026, 05:00 pm', owner: 'Kabir', bucket: 'overdue', priority: 'Low', note: 'Client said budget is tight; offer the 3N Andaman variant instead.' },
-  { id: 'TSK-304', title: 'Share group discount sheet', customer: 'Suhas Bansode', type: 'Send quote', due: '31 Jul 2026, 06:00 pm', owner: 'Kabir', bucket: 'overdue', priority: 'Medium', note: 'Group of 5 — apply the 8% early-bird slab.' },
-  { id: 'TSK-303', title: 'Airport transfer confirmation', customer: 'Tanvi Joshi', type: 'Supplier', due: '17 Jul 2026, 08:00 am', owner: 'Sneha', bucket: 'done', priority: 'Medium', note: 'Confirmed with the Phuket transfer partner.' },
-  { id: 'TSK-302', title: 'Post-trip feedback call', customer: 'Imran Shaikh', type: 'Call', due: '14 Jul 2026, 11:00 am', owner: 'Ritik', bucket: 'done', priority: 'Low', note: 'Rated 5/5. Asked about a Europe trip next summer.' },
+  { id: 'TSK-311', title: 'Share revised Bali itinerary', customer: 'Siddhesh Rane', type: 'Send itinerary', due: '04 Aug 2026, 11:45 am', owner: 'Kabir', bucket: 'today', priority: 'High', note: 'Client wants a pool villa option and a private candlelight dinner added.' },
+  { id: 'TSK-310', title: 'Collect passport copies', customer: 'Rohan Bhatt', type: 'Documents', due: '04 Aug 2026, 04:30 pm', owner: 'Sneha', bucket: 'today', priority: 'High', note: '2 of 6 passports still pending. Visa filing deadline is 08 Aug.' },
 ];
 
 // -- Quotations, invoices, payments -----------------------------------------
 export const quotations = [
   // Auto-generated from website membership signups — inclusions are snapshotted
   // from the plan at the moment the quotation was raised.
-  { id: 'QUO-1190', customer: 'Vikas Rane', pkg: 'Gold Voyager membership (Yearly)', pax: 3, amount: 35396, validTill: '04 Aug 2026', status: 'Accepted', owner: 'Sneha', source: 'Membership', planId: 'MEM-02', inclusions: ['10% off on every holiday package', 'Dedicated travel consultant', '24×7 on-trip emergency helpline'] },
+  { id: 'QUO-1190', customer: 'Siddhesh Rane', pkg: 'Bali Honeymoon Escape', pax: 2, amount: 185000, validTill: '18 Aug 2026', status: 'Sent', owner: 'Kabir', source: 'Enquiry', planId: 'MEM-02', inclusions: ['10% off on every holiday package', 'Dedicated travel consultant', '24×7 on-trip emergency helpline'] },
   { id: 'QUO-1189', customer: 'Rohan Bhatt', pkg: 'Gold Voyager membership (Yearly)', pax: 2, amount: 23598, validTill: '10 Aug 2026', status: 'Sent', owner: 'Sneha', source: 'Membership', planId: 'MEM-02', inclusions: ['10% off on every holiday package', 'Dedicated travel consultant', '24×7 on-trip emergency helpline'] },
-  { id: 'QUO-1188', customer: 'Meher Shaikh', pkg: 'Silver Explorer membership (Yearly)', pax: 1, amount: 5899, validTill: '09 Aug 2026', status: 'Viewed', owner: 'Ritik', source: 'Membership', planId: 'MEM-01', inclusions: ['5% off on every holiday package', 'Priority enquiry response within 4 hours', 'Dedicated WhatsApp support desk'] },
-  { id: 'QUO-1187', customer: 'Ridhima Param', pkg: 'Maldives Overwater Luxury', pax: 2, amount: 336000, validTill: '12 Aug 2026', status: 'Sent', owner: 'Sneha' },
-  { id: 'QUO-1186', customer: 'Sitaram Parab', pkg: 'Singapore + Malaysia Combo', pax: 4, amount: 305600, validTill: '10 Aug 2026', status: 'Viewed', owner: 'Ritik' },
-  { id: 'QUO-1185', customer: 'Divya Sharma', pkg: 'Swiss Alps Grand Tour', pax: 2, amount: 424000, validTill: '18 Aug 2026', status: 'Sent', owner: 'Kabir' },
-  { id: 'QUO-1184', customer: 'Neha Kulkarni', pkg: 'Europe Highlights 10N', pax: 2, amount: 560000, validTill: '20 Aug 2026', status: 'Draft', owner: 'Sneha' },
-  { id: 'QUO-1183', customer: 'Suhas Bansode', pkg: 'Ladakh Road Expedition', pax: 5, amount: 199500, validTill: '08 Aug 2026', status: 'Accepted', owner: 'Kabir' },
-  { id: 'QUO-1182', customer: 'Sulekha Chavan', pkg: 'Andaman Beach Break', pax: 3, amount: 142000, validTill: '02 Aug 2026', status: 'Expired', owner: 'Kabir' },
 ];
 
 export const quotationTone = {
@@ -288,7 +233,7 @@ export const memberships = [
     accent: 'slate',
     popular: false,
     published: true,
-    members: 24,
+    members: 0,
     gifts: [
       'Welcome travel kit on joining',
       'Birthday greeting card',
@@ -311,7 +256,7 @@ export const memberships = [
     accent: 'amber',
     popular: true,
     published: true,
-    members: 41,
+    members: 1,
     gifts: [
       'Welcome travel kit on joining',
       'Free airport transfer on the first trip',
@@ -337,7 +282,7 @@ export const memberships = [
     accent: 'violet',
     popular: false,
     published: true,
-    members: 12,
+    members: 1,
     gifts: [
       'Premium luggage set on joining',
       'Free airport transfer on every trip',
@@ -359,15 +304,14 @@ export const memberships = [
 // Signups captured on the website pricing page and pushed into the panel.
 export const memberSignups = [
   { id: 'MSU-04', name: 'Ananya Deshmukh', email: 'ananya.d@gmail.com', phone: '+91 98330 21145', city: 'Pune', planId: 'MEM-03', plan: 'Platinum Elite', members: 4, source: 'Website', received: '04 Aug 2026', status: 'New', quote: '' },
-  { id: 'MSU-03', name: 'Rohan Bhatt', email: 'rohan.bhatt@outlook.com', phone: '+91 99201 55420', city: 'Mumbai', planId: 'MEM-02', plan: 'Gold Voyager', members: 2, source: 'Website', received: '03 Aug 2026', status: 'Quoted', quote: 'QUO-1189' },
-  { id: 'MSU-02', name: 'Meher Shaikh', email: 'meher.s@gmail.com', phone: '+91 97027 66311', city: 'Nashik', planId: 'MEM-01', plan: 'Silver Explorer', members: 1, source: 'Website', received: '02 Aug 2026', status: 'Quoted', quote: 'QUO-1188' },
-  { id: 'MSU-01', name: 'Vikas Rane', email: 'vikas.rane@gmail.com', phone: '+91 98194 30078', city: 'Thane', planId: 'MEM-02', plan: 'Gold Voyager', members: 3, source: 'Website', received: '28 Jul 2026', status: 'Active', quote: 'QUO-1190' },
+  { id: 'MSU-03', name: 'Rohan Bhatt', email: 'rohan.bhatt@outlook.com', phone: '+91 99201 55420', city: 'Mumbai', planId: 'MEM-02', plan: 'Gold Voyager', members: 2, source: 'Website', received: '10 Sep 2025', status: 'Active', quote: 'QUO-1189', startedOn: '10 Sep 2025', expiresOn: '09 Sep 2026' },
 ];
 
 export const signupTone = {
   New: 'amber',
   Quoted: 'sky',
   Active: 'green',
+  Expired: 'slate',
   Cancelled: 'rose',
 };
 
@@ -379,13 +323,8 @@ export function membershipAmount(plan, members = 1) {
 }
 
 export const invoices = [
-  { id: 'INV-4412', customer: 'Ajay Panchmukh', booking: 'BKG-8821', issued: '02 Aug 2026', due: '10 Aug 2026', amount: 286800, paid: 286800, status: 'Paid' },
-  { id: 'INV-4411', customer: 'Meera Iyer', booking: 'BKG-8817', issued: '01 Aug 2026', due: '12 Aug 2026', amount: 336000, paid: 336000, status: 'Paid' },
-  { id: 'INV-4410', customer: 'Priya Nair', booking: 'BKG-8820', issued: '31 Jul 2026', due: '14 Aug 2026', amount: 138000, paid: 70000, status: 'Partial' },
-  { id: 'INV-4409', customer: 'Farhan Qureshi', booking: 'BKG-8818', issued: '30 Jul 2026', due: '20 Aug 2026', amount: 176700, paid: 50000, status: 'Partial' },
-  { id: 'INV-4408', customer: 'Sitaram Parab', booking: 'BKG-8815', issued: '29 Jul 2026', due: '05 Aug 2026', amount: 305600, paid: 0, status: 'Overdue' },
-  { id: 'INV-4407', customer: 'Rahul Menon', booking: 'BKG-8813', issued: '28 Jul 2026', due: '25 Aug 2026', amount: 424000, paid: 150000, status: 'Partial' },
-  { id: 'INV-4406', customer: 'Tanvi Joshi', booking: 'BKG-8812', issued: '02 Jul 2026', due: '12 Jul 2026', amount: 143400, paid: 143400, status: 'Paid' },
+  { id: 'INV-4412', customer: 'Rohan Bhatt', booking: 'BKG-8821', issued: '02 Aug 2026', due: '10 Aug 2026', amount: 185000, paid: 185000, status: 'Paid' },
+  { id: 'INV-4411', customer: 'Ananya Deshmukh', booking: 'BKG-8820', issued: '01 Aug 2026', due: '12 Aug 2026', amount: 336000, paid: 150000, status: 'Partial' },
 ];
 
 export const invoiceTone = {
@@ -396,13 +335,8 @@ export const invoiceTone = {
 };
 
 export const payments = [
-  { id: 'PAY-9931', customer: 'Meera Iyer', invoice: 'INV-4411', date: '03 Aug 2026', mode: 'Bank transfer', amount: 186000, status: 'Success' },
-  { id: 'PAY-9930', customer: 'Ajay Panchmukh', invoice: 'INV-4412', date: '02 Aug 2026', mode: 'UPI', amount: 286800, status: 'Success' },
-  { id: 'PAY-9929', customer: 'Rahul Menon', invoice: 'INV-4407', date: '01 Aug 2026', mode: 'Card', amount: 150000, status: 'Success' },
-  { id: 'PAY-9928', customer: 'Priya Nair', invoice: 'INV-4410', date: '31 Jul 2026', mode: 'UPI', amount: 70000, status: 'Success' },
-  { id: 'PAY-9927', customer: 'Farhan Qureshi', invoice: 'INV-4409', date: '30 Jul 2026', mode: 'Bank transfer', amount: 50000, status: 'Success' },
-  { id: 'PAY-9926', customer: 'Meera Iyer', invoice: 'INV-4411', date: '29 Jul 2026', mode: 'UPI', amount: 150000, status: 'Success' },
-  { id: 'PAY-9925', customer: 'Tanvi Joshi', invoice: 'INV-4406', date: '26 Jul 2026', mode: 'Cash', amount: 143400, status: 'Success' },
+  { id: 'PAY-9931', customer: 'Ananya Deshmukh', invoice: 'INV-4411', date: '03 Aug 2026', mode: 'Bank transfer', amount: 150000, status: 'Success' },
+  { id: 'PAY-9930', customer: 'Rohan Bhatt', invoice: 'INV-4412', date: '02 Aug 2026', mode: 'UPI', amount: 185000, status: 'Success' },
 ];
 
 export const paymentTone = { Success: 'green', Pending: 'amber', Failed: 'rose', Refunded: 'violet' };
@@ -411,32 +345,20 @@ export const paymentTone = { Success: 'green', Pending: 'amber', Failed: 'rose',
 export const suppliers = [
   { id: 'SUP-21', name: 'Bali Sunrise DMC', category: 'DMC', region: 'Indonesia', contact: 'Wayan Putra', phone: '+62 812 4455 991', rating: 4.8, bookings: 62, status: 'Active' },
   { id: 'SUP-22', name: 'Emirates Holidays Desk', category: 'Airline', region: 'UAE', contact: 'Sara Al Nuaimi', phone: '+971 50 221 4478', rating: 4.6, bookings: 48, status: 'Active' },
-  { id: 'SUP-23', name: 'Lagoon Resorts Maldives', category: 'Hotel', region: 'Maldives', contact: 'Ahmed Rasheed', phone: '+960 779 3321', rating: 4.9, bookings: 24, status: 'Active' },
-  { id: 'SUP-24', name: 'Alps Rail & Coach', category: 'Transport', region: 'Switzerland', contact: 'Lukas Meier', phone: '+41 79 220 1188', rating: 4.7, bookings: 17, status: 'Active' },
-  { id: 'SUP-25', name: 'Backwater Cruises Kerala', category: 'Hotel', region: 'India', contact: 'Joseph Thomas', phone: '+91 98470 11223', rating: 4.4, bookings: 71, status: 'Active' },
-  { id: 'SUP-26', name: 'Phuket Coast Tours', category: 'DMC', region: 'Thailand', contact: 'Nattapong S.', phone: '+66 81 334 5566', rating: 4.2, bookings: 88, status: 'On hold' },
-  { id: 'SUP-27', name: 'VisaExpress Consultants', category: 'Visa', region: 'Global', contact: 'Rhea Dsouza', phone: '+91 98200 44117', rating: 4.5, bookings: 134, status: 'Active' },
 ];
 
 // -- Campaigns --------------------------------------------------------------
 export const campaigns = [
   { id: 'CMP-77', name: 'Monsoon Kerala Flash Sale', channel: 'WhatsApp', sent: 4820, opened: 3612, clicked: 894, leads: 63, status: 'Completed', spend: 18000 },
   { id: 'CMP-76', name: 'Bali Honeymoon — Instagram', channel: 'Instagram', sent: 22400, opened: 15380, clicked: 2104, leads: 118, status: 'Running', spend: 65000 },
-  { id: 'CMP-75', name: 'Dubai Long Weekend', channel: 'Email', sent: 7600, opened: 2812, clicked: 421, leads: 34, status: 'Running', spend: 12000 },
-  { id: 'CMP-74', name: 'Early Bird Europe 2027', channel: 'Google Ads', sent: 18900, opened: 11240, clicked: 1876, leads: 91, status: 'Running', spend: 84000 },
-  { id: 'CMP-73', name: 'Ladakh Bike Expedition', channel: 'WhatsApp', sent: 3100, opened: 2440, clicked: 512, leads: 41, status: 'Paused', spend: 9500 },
 ];
 
 export const campaignTone = { Running: 'green', Paused: 'amber', Completed: 'violet', Draft: 'slate' };
 
 // -- Team -------------------------------------------------------------------
 export const team = [
-  { id: 'USR-02', name: 'Sneha Kulkarni', role: 'Senior Travel Consultant', email: 'sneha@smiraclub.com', phone: '+91 98211 44556', status: 'Active', live: 'Online', attendance: 'Present', activity: 'On call with Ridhima Param', lastActive: '2 min ago', tasksDone: 4, tasksTotal: 6, leads: 12, followUps: 5, calls: 18, presentations: 6, visits: 2, bookings: 21, enquiries: 62, revenue: 1684000, target: 2000000, productivity: 88, alerts: 1 },
-  { id: 'USR-04', name: 'Kabir Menon', role: 'Travel Consultant', email: 'kabir@smiraclub.com', phone: '+91 90045 22119', status: 'Active', live: 'Online', attendance: 'Present', activity: 'Building Ladakh itinerary', lastActive: '9 min ago', tasksDone: 3, tasksTotal: 5, leads: 9, followUps: 3, calls: 12, presentations: 4, visits: 1, bookings: 16, enquiries: 48, revenue: 1366000, target: 1800000, productivity: 79, alerts: 0 },
-  { id: 'USR-03', name: 'Ritik Sharma', role: 'Travel Consultant', email: 'ritik@smiraclub.com', phone: '+91 99303 88110', status: 'Active', live: 'Away', attendance: 'Present', activity: 'On a customer visit — Bandra', lastActive: '41 min ago', tasksDone: 2, tasksTotal: 7, leads: 15, followUps: 8, calls: 9, presentations: 3, visits: 3, bookings: 17, enquiries: 58, revenue: 1215000, target: 1800000, productivity: 71, alerts: 3 },
-  { id: 'USR-05', name: 'Rhea Dsouza', role: 'Visa & Documentation', email: 'rhea@smiraclub.com', phone: '+91 98200 44117', status: 'Active', live: 'Online', attendance: 'Half day', activity: 'Filing Schengen application', lastActive: '5 min ago', tasksDone: 5, tasksTotal: 6, leads: 0, followUps: 2, calls: 4, presentations: 0, visits: 0, bookings: 0, enquiries: 0, revenue: 0, target: 0, productivity: 84, alerts: 1 },
-  { id: 'USR-01', name: 'Dushyant Kale', role: 'Owner', email: 'dushyant@smiraclub.com', phone: '+91 98200 11223', status: 'Active', live: 'Online', attendance: 'Present', activity: 'Reviewing supplier contracts', lastActive: 'just now', tasksDone: 1, tasksTotal: 2, leads: 0, followUps: 0, calls: 3, presentations: 1, visits: 0, bookings: 0, enquiries: 0, revenue: 0, target: 0, productivity: 76, alerts: 0 },
-  { id: 'USR-06', name: 'Amit Patil', role: 'Accounts', email: 'amit@smiraclub.com', phone: '+91 97654 33221', status: 'Invited', live: 'Offline', attendance: 'Leave', activity: 'Yet to accept the invite', lastActive: '3 days ago', tasksDone: 0, tasksTotal: 0, leads: 0, followUps: 0, calls: 0, presentations: 0, visits: 0, bookings: 0, enquiries: 0, revenue: 0, target: 0, productivity: 0, alerts: 0 },
+  { id: 'USR-02', name: 'Sneha Kulkarni', role: 'Senior Travel Consultant', email: 'sneha@smiraclub.com', phone: '+91 98211 44556', status: 'Active', live: 'Online', attendance: 'Present', activity: 'On call with Ridhima Param', lastActive: '2 min ago', tasksDone: 1, tasksTotal: 2, leads: 1, followUps: 1, calls: 3, presentations: 1, visits: 0, bookings: 1, enquiries: 2, revenue: 185000, target: 300000, productivity: 82, alerts: 0 },
+  { id: 'USR-04', name: 'Kabir Menon', role: 'Travel Consultant', email: 'kabir@smiraclub.com', phone: '+91 90045 22119', status: 'Active', live: 'Online', attendance: 'Present', activity: 'Building Ladakh itinerary', lastActive: '9 min ago', tasksDone: 0, tasksTotal: 1, leads: 1, followUps: 1, calls: 2, presentations: 1, visits: 1, bookings: 1, enquiries: 2, revenue: 336000, target: 400000, productivity: 74, alerts: 1 },
 ];
 
 export const consultantPerformance = team
@@ -445,13 +367,8 @@ export const consultantPerformance = team
 
 // -- Activity feed ----------------------------------------------------------
 export const activityFeed = [
-  { id: 1, who: 'Sneha', what: 'confirmed booking', target: 'BKG-8817 · Maldives', when: '12 min ago', tone: 'green' },
-  { id: 2, who: 'Ritik', what: 'sent itinerary to', target: 'Siddhesh Rane', when: '38 min ago', tone: 'sky' },
-  { id: 3, who: 'System', what: 'received payment', target: '₹1,86,000 · INV-4411', when: '1 hr ago', tone: 'green' },
-  { id: 4, who: 'Kabir', what: 'marked enquiry lost', target: 'Sulekha Chavan', when: '2 hrs ago', tone: 'rose' },
-  { id: 5, who: 'Rhea', what: 'filed visa application', target: 'Rahul Menon · Schengen', when: '3 hrs ago', tone: 'violet' },
-  { id: 6, who: 'Sneha', what: 'created quotation', target: 'QUO-1187 · Maldives', when: '5 hrs ago', tone: 'amber' },
-  { id: 7, who: 'Ritik', what: 'added new enquiry', target: 'Jayashree Patil', when: '6 hrs ago', tone: 'sky' },
+  { id: 1, who: 'Sneha', what: 'confirmed booking', target: 'BKG-8821 · Bali', when: '12 min ago', tone: 'green' },
+  { id: 2, who: 'Kabir', what: 'sent itinerary to', target: 'Siddhesh Rane', when: '38 min ago', tone: 'sky' },
 ];
 
 export const upcomingDepartures = bookings

@@ -102,7 +102,7 @@ function Switch({ on }) {
   );
 }
 
-export default function Memberships() {
+export default function Memberships({ embedded = false }) {
   const {
     memberships,
     memberSignups,
@@ -238,25 +238,38 @@ export default function Memberships() {
     });
   };
 
+  const addPlan = () => {
+    setEditing(null);
+    setFormOpen(true);
+  };
+
   return (
     <>
-      <PageHeader
-        title="Memberships"
-        subtitle="Plans published on your website — features here are what members get"
-      >
-        <button className="btn-ghost" onClick={simulateSignup}>
-          <Sparkles size={16} /> Simulate signup
-        </button>
-        <button
-          className="btn-primary"
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
+      {embedded ? (
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <p className="mr-auto text-sm text-ink-500">
+            Plans published on your website — features here are what members get
+          </p>
+          <button className="btn-ghost" onClick={simulateSignup}>
+            <Sparkles size={16} /> Simulate signup
+          </button>
+          <button className="btn-primary" onClick={addPlan}>
+            <Plus size={16} /> Add plan
+          </button>
+        </div>
+      ) : (
+        <PageHeader
+          title="Memberships"
+          subtitle="Plans published on your website — features here are what members get"
         >
-          <Plus size={16} /> Add plan
-        </button>
-      </PageHeader>
+          <button className="btn-ghost" onClick={simulateSignup}>
+            <Sparkles size={16} /> Simulate signup
+          </button>
+          <button className="btn-primary" onClick={addPlan}>
+            <Plus size={16} /> Add plan
+          </button>
+        </PageHeader>
+      )}
 
       <div className="mb-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={Globe} label="Live on website" value={`${published.length} / ${memberships.length}`} />

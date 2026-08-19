@@ -8,17 +8,22 @@ import RowMenu from '../components/ui/RowMenu.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
+import BookingDetails from '../components/bookings/BookingDetails.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { bookingStatusTone, inr, shortInr } from '../data/mockData.js';
 
 const STATUSES = ['Confirmed', 'Part paid', 'Pending', 'Completed', 'Cancelled'];
 
 export default function Bookings() {
-  const { bookings, packages, team, owner, create, update, updateMany, remove, toast } = useApp();
+  const {
+    bookings, packages, team, customers, memberSignups, memberships,
+    owner, create, update, updateMany, remove, toast,
+  } = useApp();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [statusFor, setStatusFor] = useState(null);
+  const [viewing, setViewing] = useState(null); // the booking panel
 
   const rows = byOwner(bookings, owner);
   const consultants = team.filter((t) => t.bookings > 0).map((t) => t.name.split(' ')[0]);
@@ -93,27 +98,6 @@ export default function Bookings() {
     },
     { key: 'amount', header: 'Value', render: (r) => <span className="font-bold text-ink-900">{inr(r.amount)}</span> },
     {
-      key: 'paid',
-      header: 'Collection',
-      render: (r) => {
-        const pct = r.amount ? Math.round((r.paid / r.amount) * 100) : 0;
-        return (
-          <div className="min-w-[130px]">
-            <div className="mb-1 flex justify-between text-xs">
-              <span className="font-semibold text-ink-700">{inr(r.paid)}</span>
-              <span className="text-ink-400">{pct}%</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-surface-soft">
-              <div
-                className={`h-full rounded-full ${pct >= 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                style={{ width: `${Math.min(pct, 100)}%` }}
-              />
-            </div>
-          </div>
-        );
-      },
-    },
-    {
       key: 'status',
       header: 'Status',
       render: (r) => <Badge tone={bookingStatusTone[r.status]} dot>{r.status}</Badge>,
@@ -167,15 +151,33 @@ export default function Bookings() {
         ]}
         exportName="smira-club-bookings"
         emptyLabel="No bookings match this view"
-        onRowClick={(r) => {
-          setEditing(r);
-          setFormOpen(true);
-        }}
+        onRowClick={(r) => setViewing(r)}
         bulkActions={[
           { label: 'Change status', icon: Tag, onClick: (ids) => setStatusFor(ids) },
           { label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) },
         ]}
       />
+
+      {viewing && (
+        <BookingDetails
+          booking={viewing}
+          list={rows}
+          customer={customers.find((c) => c.name === viewing.customer) || null}
+          signups={memberSignups}
+          plans={memberships}
+          onClose={() => setViewing(null)}
+          onJump={(i) => rows[i] && setViewing(rows[i])}
+          onEdit={(b) => {
+            setViewing(null);
+            setEditing(b);
+            setFormOpen(true);
+          }}
+          onInvoice={(b) => {
+            raiseInvoice(b);
+            setViewing(null);
+          }}
+        />
+      )}
 
       <FormModal
         open={formOpen}

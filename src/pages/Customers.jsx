@@ -11,9 +11,11 @@ import {
   Gift,
   Check,
   FileText,
+  UserRound,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import Memberships from './Memberships.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
@@ -22,6 +24,7 @@ import Modal from '../components/ui/Modal.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp, phoneDigits } from '../store/AppStore.jsx';
+import { membershipStanding } from '../lib/membership.js';
 import {
   inr,
   formatDate,
@@ -102,6 +105,7 @@ export default function Customers() {
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [view, setView] = useState('people'); // 'people' | 'plans'
 
   /** The website membership a traveller signed up for, if any. */
   const membershipFor = (customer) => {
@@ -257,18 +261,51 @@ export default function Customers() {
 
   return (
     <>
-      <PageHeader title="Customers" subtitle="Repeat travellers, key dates and memberships">
-        <button
-          className="btn-primary"
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus size={16} /> Add customer
-        </button>
+      <PageHeader
+        title="Members"
+        subtitle={
+          view === 'people'
+            ? 'Repeat travellers, key dates and the plan each one holds'
+            : 'The three plans on your website and who signed up'
+        }
+      >
+        {view === 'people' && (
+          <button
+            className="btn-primary"
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            <Plus size={16} /> Add member
+          </button>
+        )}
       </PageHeader>
 
+      {/* People on the left, the plans they hold on the right */}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        {[
+          { key: 'people', label: 'Members', icon: UserRound, count: customers.length },
+          { key: 'plans', label: 'Membership plans', icon: Crown, count: memberships.length },
+        ].map((v) => (
+          <button
+            key={v.key}
+            onClick={() => setView(v.key)}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+              view === v.key
+                ? 'bg-ink-900 text-white shadow-sm'
+                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
+            }`}
+          >
+            <v.icon size={15} /> {v.label}
+            <span className={`num ${view === v.key ? 'text-white/60' : 'text-ink-400'}`}>{v.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {view === 'plans' && <Memberships embedded />}
+
+      {view === 'people' && (
       <DataTable
         columns={columns}
         rows={customers}
@@ -283,6 +320,7 @@ export default function Customers() {
         onRowClick={(r) => setViewing(r)}
         bulkActions={[{ label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) }]}
       />
+      )}
 
       {/* Traveller profile */}
       <Modal
@@ -379,6 +417,22 @@ export default function Customers() {
                     >
                       {membership.signup.quote}
                     </button>
+                  )}
+                  {membershipStanding(membership.signup) && (
+                    <p className="w-full text-sm text-ink-600">
+                      <b
+                        className={
+                          membershipStanding(membership.signup).tone === 'rose'
+                            ? 'text-rose-600'
+                            : membershipStanding(membership.signup).tone === 'amber'
+                              ? 'text-amber-600'
+                              : 'text-emerald-600'
+                        }
+                      >
+                        {membershipStanding(membership.signup).headline}
+                      </b>{' '}
+                      · {membershipStanding(membership.signup).note}
+                    </p>
                   )}
                 </div>
               ) : (

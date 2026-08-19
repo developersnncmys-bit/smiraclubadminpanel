@@ -1,10 +1,4 @@
 import {
-  Users,
-  UserPlus,
-  PhoneCall,
-  Trophy,
-  XCircle,
-  IndianRupee,
   Upload,
   Plus,
   UserCheck,
@@ -12,30 +6,38 @@ import {
   FileText,
   Download,
   ArrowRight,
+  UserPlus,
 } from 'lucide-react';
-import Card from '../ui/Card.jsx';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { statusTone, enquiryStatuses, inr, shortInr } from '../../data/mockData.js';
 
-/** Label, value and a proportional bar — the one chart shape this page uses. */
-function Bars({ rows, max, tone = 'bg-brand-500', empty = 'Nothing to show yet.' }) {
+/** A plain box: one heading, one line saying what it means, then the content. */
+function Block({ title, note, wide, children }) {
+  return (
+    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
+      <h3 className="font-display text-base font-extrabold text-ink-900">{title}</h3>
+      {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+/** Name on the left, number on the right, a light bar underneath. */
+function List({ rows, empty = 'Nothing here yet.' }) {
   if (rows.length === 0) return <p className="py-6 text-center text-sm text-ink-500">{empty}</p>;
-  const top = max ?? Math.max(1, ...rows.map((r) => r.value));
+  const top = Math.max(1, ...rows.map((r) => r.value));
   return (
     <ul className="space-y-3.5">
       {rows.map((r) => (
         <li key={r.label}>
           <div className="flex items-baseline justify-between gap-3">
             <span className="truncate text-sm font-semibold text-ink-700">{r.label}</span>
-            <span className="num shrink-0 text-sm font-bold text-ink-900">
-              {r.display ?? r.value}
-              {r.note && <span className="ml-1.5 text-xs font-semibold text-ink-500">{r.note}</span>}
-            </span>
+            <span className="num shrink-0 text-sm font-bold text-ink-900">{r.display ?? r.value}</span>
           </div>
           <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-soft">
             <div
-              className={`h-full rounded-full transition-all ${r.tone || tone}`}
+              className={`h-full rounded-full ${r.tone || 'bg-brand-500'}`}
               style={{ width: `${Math.round((r.value / top) * 100)}%` }}
             />
           </div>
@@ -45,7 +47,7 @@ function Bars({ rows, max, tone = 'bg-brand-500', empty = 'Nothing to show yet.'
   );
 }
 
-/** A number with its caption, on the soft fill. */
+/** One big number with its caption. */
 function Stat({ label, value, tone = 'text-ink-900' }) {
   return (
     <div className="rounded-xl bg-surface-soft px-4 py-3.5">
@@ -56,18 +58,16 @@ function Stat({ label, value, tone = 'text-ink-900' }) {
 }
 
 /**
- * Every block on the client's Sales & Leads sheet, laid out as one board:
- * the numbers at the top, then nine cards of the same shape so the page
- * reads left to right without a single nested tab.
+ * The same blocks the client's sheet asks for, written the way the desk
+ * talks: a plain heading, a line saying what the box means, and one number
+ * per row. Two columns, no tabs, no jargon.
  */
 export default function SalesOverview({ rows, bookings, team, onPickStatus, onOpen, actions }) {
   const total = rows.length;
   const by = (fn) => rows.filter(fn);
-  const share = (n) => (total ? Math.round((n / total) * 100) : 0);
   const value = (list) => list.reduce((s, e) => s + Number(e.budget || 0), 0);
 
   const fresh = by((e) => e.status === 'New');
-  const contacted = by((e) => e.status !== 'New');
   const won = by((e) => e.status === 'Booked');
   const lost = by((e) => e.status === 'Lost');
   const open = by((e) => !['Booked', 'Lost'].includes(e.status));
@@ -88,12 +88,12 @@ export default function SalesOverview({ rows, bookings, team, onPickStatus, onOp
   );
 
   const kpis = [
-    { icon: Users, label: 'Total leads', value: total, hint: 'in this view' },
-    { icon: UserPlus, label: 'New', value: fresh.length, hint: 'never contacted', alert: fresh.length > 0 },
-    { icon: PhoneCall, label: 'Contacted', value: contacted.length, hint: `${share(contacted.length)}% of leads` },
-    { icon: Trophy, label: 'Converted', value: won.length, hint: `${share(won.length)}% win rate` },
-    { icon: XCircle, label: 'Lost', value: lost.length, hint: `${share(lost.length)}% of leads` },
-    { icon: IndianRupee, label: 'Pipeline value', value: shortInr(value(open)), hint: 'still open' },
+    { label: 'All leads', value: total },
+    { label: 'Not contacted', value: fresh.length, tone: fresh.length ? 'text-rose-600' : 'text-ink-900' },
+    { label: 'Talked to', value: total - fresh.length },
+    { label: 'Became trips', value: won.length },
+    { label: 'Lost', value: lost.length },
+    { label: 'Money still open', value: shortInr(value(open)), tone: 'text-brand-700' },
   ];
 
   const quick = [
@@ -107,26 +107,18 @@ export default function SalesOverview({ rows, bookings, team, onPickStatus, onOp
 
   return (
     <div className="space-y-6">
-      {/* 1 · Top KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      {/* The six numbers, in plain words */}
+      <div className="grid gap-4 sm:grid-cols-3 2xl:grid-cols-6">
         {kpis.map((k) => (
-          <div key={k.label} className="card px-4 py-3.5">
-            <p className="flex items-center gap-2 text-xs font-semibold text-ink-500">
-              <k.icon size={13} className="shrink-0 text-ink-400" /> {k.label}
-            </p>
-            <p
-              className={`num mt-1.5 font-display text-2xl font-extrabold leading-none ${
-                k.alert ? 'text-rose-600' : 'text-ink-900'
-              }`}
-            >
+          <div key={k.label} className="card px-4 py-4">
+            <p className="text-sm font-semibold text-ink-500">{k.label}</p>
+            <p className={`num mt-1 font-display text-2xl font-extrabold ${k.tone || 'text-ink-900'}`}>
               {k.value}
             </p>
-            <p className="mt-1 truncate text-xs text-ink-400">{k.hint}</p>
           </div>
         ))}
       </div>
 
-      {/* 11 · Quick actions, up top where the desk starts its day */}
       <div className="card flex flex-wrap items-center gap-2 px-4 py-3.5">
         <p className="eyebrow mr-1">Quick actions</p>
         {quick.map((q) => (
@@ -136,62 +128,40 @@ export default function SalesOverview({ rows, bookings, team, onPickStatus, onOp
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        {/* 2 · Lead funnel */}
-        <Card
-          eyebrow="Lead funnel"
-          title="Where every lead sits"
-          subtitle="Click a stage to open it in the list"
-        >
-          <ul className="space-y-2.5">
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Block title="Where the leads are now" note="Click a stage to see those leads in the list">
+          <ul className="space-y-2">
             {enquiryStatuses.map((status) => {
               const n = by((e) => e.status === status).length;
               return (
                 <li key={status}>
                   <button
                     onClick={() => onPickStatus(status)}
-                    className="w-full rounded-xl px-3 py-2 text-left transition hover:bg-surface-soft"
+                    className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-soft"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <Badge tone={statusTone[status]}>{status}</Badge>
-                      <span className="num text-sm">
-                        <b className="text-ink-900">{n}</b>
-                        <span className="ml-1.5 text-xs text-ink-500">{share(n)}%</span>
-                      </span>
-                    </div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-soft">
-                      <div className="h-full rounded-full bg-brand-500" style={{ width: `${share(n)}%` }} />
-                    </div>
+                    <Badge tone={statusTone[status]}>{status}</Badge>
+                    <span className="num text-sm font-bold text-ink-900">{n} leads</span>
                   </button>
                 </li>
               );
             })}
           </ul>
-        </Card>
+        </Block>
 
-        {/* 3 · Sales performance */}
-        <Card eyebrow="Sales performance" title="What the desk closed" subtitle="Enquiries that became trips">
+        <Block title="What we sold" note="Leads that turned into confirmed trips">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Stat label="Won value" value={inr(value(won))} tone="text-brand-700" />
+            <Stat label="Trips confirmed" value={bookings.length} />
+            <Stat label="Value of those trips" value={inr(value(won))} tone="text-brand-700" />
             <Stat
-              label="Average deal"
+              label="Average trip"
               value={won.length ? inr(Math.round(value(won) / won.length)) : '—'}
             />
-            <Stat label="Win rate" value={`${share(won.length)}%`} />
-            <Stat label="Trips confirmed" value={bookings.length} />
+            <Stat label="Out of every 100 leads" value={`${Math.round((won.length / (total || 1)) * 100)} book`} />
           </div>
-          <p className="mt-4 text-sm text-ink-600">
-            {won.length} of {total} enquiries became trips worth {inr(value(won))}.
-          </p>
-        </Card>
+        </Block>
 
-        {/* 8 · Sales pipeline value */}
-        <Card
-          eyebrow="Sales pipeline value"
-          title="Money still in play"
-          subtitle={`${inr(value(open))} across ${open.length} open leads`}
-        >
-          <Bars
+        <Block title="Money waiting to be closed" note="What the open leads are worth, stage by stage">
+          <List
             rows={enquiryStatuses
               .filter((s) => !['Booked', 'Lost'].includes(s))
               .map((s) => {
@@ -199,11 +169,10 @@ export default function SalesOverview({ rows, bookings, team, onPickStatus, onOp
                 return { label: s, value: v, display: v ? inr(v) : '—' };
               })}
           />
-        </Card>
+        </Block>
 
-        {/* 4 · Lead source performance */}
-        <Card eyebrow="Lead source performance" title="Which channels bring business" subtitle="Leads, and how many closed">
-          <Bars
+        <Block title="Where the leads come from" note="Leads received from each channel">
+          <List
             rows={sources
               .map((s) => {
                 const all = by((e) => e.source === s);
@@ -211,26 +180,22 @@ export default function SalesOverview({ rows, bookings, team, onPickStatus, onOp
                 return {
                   label: s,
                   value: all.length,
-                  display: all.length,
-                  note: `· ${w} won`,
-                  tone: w > 0 ? 'bg-brand-500' : 'bg-ink-900/20',
+                  display: `${all.length} leads${w ? ` · ${w} booked` : ''}`,
                 };
               })
               .sort((a, b) => b.value - a.value)}
           />
-        </Card>
+        </Block>
 
-        {/* 5 · Sales team performance */}
-        <Card eyebrow="Sales team performance" title="Per consultant" subtitle="Leads held and revenue booked">
-          <ul className="space-y-3">
+        <Block title="How each person is doing" note="Leads they hold, and money they have booked">
+          <ul className="space-y-3.5">
             {owners
               .map((o) => {
                 const all = by((e) => e.owner === o);
-                const w = all.filter((e) => e.status === 'Booked').length;
                 const rev = bookings
                   .filter((b) => b.owner === o)
                   .reduce((s, b) => s + Number(b.amount || 0), 0);
-                return { owner: o, leads: all.length, won: w, rev };
+                return { owner: o, leads: all.length, rev };
               })
               .sort((a, b) => b.rev - a.rev || b.leads - a.leads)
               .map((r) => (
@@ -244,38 +209,29 @@ export default function SalesOverview({ rows, bookings, team, onPickStatus, onOp
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-ink-900">{r.owner}</p>
-                    <p className="num text-xs text-ink-500">
-                      {r.leads} leads · {r.won} won
-                    </p>
+                    <p className="num text-xs text-ink-500">{r.leads} leads</p>
                   </div>
                   <span className="num shrink-0 text-sm font-bold text-brand-700">
-                    {r.rev ? shortInr(r.rev) : '—'}
+                    {r.rev ? inr(r.rev) : '—'}
                   </span>
                 </li>
               ))}
           </ul>
-        </Card>
+        </Block>
 
-        {/* 6 · Today's sales activity */}
-        <Card
-          eyebrow="Today's sales activity"
-          title="What the desk did today"
-          subtitle={`${team.filter((m) => m.status === 'Active').length} desks active`}
-        >
+        <Block title="What the team did today" note="Work logged by the desk since this morning">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Calls" value={activity.calls} />
-            <Stat label="Follow-ups" value={activity.followUps} />
+            <Stat label="Calls made" value={activity.calls} />
+            <Stat label="Follow-ups done" value={activity.followUps} />
             <Stat label="Itineraries sent" value={activity.presentations} />
-            <Stat label="Customer visits" value={activity.visits} />
+            <Stat label="Customers visited" value={activity.visits} />
           </div>
-        </Card>
+        </Block>
 
-        {/* 7 · Follow-up management */}
-        <Card
-          eyebrow="Follow-up management"
-          title="Waiting on a chase"
-          subtitle={`${open.length} leads open`}
-          className="xl:col-span-2"
+        <Block
+          title="Who to call next"
+          note={`${open.length} leads are still open — the biggest ones first`}
+          wide
         >
           <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
             {open
@@ -309,53 +265,40 @@ export default function SalesOverview({ rows, bookings, team, onPickStatus, onOp
               </li>
             )}
           </ul>
-        </Card>
+        </Block>
 
-        {/* 9 · Lost lead analysis */}
-        <Card
-          eyebrow="Lost lead analysis"
-          title="Why leads go"
-          subtitle={lost.length ? `${inr(value(lost))} walked away` : 'Nothing lost in this view'}
+        <Block
+          title="Why leads said no"
+          note={lost.length ? `${lost.length} leads walked away, worth ${inr(value(lost))}` : 'Nothing lost so far'}
         >
-          <Bars
-            tone="bg-rose-400"
-            empty="No leads lost in this view."
+          <List
+            empty="No leads lost yet."
             rows={reasons
-              .map((r) => ({ label: r, value: lost.filter((e) => e.lostReason === r).length }))
+              .map((r) => {
+                const n = lost.filter((e) => e.lostReason === r).length;
+                return { label: r, value: n, display: `${n} leads`, tone: 'bg-rose-400' };
+              })
               .sort((a, b) => b.value - a.value)}
           />
-          {lost.length > 0 && (
-            <p className="mt-4 border-t border-ink-900/[0.07] pt-3 text-xs text-ink-500">
-              Most lost through{' '}
-              <b className="text-ink-700">
-                {sources
-                  .map((s) => ({ s, n: lost.filter((e) => e.source === s).length }))
-                  .sort((a, b) => b.n - a.n)[0]?.s || '—'}
-              </b>
-            </p>
-          )}
-        </Card>
+        </Block>
 
-        {/* 10 · Conversion analytics */}
-        <Card
-          eyebrow="Conversion analytics"
-          title="Win rate by trip type"
-          subtitle="Which trips actually close"
-          className="xl:col-span-2"
-        >
-          <Bars
-            empty="No labelled enquiries yet."
-            max={100}
+        <Block title="Which trips close best" note="Out of the leads asking for each kind of trip">
+          <List
+            empty="No trip types to compare yet."
             rows={labels
               .map((l) => {
                 const all = by((e) => e.label === l);
                 const w = all.filter((e) => e.status === 'Booked').length;
-                const rate = all.length ? Math.round((w / all.length) * 100) : 0;
-                return { label: l, value: rate, display: `${rate}%`, note: `of ${all.length}` };
+                return {
+                  label: l,
+                  value: all.length,
+                  display: `${w} of ${all.length} booked`,
+                  tone: w ? 'bg-brand-500' : 'bg-ink-900/15',
+                };
               })
               .sort((a, b) => b.value - a.value)}
           />
-        </Card>
+        </Block>
       </div>
     </div>
   );

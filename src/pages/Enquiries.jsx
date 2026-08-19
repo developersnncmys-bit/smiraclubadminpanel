@@ -166,7 +166,6 @@ export default function Enquiries() {
       render: (r) => <span className="font-bold text-ink-900">{inr(r.budget)}</span>,
     },
     { key: 'source', header: 'Source', render: (r) => <span className="text-ink-600">{r.source}</span> },
-    { key: 'label', header: 'Label', render: (r) => <Badge tone="teal">{r.label}</Badge> },
     {
       key: 'owner',
       header: 'Owner',

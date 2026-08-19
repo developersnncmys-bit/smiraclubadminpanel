@@ -20,7 +20,7 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import MemberDetails from '../components/team/MemberDetails.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { inr, shortInr } from '../data/mockData.js';
+import { inr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
 
 const ROLES = [
@@ -45,18 +45,6 @@ function workloadOf(m) {
   if (load >= 10) return { label: 'Balanced', tone: 'amber' };
   if (load > 0) return { label: 'Light', tone: 'green' };
   return { label: 'Free', tone: 'slate' };
-}
-
-/** Thin progress line used twice on every card. */
-function Line({ pct, tone = 'bg-brand-500' }) {
-  return (
-    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-soft">
-      <div
-        className={`h-full rounded-full transition-all ${tone}`}
-        style={{ width: `${Math.min(pct, 100)}%` }}
-      />
-    </div>
-  );
 }
 
 /** One counter in the card's activity strip. */
@@ -253,8 +241,6 @@ export default function Team() {
         {rows.map((m) => {
           const w = workloadOf(m);
           const rank = rankOf(m);
-          const taskPct = m.tasksTotal ? Math.round((m.tasksDone / m.tasksTotal) * 100) : 0;
-          const targetPct = m.target ? Math.round((m.revenue / m.target) * 100) : 0;
           return (
             <article
               key={m.id}
@@ -339,29 +325,6 @@ export default function Team() {
                 {m.activity || 'Nothing on right now'}
                 <span className="ml-2 text-xs text-ink-400">· {m.lastActive}</span>
               </p>
-
-              {/* The two lines that matter: today's list, and the year's number */}
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="flex items-baseline justify-between gap-2 text-xs font-semibold text-ink-500">
-                    Today&rsquo;s tasks
-                    <span className="num text-ink-900">
-                      {m.tasksDone}/{m.tasksTotal}
-                    </span>
-                  </p>
-                  <Line pct={taskPct} />
-                </div>
-                <div>
-                  <p className="flex items-baseline justify-between gap-2 text-xs font-semibold text-ink-500">
-                    {m.target ? `Target ${shortInr(m.target)}` : 'No target'}
-                    <span className="num text-ink-900">{m.target ? `${targetPct}%` : '—'}</span>
-                  </p>
-                  <Line
-                    pct={targetPct}
-                    tone={targetPct >= 100 ? 'bg-emerald-500' : 'bg-brand-500'}
-                  />
-                </div>
-              </div>
 
               {/* Everything the sheet counts, in one strip */}
               <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-ink-900/[0.07] py-3 sm:grid-cols-6">

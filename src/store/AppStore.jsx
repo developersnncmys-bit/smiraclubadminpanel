@@ -12,7 +12,7 @@ import * as extra from '../data/modulesData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v14';
+const KEY = 'smira-club-admin:v15';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -43,6 +43,7 @@ const PREFIX = {
   banners: 'BNR',
   seoPages: 'SEO',
   apiKeys: 'API',
+  activities: 'ACT',
 };
 
 export const SINGULAR = {
@@ -72,6 +73,7 @@ export const SINGULAR = {
   banners: 'Banner',
   seoPages: 'SEO entry',
   apiKeys: 'API key',
+  activities: 'Activity',
 };
 
 const seedState = () => ({
@@ -101,6 +103,7 @@ const seedState = () => ({
   banners: extra.banners,
   seoPages: extra.seoPages,
   apiKeys: extra.apiKeys,
+  activities: extra.activities,
   settings: {
     membership: { autoQuote: true, validityDays: 7 },
     agency: {
@@ -446,6 +449,32 @@ export function AppProvider({ children }) {
     [db.customers, update, toast]
   );
 
+  /** Adds a line to a lead's activity trail. */
+  const logActivity = useCallback(
+    (leadId, text, kind = 'note', meta) => {
+      const now = new Date();
+      create(
+        'activities',
+        {
+          lead: leadId,
+          kind,
+          text,
+          meta,
+          who: auth?.name?.split(' ')[0] || 'You',
+          at: `${now.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          })}, ${now
+            .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+            .toLowerCase()}`,
+        },
+        { silent: true }
+      );
+    },
+    [create, auth]
+  );
+
   const signOut = useCallback(() => {
     setAuth(null);
     toast('Signed out — verify your mobile number to continue', 'info');
@@ -496,6 +525,7 @@ export function AppProvider({ children }) {
       generateMembershipQuote,
       receiveMemberSignup,
       toggleGift,
+      logActivity,
     }),
     [
       db,
@@ -520,6 +550,7 @@ export function AppProvider({ children }) {
       generateMembershipQuote,
       receiveMemberSignup,
       toggleGift,
+      logActivity,
     ]
   );
 

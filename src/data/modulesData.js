@@ -153,3 +153,27 @@ export const apiKeys = [
   { id: 'API-04', name: 'WhatsApp Business API', key: 'sk_live_4e61••••••90bb', scope: 'Send messages', created: '05 May 2026', lastUsed: '04 Aug 2026', calls: 3120, status: 'Active' },
   { id: 'API-05', name: 'Old website (retired)', key: 'sk_live_19cc••••••33fa', scope: 'Create enquiries', created: '20 Nov 2025', lastUsed: '14 Feb 2026', calls: 410, status: 'Revoked' },
 ];
+
+// -- Lead activity ----------------------------------------------------------
+// Everything that has happened to an enquiry, newest last. The panel appends
+// to this whenever the desk acts on a lead.
+export const activities = [
+  { id: 'ACT-01', lead: 'ENQ-2041', kind: 'created', text: 'New lead created', meta: 'Source: Instagram', who: 'System', at: '04 Aug 2026, 09:12 am' },
+  { id: 'ACT-02', lead: 'ENQ-2041', kind: 'automation', text: "Automation: Interested rules — moved to list 'Interested'", who: 'System', at: '04 Aug 2026, 09:13 am' },
+  { id: 'ACT-03', lead: 'ENQ-2041', kind: 'call', text: 'Called the traveller — discussed Bali dates', who: 'Ritik', at: '04 Aug 2026, 11:40 am' },
+  { id: 'ACT-04', lead: 'ENQ-2041', kind: 'status', text: 'Status updated to Interested', who: 'Ritik', at: '04 Aug 2026, 11:52 am' },
+  { id: 'ACT-05', lead: 'ENQ-2041', kind: 'note', text: 'Wants a pool villa and a candlelight dinner added', who: 'Ritik', at: '04 Aug 2026, 11:55 am' },
+  { id: 'ACT-06', lead: 'ENQ-2041', kind: 'whatsapp', text: 'Sent the Bali Honeymoon Escape itinerary on WhatsApp', who: 'Ritik', at: '04 Aug 2026, 12:20 pm' },
+
+  { id: 'ACT-07', lead: 'ENQ-2040', kind: 'created', text: 'New lead created', meta: 'Source: Website form', who: 'System', at: '04 Aug 2026, 08:02 am' },
+  { id: 'ACT-08', lead: 'ENQ-2040', kind: 'automation', text: 'Automation: Assign website enquiries — waiting for a consultant', who: 'System', at: '04 Aug 2026, 08:02 am' },
+
+  { id: 'ACT-09', lead: 'ENQ-2039', kind: 'created', text: 'New lead created', meta: 'Source: Referral', who: 'System', at: '03 Aug 2026, 10:15 am' },
+  { id: 'ACT-10', lead: 'ENQ-2039', kind: 'call', text: 'Spoke about Maldives in December', who: 'Sneha', at: '03 Aug 2026, 12:30 pm' },
+  { id: 'ACT-11', lead: 'ENQ-2039', kind: 'status', text: 'Status updated to Quoted', who: 'Sneha', at: '03 Aug 2026, 04:45 pm' },
+  { id: 'ACT-12', lead: 'ENQ-2039', kind: 'email', text: 'Emailed quotation QUO-1187', who: 'Sneha', at: '03 Aug 2026, 04:50 pm' },
+
+  { id: 'ACT-13', lead: 'ENQ-2036', kind: 'created', text: 'New lead created', meta: 'Source: WhatsApp', who: 'System', at: '02 Aug 2026, 09:40 am' },
+  { id: 'ACT-14', lead: 'ENQ-2036', kind: 'status', text: 'Status updated to Booked', who: 'Sneha', at: '02 Aug 2026, 06:10 pm' },
+  { id: 'ACT-15', lead: 'ENQ-2036', kind: 'note', text: 'Group of 6 — needs two connecting rooms', who: 'Sneha', at: '02 Aug 2026, 06:12 pm' },
+];

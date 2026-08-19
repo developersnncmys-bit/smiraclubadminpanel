@@ -20,6 +20,7 @@ import RowMenu from '../components/ui/RowMenu.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
+import LeadDetails from '../components/sales/LeadDetails.jsx';
 import SalesInsights from '../components/sales/SalesInsights.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, inr } from '../data/mockData.js';
@@ -41,6 +42,7 @@ export default function Enquiries() {
   const [assignFor, setAssignFor] = useState(null); // ids awaiting an owner
   const [statusFor, setStatusFor] = useState(null);
   const [pipeline, setPipeline] = useState('');
+  const [viewing, setViewing] = useState(null); // the lead panel
 
   // A ?new=1 deep link opens the create form straight away.
   useEffect(() => {
@@ -248,10 +250,7 @@ export default function Enquiries() {
         onClearExternal={() => setPipeline('')}
         exportName="smira-club-enquiries"
         emptyLabel="No enquiries match this view"
-        onRowClick={(r) => {
-          setEditing(r);
-          setFormOpen(true);
-        }}
+        onRowClick={(r) => setViewing(r)}
         bulkActions={[
           { label: 'Assign', icon: UserCheck, onClick: (ids) => setAssignFor(ids) },
           { label: 'Change status', icon: Tag, onClick: (ids) => setStatusFor(ids) },
@@ -368,6 +367,22 @@ export default function Enquiries() {
           />
         </label>
       </Modal>
+      <LeadDetails
+        lead={viewing && rows.find((r) => r.id === viewing.id)}
+        list={rows}
+        onClose={() => setViewing(null)}
+        onJump={(step) => {
+          const i = rows.findIndex((r) => r.id === viewing.id);
+          const next = rows[i + step];
+          if (next) setViewing(next);
+        }}
+        onEdit={(lead) => {
+          setViewing(null);
+          setEditing(lead);
+          setFormOpen(true);
+        }}
+      />
+
     </>
   );
 }

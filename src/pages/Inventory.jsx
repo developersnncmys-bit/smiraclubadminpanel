@@ -2,7 +2,7 @@ import RecordsPage from '../components/ui/RecordsPage.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import { inr } from '../data/mockData.js';
 
-const KINDS = ['Hotel', 'Flight', 'Cruise', 'Transport', 'Camp', 'Rail'];
+const KINDS = ['Hotels', 'Packages', 'Villas', 'Lifestyle'];
 const STATUS = ['Confirmed', 'Provisional', 'Sold out', 'Released'];
 const tone = { Confirmed: 'green', Provisional: 'amber', 'Sold out': 'violet', Released: 'slate' };
 
@@ -14,14 +14,14 @@ export default function Inventory() {
     <RecordsPage
       collection="inventory"
       title="Travel Inventory"
-      subtitle="Seats, rooms and vehicles you hold, and what is left to sell"
+      subtitle="Hotels, packages, villas and lifestyle you hold, and what is left to sell"
       addLabel="Add allotment"
       searchKeys={['item', 'supplier', 'season', 'kind']}
       filters={[
         { key: 'kind', label: 'Type', options: KINDS },
         { key: 'status', label: 'Status', options: STATUS },
       ]}
-      initial={{ kind: 'Hotel', status: 'Provisional', held: 10, sold: 0 }}
+      initial={{ kind: 'Hotels', status: 'Provisional', held: 10, sold: 0 }}
       stats={(rows) => {
         const held = rows.reduce((s, r) => s + Number(r.held || 0), 0);
         const sold = rows.reduce((s, r) => s + Number(r.sold || 0), 0);

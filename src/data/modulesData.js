@@ -14,12 +14,14 @@ export const partners = [
 
 // -- Travel inventory -------------------------------------------------------
 export const inventory = [
-  { id: 'INV-01', item: 'Bali — Ayana Resort', kind: 'Hotel', supplier: 'Bali Sunrise DMC', season: 'Sep – Nov 2026', held: 20, sold: 12, release: '15 Aug 2026', cost: 42000, status: 'Confirmed' },
-  { id: 'INV-02', item: 'Mumbai → Malé seats', kind: 'Flight', supplier: 'Emirates Holidays Desk', season: 'Dec 2026', held: 30, sold: 24, release: '01 Oct 2026', cost: 38500, status: 'Confirmed' },
-  { id: 'INV-03', item: 'Kerala houseboat — deluxe', kind: 'Cruise', supplier: 'Kerala Houseboat Collective', season: 'Aug – Oct 2026', held: 12, sold: 5, release: '20 Aug 2026', cost: 18500, status: 'Confirmed' },
-  { id: 'INV-04', item: 'Dubai desert safari coaches', kind: 'Transport', supplier: 'Gulf Transfers LLC', season: 'Sep 2026', held: 8, sold: 8, release: '05 Sep 2026', cost: 9500, status: 'Sold out' },
-  { id: 'INV-05', item: 'Ladakh camp — Pangong', kind: 'Camp', supplier: 'Himalayan Base Co.', season: 'Jun – Sep 2026', held: 15, sold: 3, release: '30 Aug 2026', cost: 12000, status: 'Provisional' },
-  { id: 'INV-06', item: 'Swiss rail passes', kind: 'Rail', supplier: 'Alpine Rail Partners', season: 'Oct – Dec 2026', held: 25, sold: 6, release: '12 Sep 2026', cost: 21500, status: 'Confirmed' },
+  { id: 'TIV-01', item: 'Ayana Resort — Bali', kind: 'Hotels', supplier: 'Bali Sunrise DMC', season: 'Sep – Nov 2026', held: 20, sold: 12, release: '15 Aug 2026', cost: 42000, status: 'Confirmed' },
+  { id: 'TIV-02', item: 'Atlantis The Palm — Dubai', kind: 'Hotels', supplier: 'Gulf Stays LLC', season: 'Oct – Dec 2026', held: 14, sold: 9, release: '20 Sep 2026', cost: 36500, status: 'Confirmed' },
+  { id: 'TIV-03', item: 'Bali Honeymoon Escape — 7D/6N', kind: 'Packages', supplier: 'Bali Sunrise DMC', season: 'Sep – Nov 2026', held: 25, sold: 18, release: '01 Sep 2026', cost: 68000, status: 'Confirmed' },
+  { id: 'TIV-04', item: 'Kerala Backwaters Family — 6D/5N', kind: 'Packages', supplier: 'Kerala Houseboat Collective', season: 'Aug – Oct 2026', held: 30, sold: 22, release: '10 Aug 2026', cost: 24500, status: 'Confirmed' },
+  { id: 'TIV-05', item: 'Private pool villa — Seminyak', kind: 'Villas', supplier: 'Bali Sunrise DMC', season: 'Sep – Dec 2026', held: 8, sold: 8, release: '05 Sep 2026', cost: 54000, status: 'Sold out' },
+  { id: 'TIV-06', item: 'Beach villa — Alibaug', kind: 'Villas', supplier: 'Konkan Retreats', season: 'All year', held: 6, sold: 2, release: '30 Aug 2026', cost: 28000, status: 'Provisional' },
+  { id: 'TIV-07', item: 'Airport lounge passes', kind: 'Lifestyle', supplier: 'DreamFolks', season: 'All year', held: 100, sold: 61, release: '—', cost: 800, status: 'Confirmed' },
+  { id: 'TIV-08', item: 'Schengen visa appointment slots', kind: 'Lifestyle', supplier: 'VFS partner desk', season: 'Sep – Nov 2026', held: 40, sold: 12, release: '25 Aug 2026', cost: 2700, status: 'Provisional' },
 ];
 
 // -- Lifestyle add-ons ------------------------------------------------------

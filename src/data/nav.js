@@ -31,9 +31,9 @@ const planned = (path, label) => {
 };
 
 /**
- * The client's sheet tabs, in their exact order and wording. Nothing is
- * inserted between them — pages we built that their sheet does not name are
- * listed after API so this sequence stays untouched.
+ * The client's sheet tabs, in their exact order and wording. Tasks,
+ * Quotations, Invoices, Packages and Suppliers still have routes and pages;
+ * they are out of the sidebar until the client says where they belong.
  */
 export const navGroups = [
   {
@@ -64,17 +64,6 @@ export const navGroups = [
       built('/banners'),
       built('/seo'),
       built('/api'),
-    ],
-  },
-  {
-    // Built and working, but not on the client's tab list.
-    section: 'Also in the panel',
-    items: [
-      { to: '/tasks', label: 'Tasks', icon: ListTodo, badgeKey: 'tasks' },
-      { to: '/quotations', label: 'Quotations', icon: FileText },
-      { to: '/invoices', label: 'Invoices', icon: ReceiptIndianRupee },
-      { to: '/packages', label: 'Packages', icon: Package },
-      { to: '/suppliers', label: 'Suppliers', icon: Building2 },
     ],
   },
 ];

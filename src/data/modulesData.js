@@ -23,9 +23,6 @@ export const inventory = [
   { id: 'TIV-09', kind: 'Villas', name: 'Villa Seminyak — private pool', location: 'Seminyak, Bali', bedrooms: 3, guests: 6, price: 54000, nights: 1, supplier: 'Bali Sunrise DMC', status: 'Sold out', booked: 8, rooms: 8 },
   { id: 'TIV-10', kind: 'Villas', name: 'Casa Alibaug — beachfront', location: 'Alibaug, Maharashtra', bedrooms: 4, guests: 10, price: 28000, nights: 1, supplier: 'Konkan Retreats', status: 'Available', booked: 2, rooms: 6 },
 
-  // Lifestyle — the extras, and who provides them
-  { id: 'TIV-13', kind: 'Lifestyle', name: 'Airport lounge pass', category: 'Lounge', location: 'All Indian airports', price: 1200, rooms: 100, booked: 61, supplier: 'DreamFolks', status: 'Available' },
-  { id: 'TIV-14', kind: 'Lifestyle', name: 'Schengen visa filing', category: 'Visa', location: 'Mumbai centre', price: 4500, rooms: 40, booked: 12, supplier: 'VFS partner desk', status: 'Available' },
 ];
 
 // -- Lifestyle add-ons ------------------------------------------------------

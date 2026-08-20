@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Hotel, Package, Home, Umbrella, Star, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Hotel, Package, Home, Star, MapPin, Pencil, Trash2 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -13,7 +13,6 @@ const STATUS = ['Available', 'Limited', 'Sold out'];
 const statusTone = { Available: 'green', Limited: 'amber', 'Sold out': 'rose' };
 
 const MEALS = ['Room only', 'Breakfast included', 'Half board', 'Full board'];
-const LIFESTYLE_CATEGORIES = ['Visa', 'Insurance', 'Lounge', 'Transfer', 'Experience', 'Forex'];
 
 /** What each of the four things is, in its own words. */
 const TABS = [
@@ -37,13 +36,6 @@ const TABS = [
     unit: 'nights',
     blurb: 'Whole villas, per night',
     priceLabel: 'Per night',
-  },
-  {
-    key: 'Lifestyle',
-    icon: Umbrella,
-    unit: 'units',
-    blurb: 'Add-ons sold with a trip',
-    priceLabel: 'Price',
   },
 ];
 
@@ -190,15 +182,6 @@ export default function Inventory() {
       { key: 'status', header: 'Status', render: status },
       actions,
     ],
-    Lifestyle: [
-      { key: 'name', header: 'Service', render: (r) => <Title row={r} /> },
-      { key: 'category', header: 'Category', render: (r) => <Badge tone="teal">{r.category}</Badge> },
-      { key: 'price', header: 'Price', render: money },
-      { key: 'left', header: 'Availability', csv: (r) => r.rooms - r.booked, render: (r) => <Left row={r} unit="units" /> },
-      { key: 'supplier', header: 'Provided by', render: (r) => <span className="text-sm text-ink-600">{r.supplier}</span> },
-      { key: 'status', header: 'Status', render: status },
-      actions,
-    ],
   };
 
   // The form asks only for what that kind of thing needs.
@@ -239,14 +222,6 @@ export default function Inventory() {
       { name: 'price', label: 'Price per night (₹)', type: 'number', required: true },
       { name: 'rooms', label: 'Nights held', type: 'number' },
       { name: 'booked', label: 'Nights booked', type: 'number' },
-      ...tail,
-    ],
-    Lifestyle: [
-      ...shared,
-      { name: 'category', label: 'Category', type: 'select', options: LIFESTYLE_CATEGORIES },
-      { name: 'price', label: 'Price (₹)', type: 'number', required: true },
-      { name: 'rooms', label: 'Units held', type: 'number' },
-      { name: 'booked', label: 'Units sold', type: 'number' },
       ...tail,
     ],
   };

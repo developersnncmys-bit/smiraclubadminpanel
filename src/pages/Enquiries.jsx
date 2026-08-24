@@ -11,6 +11,7 @@ import {
   Trash2,
   UserCheck,
   Tag,
+  Crown,
   LayoutGrid,
   Rows3,
   X,
@@ -28,6 +29,7 @@ import SalesOverview from '../components/sales/SalesOverview.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, inr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
+import { findMembership, membershipStanding } from '../lib/membership.js';
 
 const SOURCES = ['Instagram', 'Website', 'Google Ads', 'Referral', 'Walk-in', 'WhatsApp'];
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
@@ -37,7 +39,19 @@ const digits = (phone) => String(phone).replace(/[^\d]/g, '');
 export default function Enquiries() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { enquiries, bookings, team, owner, create, update, updateMany, remove, toast } = useApp();
+  const {
+    enquiries,
+    bookings,
+    team,
+    memberSignups,
+    memberships,
+    owner,
+    create,
+    update,
+    updateMany,
+    remove,
+    toast,
+  } = useApp();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -60,6 +74,12 @@ export default function Enquiries() {
   }, [params, setParams]);
 
   const rows = byOwner(enquiries, owner);
+
+  /** The plan this lead already holds, if any, and how long it has left. */
+  const planOf = (lead) => {
+    const found = findMembership(lead, memberSignups, memberships);
+    return found ? { ...found, standing: membershipStanding(found.signup) } : null;
+  };
   const listRows = stage ? rows.filter((e) => e.status === stage) : rows;
 
   // The funnel hands the list a stage; the list says so and can drop it.
@@ -166,6 +186,34 @@ export default function Enquiries() {
       render: (r) => <span className="font-bold text-ink-900">{inr(r.budget)}</span>,
     },
     { key: 'source', header: 'Source', render: (r) => <span className="text-ink-600">{r.source}</span> },
+    {
+      key: 'membership',
+      header: 'Membership',
+      csv: (r) => {
+        const m = planOf(r);
+        return m ? `${m.signup.plan} till ${m.signup.expiresOn || '—'}` : 'Not a member';
+      },
+      render: (r) => {
+        const m = planOf(r);
+        if (!m) return <span className="text-sm text-ink-400">Not a member</span>;
+        const tone = m.standing.tone;
+        return (
+          <div className="min-w-[150px]">
+            <p className="flex items-center gap-1.5 text-sm font-bold text-ink-900">
+              <Crown size={12} className="shrink-0 text-brand-600" />
+              {m.signup.plan}
+            </p>
+            <p
+              className={`text-xs font-semibold ${
+                tone === 'rose' ? 'text-rose-600' : tone === 'amber' ? 'text-amber-600' : 'text-ink-500'
+              }`}
+            >
+              {m.signup.expiresOn ? `Till ${m.signup.expiresOn} · ${m.standing.headline}` : m.standing.headline}
+            </p>
+          </div>
+        );
+      },
+    },
     {
       key: 'owner',
       header: 'Owner',

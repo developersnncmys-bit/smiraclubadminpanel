@@ -233,7 +233,7 @@ export const memberships = [
     accent: 'slate',
     popular: false,
     published: true,
-    members: 0,
+    members: 1,
     gifts: [
       'Welcome travel kit on joining',
       'Birthday greeting card',
@@ -303,6 +303,7 @@ export const memberships = [
 
 // Signups captured on the website pricing page and pushed into the panel.
 export const memberSignups = [
+  { id: 'MSU-09', name: 'Siddhesh Rane', email: 'siddhesh.r@gmail.com', phone: '+91 98201 44521', city: 'Mumbai', planId: 'MEM-01', plan: 'Silver Explorer', members: 2, source: 'Instagram', received: '04 Oct 2025', status: 'Active', quote: '', startedOn: '04 Oct 2025', expiresOn: '03 Oct 2026' },
   { id: 'MSU-04', name: 'Ananya Deshmukh', email: 'ananya.d@gmail.com', phone: '+91 98330 21145', city: 'Pune', planId: 'MEM-03', plan: 'Platinum Elite', members: 4, source: 'Website', received: '04 Aug 2026', status: 'New', quote: '' },
   { id: 'MSU-03', name: 'Rohan Bhatt', email: 'rohan.bhatt@outlook.com', phone: '+91 99201 55420', city: 'Mumbai', planId: 'MEM-02', plan: 'Gold Voyager', members: 2, source: 'Website', received: '10 Sep 2025', status: 'Active', quote: 'QUO-1189', startedOn: '10 Sep 2025', expiresOn: '09 Sep 2026' },
 ];

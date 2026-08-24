@@ -16,11 +16,13 @@ import {
   Copy,
   ShoppingCart,
   CalendarPlus,
+  Crown,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { statusTone, enquiryStatuses, inr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
+import { findMembership, membershipStanding } from '../../lib/membership.js';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 
@@ -70,7 +72,7 @@ function Field({ label, children, onEdit, onCopy }) {
  * loses its place.
  */
 export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
-  const { activities, tasks, quotations, logActivity, update, toast } = useApp();
+  const { activities, tasks, quotations, memberSignups, memberships, logActivity, update, toast } = useApp();
   const [tab, setTab] = useState('Activities');
   const [newest, setNewest] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -87,6 +89,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
   const leadQuotes = quotations.filter((q) => q.customer === lead.name);
 
   const digits = String(lead.phone).replace(/[^\d]/g, '');
+  const held = findMembership(lead, memberSignups, memberships);
+  const standing = held ? membershipStanding(held.signup) : null;
 
   const quick = [
     { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${digits}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
@@ -226,6 +230,39 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
                 </div>
               ) : (
                 <Badge tone="teal">{lead.label || 'None'}</Badge>
+              )}
+            </Field>
+
+            <Field label="Membership">
+              {held ? (
+                <>
+                  <p className="flex items-center gap-1.5 font-bold text-ink-900">
+                    <Crown size={13} className="shrink-0 text-brand-600" />
+                    {held.signup.plan}
+                    {held.plan?.discount ? (
+                      <span className="text-xs font-semibold text-ink-500">
+                        · {held.plan.discount}% off packages
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="mt-0.5 text-xs text-ink-500">
+                    {held.signup.startedOn ? `Joined ${held.signup.startedOn}` : `Signed up ${held.signup.received}`}
+                    {held.signup.expiresOn ? ` · valid till ${held.signup.expiresOn}` : ''}
+                  </p>
+                  <p
+                    className={`mt-1 text-xs font-bold ${
+                      standing.tone === 'rose'
+                        ? 'text-rose-600'
+                        : standing.tone === 'amber'
+                          ? 'text-amber-600'
+                          : 'text-emerald-600'
+                    }`}
+                  >
+                    {standing.headline}
+                  </p>
+                </>
+              ) : (
+                <span className="text-ink-500">Not a member</span>
               )}
             </Field>
 

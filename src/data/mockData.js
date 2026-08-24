@@ -134,6 +134,28 @@ export const trends = {
 };
 
 // -- Enquiries (leads) ------------------------------------------------------
+export const liveStatuses = [
+  'Online',
+  'Idle',
+  'In meeting',
+  'On customer visit',
+  'On break',
+  'Offline',
+  'Leave',
+  'Not logged in',
+];
+
+export const attendanceStates = [
+  'Present',
+  'Absent',
+  'Leave',
+  'Late',
+  'Half day',
+  'Not logged in',
+  'Work from home',
+  'Field visit',
+];
+
 export const enquiryStatuses = ['New', 'Contacted', 'Interested', 'Quoted', 'Booked', 'Lost'];
 
 export const statusTone = {
@@ -358,8 +380,67 @@ export const campaignTone = { Running: 'green', Paused: 'amber', Completed: 'vio
 
 // -- Team -------------------------------------------------------------------
 export const team = [
-  { id: 'USR-02', name: 'Sneha Kulkarni', role: 'Senior Travel Consultant', email: 'sneha@smiraclub.com', phone: '+91 98211 44556', status: 'Active', live: 'Online', attendance: 'Present', activity: 'On call with Ridhima Param', lastActive: '2 min ago', tasksDone: 1, tasksTotal: 2, leads: 1, followUps: 1, calls: 3, presentations: 1, visits: 0, bookings: 1, enquiries: 2, revenue: 185000, target: 300000, productivity: 82, alerts: 0 },
-  { id: 'USR-04', name: 'Kabir Menon', role: 'Travel Consultant', email: 'kabir@smiraclub.com', phone: '+91 90045 22119', status: 'Active', live: 'Online', attendance: 'Present', activity: 'Building Ladakh itinerary', lastActive: '9 min ago', tasksDone: 0, tasksTotal: 1, leads: 1, followUps: 1, calls: 2, presentations: 1, visits: 1, bookings: 1, enquiries: 2, revenue: 336000, target: 400000, productivity: 74, alerts: 1 },
+  {
+    id: 'USR-02', empId: 'EMP-102', name: 'Sneha Kulkarni', role: 'Senior Travel Consultant',
+    department: 'Sales desk', email: 'sneha@smiraclub.com', phone: '+91 98211 44556', status: 'Active',
+    live: 'Online', attendance: 'Present',
+    activity: 'On call with Ridhima Param', activityType: 'Calling leads', activityStarted: '03:12 pm',
+    lastActive: '2 min ago', lastActivityKind: 'Lead call',
+    // Attendance for today, and the month behind it
+    day: {
+      login: '09:58 am', logout: '—', working: '6h 12m', breaks: '38m', idle: '12m',
+      lateBy: 0, mode: 'Office', source: 'Web app', regularisation: 'None pending', attendancePct: 96,
+    },
+    // The client's per-column detail
+    callDetail: { connected: 2, notAnswered: 1, busy: 0, wrongNumber: 0, interested: 1, notInterested: 0, callback: 1, avgDuration: '4m 20s', talkTime: '12m' },
+    presentationDetail: { scheduled: 1, completed: 1, cancelled: 0, noShow: 0, rescheduled: 0, converted: 1, pending: 0 },
+    visitDetail: { scheduled: 0, completed: 0, upcoming: 0, cancelled: 0, noShow: 0, converted: 0, revenue: 0 },
+    followUpDetail: { due: 1, completed: 1, pending: 0, overdue: 0, missed: 0, rescheduled: 0 },
+    taskDetail: { pending: 1, overdue: 0, inProgress: 1, cancelled: 0, rescheduled: 0 },
+    pipeline: { fresh: 0, contacted: 0, interested: 0, presentation: 0, visit: 0, hot: 0, closing: 1 },
+    salesDetail: { today: 0, mtd: 1, closings: 1, pending: 0, cancelled: 0, avgTicket: 185000, byPlan: { Silver: 1, Gold: 0, Platinum: 0 } },
+    revenueDetail: { today: 0, mtd: 185000, previous: 142000, collected: 185000, pending: 0, refund: 0, outstanding: 0,
+      sources: { Membership: 5899, Booking: 179101, Addons: 0 } },
+    targets: { leads: 4, calls: 10, presentations: 2, visits: 1, closings: 2, revenue: 300000 },
+    score: { attendance: 10, calls: 12, connected: 8, followUps: 15, presentations: 13, visits: 4, closings: 16, discipline: 4 },
+    notices: [
+      { level: 'positive', text: 'Closed Bali Honeymoon Escape — ₹1,85,000', at: '11:20 am' },
+      { level: 'warning', text: 'One callback requested and not yet booked', at: '01:05 pm' },
+    ],
+    current: { customer: 'Ridhima Param', next: 'Send revised quote by 5:00 pm' },
+    tasksDone: 1, tasksTotal: 2, leads: 1, followUps: 1, calls: 3, presentations: 1, visits: 0,
+    bookings: 1, enquiries: 2, revenue: 185000, target: 300000, productivity: 82, alerts: 1,
+  },
+  {
+    id: 'USR-04', empId: 'EMP-104', name: 'Kabir Menon', role: 'Travel Consultant',
+    department: 'Sales desk', email: 'kabir@smiraclub.com', phone: '+91 90045 22119', status: 'Active',
+    live: 'On customer visit', attendance: 'Present',
+    activity: 'Customer meeting — Bandra', activityType: 'Customer visit', activityStarted: '02:40 pm',
+    lastActive: '9 min ago', lastActivityKind: 'Visit check-in',
+    day: {
+      login: '10:22 am', logout: '—', working: '5h 48m', breaks: '52m', idle: '26m',
+      lateBy: 22, mode: 'Field', source: 'Mobile app', regularisation: 'Late login — pending', attendancePct: 88,
+    },
+    callDetail: { connected: 1, notAnswered: 1, busy: 0, wrongNumber: 0, interested: 1, notInterested: 0, callback: 0, avgDuration: '6m 05s', talkTime: '9m' },
+    presentationDetail: { scheduled: 2, completed: 1, cancelled: 0, noShow: 1, rescheduled: 0, converted: 1, pending: 1 },
+    visitDetail: { scheduled: 1, completed: 1, upcoming: 0, cancelled: 0, noShow: 0, converted: 1, revenue: 336000 },
+    followUpDetail: { due: 2, completed: 1, pending: 0, overdue: 1, missed: 0, rescheduled: 0 },
+    taskDetail: { pending: 1, overdue: 1, inProgress: 0, cancelled: 0, rescheduled: 0 },
+    pipeline: { fresh: 0, contacted: 0, interested: 1, presentation: 0, visit: 1, hot: 1, closing: 1 },
+    salesDetail: { today: 1, mtd: 1, closings: 1, pending: 1, cancelled: 0, avgTicket: 336000, byPlan: { Silver: 0, Gold: 1, Platinum: 0 } },
+    revenueDetail: { today: 336000, mtd: 336000, previous: 210000, collected: 150000, pending: 186000, refund: 0, outstanding: 186000,
+      sources: { Membership: 23598, Booking: 312402, Addons: 0 } },
+    targets: { leads: 4, calls: 10, presentations: 2, visits: 2, closings: 2, revenue: 400000 },
+    score: { attendance: 7, calls: 9, connected: 6, followUps: 10, presentations: 14, visits: 9, closings: 16, discipline: 3 },
+    notices: [
+      { level: 'critical', text: 'Follow-up on Siddhesh Rane is overdue', at: '12:40 pm' },
+      { level: 'warning', text: 'Logged in 22 minutes late — regularisation pending', at: '10:22 am' },
+      { level: 'positive', text: 'Maldives visit converted — ₹3,36,000', at: '03:05 pm' },
+    ],
+    current: { customer: 'Ananya Deshmukh', next: 'Collect balance ₹1,86,000 by 28 Aug' },
+    tasksDone: 0, tasksTotal: 1, leads: 1, followUps: 1, calls: 2, presentations: 1, visits: 1,
+    bookings: 1, enquiries: 2, revenue: 336000, target: 400000, productivity: 74, alerts: 2,
+  },
 ];
 
 export const consultantPerformance = team

@@ -386,6 +386,10 @@ export const memberships = [
     published: true,
     members: 1,
     freeStay: { nights: 1, rooms: 1, validity: '12 months from joining' },
+    duration: '12 months',
+    rooms: 1,
+    persons: 2,
+    services: ['Hotel booking desk', 'Trip planning', 'Airport assistance'],
     gifts: [
       'Welcome travel kit on joining',
       'Birthday greeting card',
@@ -410,6 +414,10 @@ export const memberships = [
     published: true,
     members: 1,
     freeStay: { nights: 2, rooms: 2, validity: '12 months from joining' },
+    duration: '12 months',
+    rooms: 2,
+    persons: 2,
+    services: ['Hotel booking desk', 'Trip planning', 'Airport assistance'],
     gifts: [
       'Welcome travel kit on joining',
       'Free airport transfer on the first trip',
@@ -437,6 +445,10 @@ export const memberships = [
     published: true,
     members: 1,
     freeStay: { nights: 2, rooms: 2, validity: '12 months from joining' },
+    duration: '12 months',
+    rooms: 2,
+    persons: 2,
+    services: ['Hotel booking desk', 'Trip planning', 'Airport assistance'],
     gifts: [
       'Premium luggage set on joining',
       'Free airport transfer on every trip',
@@ -457,13 +469,114 @@ export const memberships = [
 
 // Signups captured on the website pricing page and pushed into the panel.
 export const memberSignups = [
-  { id: 'MSU-09', name: 'Siddhesh Rane', email: 'siddhesh.r@gmail.com', phone: '+91 98201 44521', city: 'Mumbai', planId: 'MEM-01', plan: 'Silver Explorer', members: 2, source: 'Instagram', received: '04 Oct 2025', status: 'Active', quote: '', startedOn: '04 Oct 2025', expiresOn: '03 Oct 2026' },
-  { id: 'MSU-04', name: 'Ananya Deshmukh', email: 'ananya.d@gmail.com', phone: '+91 98330 21145', city: 'Pune', planId: 'MEM-03', plan: 'Platinum Elite', members: 4, source: 'Website', received: '04 Aug 2026', status: 'New', quote: '' },
-  { id: 'MSU-03', name: 'Rohan Bhatt', email: 'rohan.bhatt@outlook.com', phone: '+91 99201 55420', city: 'Mumbai', planId: 'MEM-02', plan: 'Gold Voyager', members: 2, source: 'Website', received: '10 Sep 2025', status: 'Active', quote: 'QUO-1189', startedOn: '10 Sep 2025', expiresOn: '09 Sep 2026' },
+  {
+    id: 'MSU-09', name: 'Siddhesh Rane', email: 'siddhesh.r@gmail.com', phone: '+91 98201 44521', city: 'Mumbai',
+    address: '12 Carter Road, Bandra West, Mumbai 400050', family: 2, branch: 'Mumbai',
+    planId: 'MEM-01', plan: 'Silver Explorer', members: 2, source: 'Instagram', received: '04 Oct 2025',
+    status: 'Active', quote: '', startedOn: '04 Oct 2025', expiresOn: '03 Oct 2026',
+    amount: 5899, paid: 5899, expert: 'Kabir', fieldOfficer: 'Ritik',
+    activation: { stage: 'Activated', date: '05 Oct 2025', deadline: '11 Oct 2025', contacted: true, explained: true, documents: true, gift: 'Given' },
+    renewal: { stage: 'Renewal contacted', contactedOn: '14 Aug 2026', note: 'Asked for a Gold upgrade quote' },
+    benefits: [
+      { name: 'Free hotel stays', allocated: 1, used: 0 },
+      { name: 'Luxury hotel discounts', allocated: 4, used: 1 },
+      { name: 'Travel packages', allocated: 2, used: 1 },
+      { name: 'Transport benefits', allocated: 2, used: 0 },
+      { name: 'Restaurant benefits', allocated: 4, used: 2 },
+    ],
+    saving: 18400,
+    timeline: [
+      { step: 'Lead created', at: '28 Sep 2025', note: 'Came in from Instagram' },
+      { step: 'Membership sold', at: '04 Oct 2025', note: 'Silver Explorer, 2 members' },
+      { step: 'Payment', at: '04 Oct 2025', note: '₹5,899 by UPI' },
+      { step: 'Activation', at: '05 Oct 2025', note: 'Welcome kit handed over' },
+      { step: 'Expert call', at: '06 Oct 2025', note: 'Kabir explained the benefits' },
+      { step: 'Benefit used', at: '18 Feb 2026', note: 'Restaurant benefit — Goa' },
+      { step: 'Follow-up', at: '14 Aug 2026', note: 'Renewal conversation started' },
+    ],
+  },
+  {
+    id: 'MSU-04', name: 'Ananya Deshmukh', email: 'ananya.d@gmail.com', phone: '+91 98330 21145', city: 'Pune',
+    address: '31 Koregaon Park Annexe, Pune 411001', family: 4, branch: 'Pune',
+    planId: 'MEM-03', plan: 'Platinum Elite', members: 4, source: 'Website', received: '04 Aug 2026',
+    status: 'New', quote: '', amount: 35396, paid: 0, expert: 'Sneha', fieldOfficer: '—',
+    activation: { stage: 'Payment pending', date: '—', deadline: '11 Aug 2026', contacted: true, explained: false, documents: false, gift: 'Not given' },
+    renewal: { stage: '—', contactedOn: '—', note: '' },
+    benefits: [
+      { name: 'Free hotel stays', allocated: 2, used: 0 },
+      { name: 'Luxury hotel discounts', allocated: 8, used: 0 },
+      { name: 'Travel packages', allocated: 4, used: 0 },
+      { name: 'Transport benefits', allocated: 4, used: 0 },
+      { name: 'Restaurant benefits', allocated: 8, used: 0 },
+    ],
+    saving: 0,
+    timeline: [
+      { step: 'Lead created', at: '04 Aug 2026', note: 'Signed up on the website' },
+      { step: 'Membership sold', at: '04 Aug 2026', note: 'Platinum Elite, 4 members' },
+      { step: 'Follow-up', at: '05 Aug 2026', note: 'Sneha called about the payment link' },
+    ],
+  },
+  {
+    id: 'MSU-03', name: 'Rohan Bhatt', email: 'rohan.bhatt@outlook.com', phone: '+91 99201 55420', city: 'Mumbai',
+    address: 'A-1202 Oberoi Splendor, Jogeshwari East, Mumbai 400060', family: 3, branch: 'Mumbai',
+    planId: 'MEM-02', plan: 'Gold Voyager', members: 2, source: 'Website', received: '10 Sep 2025',
+    status: 'Active', quote: 'QUO-1189', startedOn: '10 Sep 2025', expiresOn: '09 Sep 2026',
+    amount: 23598, paid: 23598, expert: 'Sneha', fieldOfficer: 'Ritik',
+    activation: { stage: 'Activated', date: '11 Sep 2025', deadline: '17 Sep 2025', contacted: true, explained: true, documents: true, gift: 'Given' },
+    renewal: { stage: 'Renewal interested', contactedOn: '18 Aug 2026', note: 'Will renew after the Bali trip' },
+    benefits: [
+      { name: 'Free hotel stays', allocated: 2, used: 1 },
+      { name: 'Luxury hotel discounts', allocated: 6, used: 3 },
+      { name: 'Travel packages', allocated: 3, used: 1 },
+      { name: 'Transport benefits', allocated: 3, used: 1 },
+      { name: 'Restaurant benefits', allocated: 6, used: 4 },
+    ],
+    saving: 42600,
+    timeline: [
+      { step: 'Lead created', at: '02 Sep 2025', note: 'Website enquiry' },
+      { step: 'Membership sold', at: '10 Sep 2025', note: 'Gold Voyager, 2 members' },
+      { step: 'Payment', at: '10 Sep 2025', note: '₹23,598 by bank transfer' },
+      { step: 'Activation', at: '11 Sep 2025', note: 'Welcome kit handed over' },
+      { step: 'Expert call', at: '12 Sep 2025', note: 'Sneha walked through the plan' },
+      { step: 'Hotel booking', at: '28 Jul 2026', note: 'BKG-8821 — Bali, 10% member discount' },
+      { step: 'Renewal', at: '18 Aug 2026', note: 'Interested, expires 09 Sep 2026' },
+    ],
+  },
 ];
+
+/** Where a membership is in the activation run. */
+export const activationStages = [
+  'Payment pending',
+  'Payment completed',
+  'Expert assigned',
+  'Explanation completed',
+  'Activated',
+];
+
+/** The renewal ladder the desk works down. */
+export const renewalStages = [
+  'Renewal contacted',
+  'Renewal interested',
+  'Renewed',
+  'Renewal lost',
+];
+
+export const membershipStates = ['Active', 'New', 'Quoted', 'Expired', 'Suspended', 'Cancelled'];
+
+/** Everything a plan can hand out, in the client's order. */
+export const benefitKinds = [
+  'Free hotel stays',
+  'Luxury hotel discounts',
+  'Travel packages',
+  'Transport benefits',
+  'Restaurant benefits',
+  'Other offers',
+];
+
 
 export const signupTone = {
   New: 'amber',
+  Suspended: 'rose',
   Quoted: 'sky',
   Active: 'green',
   Expired: 'slate',

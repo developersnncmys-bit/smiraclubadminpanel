@@ -16,6 +16,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Memberships from './Memberships.jsx';
+import MembershipDesk from '../components/membership/MembershipDesk.jsx';
+import MemberProfile from '../components/membership/MemberProfile.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
@@ -105,7 +107,8 @@ export default function Customers() {
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
   const [confirm, setConfirm] = useState(null);
-  const [view, setView] = useState('people'); // 'people' | 'plans'
+  const [view, setView] = useState('people'); // 'people' | 'memberships' | 'plans'
+  const [memberOpen, setMemberOpen] = useState(null); // the membership being read
 
   /** The website membership a traveller signed up for, if any. */
   const membershipFor = (customer) => {
@@ -286,7 +289,8 @@ export default function Customers() {
       <div className="mb-5 flex flex-wrap items-center gap-2">
         {[
           { key: 'people', label: 'Members', icon: UserRound, count: customers.length },
-          { key: 'plans', label: 'Membership plans', icon: Crown, count: memberships.length },
+          { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
+          { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
         ].map((v) => (
           <button
             key={v.key}
@@ -302,6 +306,36 @@ export default function Customers() {
           </button>
         ))}
       </div>
+
+      {view === 'memberships' && (
+        <MembershipDesk
+          rows={memberSignups}
+          plans={memberships}
+          onOpen={(m) => setMemberOpen(m)}
+          actions={{
+            addMember: () => { setEditing(null); setFormOpen(true); },
+            createMembership: () => setView('plans'),
+            editPlans: () => setView('plans'),
+            recordPayment: () => navigate('/payments'),
+            note: (message) => toast(message),
+          }}
+        />
+      )}
+
+      {memberOpen && (
+        <MemberProfile
+          member={memberOpen}
+          list={memberSignups}
+          plan={memberships.find((p) => p.id === memberOpen.planId) || null}
+          bookings={bookings}
+          onClose={() => setMemberOpen(null)}
+          onJump={(i) => setMemberOpen(memberSignups[i])}
+          actions={{
+            note: (message) => toast(message),
+            recordPayment: () => navigate('/payments'),
+          }}
+        />
+      )}
 
       {view === 'plans' && <Memberships embedded />}
 

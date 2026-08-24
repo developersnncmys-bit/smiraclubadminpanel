@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Plus, CalendarCheck, Wallet, Users, TrendingUp, Pencil, Trash2, Tag, Receipt } from 'lucide-react';
+import {
+  Plus, CalendarCheck, Wallet, Users, TrendingUp, Pencil, Trash2, Tag, Receipt,
+  LayoutGrid, Rows3, Crown,
+} from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -9,21 +12,26 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import BookingDetails from '../components/bookings/BookingDetails.jsx';
+import BookingOverview from '../components/bookings/BookingOverview.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
-import { bookingStatusTone, inr, shortInr } from '../data/mockData.js';
+import { useNavigate } from 'react-router-dom';
+import { bookingStatusTone, bookingTypes, bookingSources, inr, shortInr } from '../data/mockData.js';
+import { downloadCsv } from '../lib/csv.js';
 
 const STATUSES = ['Confirmed', 'Part paid', 'Pending', 'Completed', 'Cancelled'];
 
 export default function Bookings() {
   const {
-    bookings, packages, team, customers, memberSignups, memberships,
+    bookings, packages, team, customers, memberSignups, memberships, invoices,
     owner, create, update, updateMany, remove, toast,
   } = useApp();
+  const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [statusFor, setStatusFor] = useState(null);
   const [viewing, setViewing] = useState(null); // the booking panel
+  const [view, setView] = useState('list'); // 'list' | 'overview'
 
   const rows = byOwner(bookings, owner);
   const consultants = team.filter((t) => t.bookings > 0).map((t) => t.name.split(' ')[0]);
@@ -75,23 +83,45 @@ export default function Bookings() {
       ),
     },
     {
-      key: 'pkg',
-      header: 'Package',
+      key: 'membership',
+      header: 'Membership',
+      render: (r) =>
+        r.membership ? (
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-800">
+            <Crown size={12} className="shrink-0 text-brand-600" /> {r.membership}
+          </span>
+        ) : (
+          <span className="text-sm text-ink-400">Not a member</span>
+        ),
+    },
+    {
+      key: 'bookingType',
+      header: 'Type',
       render: (r) => (
-        <div className="min-w-[180px]">
-          <p className="font-semibold text-ink-800">{r.pkg}</p>
-          <p className="text-xs text-ink-500">{r.destination}</p>
+        <div className="min-w-[170px]">
+          <p className="font-semibold text-ink-800">
+            {r.bookingType || 'Package'}
+            {r.freeStay && <span className="ml-1.5 text-xs font-bold text-emerald-600">free stay</span>}
+          </p>
+          <p className="truncate text-xs text-ink-500">{r.hotel || r.pkg}</p>
         </div>
       ),
     },
     {
-      key: 'departure',
-      header: 'Departure',
+      key: 'destination',
+      header: 'Destination',
+      render: (r) => <span className="text-ink-700">{r.destination}</span>,
+    },
+    {
+      key: 'checkIn',
+      header: 'Stay',
       render: (r) => (
-        <div>
-          <p className="font-semibold text-ink-800">{r.departure}</p>
-          <p className="text-xs text-ink-500">
-            {r.nights} nights · {r.pax} pax
+        <div className="whitespace-nowrap">
+          <p className="num font-semibold text-ink-800">
+            {r.checkIn || r.departure} → {r.checkOut || '—'}
+          </p>
+          <p className="num text-xs text-ink-500">
+            {r.rooms || 1} room{(r.rooms || 1) > 1 ? 's' : ''} · {r.adults ?? r.pax} guests
           </p>
         </div>
       ),
@@ -133,6 +163,65 @@ export default function Bookings() {
         </button>
       </PageHeader>
 
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        {[
+          { key: 'list', label: 'Bookings', icon: Rows3, count: rows.length },
+          { key: 'overview', label: 'Booking desk', icon: LayoutGrid },
+        ].map((v) => (
+          <button
+            key={v.key}
+            onClick={() => setView(v.key)}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+              view === v.key
+                ? 'bg-ink-900 text-white shadow-sm'
+                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
+            }`}
+          >
+            <v.icon size={15} /> {v.label}
+            {v.count != null && (
+              <span className={`num ${view === v.key ? 'text-white/60' : 'text-ink-400'}`}>{v.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {view === 'overview' && (
+        <BookingOverview
+          rows={rows}
+          invoices={invoices}
+          signups={memberSignups}
+          onOpen={(b) => setViewing(b)}
+          actions={{
+            add: () => { setEditing(null); setFormOpen(true); },
+            showList: () => setView('list'),
+            note: (message) => toast(message),
+            recordPayment: () => navigate('/payments'),
+            exportBookings: () =>
+              downloadCsv('smira-club-bookings', rows, [
+                { key: 'id', header: 'Booking' },
+                { key: 'customer', header: 'Customer' },
+                { key: 'membership', header: 'Membership' },
+                { key: 'bookingType', header: 'Type' },
+                { key: 'hotel', header: 'Hotel' },
+                { key: 'vendor', header: 'Vendor' },
+                { key: 'destination', header: 'Destination' },
+                { key: 'checkIn', header: 'Check-in' },
+                { key: 'checkOut', header: 'Check-out' },
+                { key: 'rooms', header: 'Rooms' },
+                { key: 'pax', header: 'Guests' },
+                { key: 'amount', header: 'Amount' },
+                { key: 'paid', header: 'Paid' },
+                { key: 'status', header: 'Status' },
+                { key: 'owner', header: 'Assigned to' },
+                { key: 'source', header: 'Source' },
+                { key: 'created', header: 'Created' },
+              ]),
+          }}
+        />
+      )}
+
+      {view === 'list' && (
+      <>
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={CalendarCheck} label="Total bookings" value={rows.length} skin="brand" />
         <StatCard icon={TrendingUp} label="Booked value" value={shortInr(booked)} />
@@ -143,11 +232,14 @@ export default function Bookings() {
       <DataTable
         columns={columns}
         rows={rows}
-        searchKeys={['id', 'customer', 'pkg', 'destination']}
+        searchKeys={['id', 'customer', 'pkg', 'destination', 'hotel', 'vendor']}
         searchPlaceholder="Search by booking ID, customer or package…"
         filters={[
           { key: 'status', label: 'Status', options: STATUSES },
-          { key: 'owner', label: 'Team', options: consultants },
+          { key: 'bookingType', label: 'Type', options: bookingTypes },
+          { key: 'membership', label: 'Membership', options: memberships.map((p) => p.name) },
+          { key: 'source', label: 'Source', options: bookingSources },
+          { key: 'owner', label: 'Assigned to', options: consultants },
         ]}
         exportName="smira-club-bookings"
         emptyLabel="No bookings match this view"
@@ -157,6 +249,8 @@ export default function Bookings() {
           { label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) },
         ]}
       />
+      </>
+      )}
 
       {viewing && (
         <BookingDetails

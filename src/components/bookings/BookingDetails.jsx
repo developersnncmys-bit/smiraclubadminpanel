@@ -1,5 +1,6 @@
 import {
   X,
+  FileText,
   ChevronLeft,
   ChevronRight,
   Phone,
@@ -53,6 +54,14 @@ const barTone = {
  * and — the part the desk keeps asking for — whether this customer holds a
  * membership and how long it still has to run.
  */
+const confirmTone = {
+  'Waiting for hotel': 'amber',
+  'Sent to hotel': 'sky',
+  'Hotel confirmed': 'green',
+  'Hotel rejected': 'rose',
+  'Alternative required': 'violet',
+};
+
 export default function BookingDetails({
   booking,
   list,
@@ -72,6 +81,15 @@ export default function BookingDetails({
   const paidPct = b.amount ? Math.round((b.paid / b.amount) * 100) : 0;
 
   const membership = findMembership({ ...(customer || {}), name: b.customer }, signups, plans);
+
+  // How far along the booking is, for the flow line.
+  const flowAt = {
+    'Waiting for hotel': 1,
+    'Sent to hotel': 2,
+    'Hotel confirmed': 3,
+    'Hotel rejected': 2,
+    'Alternative required': 2,
+  }[b.confirmation?.status] ?? 1;
 
   // Travellers who booked over the phone have no customer record yet; their
   // signup still carries a number worth calling.
@@ -257,28 +275,91 @@ export default function BookingDetails({
               )}
             </section>
 
-            {/* The trip */}
+            {/* What was booked */}
             <section className="card p-5">
-              <h3 className="font-display text-base font-extrabold text-ink-900">The trip</h3>
-              <p className="mt-0.5 text-sm text-ink-500">{b.pkg}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-display text-base font-extrabold text-ink-900">Travel details</h3>
+                <Badge tone="slate">{b.bookingType || 'Package'}</Badge>
+              </div>
+              <p className="mt-0.5 text-sm text-ink-500">
+                {b.hotel || b.pkg} · {b.destination}
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <Stat label="Check-in" value={b.checkIn || b.departure} />
+                <Stat label="Check-out" value={b.checkOut || '—'} />
+                <Stat label="Nights" value={b.nights} />
+                <Stat label="Rooms" value={`${b.rooms || 1} · ${b.roomType || 'Standard'}`} />
+                <Stat
+                  label="Guests"
+                  value={`${b.adults ?? b.pax} adults${b.children ? `, ${b.children} children` : ''}${
+                    b.infants ? `, ${b.infants} infants` : ''
+                  }`}
+                />
+                <Stat label="Meal plan" value={b.mealPlan || 'Room only'} />
+              </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <p className="flex items-center gap-2.5 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
-                  <MapPin size={15} className="shrink-0 text-ink-400" /> {b.destination}
+                <p className="rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
+                  <span className="eyebrow block">Occasion</span>
+                  {b.occasion || 'Not recorded'}
+                  {b.specialNote && <span className="mt-1 block text-xs text-ink-500">{b.specialNote}</span>}
                 </p>
-                <p className="flex items-center gap-2.5 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
-                  <CalendarDays size={15} className="shrink-0 text-ink-400" /> Leaves {b.departure}
+                <p className="rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
+                  <span className="eyebrow block">Special requests</span>
+                  {b.specialRequests || 'None'}
                 </p>
-                <p className="flex items-center gap-2.5 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
-                  <CalendarDays size={15} className="shrink-0 text-ink-400" /> {b.nights + 1} days{' '}
-                  {b.nights} nights
-                </p>
-                <p className="flex items-center gap-2.5 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
-                  <Users size={15} className="shrink-0 text-ink-400" /> {b.pax} travellers
-                </p>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-ink-600">
+                <span>Booked {b.created || '—'}</span>
+                <span>·</span>
+                <span>Source {b.source || '—'}</span>
+                <span>·</span>
+                <span>Handled by {b.owner}{b.assignedRole ? ` (${b.assignedRole})` : ''}</span>
+                {b.freeStay && <Badge tone="green">Free stay · {b.freeNights || 1} nights</Badge>}
               </div>
             </section>
 
+            {/* Where it sits with the hotel */}
+            <section className="card p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-display text-base font-extrabold text-ink-900">Hotel confirmation</h3>
+                <Badge tone={confirmTone[b.confirmation?.status] || 'slate'} dot>
+                  {b.confirmation?.status || 'Not sent'}
+                </Badge>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <Stat label="Vendor" value={b.vendor || '—'} />
+                <Stat label="Sent on" value={b.confirmation?.sent || '—'} />
+                <Stat label="Deadline" value={b.confirmation?.deadline || '—'} />
+              </div>
+              <p className="mt-3 text-sm text-ink-600">
+                {b.vendorContact?.person} · {b.vendorContact?.phone} · {b.vendorContact?.ratePlan}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink-500">
+                <span className="font-semibold text-ink-700">Booking flow</span>
+                {['Enquiry', 'Booking request', 'Sent to hotel', 'Hotel confirmed', 'Voucher sent', 'Travelled'].map(
+                  (step, i) => (
+                    <span key={step} className="flex items-center gap-2">
+                      {i > 0 && <span className="text-ink-300">→</span>}
+                      <span
+                        className={
+                          i <= flowAt
+                            ? 'font-bold text-brand-700'
+                            : 'text-ink-400'
+                        }
+                      >
+                        {step}
+                      </span>
+                    </span>
+                  )
+                )}
+              </div>
+              <p className="mt-2 text-xs text-ink-400">
+                A booking can also end as cancelled, rescheduled or a no-show.
+              </p>
+            </section>
             {/* The money */}
             <section className="card p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -287,6 +368,28 @@ export default function BookingDetails({
                   <Receipt size={14} /> Raise invoice
                 </button>
               </div>
+
+              <ul className="mt-4 divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+                {[
+                  ['Base tariff', b.charges?.base],
+                  ['Membership discount', b.charges?.membershipDiscount ? -b.charges.membershipDiscount : 0],
+                  ['Offer discount', b.charges?.offerDiscount ? -b.charges.offerDiscount : 0],
+                  ['Meal charges', b.charges?.meals],
+                  ['Taxes', b.charges?.taxes],
+                  ['Extra charges', b.charges?.extra],
+                ].map(([label, amount]) => (
+                  <li key={label} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                    <span className="text-ink-600">{label}</span>
+                    <span className={`num font-bold ${Number(amount) < 0 ? 'text-emerald-600' : 'text-ink-900'}`}>
+                      {amount ? inr(amount) : '—'}
+                    </span>
+                  </li>
+                ))}
+                <li className="flex items-center justify-between gap-3 bg-surface-soft px-4 py-3 text-sm">
+                  <span className="font-bold text-ink-900">Total</span>
+                  <span className="num font-extrabold text-ink-900">{inr(b.amount)}</span>
+                </li>
+              </ul>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <Stat label="Trip value" value={inr(b.amount)} />
@@ -310,6 +413,33 @@ export default function BookingDetails({
                   />
                 </div>
               </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <Stat label="Paid by" value={b.payment?.method || '—'} />
+                <Stat label="Transaction" value={b.payment?.txnId || '—'} />
+                <Stat label="Invoice" value={b.payment?.invoice || '—'} />
+              </div>
+            </section>
+
+            {/* Papers on file */}
+            <section className="card p-5">
+              <h3 className="font-display text-base font-extrabold text-ink-900">Documents</h3>
+              <p className="mt-0.5 text-sm text-ink-500">What is on file for this booking</p>
+              <ul className="mt-4 divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+                {(b.documents || []).map((d) => (
+                  <li key={d.name} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <span className="flex items-center gap-2.5 text-sm text-ink-700">
+                      <FileText size={14} className="shrink-0 text-ink-400" /> {d.name}
+                    </span>
+                    <Badge tone={d.status === 'Uploaded' ? 'green' : d.status === 'Pending' ? 'amber' : 'slate'}>
+                      {d.status}
+                    </Badge>
+                  </li>
+                ))}
+                {(b.documents || []).length === 0 && (
+                  <li className="px-4 py-6 text-center text-sm text-ink-500">Nothing uploaded yet.</li>
+                )}
+              </ul>
             </section>
           </div>
         </div>

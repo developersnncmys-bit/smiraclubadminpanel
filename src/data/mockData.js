@@ -251,9 +251,77 @@ export const packages = [
 
 // -- Bookings ---------------------------------------------------------------
 export const bookings = [
-  { id: 'BKG-8821', customer: 'Rohan Bhatt', pkg: 'Bali Honeymoon Escape', destination: 'Bali, Indonesia', departure: '02 Sep 2026', nights: 6, pax: 2, amount: 185000, paid: 185000, status: 'Confirmed', owner: 'Sneha' },
-  { id: 'BKG-8820', customer: 'Ananya Deshmukh', pkg: 'Maldives Overwater Luxury', destination: 'Malé, Maldives', departure: '15 Sep 2026', nights: 5, pax: 2, amount: 336000, paid: 150000, status: 'Part paid', owner: 'Kabir' },
+  {
+    id: 'BKG-8821', customer: 'Rohan Bhatt', membership: 'Gold Voyager', bookingType: 'Package',
+    hotel: 'Ayana Resort & Spa', vendor: 'Bali Sunrise DMC', destination: 'Bali, Indonesia',
+    pkg: 'Bali Honeymoon Escape', departure: '02 Sep 2026', checkIn: '02 Sep 2026', checkOut: '08 Sep 2026',
+    nights: 6, pax: 2, adults: 2, children: 0, infants: 0, rooms: 1, roomType: 'Ocean view suite',
+    mealPlan: 'Breakfast included', amount: 185000, paid: 185000, status: 'Confirmed', owner: 'Sneha',
+    assignedRole: 'Travel expert', created: '28 Jul 2026', source: 'Referral', freeStay: false,
+    occasion: 'Honeymoon', specialNote: 'Cake and flowers in the room on arrival',
+    specialRequests: 'Late check-out if possible, high floor',
+    charges: { base: 168000, membershipDiscount: 16800, offerDiscount: 0, meals: 12000, taxes: 21800, extra: 0 },
+    payment: { method: 'UPI', txnId: 'TXN-8841127', date: '02 Aug 2026', invoice: 'INV-4412' },
+    confirmation: { status: 'Hotel confirmed', deadline: '20 Aug 2026', sent: '29 Jul 2026', voucher: 'BV-8821' },
+    vendorContact: { person: 'Wayan Sudira', phone: '+62 361 702222', email: 'res@balisunrise.com', ratePlan: 'Contract 2026-A', payable: 121000 },
+    handledBy: { created: 'Sneha', handled: 'Sneha', confirmed: 'Sneha', modified: '—', cancelled: '—' },
+    documents: [
+      { name: 'Government ID', status: 'Uploaded' },
+      { name: 'Booking voucher', status: 'Uploaded' },
+      { name: 'Payment receipt', status: 'Uploaded' },
+      { name: 'Invoice', status: 'Uploaded' },
+      { name: 'Hotel confirmation', status: 'Uploaded' },
+    ],
+  },
+  {
+    id: 'BKG-8820', customer: 'Ananya Deshmukh', membership: 'Platinum Elite', bookingType: 'Hotel',
+    hotel: 'Atlantis The Palm', vendor: 'Gulf Stays LLC', destination: 'Malé, Maldives',
+    pkg: 'Maldives Overwater Luxury', departure: '15 Sep 2026', checkIn: '15 Sep 2026', checkOut: '20 Sep 2026',
+    nights: 5, pax: 2, adults: 2, children: 0, infants: 0, rooms: 2, roomType: 'Overwater villa',
+    mealPlan: 'Half board', amount: 336000, paid: 150000, status: 'Part paid', owner: 'Kabir',
+    assignedRole: 'Frontliner', created: '01 Aug 2026', source: 'Website', freeStay: true, freeNights: 2,
+    occasion: 'Anniversary', specialNote: 'Two free-stay nights applied from the Platinum plan',
+    specialRequests: 'Airport transfer by speedboat',
+    charges: { base: 310000, membershipDiscount: 46500, offerDiscount: 5000, meals: 28000, taxes: 49500, extra: 0 },
+    payment: { method: 'Bank transfer', txnId: 'TXN-8840119', date: '03 Aug 2026', invoice: 'INV-4411' },
+    confirmation: { status: 'Sent to hotel', deadline: '30 Aug 2026', sent: '04 Aug 2026', voucher: '—' },
+    vendorContact: { person: 'Imran Haleem', phone: '+960 664 0011', email: 'bookings@gulfstays.com', ratePlan: 'Contract 2026-M', payable: 214000 },
+    handledBy: { created: 'Kabir', handled: 'Kabir', confirmed: '—', modified: 'Sneha', cancelled: '—' },
+    documents: [
+      { name: 'Government ID', status: 'Uploaded' },
+      { name: 'Booking voucher', status: 'Pending' },
+      { name: 'Payment receipt', status: 'Uploaded' },
+      { name: 'Invoice', status: 'Uploaded' },
+      { name: 'Hotel confirmation', status: 'Waiting' },
+    ],
+  },
 ];
+
+export const bookingTypes = ['Hotel', 'Package', 'Transport', 'Villa', 'Add-on'];
+export const bookingSources = ['Website', 'Walk-in', 'Referral', 'Instagram', 'WhatsApp', 'Partner', 'Existing member'];
+export const paymentMethods = ['UPI', 'Card', 'Net banking', 'Cash', 'Bank transfer', 'Payment gateway'];
+export const occasions = ['Birthday', 'Anniversary', 'Honeymoon', 'Family trip', 'Other'];
+export const assignRoles = ['Frontliner', 'Travel expert', 'Field officer', 'Booking team', 'Manager'];
+
+/** Where a booking sits with the hotel. */
+export const confirmationStates = [
+  'Waiting for hotel',
+  'Sent to hotel',
+  'Hotel confirmed',
+  'Hotel rejected',
+  'Alternative required',
+];
+
+/** Cancellations waiting on a decision, and the refund behind each. */
+export const cancellationRequests = [
+  { id: 'CAN-01', booking: 'BKG-8820', customer: 'Ananya Deshmukh', reason: 'Travel plan changed', value: 336000, charges: 33600, refund: 116400, requested: '20 Aug 2026', approvedBy: 'Pending', status: 'Awaiting approval' },
+];
+
+/** Date changes, and what they cost. */
+export const rescheduleRequests = [
+  { id: 'RES-01', booking: 'BKG-8821', customer: 'Rohan Bhatt', from: '02 Sep 2026', to: '16 Sep 2026', reason: 'Visa appointment moved', availability: 'Rooms available', extra: 8000, approval: 'Approved by Sneha', status: 'Rescheduled' },
+];
+
 
 export const bookingStatusTone = {
   Confirmed: 'green',
@@ -317,6 +385,7 @@ export const memberships = [
     popular: false,
     published: true,
     members: 1,
+    freeStay: { nights: 1, rooms: 1, validity: '12 months from joining' },
     gifts: [
       'Welcome travel kit on joining',
       'Birthday greeting card',
@@ -340,6 +409,7 @@ export const memberships = [
     popular: true,
     published: true,
     members: 1,
+    freeStay: { nights: 2, rooms: 2, validity: '12 months from joining' },
     gifts: [
       'Welcome travel kit on joining',
       'Free airport transfer on the first trip',
@@ -366,6 +436,7 @@ export const memberships = [
     popular: false,
     published: true,
     members: 1,
+    freeStay: { nights: 2, rooms: 2, validity: '12 months from joining' },
     gifts: [
       'Premium luggage set on joining',
       'Free airport transfer on every trip',

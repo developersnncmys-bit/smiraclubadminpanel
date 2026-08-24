@@ -67,10 +67,22 @@ export const navGroups = [
   },
 ];
 
+/**
+ * The five sections being finished first, plus the dashboard they open on.
+ * Every other tab is out of the sidebar for now — the pages and routes are
+ * untouched, so emptying this list brings the whole sheet back.
+ */
+const IN_PROGRESS = ['/', '/team', '/enquiries', '/bookings', '/customers', '/inventory'];
+
 /** What the sidebar shows: hidden groups and hidden pages are dropped. */
 export const visibleNavGroups = navGroups
   .filter((g) => !g.hidden)
-  .map((g) => ({ ...g, items: g.items.filter((i) => !i.hidden) }))
+  .map((g) => ({
+    ...g,
+    items: g.items.filter(
+      (i) => !i.hidden && (IN_PROGRESS.length === 0 || IN_PROGRESS.includes(i.to))
+    ),
+  }))
   .filter((g) => g.items.length > 0);
 
 /** Flat list, kept for anything that just needs every destination. */

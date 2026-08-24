@@ -55,12 +55,12 @@ export default function Reports() {
     },
     {
       stage: 'Quotation sent',
-      value: scopedEnquiries.filter((e) => ['Quoted', 'Booked'].includes(e.status)).length,
+      value: scopedEnquiries.filter((e) => ['Details sent', 'Presentation', 'Visit scheduled', 'Closing', 'Won'].includes(e.status)).length,
       colour: 'bg-violet-500',
     },
     {
-      stage: 'Booked',
-      value: scopedEnquiries.filter((e) => e.status === 'Booked').length,
+      stage: 'Won',
+      value: scopedEnquiries.filter((e) => e.status === 'Won').length,
       colour: 'bg-orange-500',
     },
   ];

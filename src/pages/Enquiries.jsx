@@ -42,6 +42,7 @@ export default function Enquiries() {
   const {
     enquiries,
     bookings,
+    invoices,
     team,
     memberSignups,
     memberships,
@@ -97,6 +98,10 @@ export default function Enquiries() {
       setAssignFor(ids);
     },
     broadcast: () => toast('WhatsApp blast goes out with the messaging work', 'info'),
+    note: (message) => toast(message),
+    addCustomer: () => navigate('/customers'),
+    recordPayment: () => navigate('/payments'),
+    openTeam: () => navigate('/team'),
     showList: () => { setStage(null); setView('leads'); },
     exportLeads: () =>
       downloadCsv('smira-club-enquiries', rows, [
@@ -143,7 +148,7 @@ export default function Enquiries() {
       status: 'Draft',
       owner: row.owner === 'Unassigned' ? 'Sneha' : row.owner,
     });
-    update('enquiries', row.id, { status: 'Quoted' }, { silent: true });
+    update('enquiries', row.id, { status: 'Details sent' }, { silent: true });
     toast(`Quotation ${id} drafted for ${row.name}`);
     navigate('/quotations');
   };
@@ -340,6 +345,7 @@ export default function Enquiries() {
         <SalesOverview
           rows={rows}
           bookings={bookings}
+          invoices={invoices}
           team={team}
           onPickStatus={openStage}
           onOpen={(lead) => setViewing(lead)}

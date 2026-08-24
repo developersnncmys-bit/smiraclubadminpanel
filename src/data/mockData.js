@@ -156,20 +156,81 @@ export const attendanceStates = [
   'Field visit',
 ];
 
-export const enquiryStatuses = ['New', 'Contacted', 'Interested', 'Quoted', 'Booked', 'Lost'];
+export const enquiryStatuses = [
+  'New',
+  'Contacted',
+  'Interested',
+  'Details sent',
+  'Presentation',
+  'Visit scheduled',
+  'Closing',
+  'Won',
+  'Lost',
+];
+
+/** How likely each stage is to close — used for the weighted pipeline. */
+export const stageProbability = {
+  New: 0.05,
+  Contacted: 0.1,
+  Interested: 0.25,
+  'Details sent': 0.4,
+  Presentation: 0.55,
+  'Visit scheduled': 0.7,
+  Closing: 0.85,
+  Won: 1,
+  Lost: 0,
+};
+
+/** Why leads are marked lost, as the client listed them. */
+export const lostReasons = [
+  'Price too high',
+  'Not interested',
+  'No response',
+  'Went to a competitor',
+  'Wrong number',
+  'Duplicate lead',
+  'Not eligible',
+  'Travel plan cancelled',
+  'Payment issue',
+  'Membership not suitable',
+  'Follow-up failed',
+  'Other',
+];
+
+export const leadSources = [
+  'Website',
+  'Facebook',
+  'Instagram',
+  'Google Ads',
+  'WhatsApp',
+  'Referral',
+  'Walk-in',
+  'Calling data',
+  'Partner',
+  'Campaign',
+  'Existing member',
+  'Other',
+];
 
 export const statusTone = {
   New: 'sky',
   Contacted: 'violet',
   Interested: 'amber',
-  Quoted: 'teal',
-  Booked: 'green',
+  'Details sent': 'sky',
+  Presentation: 'violet',
+  'Visit scheduled': 'teal',
+  Closing: 'amber',
+  Won: 'green',
   Lost: 'rose',
 };
 
 export const enquiries = [
-  { id: 'ENQ-2041', name: 'Siddhesh Rane', phone: '+91 98201 44521', email: 'siddhesh.r@gmail.com', destination: 'Bali', pax: 2, travelDate: '18 Sep 2026', budget: 185000, status: 'Interested', source: 'Instagram', owner: 'Kabir', label: 'Honeymoon', created: '04 Aug 2026' },
-  { id: 'ENQ-2040', name: 'Jayashree Patil', phone: '+91 90045 88120', email: 'jaya.patil@outlook.com', destination: 'Kerala', pax: 4, travelDate: '02 Oct 2026', budget: 96000, status: 'New', source: 'Website', owner: 'Unassigned', label: 'Family', created: '04 Aug 2026' },
+  { id: 'ENQ-2041', name: 'Siddhesh Rane', phone: '+91 98201 44521', email: 'siddhesh.r@gmail.com', destination: 'Bali', pax: 2, travelDate: '18 Sep 2026', budget: 185000, status: 'Interested', source: 'Instagram', owner: 'Kabir', label: 'Honeymoon', created: '04 Aug 2026', lastContact: 'Yesterday', nextFollowUp: 'Today 4:00 pm', priority: 'High' },
+  { id: 'ENQ-2039', name: 'Rohan Bhatt', phone: '+91 99201 55420', email: 'rohan.bhatt@outlook.com', destination: 'Bali', pax: 2, travelDate: '02 Sep 2026', budget: 185000, status: 'Won', source: 'Referral', owner: 'Sneha', label: 'Honeymoon', created: '22 Jul 2026', lastContact: '28 Jul 2026', nextFollowUp: 'Departure call 30 Aug', priority: 'High' },
+  { id: 'ENQ-2038', name: 'Ananya Deshmukh', phone: '+91 98330 21145', email: 'ananya.d@gmail.com', destination: 'Maldives', pax: 2, travelDate: '15 Sep 2026', budget: 336000, status: 'Won', source: 'Website', owner: 'Kabir', label: 'Luxury', created: '20 Jul 2026', lastContact: '01 Aug 2026', nextFollowUp: 'Balance payment 28 Aug', priority: 'High' },
+  { id: 'ENQ-2037', name: 'Farhan Qureshi', phone: '+91 98203 71190', email: 'farhan.q@gmail.com', destination: 'Turkey', pax: 2, travelDate: '12 Oct 2026', budget: 264000, status: 'Lost', source: 'Instagram', owner: 'Sneha', label: 'Couple', created: '19 Jul 2026', lastContact: '29 Jul 2026', nextFollowUp: '—', priority: 'Low', lostReason: 'Price too high' },
+  { id: 'ENQ-2036', name: 'Pooja Salvi', phone: '+91 90040 66218', email: 'pooja.salvi@gmail.com', destination: 'Goa', pax: 5, travelDate: '18 Aug 2026', budget: 74000, status: 'Lost', source: 'Google Ads', owner: 'Kabir', label: 'Family', created: '18 Jul 2026', lastContact: '26 Jul 2026', nextFollowUp: '—', priority: 'Low', lostReason: 'No response' },
+  { id: 'ENQ-2040', name: 'Jayashree Patil', phone: '+91 90045 88120', email: 'jaya.patil@outlook.com', destination: 'Kerala', pax: 4, travelDate: '02 Oct 2026', budget: 96000, status: 'New', source: 'Website', owner: 'Unassigned', label: 'Family', created: '04 Aug 2026', lastContact: 'Not yet', nextFollowUp: 'Today 6:00 pm', priority: 'Medium' },
 ];
 
 /** Brand colour per enquiry source; the counts come from the live list. */
@@ -456,3 +517,52 @@ export const activityFeed = [
 export const upcomingDepartures = bookings
   .filter((b) => ['Confirmed', 'Part paid', 'Pending'].includes(b.status))
   .slice(0, 5);
+
+// -- Thirty days behind today, for the sales performance graph --------------
+export const salesTrend = [
+  { day: 1, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 2, revenue: 142000, closings: 1, customers: 1, target: 40000 },
+  { day: 3, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 4, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 5, revenue: 96000, closings: 1, customers: 1, target: 40000 },
+  { day: 6, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 7, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 8, revenue: 178000, closings: 1, customers: 1, target: 40000 },
+  { day: 9, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 10, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 11, revenue: 132000, closings: 1, customers: 1, target: 40000 },
+  { day: 12, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 13, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 14, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 15, revenue: 210000, closings: 1, customers: 1, target: 40000 },
+  { day: 16, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 17, revenue: 88000, closings: 1, customers: 1, target: 40000 },
+  { day: 18, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 19, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 20, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 21, revenue: 164000, closings: 1, customers: 1, target: 40000 },
+  { day: 22, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 23, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 24, revenue: 185000, closings: 1, customers: 1, target: 40000 },
+  { day: 25, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 26, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 27, revenue: 120000, closings: 1, customers: 1, target: 40000 },
+  { day: 28, revenue: 0, closings: 0, customers: 0, target: 40000 },
+  { day: 29, revenue: 336000, closings: 1, customers: 1, target: 40000 },
+  { day: 30, revenue: 0, closings: 0, customers: 0, target: 40000 },
+];
+
+/** The live activity feed on Sales & Leads. */
+export const salesActivity = [
+  { id: 'ACT-S1', at: '10:05 am', who: 'Kabir', kind: 'Calls', text: 'Called Siddhesh Rane about the Bali itinerary' },
+  { id: 'ACT-S2', at: '10:22 am', who: 'Sneha', kind: 'Presentations', text: 'Sent the Maldives itinerary to Ananya Deshmukh' },
+  { id: 'ACT-S3', at: '10:48 am', who: 'Kabir', kind: 'Visits', text: 'Completed the customer visit in Bandra' },
+  { id: 'ACT-S4', at: '11:15 am', who: 'Sneha', kind: 'Follow-ups', text: 'Moved Siddhesh Rane to Interested' },
+  { id: 'ACT-S5', at: '11:42 am', who: 'Sneha', kind: 'Closings', text: 'Closed Bali Honeymoon Escape — ₹1,85,000' },
+  { id: 'ACT-S6', at: '12:05 pm', who: 'System', kind: 'Follow-ups', text: '1 follow-up is now overdue' },
+  { id: 'ACT-S7', at: '12:40 pm', who: 'Kabir', kind: 'WhatsApp', text: 'WhatsApped the Goa quote to Jayashree Patil' },
+  { id: 'ACT-S8', at: '01:20 pm', who: 'System', kind: 'Payments', text: 'Received ₹1,50,000 against INV-4411' },
+  { id: 'ACT-S9', at: '02:35 pm', who: 'Kabir', kind: 'Tasks', text: 'Created a task — collect passport copies' },
+];
+
+export const activityKinds = ['All', 'Calls', 'Follow-ups', 'Presentations', 'Visits', 'Closings', 'Payments', 'WhatsApp', 'Tasks'];

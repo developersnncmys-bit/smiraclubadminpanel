@@ -31,7 +31,7 @@ export default function Dashboard() {
   const revenue = scopedBookings.reduce((s, b) => s + Number(b.amount || 0), 0);
 
   const contacted = scopedEnquiries.filter((e) => e.status !== 'New').length;
-  const booked = scopedEnquiries.filter((e) => e.status === 'Booked').length;
+  const booked = scopedEnquiries.filter((e) => e.status === 'Won').length;
   const pct = (n, d) => (d ? `${Math.round((n / d) * 100)}%` : '0%');
 
   const ratios = [

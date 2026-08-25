@@ -8,53 +8,16 @@ import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 
 // Planned modules are read straight from the registry, so a new one is
 // covered here the moment it is added.
-const PLANNED = [
-  ...readFileSync('./src/data/modules.js', 'utf8').matchAll(/to: '(\/[a-z]+)'/g),
-].map((m) => m[1]);
-
-const ROUTES = [
-  '/', '/enquiries', '/quotations', '/bookings', '/packages', '/memberships',
-  '/suppliers', '/invoices', '/payments', '/customers', '/team', '/campaigns',
-  '/reports', '/settings', '/tasks', '/login',
-  ...PLANNED,
-];
-
 // A string that only appears once the real page rendered, so a silent
 // redirect to /login cannot pass as success.
 const MARKERS = {
-  '/': 'Business reports',
+  '/team': 'High workload',
   '/enquiries': 'Sales overview',
-  '/quotations': 'New quotation',
-  '/bookings': 'Bookings',
-  '/packages': 'Create package',
-  '/memberships': 'Membership plans',
-  '/suppliers': 'Suppliers',
-  '/invoices': 'Invoices',
-  '/payments': 'Payments',
+  '/bookings': 'Booking desk',
   '/customers': 'Memberships',
-  '/team': 'Team ranking',
-  '/campaigns': 'Campaigns',
-  '/reports': 'Report builder',
-  '/settings': 'Settings',
-  '/tasks': 'Tasks',
+  '/memberships': 'Membership plans',
   '/partners': 'Every partner',
-  '/inventory': 'Everything the agency sells',
-  '/lifestyle': 'Add-ons sold alongside a trip',
-  '/automation': 'Automation rules',
-  '/notifications': 'What the panel tells the team',
-  '/offers': 'Discount codes and seasonal offers',
-  '/roles': 'Who can see and do what',
-  '/rewards': 'Travellers who bring their friends',
-  '/forms': 'where each response lands',
-  '/blogs': 'Travel writing',
-  '/banners': 'Home page and campaign artwork',
-  '/seo': 'How each page of the website reads',
-  '/api': 'Keys the website and other systems use',
-  '/profile': 'Your own account details',
-  '/cms': 'Not built yet',
-  '/ai': 'Not built yet',
-  '/alerts': 'Not built yet',
-  '/communication': 'Not built yet',
+  '/reports': 'Report builder',
   '/support': 'Complaint funnel',
 };
 

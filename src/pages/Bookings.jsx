@@ -195,7 +195,7 @@ export default function Bookings() {
             add: () => { setEditing(null); setFormOpen(true); },
             showList: () => setView('list'),
             note: (message) => toast(message),
-            recordPayment: () => navigate('/payments'),
+            recordPayment: () => toast('Payments arrive with that sheet'),
             exportBookings: () =>
               downloadCsv('smira-club-bookings', rows, [
                 { key: 'id', header: 'Booking' },

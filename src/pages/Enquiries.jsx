@@ -100,7 +100,7 @@ export default function Enquiries() {
     broadcast: () => toast('WhatsApp blast goes out with the messaging work', 'info'),
     note: (message) => toast(message),
     addCustomer: () => navigate('/customers'),
-    recordPayment: () => navigate('/payments'),
+    recordPayment: () => toast('Payments arrive with that sheet'),
     openTeam: () => navigate('/team'),
     showList: () => { setStage(null); setView('leads'); },
     exportLeads: () =>
@@ -150,7 +150,7 @@ export default function Enquiries() {
     });
     update('enquiries', row.id, { status: 'Details sent' }, { silent: true });
     toast(`Quotation ${id} drafted for ${row.name}`);
-    navigate('/quotations');
+    toast('Quotations arrive with that sheet', 'info');
   };
 
   const columns = [

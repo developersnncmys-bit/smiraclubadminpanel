@@ -320,7 +320,7 @@ export default function Customers() {
             addMember: () => { setEditing(null); setFormOpen(true); },
             createMembership: () => setView('plans'),
             editPlans: () => setView('plans'),
-            recordPayment: () => navigate('/payments'),
+            recordPayment: () => toast('Payments arrive with that sheet'),
             note: (message) => toast(message),
           }}
         />
@@ -336,7 +336,7 @@ export default function Customers() {
           onJump={(i) => setMemberOpen(memberSignups[i])}
           actions={{
             note: (message) => toast(message),
-            recordPayment: () => navigate('/payments'),
+            recordPayment: () => toast('Payments arrive with that sheet'),
           }}
         />
       )}
@@ -465,7 +465,7 @@ export default function Customers() {
                   </span>
                   {membership.signup.quote && (
                     <button
-                      onClick={() => navigate('/quotations')}
+                      onClick={() => toast('Quotations arrive with that sheet', 'info')}
                       className="ml-auto text-sm font-bold text-brand-700 hover:underline"
                     >
                       {membership.signup.quote}
@@ -491,7 +491,7 @@ export default function Customers() {
               ) : (
                 <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-ink-900/15 px-4 py-3">
                   <p className="flex-1 text-sm text-ink-500">No membership yet.</p>
-                  <button className="btn-ghost btn-sm" onClick={() => navigate('/memberships')}>
+                  <button className="btn-ghost btn-sm" onClick={() => setView('plans')}>
                     View plans
                   </button>
                 </div>

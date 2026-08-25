@@ -333,9 +333,98 @@ export const bookingStatusTone = {
 
 // -- Customers --------------------------------------------------------------
 export const customers = [
-  { id: 'CUS-512', name: 'Ananya Deshmukh', phone: '+91 98330 21145', email: 'ananya.d@gmail.com', city: 'Pune', trips: 1, spend: 336000, tier: 'Gold', last: '04 Aug 2026', dob: '1994-06-19', special: '2022-03-08', specialLabel: 'Anniversary', source: 'Website', address: '31 Koregaon Park Annexe, Pune 411001', giftsGiven: [] },
-  { id: 'CUS-511', name: 'Rohan Bhatt', phone: '+91 99201 55420', email: 'rohan.bhatt@outlook.com', city: 'Mumbai', trips: 1, spend: 185000, tier: 'Gold', last: '28 Jul 2026', dob: '1989-01-24', special: '2017-05-21', specialLabel: 'Anniversary', source: 'Website', address: 'A-1202 Oberoi Splendor, Jogeshwari East, Mumbai 400060', giftsGiven: [{ gift: 'Welcome travel kit on joining', date: '05 Aug 2026' }] },
+  {
+    id: 'CUS-512', name: 'Ananya Deshmukh', phone: '+91 98330 21145', email: 'ananya.d@gmail.com',
+    city: 'Pune', trips: 1, spend: 336000, tier: 'Gold', last: '04 Aug 2026',
+    dob: '1994-06-19', special: '2022-03-08', specialLabel: 'Anniversary',
+    childBirthday: '2019-09-02', source: 'Website',
+    address: '31 Koregaon Park Annexe, Pune 411001', giftsGiven: [],
+    membership: 'MSU-04', expert: 'Sneha', family: 4,
+    preferences: ['Beach', 'Luxury stays', 'Direct flights'],
+    engagement: 'Active', lastBooking: '04 Aug 2026', lastInteraction: '05 Aug 2026',
+    lastMessage: 'WhatsApp — payment link sent', satisfaction: 4, complaint: '',
+    referral: { code: 'ANANYA10', total: 2, qualified: 1, converted: 0, earned: 0, redeemed: 0, pending: 2500 },
+    communication: [
+      { at: '05 Aug 2026', kind: 'WhatsApp', text: 'Payment link for the Platinum membership' },
+      { at: '04 Aug 2026', kind: 'Call', text: 'Sneha explained the plan benefits' },
+    ],
+  },
+  {
+    id: 'CUS-511', name: 'Rohan Bhatt', phone: '+91 99201 55420', email: 'rohan.bhatt@outlook.com',
+    city: 'Mumbai', trips: 1, spend: 185000, tier: 'Gold', last: '28 Jul 2026',
+    dob: '1989-01-24', special: '2017-05-21', specialLabel: 'Anniversary',
+    childBirthday: '2015-08-30', source: 'Website',
+    address: 'A-1202 Oberoi Splendor, Jogeshwari East, Mumbai 400060',
+    giftsGiven: [{ gift: 'Welcome travel kit on joining', date: '05 Aug 2026' }],
+    membership: 'MSU-03', expert: 'Sneha', family: 3,
+    preferences: ['Honeymoon', 'Island stays', 'Vegetarian meals'],
+    engagement: 'Highly engaged', lastBooking: '28 Jul 2026', lastInteraction: '18 Aug 2026',
+    lastMessage: 'Call — renewal conversation', satisfaction: 5, complaint: '',
+    referral: { code: 'ROHAN15', total: 3, qualified: 2, converted: 1, earned: 5000, redeemed: 0, pending: 2500 },
+    communication: [
+      { at: '18 Aug 2026', kind: 'Call', text: 'Renewal discussed — interested after the Bali trip' },
+      { at: '28 Jul 2026', kind: 'WhatsApp', text: 'Bali booking confirmation sent' },
+      { at: '11 Sep 2025', kind: 'Meeting', text: 'Membership handover and welcome kit' },
+    ],
+  },
 ];
+
+/** The gifts and rewards the agency hands out, in the client's order. */
+export const rewardKinds = [
+  'Welcome gift',
+  'Membership gift',
+  'Hotel stay reward',
+  'Birthday gift',
+  'Anniversary gift',
+  'Referral reward',
+  'Special campaign',
+];
+
+/** A gift walks down this ladder before it reaches the member. */
+export const rewardStages = ['Pending', 'Eligible', 'Approved', 'Assigned', 'Delivered', 'Cancelled'];
+
+/** Gifts in flight, with who is carrying them. */
+export const rewardGrants = [
+  {
+    id: 'RWD-01', member: 'Rohan Bhatt', kind: 'Welcome gift', gift: 'Welcome travel kit on joining',
+    eligibility: 'On joining Gold Voyager', assigned: '05 Aug 2026', due: '12 Aug 2026',
+    officer: 'Ritik', stage: 'Delivered', proof: 'Signed handover slip', notes: 'Handed over at the Mumbai desk',
+  },
+  {
+    id: 'RWD-02', member: 'Rohan Bhatt', kind: 'Birthday gift', gift: 'Birthday greeting card and cake voucher',
+    eligibility: 'Birthday 24 Jan', assigned: '—', due: '24 Jan 2027',
+    officer: 'Ritik', stage: 'Eligible', proof: '—', notes: 'Queue with the January batch',
+  },
+  {
+    id: 'RWD-03', member: 'Ananya Deshmukh', kind: 'Membership gift', gift: 'Platinum luggage set',
+    eligibility: 'On activating Platinum Elite', assigned: '—', due: '11 Aug 2026',
+    officer: 'Ritik', stage: 'Pending', proof: '—', notes: 'Waiting on the membership payment',
+  },
+  {
+    id: 'RWD-04', member: 'Rohan Bhatt', kind: 'Referral reward', gift: '₹5,000 travel credit',
+    eligibility: '1 referral converted', assigned: '02 Aug 2026', due: '20 Aug 2026',
+    officer: 'Sneha', stage: 'Approved', proof: '—', notes: 'Credit to be applied on the next booking',
+  },
+];
+
+/** How engaged a member is, and how the desk should read it. */
+export const engagementLevels = ['Highly engaged', 'Active', 'Low engagement', 'At risk'];
+
+/** What the reminder engine watches. */
+export const reminderKinds = [
+  'Membership expiry',
+  'Membership activation',
+  'Unused benefits',
+  'Booking opportunity',
+  'Birthday',
+  'Anniversary',
+  'Gift collection',
+  'Referral reward',
+  'Pending payment',
+  'Upcoming booking',
+  'Renewal',
+];
+
 
 // -- Tasks ------------------------------------------------------------------
 export const tasks = [

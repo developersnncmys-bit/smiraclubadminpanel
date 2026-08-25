@@ -12,7 +12,7 @@ import * as extra from '../data/modulesData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v24';
+const KEY = 'smira-club-admin:v25';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -30,6 +30,7 @@ const PREFIX = {
   team: 'USR',
   memberships: 'MEM',
   memberSignups: 'MSU',
+  rewardGrants: 'RWD',
   partners: 'PTR',
   inventory: 'TIV',
   lifestyle: 'LIF',
@@ -60,6 +61,7 @@ export const SINGULAR = {
   team: 'Team member',
   memberships: 'Membership plan',
   memberSignups: 'Membership signup',
+  rewardGrants: 'Reward',
   partners: 'Partner',
   inventory: 'Inventory block',
   lifestyle: 'Add-on',
@@ -90,6 +92,7 @@ const seedState = () => ({
   team: seed.team,
   memberships: seed.memberships,
   memberSignups: seed.memberSignups,
+  rewardGrants: seed.rewardGrants,
   partners: extra.partners,
   inventory: extra.inventory,
   lifestyle: extra.lifestyle,

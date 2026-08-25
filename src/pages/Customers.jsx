@@ -12,11 +12,13 @@ import {
   Check,
   FileText,
   UserRound,
+  Rows3,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Memberships from './Memberships.jsx';
 import MembershipDesk from '../components/membership/MembershipDesk.jsx';
+import MembersDesk from '../components/membership/MembersDesk.jsx';
 import MemberProfile from '../components/membership/MemberProfile.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -96,6 +98,7 @@ export default function Customers() {
     customers,
     memberSignups,
     memberships,
+    rewardGrants,
     quotations,
     bookings,
     create,
@@ -272,7 +275,7 @@ export default function Customers() {
             : 'The three plans on your website and who signed up'
         }
       >
-        {view === 'people' && (
+        {view === 'table' && (
           <button
             className="btn-primary"
             onClick={() => {
@@ -289,6 +292,7 @@ export default function Customers() {
       <div className="mb-5 flex flex-wrap items-center gap-2">
         {[
           { key: 'people', label: 'Members', icon: UserRound, count: customers.length },
+          { key: 'table', label: 'Member list', icon: Rows3, count: customers.length },
           { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
           { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
         ].map((v) => (
@@ -340,6 +344,21 @@ export default function Customers() {
       {view === 'plans' && <Memberships embedded />}
 
       {view === 'people' && (
+        <MembersDesk
+          members={customers}
+          signups={memberSignups}
+          rewards={rewardGrants}
+          bookings={bookings}
+          onOpen={(c) => setViewing(c)}
+          onOpenMembership={(m) => { setView('memberships'); setMemberOpen(m); }}
+          actions={{
+            addMember: () => { setEditing(null); setFormOpen(true); },
+            note: (message) => toast(message),
+          }}
+        />
+      )}
+
+      {view === 'table' && (
       <DataTable
         columns={columns}
         rows={customers}

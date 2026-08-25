@@ -79,6 +79,34 @@ function List({ rows, empty = 'Nothing here yet.' }) {
   );
 }
 
+/** A percentage drawn as a ring, for the two numbers that carry the page. */
+function Ring({ pct, label, value, tone = '#0b8472' }) {
+  const r = 34;
+  const c = 2 * Math.PI * r;
+  const filled = Math.max(0, Math.min(100, pct)) / 100;
+  return (
+    <div className="flex items-center gap-4">
+      <svg viewBox="0 0 80 80" className="h-[76px] w-[76px] shrink-0 -rotate-90">
+        <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(11,21,36,0.08)" strokeWidth="9" />
+        <circle
+          cx="40"
+          cy="40"
+          r={r}
+          fill="none"
+          stroke={tone}
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={`${c * filled} ${c}`}
+        />
+      </svg>
+      <div className="min-w-0">
+        <p className="num font-display text-2xl font-extrabold leading-none text-ink-900">{value}</p>
+        <p className="mt-1 text-sm text-ink-500">{label}</p>
+      </div>
+    </div>
+  );
+}
+
 /** One big number with its caption. */
 function Stat({ label, value, hint, tone = 'text-ink-900' }) {
   return (
@@ -111,6 +139,7 @@ export default function SalesOverview({ rows, bookings, invoices = [], team, onP
   const [rankBy, setRankBy] = useState('revenue');
   const [feedKind, setFeedKind] = useState('All');
   const [duePriority, setDuePriority] = useState('Overdue');
+  const [showBulk, setShowBulk] = useState(false);
 
   // -- KPI filters -----------------------------------------------------------
   const scoped = rows.filter(
@@ -142,20 +171,20 @@ export default function SalesOverview({ rows, bookings, invoices = [], team, onP
   const followUpsDone = team.reduce((s, m) => s + Number(m.followUpDetail?.completed || 0), 0);
   const followUpsOverdue = team.reduce((s, m) => s + Number(m.followUpDetail?.overdue || 0), 0);
 
-  // -- 1 · Top KPI cards -----------------------------------------------------
-  const kpis = [
+  // -- 1 · The numbers that carry the page ----------------------------------
+  const glance = [
     { label: 'Total leads', value: total, hint: 'new and active' },
-    { label: 'New leads', value: fresh.length, hint: 'not contacted yet', tone: fresh.length ? 'text-rose-600' : undefined },
     { label: 'Active pipeline', value: open.length, hint: 'being worked on' },
     { label: 'Presentations', value: presented.length, hint: 'sent or scheduled' },
     { label: 'Conversions', value: won.length, hint: 'closed as customers' },
-    { label: 'Conversion rate', value: `${share(won.length)}%`, hint: 'lead to customer' },
-    { label: 'Sales revenue', value: shortInr(revenue), hint: 'from won leads', tone: 'text-brand-700' },
-    { label: 'Pending payments', value: shortInr(pending), hint: 'still to collect', tone: pending ? 'text-amber-600' : undefined },
-    { label: 'Follow-ups due', value: followUpsDue, hint: `${followUpsOverdue} overdue` },
-    { label: 'Lost leads', value: lost.length, hint: `${share(lost.length)}% of leads` },
+    { label: 'Pending payments', value: shortInr(pending), hint: 'still to collect' },
     { label: 'Team attendance', value: `${present}/${team.length}`, hint: 'present today' },
-    { label: 'Target achievement', value: `${achievement}%`, hint: `of ${shortInr(target)}` },
+  ];
+
+  const attention = [
+    { label: 'New leads', value: fresh.length, note: 'nobody has called them', tone: 'bg-rose-500', urgent: fresh.length > 0 },
+    { label: 'Follow-ups due', value: followUpsDue, note: `${followUpsOverdue} already overdue`, tone: 'bg-amber-500', urgent: followUpsOverdue > 0 },
+    { label: 'Lost leads', value: lost.length, note: `${share(lost.length)}% of everything`, tone: 'bg-ink-900/25', urgent: false },
   ];
 
   // -- 2 · Lead funnel -------------------------------------------------------
@@ -293,35 +322,127 @@ export default function SalesOverview({ rows, bookings, invoices = [], team, onP
         </select>
       </div>
 
-      {/* 1 · Top KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-        {kpis.map((k) => (
-          <div key={k.label} className="card px-4 py-4">
-            <p className="text-sm font-semibold text-ink-500">{k.label}</p>
-            <p className={`num mt-1 font-display text-2xl font-extrabold ${k.tone || 'text-ink-900'}`}>{k.value}</p>
-            <p className="mt-0.5 text-xs text-ink-400">{k.hint}</p>
+      {/* 1 · The headline: money, conversion, and what needs a person */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)_minmax(0,0.9fr)]">
+        {/* Money, on the dark tile so the eye lands here first */}
+        <section className="card relative overflow-hidden bg-ink-900 p-5 text-white">
+          <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-brand-500/20 blur-2xl" />
+          <div className="relative">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Sales revenue</p>
+            <p className="num mt-2 font-display text-4xl font-extrabold leading-none">{inr(revenue)}</p>
+            <p className="mt-1.5 text-sm text-white/60">
+              from {won.length} won {won.length === 1 ? 'lead' : 'leads'} · average{' '}
+              {won.length ? inr(Math.round(revenue / won.length)) : '—'}
+            </p>
+
+            <div className="mt-5">
+              <p className="flex items-baseline justify-between text-xs font-semibold text-white/60">
+                <span>Target {shortInr(target)}</span>
+                <span className="num text-white">{achievement}%</span>
+              </p>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15">
+                <div
+                  className={`h-full rounded-full ${achievement >= 100 ? 'bg-emerald-400' : 'bg-brand-400'}`}
+                  style={{ width: `${Math.min(achievement, 100)}%` }}
+                />
+              </div>
+            </div>
+
+            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm">
+              <Wallet size={14} className="text-white/70" />
+              {pending ? `${inr(pending)} still to collect` : 'Everything collected'}
+            </p>
+          </div>
+        </section>
+
+        {/* How much of the pipeline actually turns into customers */}
+        <section className="card flex flex-col justify-between p-5">
+          <div>
+            <p className="eyebrow">Lead to customer</p>
+            <div className="mt-4">
+              <Ring pct={share(won.length)} value={`${share(won.length)}%`} label={`${won.length} of ${total} leads booked`} />
+            </div>
+          </div>
+          <ul className="mt-5 space-y-2 border-t border-ink-900/[0.07] pt-4">
+            {[
+              ['Contacted', total - fresh.length],
+              ['Presentation stage', presented.length],
+              ['Still open', open.length],
+            ].map(([label, n]) => (
+              <li key={label} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-ink-600">{label}</span>
+                <span className="num font-bold text-ink-900">{n}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* The three things that want a person today */}
+        <section className="card p-5">
+          <p className="eyebrow">Needs a person today</p>
+          <ul className="mt-4 space-y-3">
+            {attention.map((a) => (
+              <li key={a.label} className="flex items-center gap-3 rounded-xl bg-surface-soft px-3.5 py-3">
+                <span className={`h-9 w-1.5 shrink-0 rounded-full ${a.tone}`} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold text-ink-900">{a.label}</span>
+                  <span className="block truncate text-xs text-ink-500">{a.note}</span>
+                </span>
+                <span className={`num font-display text-2xl font-extrabold ${a.urgent ? 'text-rose-600' : 'text-ink-900'}`}>
+                  {a.value}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      {/* Everything else, on one line instead of a wall of boxes */}
+      <div className="card grid divide-y divide-ink-900/[0.07] sm:grid-cols-2 sm:divide-y-0 xl:grid-cols-3 2xl:grid-cols-6 sm:[&>*:not(:first-child)]:border-l sm:[&>*]:border-ink-900/[0.07]">
+        {glance.map((g) => (
+          <div key={g.label} className="px-5 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{g.label}</p>
+            <p className="num mt-1.5 font-display text-2xl font-extrabold text-ink-900">{g.value}</p>
+            <p className="mt-0.5 text-xs text-ink-400">{g.hint}</p>
           </div>
         ))}
       </div>
 
-      {/* 11 · Quick actions, kept visible */}
-      <div className="card p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="eyebrow mr-1">Quick actions</p>
+      {/* 11 · Quick actions, one calm bar */}
+      <div className="card p-3.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           {primary.map((q) => (
-            <button key={q.label} className="btn-ghost btn-sm" onClick={q.run}>
-              <q.icon size={14} /> {q.label}
+            <button
+              key={q.label}
+              onClick={q.run}
+              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-ink-700 transition hover:bg-surface-soft hover:text-ink-900"
+            >
+              <q.icon size={15} className="text-ink-400" /> {q.label}
             </button>
           ))}
+          <button
+            onClick={() => setShowBulk((v) => !v)}
+            className={`ml-auto inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition ${
+              showBulk ? 'bg-ink-900 text-white' : 'text-ink-600 hover:bg-surface-soft hover:text-ink-900'
+            }`}
+          >
+            Bulk actions
+          </button>
         </div>
-        <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-ink-900/[0.07] pt-2.5">
-          <p className="eyebrow mr-1">On selected leads</p>
-          {bulk.map((b) => (
-            <button key={b} className="chip text-ink-600 hover:text-ink-900" onClick={() => actions.note(`${b} — pick the leads in the list first`)}>
-              {b}
-            </button>
-          ))}
-        </div>
+        {showBulk && (
+          <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-ink-900/[0.07] pt-2.5">
+            <p className="eyebrow mr-1">On selected leads</p>
+            {bulk.map((b) => (
+              <button
+                key={b}
+                className="chip text-ink-600 hover:text-ink-900"
+                onClick={() => actions.note(`${b} — pick the leads in the list first`)}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 3 · Sales performance graph */}

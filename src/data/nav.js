@@ -73,7 +73,7 @@ export const navGroups = [
  * Every other tab is out of the sidebar for now — the pages and routes are
  * untouched, so emptying this list brings the whole sheet back.
  */
-const IN_PROGRESS = ['/team', '/enquiries', '/bookings', '/customers', '/support'];
+const IN_PROGRESS = ['/team', '/enquiries', '/bookings', '/customers', '/support', '/reports'];
 
 /** What the sidebar shows: hidden groups and hidden pages are dropped. */
 export const visibleNavGroups = navGroups

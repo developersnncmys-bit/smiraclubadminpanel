@@ -58,9 +58,9 @@ export const plannedModules = [
   },
   {
     to: '/partners',
-    label: 'Vendors',
+    label: 'Partners',
     icon: Globe2,
-    blurb: 'The vendors you buy from, and what you owe them.',
+    blurb: 'Hotels, villas and operators the agency sells through.',
     points: ['Partner accounts and commission slabs', 'Bookings sourced per partner', 'Commission owed and paid', 'Partner login for their own leads'],
   },
   {

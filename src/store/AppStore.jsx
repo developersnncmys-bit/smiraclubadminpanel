@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import * as seed from '../data/mockData.js';
 import * as extra from '../data/modulesData.js';
 import * as support from '../data/supportData.js';
+import * as partnerSeed from '../data/partnersData.js';
 
 /**
  * Single client-side store for the whole panel.
@@ -13,7 +14,7 @@ import * as support from '../data/supportData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v26';
+const KEY = 'smira-club-admin:v27';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -97,7 +98,7 @@ const seedState = () => ({
   memberSignups: seed.memberSignups,
   rewardGrants: seed.rewardGrants,
   tickets: support.tickets,
-  partners: extra.partners,
+  partners: partnerSeed.partners,
   inventory: extra.inventory,
   lifestyle: extra.lifestyle,
   automations: extra.automations,

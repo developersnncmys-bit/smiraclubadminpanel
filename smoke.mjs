@@ -37,7 +37,7 @@ const MARKERS = {
   '/reports': 'Report builder',
   '/settings': 'Settings',
   '/tasks': 'Tasks',
-  '/partners': 'The vendors you buy from',
+  '/partners': 'Every partner',
   '/inventory': 'Everything the agency sells',
   '/lifestyle': 'Add-ons sold alongside a trip',
   '/automation': 'Automation rules',

@@ -34,7 +34,7 @@ const MARKERS = {
   '/customers': 'Memberships',
   '/team': 'Team ranking',
   '/campaigns': 'Campaigns',
-  '/reports': 'Booked against collected',
+  '/reports': 'Report builder',
   '/settings': 'Settings',
   '/tasks': 'Tasks',
   '/partners': 'The vendors you buy from',

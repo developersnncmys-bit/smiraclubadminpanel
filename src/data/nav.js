@@ -47,6 +47,7 @@ export const navGroups = [
       built('/partners'),
       { to: '/reports', label: 'Report & Analytics', icon: PieChart },
       built('/inventory', 'Travel Inventory'),
+      built('/support', 'Support / Complaints'),
       built('/lifestyle'),
       built('/automation'),
       { to: '/payments', label: 'Payment', icon: Wallet },
@@ -72,7 +73,7 @@ export const navGroups = [
  * Every other tab is out of the sidebar for now — the pages and routes are
  * untouched, so emptying this list brings the whole sheet back.
  */
-const IN_PROGRESS = ['/team', '/enquiries', '/bookings', '/customers', '/inventory'];
+const IN_PROGRESS = ['/team', '/enquiries', '/bookings', '/customers', '/support'];
 
 /** What the sidebar shows: hidden groups and hidden pages are dropped. */
 export const visibleNavGroups = navGroups

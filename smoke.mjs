@@ -55,7 +55,7 @@ const MARKERS = {
   '/ai': 'Not built yet',
   '/alerts': 'Not built yet',
   '/communication': 'Not built yet',
-  '/support': 'Not built yet',
+  '/support': 'Complaint funnel',
 };
 
 const entry = `

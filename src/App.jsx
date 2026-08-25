@@ -31,6 +31,7 @@ import Banners from './pages/Banners.jsx';
 import Seo from './pages/Seo.jsx';
 import ApiKeys from './pages/ApiKeys.jsx';
 import Profile from './pages/Profile.jsx';
+import Support from './pages/Support.jsx';
 import Planned from './pages/Planned.jsx';
 import { plannedModules } from './data/modules.js';
 
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="banners" element={<Banners />} />
         <Route path="seo" element={<Seo />} />
         <Route path="api" element={<ApiKeys />} />
+        <Route path="support" element={<Support />} />
         <Route path="profile" element={<Profile />} />
 
         {/* Still to build — these fall through to the placeholder */}

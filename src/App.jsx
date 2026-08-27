@@ -9,12 +9,13 @@ import Customers from './pages/Customers.jsx';
 import Memberships from './pages/Memberships.jsx';
 import Partners from './pages/Partners.jsx';
 import Reports from './pages/Reports.jsx';
+import Revenue from './pages/Revenue.jsx';
 import Support from './pages/Support.jsx';
 
 /**
  * The panel holds the sections the client has specified — Team Status,
  * Sales & Leads, Booking, Members, Partners, Report & Analytics and
- * Support / Complaints. Anything else is added as its sheet arrives.
+ * Revenue, Support / Complaints. Anything else is added as its sheet arrives.
  */
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="memberships" element={<Memberships />} />
         <Route path="partners" element={<Partners />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="revenue" element={<Revenue />} />
         <Route path="support" element={<Support />} />
       </Route>
 

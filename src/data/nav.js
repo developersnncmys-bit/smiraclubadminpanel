@@ -6,6 +6,7 @@ import {
   Handshake,
   PieChart,
   Headphones,
+  IndianRupee,
 } from 'lucide-react';
 
 /**
@@ -20,9 +21,10 @@ export const navGroups = [
       { to: '/enquiries', label: 'Sales & Leads', icon: Users, badgeKey: 'enquiries' },
       { to: '/bookings', label: 'Booking', icon: CalendarCheck },
       { to: '/customers', label: 'Members', icon: UserRound, badgeKey: 'memberships' },
-      { to: '/partners', label: 'Partners', icon: Handshake },
-      { to: '/reports', label: 'Report & Analytics', icon: PieChart },
       { to: '/support', label: 'Support / Complaints', icon: Headphones },
+      { to: '/reports', label: 'Report & Analytics', icon: PieChart },
+      { to: '/revenue', label: 'Revenue', icon: IndianRupee },
+      { to: '/partners', label: 'Partners', icon: Handshake },
     ],
   },
 ];

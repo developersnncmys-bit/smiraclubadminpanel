@@ -3,6 +3,7 @@ import * as seed from '../data/mockData.js';
 import * as extra from '../data/modulesData.js';
 import * as support from '../data/supportData.js';
 import * as partnerSeed from '../data/partnersData.js';
+import * as inventorySeed from '../data/inventoryData.js';
 
 /**
  * Single client-side store for the whole panel.
@@ -14,7 +15,7 @@ import * as partnerSeed from '../data/partnersData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v27';
+const KEY = 'smira-club-admin:v28';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -34,8 +35,8 @@ const PREFIX = {
   memberSignups: 'MSU',
   rewardGrants: 'RWD',
   tickets: 'TCK',
+  inventory: 'INV',
   partners: 'PTR',
-  inventory: 'TIV',
   lifestyle: 'LIF',
   automations: 'AUT',
   notificationRules: 'NTF',
@@ -66,8 +67,8 @@ export const SINGULAR = {
   memberSignups: 'Membership signup',
   rewardGrants: 'Reward',
   tickets: 'Ticket',
+  inventory: 'Inventory item',
   partners: 'Partner',
-  inventory: 'Inventory block',
   lifestyle: 'Add-on',
   automations: 'Automation',
   notificationRules: 'Notification rule',
@@ -98,8 +99,8 @@ const seedState = () => ({
   memberSignups: seed.memberSignups,
   rewardGrants: seed.rewardGrants,
   tickets: support.tickets,
+  inventory: inventorySeed.inventory,
   partners: partnerSeed.partners,
-  inventory: extra.inventory,
   lifestyle: extra.lifestyle,
   automations: extra.automations,
   notificationRules: extra.notificationRules,

@@ -1,0 +1,287 @@
+/**
+ * Travel inventory, built to the client's sheet: what the agency holds, what
+ * it costs, who supplies it, who it is reserved for, and what is about to
+ * run out or expire.
+ */
+
+/** Everything the agency can hold, and what has to be managed for each. */
+export const categories = [
+  { key: 'Hotels', icon: '🏨', manage: '3★ / 4★ / 5★, rooms, rates, meal plans' },
+  { key: 'Villas', icon: '🏡', manage: 'Villas, occupancy, amenities, availability' },
+  { key: 'Flights', icon: '✈️', manage: 'Routes, airline, fare, seats' },
+  { key: 'Transport', icon: '🚗', manage: 'Cars, buses, transfers, drivers' },
+  { key: 'Packages', icon: '🌴', manage: 'Domestic and international packages' },
+  { key: 'Activities', icon: '🎢', manage: 'Water parks, theme parks, adventure' },
+  { key: 'Restaurants', icon: '🍽️', manage: 'Dining inventory, offers, tables' },
+  { key: 'Spa and salon', icon: '💆', manage: 'Services, slots, offers' },
+  { key: 'Attractions', icon: '🎟️', manage: 'Tickets, entry passes, experiences' },
+  { key: 'Experiences', icon: '🛥️', manage: 'Yacht, cruise, balloon, helicopter' },
+];
+
+/** The rate engine: one base rate, then everything derived from it. */
+export const rateTypes = [
+  'Standard rate',
+  'B2B rate',
+  'Member rate',
+  'Weekend rate',
+  'Seasonal rate',
+  'Festival rate',
+  'Corporate rate',
+  'Promotional rate',
+  'Package rate',
+  'Last-minute rate',
+];
+
+export const salesChannels = ['Website', 'App', 'CRM', 'WhatsApp', 'Travel expert', 'Branch', 'Corporate or B2B'];
+
+/** How a booking actually eats into stock. */
+export const integrationFlow = [
+  'Customer booking request',
+  'Booking team',
+  'Package or hotel selected',
+  'Availability check',
+  'Inventory reserved',
+  'Payment',
+  'Booking confirmed',
+  'Inventory deducted',
+  'Vendor confirmation',
+  'Voucher generated',
+  'Customer WhatsApp',
+];
+
+/** What the panel does on its own. */
+export const automation = {
+  Daily: ['Availability sync', 'Rate sync', 'Sold-out alerts', 'Low inventory alerts'],
+  Booking: ['Inventory hold', 'Inventory deduction', 'Vendor confirmation', 'Voucher generation'],
+  Pricing: ['Dynamic markup', 'Weekend pricing', 'Seasonal pricing', 'Demand-based pricing'],
+  CRM: [
+    'Recommend available hotels',
+    'Recommend packages',
+    'Hide unavailable inventory',
+    'Show membership-eligible inventory',
+  ],
+};
+
+/** Who can touch what. */
+export const inventoryRoles = [
+  { role: 'Super admin', access: 'Everything' },
+  { role: 'Inventory manager', access: 'Inventory, rates and allocation' },
+  { role: 'Vendor manager', access: 'Vendor inventory' },
+  { role: 'Package manager', access: 'Packages' },
+  { role: 'Branch manager', access: 'View, with limited booking access' },
+  { role: 'Travel expert', access: 'Search, availability and reservation' },
+  { role: 'Finance', access: 'Cost, selling price, markup and profit' },
+];
+
+/** The stock itself. Rates build up base → markup → selling → member. */
+export const inventory = [
+  {
+    id: 'INV-H01',
+    category: 'Hotels',
+    name: 'Ayana Resort & Spa',
+    code: 'AYA-BAL',
+    destination: 'Bali, Indonesia',
+    grade: '5★',
+    vendor: 'Ayana Resort & Spa',
+    units: 42,
+    booked: 24,
+    blocked: 2,
+    baseRate: 34000,
+    markup: 8000,
+    memberDiscount: 4200,
+    status: 'Active',
+    confirmation: 'Confirmed',
+    contractEnds: '31 Dec 2026',
+    rateEnds: '30 Sep 2026',
+    address: 'Jimbaran Bay, Badung, Bali 80364',
+    gps: '-8.7810, 115.1560',
+    checkIn: '2:00 pm',
+    checkOut: '12:00 noon',
+    contact: '+62 361 702222',
+    amenities: ['Private beach', 'Spa', 'Three pools', 'Airport transfer'],
+    description: 'Cliff-top resort over Jimbaran Bay, the agency\'s first choice for honeymoons.',
+    rooms: [
+      { type: 'Ocean view suite', count: 20, occupancy: 2, extraBed: true, child: 'Under 6 free', meal: 'Breakfast', rack: 46000, b2b: 34000, smira: 42000, member: 37800 },
+      { type: 'Garden villa', count: 22, occupancy: 4, extraBed: true, child: 'Under 6 free', meal: 'Half board', rack: 58000, b2b: 44000, smira: 52000, member: 46800 },
+    ],
+    allocation: { Membership: 18, Website: 10, CRM: 8, 'Corporate or B2B': 4, Buffer: 2 },
+  },
+  {
+    id: 'INV-H02',
+    category: 'Hotels',
+    name: 'Atlantis The Palm',
+    code: 'ATL-MLE',
+    destination: 'Malé, Maldives',
+    grade: '5★',
+    vendor: 'Atlantis The Palm',
+    units: 28,
+    booked: 21,
+    blocked: 0,
+    baseRate: 52000,
+    markup: 15200,
+    memberDiscount: 6700,
+    status: 'Limited',
+    confirmation: 'Waiting',
+    contractEnds: '18 Sep 2026',
+    rateEnds: '31 Aug 2026',
+    address: 'Crescent Road, The Palm, Malé',
+    gps: '4.1755, 73.5093',
+    checkIn: '3:00 pm',
+    checkOut: '11:00 am',
+    contact: '+960 664 0011',
+    amenities: ['Overwater villas', 'House reef', 'Speedboat transfer', 'Kids club'],
+    description: 'Overwater villas with a house reef, sold mostly to Platinum members.',
+    rooms: [
+      { type: 'Overwater villa', count: 16, occupancy: 2, extraBed: false, child: 'Not permitted', meal: 'Half board', rack: 74000, b2b: 52000, smira: 67200, member: 60500 },
+      { type: 'Beach villa', count: 12, occupancy: 3, extraBed: true, child: 'Under 12 half', meal: 'Full board', rack: 62000, b2b: 46000, smira: 56000, member: 50400 },
+    ],
+    allocation: { Membership: 12, Website: 8, CRM: 4, 'Corporate or B2B': 2, Buffer: 2 },
+  },
+  {
+    id: 'INV-V01',
+    category: 'Villas',
+    name: 'Casa Del Sol',
+    code: 'CAS-GOA',
+    destination: 'Assagao, Goa',
+    grade: '4 bedroom',
+    vendor: 'Goa Villa Collective',
+    units: 6,
+    booked: 5,
+    blocked: 0,
+    baseRate: 24000,
+    markup: 6000,
+    memberDiscount: 3000,
+    status: 'Low',
+    confirmation: 'Confirmed',
+    contractEnds: '30 Nov 2026',
+    rateEnds: '31 Oct 2026',
+    address: 'Badem, Assagao, Goa 403507',
+    gps: '15.6100, 73.7600',
+    checkIn: '1:00 pm',
+    checkOut: '11:00 am',
+    contact: '+91 98220 11447',
+    amenities: ['Private pool', 'Cook on call', 'Garden', 'Parking'],
+    description: 'Four-bedroom villa with its own pool, popular with family groups.',
+    rooms: [{ type: 'Whole villa', count: 6, occupancy: 8, extraBed: true, child: 'Under 5 free', meal: 'Room only', rack: 34000, b2b: 24000, smira: 30000, member: 27000 }],
+    allocation: { Membership: 3, Website: 2, CRM: 1, 'Corporate or B2B': 0, Buffer: 0 },
+  },
+  {
+    id: 'INV-P01',
+    category: 'Packages',
+    name: 'Bali Honeymoon Escape',
+    code: 'PKG-BAL-6N',
+    destination: 'Bali, Indonesia',
+    grade: '7 days 6 nights',
+    vendor: 'Ayana Resort & Spa',
+    units: 12,
+    booked: 4,
+    blocked: 0,
+    baseRate: 148000,
+    markup: 37000,
+    memberDiscount: 18500,
+    status: 'Active',
+    confirmation: 'Confirmed',
+    contractEnds: '31 Dec 2026',
+    rateEnds: '31 Dec 2026',
+    address: '—',
+    gps: '—',
+    checkIn: '—',
+    checkOut: '—',
+    contact: '+62 361 702222',
+    amenities: ['Flights', 'Transfers', 'Breakfast', 'Two excursions'],
+    description: 'Six nights in Bali with transfers and two excursions, sold as one price.',
+    rooms: [],
+    allocation: { Membership: 6, Website: 3, CRM: 2, 'Corporate or B2B': 1, Buffer: 0 },
+  },
+  {
+    id: 'INV-A01',
+    category: 'Activities',
+    name: 'Waterbom Bali day pass',
+    code: 'ACT-WBM',
+    destination: 'Kuta, Bali',
+    grade: 'Day pass',
+    vendor: 'Bali Sunrise DMC',
+    units: 60,
+    booked: 12,
+    blocked: 0,
+    baseRate: 3200,
+    markup: 800,
+    memberDiscount: 400,
+    status: 'Active',
+    confirmation: 'Confirmed',
+    contractEnds: '31 Mar 2027',
+    rateEnds: '31 Dec 2026',
+    address: 'Jl. Kartika Plaza, Kuta',
+    gps: '-8.7280, 115.1710',
+    checkIn: '9:00 am',
+    checkOut: '6:00 pm',
+    contact: '+62 361 755676',
+    amenities: ['All slides', 'Locker', 'Towel'],
+    description: 'Day passes bought in a block, resold with the packages.',
+    rooms: [],
+    allocation: { Membership: 20, Website: 20, CRM: 10, 'Corporate or B2B': 5, Buffer: 5 },
+  },
+  {
+    id: 'INV-T01',
+    category: 'Transport',
+    name: 'Airport transfer — sedan',
+    code: 'TRF-SED',
+    destination: 'Mumbai, India',
+    grade: 'Sedan · 3 seats',
+    vendor: 'Skyline Transfers',
+    units: 14,
+    booked: 3,
+    blocked: 1,
+    baseRate: 2200,
+    markup: 600,
+    memberDiscount: 280,
+    status: 'Active',
+    confirmation: 'Confirmed',
+    contractEnds: '30 Jun 2026',
+    rateEnds: '30 Jun 2026',
+    address: 'Andheri East, Mumbai',
+    gps: '19.1130, 72.8690',
+    checkIn: '—',
+    checkOut: '—',
+    contact: '+91 99670 22013',
+    amenities: ['Meet and greet', 'Water', 'Toll included'],
+    description: 'Airport pickups and drops for departing groups.',
+    rooms: [],
+    allocation: { Membership: 6, Website: 4, CRM: 2, 'Corporate or B2B': 2, Buffer: 0 },
+  },
+];
+
+/** Day by day availability, for the calendar. */
+export const availability = [
+  { date: '26 Aug 2026', item: 'INV-H01', left: 18, rate: 42000, note: '' },
+  { date: '27 Aug 2026', item: 'INV-H01', left: 14, rate: 42000, note: '' },
+  { date: '28 Aug 2026', item: 'INV-H01', left: 5, rate: 46000, note: 'Weekend rate' },
+  { date: '29 Aug 2026', item: 'INV-H01', left: 0, rate: 46000, note: 'Sold out' },
+  { date: '26 Aug 2026', item: 'INV-H02', left: 7, rate: 67200, note: '' },
+  { date: '27 Aug 2026', item: 'INV-H02', left: 7, rate: 67200, note: '' },
+  { date: '28 Aug 2026', item: 'INV-H02', left: 4, rate: 72000, note: 'Seasonal rate' },
+  { date: '29 Aug 2026', item: 'INV-H02', left: 0, rate: 72000, note: 'Blackout' },
+  { date: '26 Aug 2026', item: 'INV-V01', left: 1, rate: 30000, note: 'Low' },
+  { date: '27 Aug 2026', item: 'INV-V01', left: 1, rate: 30000, note: 'Low' },
+];
+
+/** Stock held for a booking that has not been paid for yet. */
+export const holds = [
+  { id: 'HLD-01', item: 'INV-H02', units: 2, customer: 'Ananya Deshmukh', channel: 'CRM', heldFor: 30, minutesLeft: 12, stage: 'Awaiting payment' },
+  { id: 'HLD-02', item: 'INV-H01', units: 1, customer: 'Website enquiry', channel: 'Website', heldFor: 30, minutesLeft: 3, stage: 'Awaiting payment' },
+];
+
+/** Dates nothing can be sold on. */
+export const blackouts = [
+  { item: 'INV-H02', from: '29 Aug 2026', to: '31 Aug 2026', reason: 'Resort maintenance' },
+  { item: 'INV-V01', from: '24 Dec 2026', to: '02 Jan 2027', reason: 'Owner stay' },
+];
+
+/** What is about to run out. */
+export const contractAlerts = [
+  { kind: 'Vendor contract expiry', item: 'INV-H02', on: '18 Sep 2026' },
+  { kind: 'Rate expiry', item: 'INV-H02', on: '31 Aug 2026' },
+  { kind: 'Seasonal rate ending', item: 'INV-H01', on: '30 Sep 2026' },
+  { kind: 'Hotel agreement renewal', item: 'INV-T01', on: '30 Jun 2026' },
+  { kind: 'API credentials', item: '—', on: '15 Oct 2026' },
+];

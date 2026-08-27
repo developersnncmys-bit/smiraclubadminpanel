@@ -10,6 +10,7 @@ import Memberships from './pages/Memberships.jsx';
 import Partners from './pages/Partners.jsx';
 import Reports from './pages/Reports.jsx';
 import Revenue from './pages/Revenue.jsx';
+import Inventory from './pages/Inventory.jsx';
 import Support from './pages/Support.jsx';
 
 /**
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="partners" element={<Partners />} />
         <Route path="reports" element={<Reports />} />
         <Route path="revenue" element={<Revenue />} />
+        <Route path="inventory" element={<Inventory />} />
         <Route path="support" element={<Support />} />
       </Route>
 

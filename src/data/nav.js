@@ -7,6 +7,7 @@ import {
   PieChart,
   Headphones,
   IndianRupee,
+  Warehouse,
 } from 'lucide-react';
 
 /**
@@ -25,6 +26,7 @@ export const navGroups = [
       { to: '/reports', label: 'Report & Analytics', icon: PieChart },
       { to: '/revenue', label: 'Revenue', icon: IndianRupee },
       { to: '/partners', label: 'Partners', icon: Handshake },
+      { to: '/inventory', label: 'Travel Inventory', icon: Warehouse },
     ],
   },
 ];

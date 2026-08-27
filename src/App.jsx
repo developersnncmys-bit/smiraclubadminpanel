@@ -11,6 +11,7 @@ import Partners from './pages/Partners.jsx';
 import Reports from './pages/Reports.jsx';
 import Revenue from './pages/Revenue.jsx';
 import Inventory from './pages/Inventory.jsx';
+import Whatsapp from './pages/Whatsapp.jsx';
 import Support from './pages/Support.jsx';
 
 /**
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="reports" element={<Reports />} />
         <Route path="revenue" element={<Revenue />} />
         <Route path="inventory" element={<Inventory />} />
+        <Route path="whatsapp" element={<Whatsapp />} />
         <Route path="support" element={<Support />} />
       </Route>
 

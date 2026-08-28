@@ -9,6 +9,7 @@ import {
   IndianRupee,
   Warehouse,
   MessageCircle,
+  Wallet,
 } from 'lucide-react';
 
 /**
@@ -29,6 +30,7 @@ export const navGroups = [
       { to: '/partners', label: 'Partners', icon: Handshake },
       { to: '/inventory', label: 'Travel Inventory', icon: Warehouse },
       { to: '/whatsapp', label: 'Whatsapp', icon: MessageCircle },
+      { to: '/payment', label: 'Payment', icon: Wallet },
     ],
   },
 ];

@@ -17,6 +17,7 @@ const MARKERS = {
   '/customers': 'Memberships',
   '/memberships': 'Membership plans',
   '/partners': 'Every partner',
+  '/payment': 'Total collection',
   '/whatsapp': 'Conversations today',
   '/inventory': 'Inventory value',
   '/revenue': 'Total revenue',

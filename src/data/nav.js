@@ -10,6 +10,7 @@ import {
   Warehouse,
   MessageCircle,
   Wallet,
+  Zap,
 } from 'lucide-react';
 
 /**
@@ -31,6 +32,7 @@ export const navGroups = [
       { to: '/inventory', label: 'Travel Inventory', icon: Warehouse },
       { to: '/whatsapp', label: 'Whatsapp', icon: MessageCircle },
       { to: '/payment', label: 'Payment', icon: Wallet },
+      { to: '/automation', label: 'Automation', icon: Zap },
     ],
   },
 ];

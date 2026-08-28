@@ -24,72 +24,66 @@ import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { inr, shortInr, enquiryStatuses, statusTone } from '../data/mockData.js';
+import { inr, shortInr, enquiryStatuses, statusTone, bookingStatusTone } from '../data/mockData.js';
 import { daysUntil } from '../lib/membership.js';
 import { expenses as expenseBudget } from '../data/revenueData.js';
-import { gateways, receivables, salary } from '../data/paymentData.js';
+import { receivables, salary } from '../data/paymentData.js';
 import { inboxStats, botSessions } from '../data/whatsappData.js';
 import { rules as automationRules, history as automationHistory } from '../data/automationData.js';
-import { customerRewards, referrals, rewardRules } from '../data/rewardsData.js';
+import { customerRewards, referrals } from '../data/rewardsData.js';
 import { offers } from '../data/offersData.js';
-import { contractAlerts, holds } from '../data/inventoryData.js';
+import { holds } from '../data/inventoryData.js';
 
 const PERIODS = ['Today', 'This week', 'This month', 'This year'];
 
-/** One module's card: its own headline, its numbers, and a way in. */
-function Module({ title, icon: Icon, to, tone = 'text-brand-700', note, wide, children }) {
-  const navigate = useNavigate();
+/** A titled block, the only container this page uses. */
+function Card({ title, note, action, wide, children }) {
   return (
-    <section className={`card flex flex-col p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex items-start justify-between gap-3">
+    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className={`flex items-center gap-2 font-display text-base font-extrabold text-ink-900`}>
-            <Icon size={16} className={tone} /> {title}
-          </p>
+          <h2 className="font-display text-base font-extrabold text-ink-900">{title}</h2>
           {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
         </div>
-        <button
-          onClick={() => navigate(to)}
-          className="icon-btn h-8 w-8 shrink-0"
-          title={`Open ${title.toLowerCase()}`}
-        >
-          <ArrowRight size={15} />
-        </button>
+        {action}
       </div>
-      <div className="mt-4 flex-1">{children}</div>
+      <div className="mt-4">{children}</div>
     </section>
   );
 }
 
-/** Label and number, the row this page is built from. */
-function Row({ label, value, tone = 'text-ink-900' }) {
+/**
+ * One module, as a line rather than a box: what it is, the one number that
+ * matters, and a way in. Fifteen of these read as an index; fifteen boxes of
+ * six numbers each read as a wall.
+ */
+function ModuleLine({ icon: Icon, label, value, note, tone = 'text-ink-900', to, alert }) {
+  const navigate = useNavigate();
   return (
-    <li className="flex items-baseline justify-between gap-3 py-1.5">
-      <span className="truncate text-sm text-ink-600">{label}</span>
-      <span className={`num shrink-0 text-sm font-bold ${tone}`}>{value}</span>
-    </li>
+    <button
+      onClick={() => navigate(to)}
+      className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-soft"
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-soft text-ink-500 transition group-hover:bg-white">
+        <Icon size={16} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold text-ink-900">{label}</span>
+        <span className="block truncate text-xs text-ink-500">{note}</span>
+      </span>
+      <span className={`num shrink-0 font-display text-lg font-extrabold ${alert ? 'text-rose-600' : tone}`}>
+        {value}
+      </span>
+      <ArrowRight size={15} className="shrink-0 text-ink-300 transition group-hover:text-brand-600" />
+    </button>
   );
 }
 
-/** A grid of small numbers for a card that leads with counts. */
-function Tiles({ items }) {
-  return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-      {items.map((t) => (
-        <div key={t.label} className="rounded-xl bg-surface-soft px-3.5 py-2.5">
-          <p className={`num font-display text-lg font-extrabold ${t.tone || 'text-ink-900'}`}>{t.value}</p>
-          <p className="mt-0.5 truncate text-xs font-semibold text-ink-500">{t.label}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** The funnels this page draws, as stacked bars. */
-function Funnel({ steps }) {
+/** Stage, count, and how much carried from the stage before it. */
+function Funnel({ steps, tone = 'bg-brand-500' }) {
   const top = Math.max(1, ...steps.map((s) => s.value));
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-2.5">
       {steps.map((s, i) => (
         <li key={s.label}>
           <div className="flex items-baseline justify-between gap-3">
@@ -104,7 +98,7 @@ function Funnel({ steps }) {
             </span>
           </div>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-soft">
-            <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.round((s.value / top) * 100)}%` }} />
+            <div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.round((s.value / top) * 100)}%` }} />
           </div>
         </li>
       ))}
@@ -113,9 +107,8 @@ function Funnel({ steps }) {
 }
 
 /**
- * The dashboard the client's sheet describes: one landing page that carries a
- * headline from every module, so management sees the whole business without
- * opening anything — and can step into any of it in one click.
+ * The dashboard: what the money did, where the work is, and one line per
+ * module so nothing is hidden but nothing shouts either.
  */
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -126,7 +119,7 @@ export default function Dashboard() {
 
   const [period, setPeriod] = useState('This month');
 
-  // -- The money and the counts, worked out once ----------------------------
+  // -- Money -----------------------------------------------------------------
   const won = enquiries.filter((e) => e.status === 'Won');
   const openLeads = enquiries.filter((e) => !['Won', 'Lost'].includes(e.status));
   const collected = invoices.reduce((s, i) => s + Number(i.paid || 0), 0);
@@ -138,6 +131,7 @@ export default function Dashboard() {
   const markup = Math.max(0, bookingValue - partnerCost);
   const revenue = membershipPaid + markup;
   const target = team.reduce((s, m) => s + Number(m.target || 0), 0);
+  const achievement = target ? Math.round((revenue / target) * 100) : 0;
 
   const sum = (list) => list.reduce((s, x) => s + Number(x.amount || 0), 0);
   const officeCost = sum(expenseBudget.office);
@@ -145,44 +139,38 @@ export default function Dashboard() {
   const businessCost = sum(expenseBudget.business);
   const totalExpenses = officeCost + staffCost + businessCost;
   const profit = revenue - totalExpenses;
+  const margin = revenue ? Math.round((profit / revenue) * 100) : 0;
 
+  // -- Counts ----------------------------------------------------------------
   const activeMembers = memberSignups.filter((m) => m.status === 'Active');
   const expiringSoon = memberSignups.filter((m) => { const l = daysUntil(m.expiresOn); return l != null && l >= 0 && l <= 30; });
   const pendingActivation = memberSignups.filter((m) => m.activation && m.activation.stage !== 'Activated');
-
-  const freeInventory = inventory.reduce(
-    (s, i) => s + Math.max(0, Number(i.units || 0) - Number(i.booked || 0) - Number(i.blocked || 0)),
-    0
-  );
-  const inventoryValue = inventory.reduce(
-    (s, i) => s + Math.max(0, Number(i.units || 0) - Number(i.booked || 0)) * (Number(i.baseRate || 0) + Number(i.markup || 0)),
-    0
-  );
-  const lowStock = inventory.filter((i) => {
-    const free = Number(i.units || 0) - Number(i.booked || 0) - Number(i.blocked || 0);
-    return free > 0 && free <= 2;
-  });
-  const soldOut = inventory.filter((i) => Number(i.units || 0) - Number(i.booked || 0) - Number(i.blocked || 0) === 0);
-
+  const freeUnits = (i) => Math.max(0, Number(i.units || 0) - Number(i.booked || 0) - Number(i.blocked || 0));
+  const freeInventory = inventory.reduce((s, i) => s + freeUnits(i), 0);
+  const soldOut = inventory.filter((i) => freeUnits(i) === 0);
   const openTickets = tickets.filter((t) => !['Closed', 'Customer confirmed'].includes(t.stage));
   const breached = tickets.filter((t) => t.slaState === 'Breached');
-  const rated = tickets.filter((t) => t.rating != null);
+  const online = team.filter((m) => m.live === 'Online').length;
+  const failedJobs = automationHistory.filter((h) => h.status === 'Failed').length;
 
-  // -- What management should act on before anything else --------------------
   const alerts = [
     ...(outstanding ? [{ level: 'critical', text: `${inr(outstanding)} outstanding on bookings`, to: '/payment' }] : []),
     ...(breached.length ? [{ level: 'critical', text: `${breached.length} complaint past its SLA`, to: '/support' }] : []),
+    ...(inboxStats.unanswered ? [{ level: 'critical', text: `${inboxStats.unanswered} WhatsApp chats unanswered`, to: '/whatsapp' }] : []),
     ...(soldOut.length ? [{ level: 'warning', text: `${soldOut.length} inventory items sold out`, to: '/inventory' }] : []),
     ...(expiringSoon.length ? [{ level: 'warning', text: `${expiringSoon.length} membership expiring within 30 days`, to: '/customers' }] : []),
     ...(pendingActivation.length ? [{ level: 'warning', text: `${pendingActivation.length} membership waiting on activation`, to: '/customers' }] : []),
     ...(holds.length ? [{ level: 'warning', text: `${holds.length} inventory holds about to expire`, to: '/inventory' }] : []),
-    ...(automationHistory.filter((h) => h.status === 'Failed').length
-      ? [{ level: 'warning', text: `${automationHistory.filter((h) => h.status === 'Failed').length} automation job failed`, to: '/automation' }]
-      : []),
-    ...(inboxStats.unanswered ? [{ level: 'critical', text: `${inboxStats.unanswered} WhatsApp chats unanswered`, to: '/whatsapp' }] : []),
+    ...(failedJobs ? [{ level: 'warning', text: `${failedJobs} automation job failed`, to: '/automation' }] : []),
   ];
 
-  const online = team.filter((m) => m.live === 'Online').length;
+  /** The money, as three steps rather than a table. */
+  const moneySteps = [
+    { label: 'Revenue', value: revenue, tone: 'bg-brand-500', text: 'text-brand-700' },
+    { label: 'Costs', value: totalExpenses, tone: 'bg-rose-400', text: 'text-rose-600' },
+    { label: 'Profit', value: profit, tone: 'bg-emerald-500', text: 'text-emerald-600' },
+  ];
+  const moneyTop = Math.max(1, ...moneySteps.map((s) => Math.abs(s.value)));
 
   return (
     <>
@@ -200,101 +188,135 @@ export default function Dashboard() {
         </div>
       </PageHeader>
 
-      {/* The headline, then what needs a person */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <section className="card relative overflow-hidden bg-ink-900 p-5 text-white">
-          <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-brand-500/20 blur-2xl" />
+      {/* What the money did, and what wants a person */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+        <section className="card relative overflow-hidden bg-ink-900 p-6 text-white">
+          <span className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/20 blur-3xl" />
           <div className="relative">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Revenue {period.toLowerCase()}</p>
-            <p className="num mt-2 font-display text-4xl font-extrabold leading-none">{inr(revenue)}</p>
-            <p className="mt-1.5 text-sm text-white/60">
-              {inr(membershipPaid)} memberships · {inr(markup)} booking markup
+            <p className="num mt-2 font-display text-5xl font-extrabold leading-none">{inr(revenue)}</p>
+            <p className="mt-2 text-sm text-white/60">
+              {inr(membershipPaid)} memberships · {inr(markup)} booking markup · {achievement}% of {shortInr(target)}
             </p>
-            <div className="mt-5">
-              <p className="flex items-baseline justify-between text-xs font-semibold text-white/60">
-                <span>Target {shortInr(target)}</span>
-                <span className="num text-white">{target ? Math.round((revenue / target) * 100) : 0}%</span>
-              </p>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15">
-                <div
-                  className="h-full rounded-full bg-brand-400"
-                  style={{ width: `${Math.min(100, target ? Math.round((revenue / target) * 100) : 0)}%` }}
-                />
-              </div>
+
+            {/* Revenue → costs → profit, on one line */}
+            <ul className="mt-6 space-y-3">
+              {moneySteps.map((s) => (
+                <li key={s.label}>
+                  <p className="flex items-baseline justify-between text-sm">
+                    <span className="text-white/60">{s.label}</span>
+                    <span className="num font-bold">{inr(s.value)}</span>
+                  </p>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className={`h-full rounded-full ${s.tone}`}
+                      style={{ width: `${Math.round((Math.abs(s.value) / moneyTop) * 100)}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex flex-wrap gap-2 text-sm">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5">
+                <TrendingUp size={14} className="text-emerald-300" /> {margin}% margin
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5">
+                <Wallet size={14} className="text-white/70" /> {inr(outstanding + membershipDue)} still to collect
+              </span>
             </div>
-            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm">
-              <TrendingUp size={14} className="text-emerald-300" />
-              {inr(profit)} left after everything out
-            </p>
           </div>
         </section>
 
-        <section className="card p-5">
-          <p className="eyebrow">Today across the desk</p>
-          <ul className="mt-3 space-y-2.5">
-            {[
-              { label: 'Team online', value: `${online} of ${team.length}`, tone: 'bg-emerald-500' },
-              { label: 'Open leads', value: openLeads.length, tone: 'bg-sky-500' },
-              { label: 'Trips in hand', value: bookings.length, tone: 'bg-violet-500' },
-              { label: 'Active members', value: activeMembers.length, tone: 'bg-amber-500' },
-            ].map((r) => (
-              <li key={r.label} className="flex items-center gap-3 rounded-xl bg-surface-soft px-3.5 py-2.5">
-                <span className={`h-8 w-1.5 shrink-0 rounded-full ${r.tone}`} />
-                <span className="min-w-0 flex-1 text-sm font-semibold text-ink-700">{r.label}</span>
-                <span className="num font-display text-lg font-extrabold text-ink-900">{r.value}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="card p-5">
-          <p className="eyebrow">Needs a person</p>
-          <ul className="mt-3 space-y-2">
-            {alerts.slice(0, 5).map((a) => (
+        <Card title="Needs a person" note="Straight from the data, most serious first">
+          <ul className="space-y-1.5">
+            {alerts.slice(0, 6).map((a) => (
               <li key={a.text}>
                 <button
                   onClick={() => navigate(a.to)}
-                  className="flex w-full items-center gap-2.5 rounded-xl bg-surface-soft px-3.5 py-2.5 text-left transition hover:bg-surface-soft/70"
+                  className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-surface-soft"
                 >
-                  <AlertTriangle
-                    size={15}
-                    className={`shrink-0 ${a.level === 'critical' ? 'text-rose-500' : 'text-amber-500'}`}
+                  <span
+                    className={`h-8 w-1.5 shrink-0 rounded-full ${a.level === 'critical' ? 'bg-rose-500' : 'bg-amber-500'}`}
                   />
                   <span className="min-w-0 flex-1 text-sm text-ink-800">{a.text}</span>
-                  <ArrowRight size={14} className="shrink-0 text-ink-300" />
+                  <ArrowRight size={15} className="shrink-0 text-ink-300 transition group-hover:text-brand-600" />
                 </button>
               </li>
             ))}
             {alerts.length === 0 && (
-              <li className="rounded-xl bg-surface-soft px-3.5 py-6 text-center text-sm text-ink-500">
+              <li className="rounded-xl bg-surface-soft px-4 py-8 text-center text-sm text-ink-500">
                 Nothing needs attention.
               </li>
             )}
           </ul>
-        </section>
+        </Card>
       </div>
 
-      {/* One card per module */}
-      <div className="mt-5 grid gap-5 xl:grid-cols-2 2xl:grid-cols-3">
-        <Module title="Team status" icon={UsersRound} to="/team" note="Who is on, and what they have done today">
-          <Tiles
-            items={[
-              { label: 'Total team', value: team.length },
-              { label: 'Online', value: online, tone: 'text-emerald-600' },
-              { label: 'Present', value: team.filter((m) => m.attendance === 'Present').length },
-              { label: 'Calls today', value: team.reduce((s, m) => s + Number(m.calls || 0), 0) },
-              { label: 'Follow-ups', value: team.reduce((s, m) => s + Number(m.followUps || 0), 0) },
-              { label: 'Closings', value: team.reduce((s, m) => s + Number(m.bookings || 0), 0) },
-            ]}
+      {/* Where the work is */}
+      <div className="mt-5 grid gap-5 xl:grid-cols-3">
+        <Card
+          title="Leads"
+          note={`${enquiries.length} in the pipeline · ${enquiries.length ? Math.round((won.length / enquiries.length) * 100) : 0}% become customers`}
+          action={
+            <button className="btn-ghost btn-sm" onClick={() => navigate('/enquiries')}>
+              Open
+            </button>
+          }
+        >
+          <Funnel
+            steps={enquiryStatuses
+              .filter((s) => !['Lost'].includes(s))
+              .map((s) => ({ label: s, value: enquiries.filter((e) => e.status === s).length }))}
           />
-          <ul className="mt-4 space-y-2">
+        </Card>
+
+        <Card
+          title="Trips"
+          note={`${bookings.length} on the books · ${inr(bookingValue)} booked`}
+          action={
+            <button className="btn-ghost btn-sm" onClick={() => navigate('/bookings')}>
+              Open
+            </button>
+          }
+        >
+          <ul className="space-y-2.5">
+            {['Confirmed', 'Part paid', 'Pending', 'Completed', 'Cancelled'].map((s) => {
+              const at = bookings.filter((b) => b.status === s);
+              return (
+                <li key={s} className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft px-3.5 py-2.5">
+                  <Badge tone={bookingStatusTone[s]} dot>
+                    {s}
+                  </Badge>
+                  <span className="num text-sm">
+                    <b className="text-ink-900">{at.length}</b>
+                    <span className="ml-2 text-xs text-ink-500">
+                      {at.length ? inr(at.reduce((sum, b) => sum + Number(b.amount || 0), 0)) : '—'}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+
+        <Card
+          title="The desk today"
+          note={`${online} of ${team.length} online`}
+          action={
+            <button className="btn-ghost btn-sm" onClick={() => navigate('/team')}>
+              Open
+            </button>
+          }
+        >
+          <ul className="space-y-2">
             {team.map((m) => (
-              <li key={m.id} className="flex items-center gap-2.5 rounded-xl bg-surface-soft px-3 py-2">
+              <li key={m.id} className="flex items-center gap-2.5 rounded-xl bg-surface-soft px-3 py-2.5">
                 <Avatar name={m.name} size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-bold text-ink-900">{m.name}</span>
                   <span className="num block truncate text-xs text-ink-500">
-                    Calls {m.calls ?? 0} · Leads {m.leads ?? 0} · Closings {m.bookings ?? 0}
+                    {m.calls ?? 0} calls · {m.followUps ?? 0} follow-ups · {m.bookings ?? 0} closed
                   </span>
                 </span>
                 <Badge tone={m.live === 'Online' ? 'green' : 'slate'} dot>
@@ -303,250 +325,137 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
-        </Module>
-
-        <Module title="Sales and leads" icon={Users} to="/enquiries" note="The funnel, stage by stage">
-          <Funnel
-            steps={enquiryStatuses
-              .filter((s) => s !== 'Lost')
-              .map((s) => ({ label: s, value: enquiries.filter((e) => e.status === s).length }))}
-          />
-          <ul className="mt-4 divide-y divide-ink-900/[0.07]">
-            <Row label="Total leads" value={enquiries.length} />
-            <Row label="Conversions" value={won.length} tone="text-emerald-600" />
-            <Row
-              label="Conversion rate"
-              value={`${enquiries.length ? Math.round((won.length / enquiries.length) * 100) : 0}%`}
-            />
-            <Row label="Pipeline value" value={inr(openLeads.reduce((s, e) => s + Number(e.budget || 0), 0))} tone="text-brand-700" />
-          </ul>
-        </Module>
-
-        <Module title="Booking" icon={CalendarCheck} to="/bookings" note="Where every trip stands">
-          <Tiles
-            items={[
-              { label: 'Total', value: bookings.length },
-              { label: 'Confirmed', value: bookings.filter((b) => b.status === 'Confirmed').length, tone: 'text-emerald-600' },
-              { label: 'Part paid', value: bookings.filter((b) => b.status === 'Part paid').length, tone: 'text-amber-600' },
-              { label: 'Waiting on hotels', value: bookings.filter((b) => b.confirmation?.status !== 'Hotel confirmed').length },
-              { label: 'Travellers', value: bookings.reduce((s, b) => s + Number(b.pax || 0), 0) },
-              { label: 'Free stays', value: bookings.filter((b) => b.freeStay).length },
-            ]}
-          />
-          <ul className="mt-4 divide-y divide-ink-900/[0.07]">
-            <Row label="Gross booking value" value={inr(bookingValue)} tone="text-brand-700" />
-            <Row label="Collected" value={inr(collected)} tone="text-emerald-600" />
-            <Row label="Pending payment" value={inr(outstanding)} tone={outstanding ? 'text-amber-600' : undefined} />
-            <Row label="Net after the vendor" value={inr(markup)} />
-          </ul>
-        </Module>
-
-        <Module title="Membership" icon={Crown} to="/customers" note="Plans sold, and what is running out">
-          <Tiles
-            items={[
-              { label: 'Memberships', value: memberSignups.length },
-              { label: 'Active', value: activeMembers.length, tone: 'text-emerald-600' },
-              { label: 'Pending activation', value: pendingActivation.length, tone: 'text-amber-600' },
-              { label: 'Expiring 30 days', value: expiringSoon.length, tone: 'text-amber-600' },
-              { label: 'Revenue', value: shortInr(membershipPaid), tone: 'text-brand-700' },
-              { label: 'Still to collect', value: shortInr(membershipDue) },
-            ]}
-          />
-          <ul className="mt-4 divide-y divide-ink-900/[0.07]">
-            {memberships.map((p) => (
-              <Row
-                key={p.id}
-                label={`${p.name} · ${memberSignups.filter((m) => m.planId === p.id).length} members`}
-                value={inr(memberSignups.filter((m) => m.planId === p.id).reduce((s, m) => s + Number(m.paid || 0), 0))}
-              />
-            ))}
-          </ul>
-        </Module>
-
-        <Module title="Members" icon={UserRound} to="/customers" note="Gifts, referrals and special days">
-          <Tiles
-            items={[
-              { label: 'Members', value: customers.length },
-              { label: 'Gifts pending', value: customerRewards.filter((r) => ['Earned', 'Pending'].includes(r.stage)).length, tone: 'text-amber-600' },
-              { label: 'Referrals', value: customers.reduce((s, c) => s + Number(c.referral?.total || 0), 0) },
-              { label: 'Converted', value: customers.reduce((s, c) => s + Number(c.referral?.converted || 0), 0), tone: 'text-emerald-600' },
-              { label: 'Member spend', value: shortInr(customers.reduce((s, c) => s + Number(c.spend || 0), 0)) },
-              { label: 'At risk', value: customers.filter((c) => c.engagement === 'At risk').length, tone: 'text-rose-600' },
-            ]}
-          />
-        </Module>
-
-        <Module title="Partners" icon={Handshake} to="/partners" note="Who we sell through, and what they are owed">
-          <Tiles
-            items={[
-              { label: 'Partners', value: partners.length },
-              { label: 'Active', value: partners.filter((p) => p.status === 'Active').length, tone: 'text-emerald-600' },
-              { label: 'Waiting approval', value: partners.filter((p) => p.approval !== 'Approved' && p.approval !== 'Suspended').length, tone: 'text-amber-600' },
-              { label: 'Suspended', value: partners.filter((p) => p.status === 'Suspended').length, tone: 'text-rose-600' },
-              { label: 'Partner revenue', value: shortInr(partners.reduce((s, p) => s + Number(p.revenue || 0), 0)), tone: 'text-brand-700' },
-              { label: 'Payout due', value: shortInr(partners.reduce((s, p) => s + Number(p.payable || 0), 0)), tone: 'text-amber-600' },
-            ]}
-          />
-        </Module>
-
-        <Module title="Support and complaints" icon={Headphones} to="/support" note="Tickets, SLA and how happy people are">
-          <Tiles
-            items={[
-              { label: 'Total tickets', value: tickets.length },
-              { label: 'Open', value: openTickets.length, tone: 'text-amber-600' },
-              { label: 'Escalated', value: tickets.filter((t) => (t.escalation || 1) > 1).length, tone: 'text-rose-600' },
-              { label: 'SLA breached', value: breached.length, tone: 'text-rose-600' },
-              { label: 'Resolved', value: tickets.filter((t) => ['Resolved', 'Customer confirmed', 'Closed'].includes(t.stage)).length, tone: 'text-emerald-600' },
-              {
-                label: 'Satisfaction',
-                value: rated.length ? `${(rated.reduce((s, t) => s + t.rating, 0) / rated.length).toFixed(1)}/5` : '—',
-                tone: 'text-amber-600',
-              },
-            ]}
-          />
-        </Module>
-
-        <Module title="Revenue" icon={IndianRupee} to="/revenue" note="What came in, what went out, what is left">
-          <ul className="divide-y divide-ink-900/[0.07]">
-            <Row label="Membership revenue" value={inr(membershipPaid)} />
-            <Row label="Booking markup" value={inr(markup)} />
-            <Row label="Total revenue" value={inr(revenue)} tone="text-brand-700" />
-            <Row label="Staff cost" value={inr(staffCost)} tone="text-rose-600" />
-            <Row label="Office expenses" value={inr(officeCost)} tone="text-rose-600" />
-            <Row label="Other expenses" value={inr(businessCost)} tone="text-rose-600" />
-            <Row label="Total expenses" value={inr(totalExpenses)} tone="text-rose-600" />
-            <Row label="Company profit" value={inr(profit)} tone={profit >= 0 ? 'text-emerald-600' : 'text-rose-600'} />
-            <Row
-              label="Profit margin"
-              value={`${revenue ? Math.round((profit / revenue) * 100) : 0}%`}
-              tone={profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}
-            />
-          </ul>
-        </Module>
-
-        <Module title="Payment" icon={Wallet} to="/payment" note="Collections, gateways and what is overdue">
-          <Tiles
-            items={[
-              { label: 'Collected', value: shortInr(collected + membershipPaid), tone: 'text-emerald-600' },
-              { label: 'Receivable', value: shortInr(outstanding + membershipDue), tone: 'text-amber-600' },
-              { label: 'Receipts', value: payments.length },
-              { label: 'Overdue chases', value: receivables.length, tone: 'text-rose-600' },
-              { label: 'Gateways live', value: gateways.length },
-              { label: 'Salary pending', value: salary.filter((p) => p.status !== 'Paid').length },
-            ]}
-          />
-        </Module>
-
-        <Module title="Travel inventory" icon={Warehouse} to="/inventory" note="What is free, and what is running out">
-          <Tiles
-            items={[
-              { label: 'Total units', value: inventory.reduce((s, i) => s + Number(i.units || 0), 0) },
-              { label: 'Available', value: freeInventory, tone: 'text-emerald-600' },
-              { label: 'Booked', value: inventory.reduce((s, i) => s + Number(i.booked || 0), 0) },
-              { label: 'Low availability', value: lowStock.length, tone: 'text-amber-600' },
-              { label: 'Sold out', value: soldOut.length, tone: 'text-rose-600' },
-              { label: 'Inventory value', value: shortInr(inventoryValue), tone: 'text-brand-700' },
-            ]}
-          />
-          <ul className="mt-4 space-y-1.5">
-            {contractAlerts.slice(0, 3).map((c) => (
-              <li key={c.kind + c.on} className="flex items-center gap-2 text-xs text-ink-600">
-                <AlertTriangle size={12} className="shrink-0 text-amber-500" />
-                {c.kind} — {c.on}
-              </li>
-            ))}
-          </ul>
-        </Module>
-
-        <Module title="WhatsApp and chatbot" icon={MessageCircle} to="/whatsapp" tone="text-emerald-600" note="Today's conversations and what came of them">
-          <Tiles
-            items={[
-              { label: 'Conversations', value: inboxStats.conversationsToday },
-              { label: 'New leads', value: inboxStats.newToday },
-              { label: 'Qualified', value: inboxStats.qualified },
-              { label: 'Presentations', value: inboxStats.presentations },
-              { label: 'Membership sales', value: inboxStats.membershipSales, tone: 'text-emerald-600' },
-              { label: 'Unanswered', value: inboxStats.unanswered, tone: 'text-rose-600' },
-            ]}
-          />
-          <ul className="mt-4 divide-y divide-ink-900/[0.07]">
-            <Row label="Bot finished on its own" value={`${Math.round((botSessions.completed / botSessions.total) * 100)}%`} tone="text-emerald-600" />
-            <Row label="Passed to the desk" value={botSessions.transferred} />
-          </ul>
-        </Module>
-
-        <Module title="Automation" icon={Zap} to="/automation" tone="text-violet-600" note="What ran without anyone asking">
-          <Tiles
-            items={[
-              { label: 'Active rules', value: automationRules.filter((r) => r.status === 'On').length, tone: 'text-emerald-600' },
-              { label: 'Paused', value: automationRules.filter((r) => r.status !== 'On').length },
-              { label: 'Runs', value: automationRules.reduce((s, r) => s + r.runs, 0) },
-              { label: 'Completed', value: automationRules.reduce((s, r) => s + r.completed, 0) },
-              { label: 'Errors', value: automationRules.reduce((s, r) => s + r.errors, 0), tone: 'text-rose-600' },
-              {
-                label: 'Success rate',
-                value: `${Math.round(
-                  (automationRules.reduce((s, r) => s + r.completed, 0) /
-                    Math.max(1, automationRules.reduce((s, r) => s + r.runs, 0))) *
-                    100
-                )}%`,
-              },
-            ]}
-          />
-        </Module>
-
-        <Module title="Rewards, refer and earn" icon={Gift} to="/rewards" tone="text-amber-600" note="What members earned, and what it cost">
-          <Tiles
-            items={[
-              { label: 'Rewards issued', value: customerRewards.length },
-              { label: 'Redeemed', value: customerRewards.filter((r) => r.stage === 'Redeemed').length, tone: 'text-emerald-600' },
-              { label: 'Pending', value: customerRewards.filter((r) => ['Earned', 'Pending'].includes(r.stage)).length, tone: 'text-amber-600' },
-              { label: 'Reward cost', value: inr(customerRewards.reduce((s, r) => s + r.cost, 0)), tone: 'text-rose-600' },
-              { label: 'Referrals', value: referrals.length },
-              { label: 'Successful', value: referrals.filter((r) => r.verified).length, tone: 'text-emerald-600' },
-            ]}
-          />
-          <ul className="mt-4 divide-y divide-ink-900/[0.07]">
-            <Row label="Live reward rules" value={rewardRules.filter((r) => r.status === 'Active').length} />
-            <Row label="Face value given" value={inr(customerRewards.reduce((s, r) => s + r.value, 0))} />
-          </ul>
-        </Module>
-
-        <Module title="Offers and promotions" icon={Megaphone} to="/offers" tone="text-violet-600" note="What is live, and what it is earning">
-          <Tiles
-            items={[
-              { label: 'Active offers', value: offers.filter((o) => o.status === 'Live').length, tone: 'text-emerald-600' },
-              { label: 'Scheduled', value: offers.filter((o) => o.status === 'Scheduled').length },
-              { label: 'Redemptions', value: offers.reduce((s, o) => s + o.used, 0) },
-              { label: 'Offer revenue', value: shortInr(offers.reduce((s, o) => s + o.revenue, 0)), tone: 'text-brand-700' },
-              { label: 'Discount given', value: shortInr(offers.reduce((s, o) => s + o.discountCost, 0)), tone: 'text-rose-600' },
-              { label: 'Bookings', value: offers.reduce((s, o) => s + o.bookings, 0) },
-            ]}
-          />
-        </Module>
-
-        <Module title="Report and analytics" icon={PieChart} to="/reports" note="Every report, one click away" wide>
-          <div className="grid gap-2.5 sm:grid-cols-3 xl:grid-cols-6">
-            {[
-              { label: 'Total revenue', value: inr(revenue) },
-              { label: 'New leads', value: enquiries.filter((e) => e.status === 'New').length },
-              { label: 'Qualified', value: enquiries.filter((e) => !['New', 'Lost'].includes(e.status)).length },
-              { label: 'Conversions', value: won.length },
-              { label: 'Bookings', value: bookings.length },
-              { label: 'Outstanding', value: inr(outstanding + membershipDue) },
-            ].map((t) => (
-              <div key={t.label} className="rounded-xl bg-surface-soft px-4 py-3">
-                <p className="num font-display text-lg font-extrabold text-ink-900">{t.value}</p>
-                <p className="mt-0.5 truncate text-xs font-semibold text-ink-500">{t.label}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-ink-400">
-            Every number here opens its own report — sales, leads, membership, bookings, revenue, team, partners and
-            support.
-          </p>
-        </Module>
+        </Card>
       </div>
+
+      {/* Everything else, one line each */}
+      <Card
+        title="Every module"
+        note="One number from each, and a way in"
+        wide
+        action={
+          <button className="btn-ghost btn-sm" onClick={() => navigate('/reports')}>
+            <PieChart size={14} /> All reports
+          </button>
+        }
+      >
+        <div className="grid gap-x-6 gap-y-0.5 lg:grid-cols-2 2xl:grid-cols-3">
+          <ModuleLine
+            icon={Crown}
+            label="Membership"
+            note={`${activeMembers.length} active · ${pendingActivation.length} to activate`}
+            value={inr(membershipPaid)}
+            tone="text-brand-700"
+            to="/customers"
+          />
+          <ModuleLine
+            icon={UserRound}
+            label="Members"
+            note={`${customers.reduce((s, c) => s + Number(c.referral?.total || 0), 0)} referrals · ${customerRewards.filter((r) => ['Earned', 'Pending'].includes(r.stage)).length} gifts pending`}
+            value={customers.length}
+            to="/customers"
+          />
+          <ModuleLine
+            icon={Handshake}
+            label="Partners"
+            note={`${partners.filter((p) => p.status === 'Active').length} active · ${shortInr(partners.reduce((s, p) => s + Number(p.payable || 0), 0))} payout due`}
+            value={partners.length}
+            to="/partners"
+          />
+          <ModuleLine
+            icon={Headphones}
+            label="Support"
+            note={`${openTickets.length} open · ${breached.length} past SLA`}
+            value={tickets.length}
+            alert={breached.length > 0}
+            to="/support"
+          />
+          <ModuleLine
+            icon={Warehouse}
+            label="Travel inventory"
+            note={`${freeInventory} units free · ${soldOut.length} sold out`}
+            value={shortInr(
+              inventory.reduce((s, i) => s + freeUnits(i) * (Number(i.baseRate || 0) + Number(i.markup || 0)), 0)
+            )}
+            tone="text-brand-700"
+            to="/inventory"
+          />
+          <ModuleLine
+            icon={Wallet}
+            label="Payment"
+            note={`${payments.length} receipts · ${receivables.length} chases · ${salary.filter((p) => p.status !== 'Paid').length} salary pending`}
+            value={shortInr(collected + membershipPaid)}
+            tone="text-emerald-600"
+            to="/payment"
+          />
+          <ModuleLine
+            icon={IndianRupee}
+            label="Revenue"
+            note={`${inr(totalExpenses)} out · ${margin}% margin`}
+            value={inr(profit)}
+            tone={profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}
+            to="/revenue"
+          />
+          <ModuleLine
+            icon={MessageCircle}
+            label="WhatsApp"
+            note={`${inboxStats.leads} leads · bot handled ${Math.round((botSessions.completed / botSessions.total) * 100)}%`}
+            value={inboxStats.conversationsToday}
+            alert={inboxStats.unanswered > 0}
+            to="/whatsapp"
+          />
+          <ModuleLine
+            icon={Zap}
+            label="Automation"
+            note={`${automationRules.filter((r) => r.status === 'On').length} rules on · ${failedJobs} failed`}
+            value={automationRules.reduce((s, r) => s + r.runs, 0)}
+            to="/automation"
+          />
+          <ModuleLine
+            icon={Gift}
+            label="Rewards and referrals"
+            note={`${referrals.filter((r) => r.verified).length} successful referrals · ${inr(customerRewards.reduce((s, r) => s + r.cost, 0))} cost`}
+            value={customerRewards.length}
+            to="/rewards"
+          />
+          <ModuleLine
+            icon={Megaphone}
+            label="Offers"
+            note={`${offers.filter((o) => o.status === 'Live').length} live · ${offers.reduce((s, o) => s + o.used, 0)} redeemed`}
+            value={shortInr(offers.reduce((s, o) => s + o.revenue, 0))}
+            tone="text-brand-700"
+            to="/offers"
+          />
+          <ModuleLine
+            icon={Users}
+            label="Sales and leads"
+            note={`${openLeads.length} open · ${inr(openLeads.reduce((s, e) => s + Number(e.budget || 0), 0))} in play`}
+            value={enquiries.length}
+            to="/enquiries"
+          />
+          <ModuleLine
+            icon={CalendarCheck}
+            label="Booking"
+            note={`${bookings.filter((b) => b.confirmation?.status !== 'Hotel confirmed').length} waiting on hotels`}
+            value={bookings.length}
+            to="/bookings"
+          />
+          <ModuleLine
+            icon={UsersRound}
+            label="Team status"
+            note={`${team.reduce((s, m) => s + Number(m.calls || 0), 0)} calls today`}
+            value={`${online}/${team.length}`}
+            to="/team"
+          />
+          <ModuleLine
+            icon={PieChart}
+            label="Report and analytics"
+            note="Fifteen reports over the same data"
+            value="15"
+            to="/reports"
+          />
+        </div>
+      </Card>
     </>
   );
 }

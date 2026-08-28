@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import SectionNav from '../components/ui/SectionNav.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
@@ -28,6 +29,11 @@ import {
   contractAlerts,
 } from '../data/inventoryData.js';
 
+import {
+  LayoutDashboard, Boxes, CalendarRange, Tags, PieChart, Building2, Timer as TimerIcon,
+  FileClock, Workflow, KeyRound,
+} from 'lucide-react';
+
 const SECTIONS = [
   'Dashboard',
   'All inventory',
@@ -40,6 +46,19 @@ const SECTIONS = [
   'Automation',
   'Permissions',
 ];
+
+const ICONS = {
+  Dashboard: LayoutDashboard,
+  'All inventory': Boxes,
+  Availability: CalendarRange,
+  Rates: Tags,
+  Allocation: PieChart,
+  Vendors: Building2,
+  Reservations: TimerIcon,
+  Contracts: FileClock,
+  Automation: Workflow,
+  Permissions: KeyRound,
+};
 
 const statusTone = { Active: 'green', Limited: 'amber', Low: 'amber', 'Sold out': 'rose', Blocked: 'slate' };
 
@@ -83,7 +102,7 @@ function Table({ head, rows, empty = 'Nothing here yet.' }) {
         </thead>
         <tbody className="divide-y divide-ink-900/[0.07]">
           {rows.map((r) => (
-            <tr key={r.key} className={`hover:bg-surface-soft ${r.onClick ? 'cursor-pointer' : ''}`} onClick={r.onClick}>
+            <tr key={r.key} className={`odd:bg-surface-soft/30 hover:bg-surface-soft ${r.onClick ? 'cursor-pointer' : ''}`} onClick={r.onClick}>
               {r.cells.map((c, i) => (
                 <td key={i} className={`py-2.5 ${i === 0 ? 'font-bold text-ink-900' : 'text-ink-700'}`}>
                   {c}
@@ -627,23 +646,15 @@ export default function Inventory() {
         </button>
       </PageHeader>
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        {SECTIONS.map((s) => (
-          <button
-            key={s}
-            onClick={() => setSection(s)}
-            className={`rounded-xl px-3.5 py-2 text-sm font-bold transition ${
-              section === s
-                ? 'bg-ink-900 text-white shadow-sm'
-                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-2">{body[section]}</div>
+      <SectionNav
+        sections={SECTIONS}
+        value={section}
+        onChange={setSection}
+        icons={ICONS}
+        accent="sky"
+      >
+        <div className="grid gap-5 2xl:grid-cols-2">{body[section]}</div>
+      </SectionNav>
 
       {/* What is inside one item */}
       {viewing && (

@@ -15,6 +15,7 @@ import Whatsapp from './pages/Whatsapp.jsx';
 import Payment from './pages/Payment.jsx';
 import Automation from './pages/Automation.jsx';
 import Rewards from './pages/Rewards.jsx';
+import Offers from './pages/Offers.jsx';
 import Support from './pages/Support.jsx';
 
 /**
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="payment" element={<Payment />} />
         <Route path="automation" element={<Automation />} />
         <Route path="rewards" element={<Rewards />} />
+        <Route path="offers" element={<Offers />} />
         <Route path="support" element={<Support />} />
       </Route>
 

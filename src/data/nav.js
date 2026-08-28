@@ -12,6 +12,7 @@ import {
   Wallet,
   Zap,
   Gift,
+  Megaphone,
 } from 'lucide-react';
 
 /**
@@ -35,6 +36,7 @@ export const navGroups = [
       { to: '/payment', label: 'Payment', icon: Wallet },
       { to: '/automation', label: 'Automation', icon: Zap },
       { to: '/rewards', label: 'Rewards, Refer & Earn', icon: Gift },
+      { to: '/offers', label: 'Offers & Promotions', icon: Megaphone },
     ],
   },
 ];

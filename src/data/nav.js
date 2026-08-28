@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Wallet,
   Zap,
+  Gift,
 } from 'lucide-react';
 
 /**
@@ -33,6 +34,7 @@ export const navGroups = [
       { to: '/whatsapp', label: 'Whatsapp', icon: MessageCircle },
       { to: '/payment', label: 'Payment', icon: Wallet },
       { to: '/automation', label: 'Automation', icon: Zap },
+      { to: '/rewards', label: 'Rewards, Refer & Earn', icon: Gift },
     ],
   },
 ];

@@ -1,4 +1,5 @@
 import {
+  LayoutDashboard,
   UsersRound,
   Users,
   CalendarCheck,
@@ -23,6 +24,7 @@ export const navGroups = [
   {
     section: '',
     items: [
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/team', label: 'Team Status', icon: UsersRound },
       { to: '/enquiries', label: 'Sales & Leads', icon: Users, badgeKey: 'enquiries' },
       { to: '/bookings', label: 'Booking', icon: CalendarCheck },

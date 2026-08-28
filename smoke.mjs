@@ -11,6 +11,7 @@ import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 // A string that only appears once the real page rendered, so a silent
 // redirect to /login cannot pass as success.
 const MARKERS = {
+  '/': 'Needs a person',
   '/team': 'High workload',
   '/enquiries': 'Sales overview',
   '/bookings': 'Booking desk',

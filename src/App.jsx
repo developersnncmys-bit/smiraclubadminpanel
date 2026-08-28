@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
 import Login from './pages/Login.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 import Team from './pages/Team.jsx';
 import Enquiries from './pages/Enquiries.jsx';
 import Bookings from './pages/Bookings.jsx';
@@ -35,7 +36,7 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="/team" replace />} />
+        <Route index element={<Dashboard />} />
         <Route path="team" element={<Team />} />
         <Route path="enquiries" element={<Enquiries />} />
         <Route path="bookings" element={<Bookings />} />
@@ -53,7 +54,7 @@ export default function App() {
         <Route path="support" element={<Support />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/team" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

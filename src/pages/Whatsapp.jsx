@@ -171,25 +171,25 @@ export default function Whatsapp() {
     Dashboard: (
       <>
         <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="card relative overflow-hidden bg-ink-900 p-5 text-white">
-            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-emerald-500/20 blur-2xl" />
+          <section className="card relative overflow-hidden p-5">
+            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-emerald-500/10 blur-2xl" />
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Conversations today</p>
-              <p className="num mt-2 font-display text-4xl font-extrabold leading-none">{inboxStats.conversationsToday}</p>
-              <p className="mt-1.5 text-sm text-white/60">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Conversations today</p>
+              <p className="num mt-2 font-display text-4xl font-extrabold leading-none text-ink-900">{inboxStats.conversationsToday}</p>
+              <p className="mt-1.5 text-sm text-ink-500">
                 {inboxStats.conversationsMonth} this month · {inboxStats.newToday} new customers
               </p>
               <div className="mt-5">
-                <p className="flex items-baseline justify-between text-xs font-semibold text-white/60">
+                <p className="flex items-baseline justify-between text-xs font-semibold text-ink-500">
                   <span>Answered by the bot</span>
-                  <span className="num text-white">{botRate}%</span>
+                  <span className="num">{botRate}%</span>
                 </p>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15">
-                  <div className="h-full rounded-full bg-emerald-400" style={{ width: `${botRate}%` }} />
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-soft">
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${botRate}%` }} />
                 </div>
               </div>
-              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm">
-                <MessageCircle size={14} className="text-white/70" />
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5 text-sm">
+                <MessageCircle size={14} className="text-ink-400" />
                 {inboxStats.humanHandled} passed to the desk
               </p>
             </div>

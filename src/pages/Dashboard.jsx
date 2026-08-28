@@ -190,12 +190,12 @@ export default function Dashboard() {
 
       {/* What the money did, and what wants a person */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <section className="card relative overflow-hidden bg-ink-900 p-6 text-white">
-          <span className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/20 blur-3xl" />
+        <section className="card relative overflow-hidden p-6">
+          <span className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl" />
           <div className="relative">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Revenue {period.toLowerCase()}</p>
-            <p className="num mt-2 font-display text-5xl font-extrabold leading-none">{inr(revenue)}</p>
-            <p className="mt-2 text-sm text-white/60">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Revenue {period.toLowerCase()}</p>
+            <p className="num mt-2 font-display text-5xl font-extrabold leading-none text-ink-900">{inr(revenue)}</p>
+            <p className="mt-2 text-sm text-ink-500">
               {inr(membershipPaid)} memberships · {inr(markup)} booking markup · {achievement}% of {shortInr(target)}
             </p>
 
@@ -204,10 +204,10 @@ export default function Dashboard() {
               {moneySteps.map((s) => (
                 <li key={s.label}>
                   <p className="flex items-baseline justify-between text-sm">
-                    <span className="text-white/60">{s.label}</span>
+                    <span className="text-ink-500">{s.label}</span>
                     <span className="num font-bold">{inr(s.value)}</span>
                   </p>
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-soft">
                     <div
                       className={`h-full rounded-full ${s.tone}`}
                       style={{ width: `${Math.round((Math.abs(s.value) / moneyTop) * 100)}%` }}
@@ -218,11 +218,11 @@ export default function Dashboard() {
             </ul>
 
             <div className="mt-5 flex flex-wrap gap-2 text-sm">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5">
-                <TrendingUp size={14} className="text-emerald-300" /> {margin}% margin
+              <span className="inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5">
+                <TrendingUp size={14} className="text-emerald-600" /> {margin}% margin
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5">
-                <Wallet size={14} className="text-white/70" /> {inr(outstanding + membershipDue)} still to collect
+              <span className="inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5">
+                <Wallet size={14} className="text-ink-400" /> {inr(outstanding + membershipDue)} still to collect
               </span>
             </div>
           </div>

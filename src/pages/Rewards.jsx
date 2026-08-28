@@ -192,28 +192,28 @@ export default function Rewards() {
     Dashboard: (
       <>
         <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="card relative overflow-hidden bg-ink-900 p-5 text-white">
-            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-amber-400/25 blur-2xl" />
+          <section className="card relative overflow-hidden p-5">
+            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-amber-500/12 blur-2xl" />
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Given to members</p>
-              <p className="num mt-2 font-display text-4xl font-extrabold leading-none">{inr(faceValue)}</p>
-              <p className="mt-1.5 text-sm text-white/60">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Given to members</p>
+              <p className="num mt-2 font-display text-4xl font-extrabold leading-none text-ink-900">{inr(faceValue)}</p>
+              <p className="mt-1.5 text-sm text-ink-500">
                 {issued} rewards · costing the company {inr(companyCost)}
               </p>
               <div className="mt-5">
-                <p className="flex items-baseline justify-between text-xs font-semibold text-white/60">
+                <p className="flex items-baseline justify-between text-xs font-semibold text-ink-500">
                   <span>What it actually costs us</span>
-                  <span className="num text-white">{Math.round((companyCost / Math.max(1, faceValue)) * 100)}%</span>
+                  <span className="num">{Math.round((companyCost / Math.max(1, faceValue)) * 100)}%</span>
                 </p>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15">
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-soft">
                   <div
-                    className="h-full rounded-full bg-amber-400"
+                    className="h-full rounded-full bg-amber-500"
                     style={{ width: `${Math.round((companyCost / Math.max(1, faceValue)) * 100)}%` }}
                   />
                 </div>
               </div>
-              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm">
-                <Gift size={14} className="text-white/70" />
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5 text-sm">
+                <Gift size={14} className="text-ink-400" />
                 {roiMultiple}× revenue for every rupee of reward
               </p>
             </div>
@@ -640,10 +640,10 @@ export default function Rewards() {
             <Stat label="Revenue from rewarded customers" value={inr(roi.revenueFromRewarded)} tone="text-brand-700" />
             <Stat label="Reward cost" value={inr(roi.rewardCost)} tone="text-rose-600" />
           </div>
-          <div className="mt-4 rounded-xl bg-ink-900 p-5 text-white">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Return</p>
-            <p className="num mt-2 font-display text-3xl font-extrabold">{roiMultiple}×</p>
-            <p className="mt-1.5 text-sm text-white/60">revenue for every rupee spent on rewards</p>
+          <div className="mt-4 rounded-xl bg-surface-soft p-5 ring-1 ring-ink-900/[0.05]">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Return</p>
+            <p className="num mt-2 font-display text-3xl font-extrabold text-ink-900">{roiMultiple}×</p>
+            <p className="mt-1.5 text-sm text-ink-500">revenue for every rupee spent on rewards</p>
           </div>
         </Block>
 

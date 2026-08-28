@@ -197,28 +197,28 @@ export default function Offers() {
     Dashboard: (
       <>
         <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="card relative overflow-hidden bg-ink-900 p-5 text-white">
-            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-violet-500/25 blur-2xl" />
+          <section className="card relative overflow-hidden p-5">
+            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-violet-500/12 blur-2xl" />
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Revenue from offers</p>
-              <p className="num mt-2 font-display text-4xl font-extrabold leading-none">{inr(revenue)}</p>
-              <p className="mt-1.5 text-sm text-white/60">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Revenue from offers</p>
+              <p className="num mt-2 font-display text-4xl font-extrabold leading-none text-ink-900">{inr(revenue)}</p>
+              <p className="mt-1.5 text-sm text-ink-500">
                 {bookings} bookings · {inr(discountCost)} given away in discount
               </p>
               <div className="mt-5">
-                <p className="flex items-baseline justify-between text-xs font-semibold text-white/60">
+                <p className="flex items-baseline justify-between text-xs font-semibold text-ink-500">
                   <span>Margin left after the offer</span>
-                  <span className="num text-white">{Math.round((netMargin / Math.max(1, revenue)) * 100)}%</span>
+                  <span className="num">{Math.round((netMargin / Math.max(1, revenue)) * 100)}%</span>
                 </p>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15">
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-soft">
                   <div
-                    className="h-full rounded-full bg-violet-400"
+                    className="h-full rounded-full bg-violet-500"
                     style={{ width: `${Math.max(0, Math.round((netMargin / Math.max(1, revenue)) * 100))}%` }}
                   />
                 </div>
               </div>
-              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm">
-                <Megaphone size={14} className="text-white/70" />
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5 text-sm">
+                <Megaphone size={14} className="text-ink-400" />
                 {roi}× revenue for every rupee discounted
               </p>
             </div>

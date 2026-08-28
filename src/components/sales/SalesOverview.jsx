@@ -325,31 +325,31 @@ export default function SalesOverview({ rows, bookings, invoices = [], team, onP
       {/* 1 · The headline: money, conversion, and what needs a person */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)_minmax(0,0.9fr)]">
         {/* Money, on the dark tile so the eye lands here first */}
-        <section className="card relative overflow-hidden bg-ink-900 p-5 text-white">
-          <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-brand-500/20 blur-2xl" />
+        <section className="card relative overflow-hidden p-5">
+          <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-brand-500/10 blur-2xl" />
           <div className="relative">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Sales revenue</p>
-            <p className="num mt-2 font-display text-4xl font-extrabold leading-none">{inr(revenue)}</p>
-            <p className="mt-1.5 text-sm text-white/60">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Sales revenue</p>
+            <p className="num mt-2 font-display text-4xl font-extrabold leading-none text-ink-900">{inr(revenue)}</p>
+            <p className="mt-1.5 text-sm text-ink-500">
               from {won.length} won {won.length === 1 ? 'lead' : 'leads'} · average{' '}
               {won.length ? inr(Math.round(revenue / won.length)) : '—'}
             </p>
 
             <div className="mt-5">
-              <p className="flex items-baseline justify-between text-xs font-semibold text-white/60">
+              <p className="flex items-baseline justify-between text-xs font-semibold text-ink-500">
                 <span>Target {shortInr(target)}</span>
-                <span className="num text-white">{achievement}%</span>
+                <span className="num">{achievement}%</span>
               </p>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15">
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-soft">
                 <div
-                  className={`h-full rounded-full ${achievement >= 100 ? 'bg-emerald-400' : 'bg-brand-400'}`}
+                  className={`h-full rounded-full ${achievement >= 100 ? 'bg-emerald-500' : 'bg-brand-500'}`}
                   style={{ width: `${Math.min(achievement, 100)}%` }}
                 />
               </div>
             </div>
 
-            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm">
-              <Wallet size={14} className="text-white/70" />
+            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5 text-sm">
+              <Wallet size={14} className="text-ink-400" />
               {pending ? `${inr(pending)} still to collect` : 'Everything collected'}
             </p>
           </div>

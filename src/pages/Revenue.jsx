@@ -324,28 +324,28 @@ export default function Revenue() {
       <>
         {/* The headline: what came in, what is left, what is still owed */}
         <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="card relative overflow-hidden bg-ink-900 p-5 text-white">
-            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-brand-500/20 blur-2xl" />
+          <section className="card relative overflow-hidden p-5">
+            <span className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-brand-500/10 blur-2xl" />
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Total revenue</p>
-              <p className="num mt-2 font-display text-4xl font-extrabold leading-none">{inr(totalRevenue)}</p>
-              <p className="mt-1.5 text-sm text-white/60">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Total revenue</p>
+              <p className="num mt-2 font-display text-4xl font-extrabold leading-none text-ink-900">{inr(totalRevenue)}</p>
+              <p className="mt-1.5 text-sm text-ink-500">
                 {inr(membershipPaid)} memberships · {inr(markup)} booking markup
               </p>
               <div className="mt-5">
-                <p className="flex items-baseline justify-between text-xs font-semibold text-white/60">
+                <p className="flex items-baseline justify-between text-xs font-semibold text-ink-500">
                   <span>Target {shortInr(target)}</span>
-                  <span className="num text-white">{achievement}%</span>
+                  <span className="num">{achievement}%</span>
                 </p>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15">
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-soft">
                   <div
-                    className={`h-full rounded-full ${achievement >= 100 ? 'bg-emerald-400' : 'bg-brand-400'}`}
+                    className={`h-full rounded-full ${achievement >= 100 ? 'bg-emerald-500' : 'bg-brand-500'}`}
                     style={{ width: `${Math.min(achievement, 100)}%` }}
                   />
                 </div>
               </div>
-              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm">
-                {growth >= 0 ? <TrendingUp size={14} className="text-emerald-300" /> : <TrendingDown size={14} className="text-rose-300" />}
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5 text-sm">
+                {growth >= 0 ? <TrendingUp size={14} className="text-emerald-600" /> : <TrendingDown size={14} className="text-rose-600" />}
                 {growth >= 0 ? `${growth}% up on last month` : `${Math.abs(growth)}% down on last month`}
               </p>
             </div>
@@ -724,10 +724,10 @@ export default function Revenue() {
           <Stat label="Weighted pipeline" value={inr(Math.round(weighted))} hint="by the stage each sits at" />
           <Stat label="Expected collections" value={inr(expectedCollections)} hint="85% of what is owed" />
         </div>
-        <div className="mt-5 rounded-xl bg-ink-900 p-5 text-white">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Forecast revenue</p>
-          <p className="num mt-2 font-display text-3xl font-extrabold">{inr(forecastTotal)}</p>
-          <p className="mt-1.5 text-sm text-white/60">
+        <div className="mt-5 rounded-xl bg-surface-soft p-5 ring-1 ring-ink-900/[0.05]">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Forecast revenue</p>
+          <p className="num mt-2 font-display text-3xl font-extrabold text-ink-900">{inr(forecastTotal)}</p>
+          <p className="mt-1.5 text-sm text-ink-500">
             {inr(totalRevenue)} earned + {inr(Math.round(weighted))} weighted pipeline + {inr(expectedCollections)} expected
             collections
           </p>
@@ -836,12 +836,12 @@ export default function Revenue() {
               <Line2 label="Other staff payments" value={inr(staffCost - (expenses.staff.find((x) => x.label === 'Salaries')?.amount || 0))} />
               <Line2 label="Total expenses" value={inr(totalExpenses)} bold tone="text-rose-600" />
 
-              <div className="mt-5 rounded-xl bg-ink-900 p-4 text-white">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/50">Net company profit</p>
-                <p className={`num mt-1.5 font-display text-3xl font-extrabold ${profit >= 0 ? '' : 'text-rose-300'}`}>
+              <div className="mt-5 rounded-xl bg-surface-soft p-4 ring-1 ring-ink-900/[0.05]">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Net company profit</p>
+                <p className={`num mt-1.5 font-display text-3xl font-extrabold ${profit >= 0 ? '' : 'text-rose-600'}`}>
                   {inr(profit)}
                 </p>
-                <p className="mt-1 text-sm text-white/60">Profit margin {margin}%</p>
+                <p className="mt-1 text-sm text-ink-500">Profit margin {margin}%</p>
               </div>
             </ul>
           </div>

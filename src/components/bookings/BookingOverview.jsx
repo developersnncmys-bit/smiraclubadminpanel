@@ -1,25 +1,16 @@
 import { useState } from 'react';
 import {
-  Plus,
-  Search,
-  CalendarCheck,
-  CheckCircle2,
-  UserCheck,
-  Wallet,
-  Upload,
-  XCircle,
-  CalendarClock,
-  Phone,
-  Send,
-  FileSpreadsheet,
-  FileText,
-  Download,
-  BedDouble,
+  Plus, Search, CalendarCheck, CheckCircle2, UserCheck, Wallet,
+  Upload, XCircle, CalendarClock, Phone, Send, FileSpreadsheet,
+  FileText, Download, BedDouble, LogIn, LogOut, Gift,
+  Zap,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import Block from '../ui/Block.jsx';
 import Stat from '../ui/Stat.jsx';
+import KpiRow from '../ui/KpiRow.jsx';
+import MenuButton from '../ui/MenuButton.jsx';
 import {
   bookingStatusTone,
   confirmationStates,
@@ -112,15 +103,28 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
   const collected = paidOf(rows);
   const outstanding = value(rows) - collected;
 
+  // The masthead already carries bookings, value and collection — the desk
+  // adds what is happening today and what is waiting on someone.
   const kpis = [
-    { label: 'Total bookings', value: rows.length, hint: `${confirmed.length} confirmed` },
-    { label: 'Booked value', value: shortInr(value(rows)), tone: 'text-brand-700' },
-    { label: 'Collected', value: shortInr(collected), hint: `${Math.round((collected / (value(rows) || 1)) * 100)}% of value` },
-    { label: 'Pending collection', value: shortInr(outstanding), tone: outstanding ? 'text-amber-600' : undefined, hint: `${pendingPay.length} bookings` },
-    { label: 'Check-ins today', value: checkInsToday.length },
-    { label: 'Check-outs today', value: checkOutsToday.length },
-    { label: 'Waiting on hotels', value: queue.length, tone: queue.length ? 'text-rose-600' : undefined },
-    { label: 'Free-stay bookings', value: freeStays.length, hint: 'entitlement used' },
+    { label: 'Check-ins today', value: checkInsToday.length, icon: LogIn },
+    { label: 'Check-outs today', value: checkOutsToday.length, icon: LogOut },
+    { label: 'Departing soon', value: upcoming.length, icon: CalendarClock, hint: `next ${window} days` },
+    {
+      label: 'Waiting on hotels',
+      value: queue.length,
+      icon: BedDouble,
+      tone: queue.length ? 'text-rose-600' : 'text-ink-900',
+      hint: queue.length ? 'not confirmed yet' : 'all confirmed',
+    },
+    {
+      label: 'Pending collection',
+      value: shortInr(outstanding),
+      icon: Wallet,
+      tone: outstanding ? 'text-amber-600' : 'text-ink-900',
+      progress: value(rows) ? Math.round((collected / value(rows)) * 100) : 0,
+      hint: `${pendingPay.length} booking${pendingPay.length === 1 ? '' : 's'}`,
+    },
+    { label: 'Free stays', value: freeStays.length, icon: Gift, hint: 'entitlement used' },
   ];
 
   const quick = [
@@ -143,26 +147,33 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
 
   return (
     <div className="space-y-6">
-      {/* Numbers first */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="card px-4 py-4">
-            <p className="text-sm font-semibold text-ink-500">{k.label}</p>
-            <p className={`num mt-1 font-display text-2xl font-extrabold ${k.tone || 'text-ink-900'}`}>{k.value}</p>
-            {k.hint && <p className="mt-0.5 text-xs text-ink-400">{k.hint}</p>}
-          </div>
-        ))}
-      </div>
+      {/* What the desk is working on, and what it can start */}
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+        <h2 className="font-display text-base font-extrabold text-ink-900">Booking desk</h2>
 
-      {/* Quick actions */}
-      <div className="card flex flex-wrap items-center gap-2 px-4 py-3.5">
-        <p className="eyebrow mr-1">Quick actions</p>
-        {quick.map((q) => (
-          <button key={q.label} className="btn-ghost btn-sm" onClick={q.run}>
-            <q.icon size={14} /> {q.label}
-          </button>
-        ))}
-      </div>
+        <MenuButton
+          label="Desk actions"
+          icon={Zap}
+          variant="action"
+          width="w-[250px]"
+          items={quick.map((q) => ({ key: q.label, label: q.label, icon: q.icon }))}
+          onSelect={(key) => quick.find((q) => q.label === key)?.run()}
+        />
+
+        <div className="seg">
+          {[7, 15, 30].map((n) => (
+            <button key={n} onClick={() => setWindow(n)} className={`seg-item ${window === n ? 'seg-item-on' : ''}`}>
+              {n} days
+            </button>
+          ))}
+        </div>
+
+        <p className="num ml-auto text-sm text-ink-500">
+          {checkInsToday.length} in · {checkOutsToday.length} out today · {queue.length} waiting on a hotel
+        </p>
+      </section>
+
+      <KpiRow cols={6} items={kpis} />
 
       <div className="grid gap-5 xl:grid-cols-2">
         {/* Today's booking activity */}
@@ -206,20 +217,7 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
         {/* Upcoming bookings */}
         <Block
           title="Coming up"
-          note="Arrivals and departures date by date"
-          action={
-            <div className="flex gap-1.5">
-              {[7, 15, 30].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setWindow(n)}
-                  className={`chip ${window === n ? 'border-brand-600 bg-brand-50 text-brand-700' : 'text-ink-600'}`}
-                >
-                  {n} days
-                </button>
-              ))}
-            </div>
-          }
+          note={`Arrivals and departures over the next ${window} days`}
         >
           <Rows
             empty={`Nothing in the next ${window} days.`}

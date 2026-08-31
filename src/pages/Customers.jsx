@@ -29,6 +29,7 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp, phoneDigits } from '../store/AppStore.jsx';
 import { membershipStanding } from '../lib/membership.js';
+import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
   inr,
   formatDate,
@@ -289,27 +290,17 @@ export default function Customers() {
       </PageHeader>
 
       {/* People on the left, the plans they hold on the right */}
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        {[
+      <SectionTabs
+        className="mb-5"
+        items={[
           { key: 'people', label: 'Members', icon: UserRound, count: customers.length },
           { key: 'table', label: 'Member list', icon: Rows3, count: customers.length },
           { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
           { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
-        ].map((v) => (
-          <button
-            key={v.key}
-            onClick={() => setView(v.key)}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-              view === v.key
-                ? 'bg-ink-900 text-white shadow-sm'
-                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
-            }`}
-          >
-            <v.icon size={15} /> {v.label}
-            <span className={`num ${view === v.key ? 'text-white/60' : 'text-ink-400'}`}>{v.count}</span>
-          </button>
-        ))}
-      </div>
+        ]}
+        value={view}
+        onChange={setView}
+      />
 
       {view === 'memberships' && (
         <MembershipDesk

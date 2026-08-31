@@ -1,28 +1,13 @@
 import { useState } from 'react';
 import {
-  X,
-  Phone,
-  Mail,
-  MessageCircle,
-  Pencil,
-  Share2,
-  FileText,
-  Paperclip,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  ArrowRight,
-  Clock,
-  Copy,
-  ShoppingCart,
-  CalendarPlus,
-  Crown,
+  X, Phone, Mail, MessageCircle, Pencil, Share2, FileText, Paperclip, ChevronLeft, ChevronRight, Plus, ArrowRight, Clock, ShoppingCart, CalendarPlus, Crown,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { statusTone, enquiryStatuses, inr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
 import { findMembership, membershipStanding } from '../../lib/membership.js';
+import Field from '../ui/Field.jsx';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 
@@ -37,34 +22,6 @@ const KINDS = {
   email: { icon: Mail, tone: 'bg-sky-100 text-sky-700' },
   assign: { icon: ArrowRight, tone: 'bg-brand-100 text-brand-700' },
 };
-
-/** Small label-over-value block with an optional edit control. */
-function Field({ label, children, onEdit, onCopy }) {
-  return (
-    <div className="border-b border-ink-900/[0.07] px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="eyebrow">{label}</p>
-        <div className="flex items-center gap-1">
-          {onCopy && (
-            <button onClick={onCopy} title="Copy" className="text-ink-300 hover:text-brand-700">
-              <Copy size={13} />
-            </button>
-          )}
-          {onEdit && (
-            <button
-              onClick={onEdit}
-              title={`Change ${label.toLowerCase()}`}
-              className="grid h-6 w-6 place-items-center rounded-md bg-brand-600 text-white transition hover:bg-brand-700"
-            >
-              <Pencil size={11} />
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="mt-1.5 text-sm text-ink-800">{children}</div>
-    </div>
-  );
-}
 
 /**
  * The lead panel: who they are and every quick action on the left, the trail

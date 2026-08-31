@@ -18,6 +18,9 @@ import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr } from '../data/mockData.js';
+import Block from '../components/ui/Block.jsx';
+import Stat from '../components/ui/Stat.jsx';
+import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
   conversations,
   conversationCategories,
@@ -56,31 +59,6 @@ const SECTIONS = [
 ];
 
 const scoreTone = { Hot: 'rose', Warm: 'amber', Cold: 'slate' };
-
-function Block({ title, note, wide, action, children }) {
-  return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-base font-extrabold text-ink-900">{title}</h3>
-          {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-function Stat({ label, value, hint, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-xl font-extrabold ${tone}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
-    </div>
-  );
-}
 
 function Table({ head, rows, empty = 'Nothing here yet.' }) {
   return (
@@ -604,21 +582,12 @@ export default function Whatsapp() {
         </button>
       </PageHeader>
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        {SECTIONS.map((s) => (
-          <button
-            key={s}
-            onClick={() => setSection(s)}
-            className={`rounded-xl px-3.5 py-2 text-sm font-bold transition ${
-              section === s
-                ? 'bg-ink-900 text-white shadow-sm'
-                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
+      <SectionTabs
+        className="mb-5"
+        items={SECTIONS}
+        value={section}
+        onChange={setSection}
+      />
 
       <div className="grid gap-5 xl:grid-cols-2">{body[section]}</div>
 
@@ -695,18 +664,18 @@ export default function Whatsapp() {
                   <p className="mt-3 font-display text-base font-extrabold text-ink-900">{open.name}</p>
                   <p className="num text-sm text-ink-500">{open.phone}</p>
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    <a href={`tel:${open.phone.replace(/[^\d]/g, '')}`} className="grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white">
+                    <a href={`tel:${open.phone.replace(/[^\d]/g, '')}`} className="icon-btn h-9 w-9 disabled:opacity-40">
                       <Phone size={15} />
                     </a>
                     <a
                       href={`https://wa.me/${open.phone.replace(/[^\d]/g, '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500 text-white"
+                      className="icon-btn h-9 w-9 hover:border-emerald-400 hover:text-emerald-600"
                     >
                       <MessageCircle size={15} />
                     </a>
-                    <button onClick={() => toast(`${open.name} assigned`)} className="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-white">
+                    <button onClick={() => toast(`${open.name} assigned`)} className="icon-btn h-9 w-9 disabled:opacity-40">
                       <UserCheck size={15} />
                     </button>
                   </div>

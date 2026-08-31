@@ -25,6 +25,10 @@ import {
   shortInr,
 } from '../../data/mockData.js';
 import { daysUntil } from '../../lib/membership.js';
+import Block from '../ui/Block.jsx';
+import Stat from '../ui/Stat.jsx';
+import SectionTabs from '../ui/SectionTabs.jsx';
+import KpiRow from '../ui/KpiRow.jsx';
 
 const TABS = [
   { key: 'members', label: 'Members', icon: Users },
@@ -51,32 +55,6 @@ function daysToNext(value) {
   const next = new Date(now.getFullYear(), d.getMonth(), d.getDate());
   if (next < new Date(now.getFullYear(), now.getMonth(), now.getDate())) next.setFullYear(now.getFullYear() + 1);
   return Math.round((next - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
-}
-
-/** A plain box. */
-function Block({ title, note, wide, action, children }) {
-  return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-base font-extrabold text-ink-900">{title}</h3>
-          {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-function Stat({ label, value, hint, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-xl font-extrabold ${tone}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
-    </div>
-  );
 }
 
 /**
@@ -171,35 +149,14 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="card px-4 py-4">
-            <p className="text-sm font-semibold text-ink-500">{k.label}</p>
-            <p className={`num mt-1 font-display text-2xl font-extrabold ${k.tone || 'text-ink-900'}`}>{k.value}</p>
-            {k.hint && <p className="mt-0.5 text-xs text-ink-400">{k.hint}</p>}
-          </div>
-        ))}
-      </div>
+      <KpiRow items={kpis} cols={8} />
 
       {/* The six views the sheet asks for */}
-      <div className="flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-              tab === t.key
-                ? 'bg-ink-900 text-white shadow-sm'
-                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
-            }`}
-          >
-            <t.icon size={15} /> {t.label}
-          </button>
-        ))}
+      <SectionTabs items={TABS} value={tab} onChange={setTab}>
         <button className="btn-primary ml-auto" onClick={actions.addMember}>
           <Plus size={16} /> Add member
         </button>
-      </div>
+      </SectionTabs>
 
       {/* -- Members ------------------------------------------------------- */}
       {tab === 'members' && (

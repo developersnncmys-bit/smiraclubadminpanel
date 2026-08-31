@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -21,6 +20,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import Block from '../components/ui/Block.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
@@ -33,24 +33,6 @@ import { rules as automationRules, history as automationHistory } from '../data/
 import { customerRewards, referrals } from '../data/rewardsData.js';
 import { offers } from '../data/offersData.js';
 import { holds } from '../data/inventoryData.js';
-
-const PERIODS = ['Today', 'This week', 'This month', 'This year'];
-
-/** A titled block, the only container this page uses. */
-function Card({ title, note, action, wide, children }) {
-  return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="font-display text-base font-extrabold text-ink-900">{title}</h2>
-          {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
 
 /**
  * One module, as a line rather than a box: what it is, the one number that
@@ -117,8 +99,6 @@ export default function Dashboard() {
     invoices, payments, tickets, partners, inventory, range,
   } = useApp();
 
-  const [period, setPeriod] = useState('This month');
-
   // -- Money -----------------------------------------------------------------
   const won = enquiries.filter((e) => e.status === 'Won');
   const openLeads = enquiries.filter((e) => !['Won', 'Lost'].includes(e.status));
@@ -174,26 +154,14 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader title="Dashboard" subtitle={`The whole business on one page · ${range.toLowerCase()}`}>
-        <div className="flex flex-wrap gap-1.5">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`chip ${period === p ? 'border-brand-600 bg-brand-50 text-brand-700' : 'text-ink-600'}`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      </PageHeader>
+      <PageHeader title="Dashboard" subtitle={`The whole business on one page · ${range.toLowerCase()}`} />
 
       {/* What the money did, and what wants a person */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <section className="card relative overflow-hidden p-6">
           <span className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl" />
           <div className="relative">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400">Revenue {period.toLowerCase()}</p>
+            <p className="eyebrow">{`Revenue · ${range.toLowerCase()}`}</p>
             <p className="num mt-2 font-display text-5xl font-extrabold leading-none text-ink-900">{inr(revenue)}</p>
             <p className="mt-2 text-sm text-ink-500">
               {inr(membershipPaid)} memberships · {inr(markup)} booking markup · {achievement}% of {shortInr(target)}
@@ -228,7 +196,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <Card title="Needs a person" note="Straight from the data, most serious first">
+        <Block title="Needs a person" note="Straight from the data, most serious first">
           <ul className="space-y-1.5">
             {alerts.slice(0, 6).map((a) => (
               <li key={a.text}>
@@ -250,12 +218,12 @@ export default function Dashboard() {
               </li>
             )}
           </ul>
-        </Card>
+        </Block>
       </div>
 
       {/* Where the work is */}
       <div className="mt-5 grid gap-5 xl:grid-cols-3">
-        <Card
+        <Block
           title="Leads"
           note={`${enquiries.length} in the pipeline · ${enquiries.length ? Math.round((won.length / enquiries.length) * 100) : 0}% become customers`}
           action={
@@ -269,9 +237,9 @@ export default function Dashboard() {
               .filter((s) => !['Lost'].includes(s))
               .map((s) => ({ label: s, value: enquiries.filter((e) => e.status === s).length }))}
           />
-        </Card>
+        </Block>
 
-        <Card
+        <Block
           title="Trips"
           note={`${bookings.length} on the books · ${inr(bookingValue)} booked`}
           action={
@@ -298,9 +266,9 @@ export default function Dashboard() {
               );
             })}
           </ul>
-        </Card>
+        </Block>
 
-        <Card
+        <Block
           title="The desk today"
           note={`${online} of ${team.length} online`}
           action={
@@ -325,11 +293,11 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
-        </Card>
+        </Block>
       </div>
 
       {/* Everything else, one line each */}
-      <Card
+      <Block
         title="Every module"
         note="One number from each, and a way in"
         wide
@@ -455,7 +423,7 @@ export default function Dashboard() {
             to="/reports"
           />
         </div>
-      </Card>
+      </Block>
     </>
   );
 }

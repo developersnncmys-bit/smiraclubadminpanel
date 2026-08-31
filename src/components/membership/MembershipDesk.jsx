@@ -22,33 +22,8 @@ import {
   shortInr,
 } from '../../data/mockData.js';
 import { daysUntil } from '../../lib/membership.js';
-
-/** A plain box: one heading, one line saying what it means, then the content. */
-function Block({ title, note, wide, action, children }) {
-  return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-base font-extrabold text-ink-900">{title}</h3>
-          {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-/** One number with its caption. */
-function Stat({ label, value, hint, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-xl font-extrabold ${tone}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
-    </div>
-  );
-}
+import Block from '../ui/Block.jsx';
+import Stat from '../ui/Stat.jsx';
 
 /** Label, value, proportional bar. */
 function List({ rows, empty = 'Nothing here yet.' }) {

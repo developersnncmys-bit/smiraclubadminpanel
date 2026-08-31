@@ -12,11 +12,11 @@ import {
   CheckCircle2,
   Info,
   Trophy,
-  MapPin,
-  Clock,
+  Shuffle,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
+import DrawerTabs from '../ui/DrawerTabs.jsx';
 import { inr, shortInr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
 
@@ -47,22 +47,36 @@ const noticeIcon = {
 };
 const digits = (phone) => String(phone).replace(/[^\d]/g, '');
 
-/** Label over value, used down the profile column. */
-function Field({ label, children }) {
+/** A titled group of label-and-value lines, two to a row where there is space. */
+function Group({ title, items }) {
   return (
-    <div className="border-b border-ink-900/[0.07] px-4 py-2.5">
-      <p className="eyebrow">{label}</p>
-      <div className="mt-1 text-sm text-ink-800">{children}</div>
+    <div>
+      {title && <p className="eyebrow mb-1.5">{title}</p>}
+      <dl className="grid gap-x-8 sm:grid-cols-2">
+        {items.map(([label, value, tone]) => (
+          <div
+            key={label}
+            className="flex items-center justify-between gap-3 border-b border-ink-900/[0.07] py-2"
+          >
+            <dt className="text-sm text-ink-500">{label}</dt>
+            <dd className={`num text-sm font-bold ${tone || 'text-ink-900'}`}>{value}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
 
-/** One number with its caption. */
-function Stat({ label, value, tone = 'text-ink-900' }) {
+/** The day's counters, one strip rather than a wall of cards. */
+function Strip({ items }) {
   return (
-    <div className="rounded-xl bg-surface-soft px-3.5 py-3">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-lg font-extrabold ${tone}`}>{value}</p>
+    <div className="grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
+      {items.map(([label, value, tone]) => (
+        <div key={label} className="px-4 py-3">
+          <p className={`num font-display text-lg font-extrabold ${tone || 'text-ink-900'}`}>{value}</p>
+          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-400">{label}</p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -75,7 +89,7 @@ function Meter({ left, right, pct, tone = 'bg-brand-500' }) {
         <span className="font-semibold text-ink-700">{left}</span>
         <span className="num font-bold text-ink-900">{right}</span>
       </p>
-      <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-surface-soft">
+      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-soft">
         <div
           className={`h-full rounded-full transition-all ${tone}`}
           style={{ width: `${Math.max(0, Math.min(pct, 100))}%` }}
@@ -85,27 +99,13 @@ function Meter({ left, right, pct, tone = 'bg-brand-500' }) {
   );
 }
 
-/** Name and number, in a row, for the long breakdown lists. */
-function Rows({ items }) {
-  return (
-    <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-      {items.map(([label, value, tone]) => (
-        <li key={label} className="flex items-center justify-between gap-3 px-4 py-2.5">
-          <span className="text-sm text-ink-600">{label}</span>
-          <span className={`num text-sm font-bold ${tone || 'text-ink-900'}`}>{value}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /**
- * The employee drawer from the client's sheet: who they are and what they are
- * on down the left, and Today / Attendance / Work / Targets / Tasks across the
- * right — every column of their Team Status tab, one tab at a time.
+ * The employee drawer: who they are and what they are on down the left, and
+ * Today / Work / Targets / Tasks on the right — the sheet's columns, but read
+ * as lines rather than a wall of boxes.
  */
 export default function MemberDetails({ member, list, rank, workload, tasks, onClose, onJump, onEdit }) {
-  const { update, toast } = useApp();
+  const { toast } = useApp();
   const [tab, setTab] = useState('Today');
 
   if (!member) return null;
@@ -118,22 +118,27 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
   const targets = m.targets || {};
   const rev = m.revenueDetail || {};
   const targetPct = m.target ? Math.round((m.revenue / m.target) * 100) : 0;
+  const pct = (part, whole) => `${whole ? Math.round((part / whole) * 100) : 0}%`;
 
   const band =
     score >= 90 ? 'Excellent' : score >= 75 ? 'Good' : score >= 60 ? 'Average' : 'Needs improvement';
   const bandTone = score >= 90 ? 'green' : score >= 75 ? 'sky' : score >= 60 ? 'amber' : 'rose';
+  const scoreText =
+    score >= 90 ? 'text-emerald-600' : score >= 75 ? 'text-sky-600' : score >= 60 ? 'text-amber-600' : 'text-rose-600';
 
   const quick = [
-    { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${phone}`; } },
-    { icon: MessageCircle, tone: 'bg-emerald-500', label: 'WhatsApp', run: () => window.open(`https://wa.me/${phone}`, '_blank') },
-    { icon: Mail, tone: 'bg-sky-500', label: 'Email', run: () => { window.location.href = `mailto:${m.email}`; } },
-    { icon: ClipboardPlus, tone: 'bg-brand-600', label: 'Assign a task', run: () => toast(`Task assigned to ${m.name.split(' ')[0]}`) },
-    { icon: Pencil, tone: 'bg-ink-400', label: 'Edit member', run: () => onEdit(m) },
+    { icon: Phone, short: 'Call', label: 'Call', run: () => { window.location.href = `tel:${phone}`; } },
+    { icon: MessageCircle, short: 'WhatsApp', label: 'WhatsApp', run: () => window.open(`https://wa.me/${phone}`, '_blank') },
+    { icon: Mail, short: 'Email', label: 'Email', run: () => { window.location.href = `mailto:${m.email}`; } },
+    { icon: ClipboardPlus, short: 'Task', label: 'Assign a task', run: () => toast(`Task assigned to ${m.name.split(' ')[0]}`) },
+    { icon: Shuffle, short: 'Rebalance', label: 'Rebalance workload', run: () => toast(`Pick the leads to move off ${m.name.split(' ')[0]}`) },
+    { icon: Pencil, short: 'Edit', label: 'Edit member', run: () => onEdit(m) },
   ];
 
   const tabs = [
     { key: 'Today', count: null },
-    { key: 'Attendance', count: null },
+    { key: 'Activity', count: (m.activityLog || []).length },
+    { key: 'Leads', count: null },
     { key: 'Work', count: null },
     { key: 'Targets', count: null },
     { key: 'Tasks', count: tasks.length },
@@ -143,9 +148,10 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
 
-      <aside className="flex h-full w-full max-w-[1000px] flex-col bg-surface-base shadow-lift">
+      <aside className="flex h-full w-full max-w-[880px] flex-col bg-surface-base shadow-lift">
         <header className="flex items-center gap-3 border-b border-ink-900/[0.07] bg-white px-5 py-3.5">
-          <h2 className="font-display text-lg font-extrabold text-ink-900">Employee details</h2>
+          <h2 className="font-display text-lg font-extrabold text-ink-900">{m.name}</h2>
+          <span className="num text-sm text-ink-400">{m.empId || m.id}</span>
           <div className="ml-auto flex items-center gap-2">
             <span className="num text-sm font-semibold text-ink-500">
               {index + 1} / {list.length}
@@ -162,326 +168,376 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 lg:grid-cols-[330px_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 lg:grid-cols-[290px_minmax(0,1fr)]">
           {/* Who they are, and what they are on right now */}
-          <section className="card h-fit overflow-hidden">
-            <div className="px-4 pb-4 pt-5 text-center">
-              <span className="relative inline-block">
-                <Avatar name={m.name} size="lg" />
+          <section className="card h-fit p-5">
+            <div className="flex items-center gap-3">
+              <span className="relative shrink-0">
+                <Avatar name={m.name} />
                 <span
-                  className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full ring-2 ring-white ${
+                  className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-2 ring-white ${
                     liveDot[m.live] || liveDot.Offline
                   }`}
                 />
               </span>
-              <p className="mt-3 font-display text-lg font-extrabold text-ink-900">{m.name}</p>
-              <p className="text-sm text-ink-500">{m.role}</p>
-              <p className="num mt-0.5 text-xs text-ink-400">
-                {m.empId || m.id} · {m.department || 'Sales desk'}
-              </p>
-
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                <Badge tone={m.live === 'Online' ? 'green' : m.live === 'Offline' ? 'slate' : 'sky'} dot>
-                  {m.live}
-                </Badge>
-                <Badge tone={attendanceTone[m.attendance] || 'slate'}>{m.attendance}</Badge>
-                {rank > 0 && (
-                  <Badge tone={rank === 1 ? 'amber' : 'slate'}>
-                    {rank === 1 && <Trophy size={11} />} Rank #{rank}
-                  </Badge>
-                )}
-              </div>
-
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {quick.map((q) => (
-                  <button
-                    key={q.label}
-                    onClick={q.run}
-                    title={q.label}
-                    className={`grid h-9 w-9 place-items-center rounded-full text-white transition hover:opacity-90 ${q.tone}`}
-                  >
-                    <q.icon size={15} />
-                  </button>
-                ))}
+              <div className="min-w-0">
+                <p className="truncate font-display text-base font-extrabold text-ink-900">{m.name}</p>
+                <p className="truncate text-sm text-ink-500">{m.role}</p>
               </div>
             </div>
 
-            <Field label="Current activity">
-              <p className="font-semibold text-ink-900">{m.activityType || 'Idle'}</p>
-              <p className="text-ink-600">{m.activity || '—'}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-400">
-                <Clock size={11} /> started {m.activityStarted || '—'} · last active {m.lastActive}
-              </p>
-            </Field>
-            {m.current && (
-              <Field label="Current work">
-                <p className="font-semibold text-ink-900">{m.current.customer}</p>
-                <p className="text-ink-600">Next: {m.current.next}</p>
-              </Field>
-            )}
-            <Field label="Working from">
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin size={12} className="text-ink-400" /> {d.mode || 'Office'} · {d.source || 'Web app'}
-              </span>
-            </Field>
-            <Field label="Workload level">
-              <Badge tone={workload.tone}>{workload.label}</Badge>
-            </Field>
-            <Field label="Phone">
-              <span className="num">{m.phone}</span>
-            </Field>
-            <Field label="Email">{m.email}</Field>
-            <Field label="Account">
-              <Badge tone={m.status === 'Active' ? 'green' : m.status === 'Invited' ? 'sky' : 'slate'}>
-                {m.status}
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <Badge tone={m.live === 'Online' ? 'green' : m.live === 'Offline' ? 'slate' : 'sky'} dot>
+                {m.live}
               </Badge>
-            </Field>
-          </section>
+              <Badge tone={attendanceTone[m.attendance] || 'slate'}>{m.attendance}</Badge>
+              <Badge tone={workload.tone}>{workload.level} load</Badge>
+              {rank > 0 && (
+                <Badge tone={rank === 1 ? 'amber' : 'slate'}>
+                  {rank === 1 && <Trophy size={11} />} #{rank}
+                </Badge>
+              )}
+            </div>
 
-          {/* Everything the sheet tracks, one tab at a time */}
-          <section className="card flex min-h-0 flex-col overflow-hidden">
-            <div className="no-scrollbar flex overflow-x-auto border-b border-ink-900/[0.07] bg-surface-soft/50">
-              {tabs.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-bold transition ${
-                    tab === t.key
-                      ? 'border-brand-600 bg-white text-brand-700'
-                      : 'border-transparent text-ink-500 hover:text-ink-800'
-                  }`}
-                >
-                  {t.key}
-                  {t.count != null && <span className="num ml-1.5 text-ink-400">{t.count}</span>}
+            <div className="mt-3 grid grid-cols-3 gap-1.5">
+              {quick.map((q) => (
+                <button key={q.label} onClick={q.run} className="qa">
+                  <q.icon size={16} />
+                  {q.short}
                 </button>
               ))}
             </div>
 
+            {/* The one thing management opens this drawer to see */}
+            <div className="mt-4 rounded-xl bg-surface-soft px-3.5 py-3">
+              <p className="text-sm font-bold text-ink-900">{m.activityType || 'Idle'}</p>
+              <p className="text-sm text-ink-600">{m.activity || '—'}</p>
+              <p className="mt-1 text-xs text-ink-400">
+                since {m.activityStarted || '—'} · last active {m.lastActive}
+              </p>
+              {m.current && (
+                <p className="mt-2 border-t border-ink-900/[0.07] pt-2 text-xs text-ink-600">
+                  <b className="text-ink-800">{m.current.customer}</b> — next: {m.current.next}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <Group
+                items={[
+                  ['Team', m.department || 'Sales desk'],
+                  ['Working from', `${d.mode || 'Office'} · ${d.source || 'Web app'}`],
+                  ['Phone', m.phone],
+                  ['Email', <span key="e" className="break-all text-ink-800">{m.email}</span>],
+                  ['Account', m.status],
+                ]}
+              />
+            </div>
+          </section>
+
+          {/* Everything the sheet tracks, one tab at a time */}
+          <section className="card flex min-h-0 flex-col overflow-hidden">
+            <DrawerTabs items={tabs} value={tab} onChange={setTab} />
+
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
               {tab === 'Today' && (
                 <div className="space-y-5">
-                  <div>
-                    <p className="eyebrow mb-2">Today&rsquo;s summary</p>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <Stat label="Login" value={d.login || '—'} />
-                      <Stat label="Working" value={d.working || '—'} />
-                      <Stat label="Calls" value={m.calls ?? 0} />
-                      <Stat label="Connected" value={m.callDetail?.connected ?? 0} />
-                      <Stat label="Presentations" value={m.presentations ?? 0} />
-                      <Stat label="Visits" value={m.visits ?? 0} />
-                      <Stat label="Follow-ups" value={m.followUps ?? 0} />
-                      <Stat label="Closings" value={m.bookings ?? 0} />
-                      <Stat label="Revenue" value={m.revenue ? inr(m.revenue) : '—'} tone="text-brand-700" />
-                    </div>
-                  </div>
+                  <Strip
+                    items={[
+                      ['Calls', m.calls ?? 0],
+                      ['Connected', m.callDetail?.connected ?? 0, 'text-emerald-600'],
+                      ['Presentations', m.presentations ?? 0],
+                      ['Visits', m.visits ?? 0],
+                      ['Follow-ups', m.followUpDetail?.due ?? 0],
+                      ['Closings', m.bookings ?? 0, 'text-emerald-600'],
+                      ['Revenue', m.revenue ? inr(m.revenue) : '—', 'text-brand-700'],
+                      ['Score', `${score}`, scoreText],
+                    ]}
+                  />
+
+                  <Group
+                    title="Attendance today"
+                    items={[
+                      ['Login', d.login || '—'],
+                      ['Logout', d.logout || '—'],
+                      ['Working hours', d.working || '—'],
+                      ['Break · idle', `${d.breaks || '—'} · ${d.idle || '—'}`],
+                      [
+                        'Late by',
+                        d.lateBy ? `${d.lateBy} min` : 'On time',
+                        d.lateBy ? 'text-amber-600' : 'text-emerald-600',
+                      ],
+                      ['This month', `${d.attendancePct ?? 0}%`],
+                      ['Regularisation', d.regularisation || 'None pending'],
+                      ['Revenue today', m.revenue ? inr(m.revenue) : '—', 'text-brand-700'],
+                    ]}
+                  />
+
+                  <Group
+                    title="Lead pipeline"
+                    items={[
+                      ['Fresh', m.pipeline?.fresh ?? 0],
+                      ['Contacted', m.pipeline?.contacted ?? 0],
+                      ['Interested', m.pipeline?.interested ?? 0],
+                      ['Presentation', m.pipeline?.presentation ?? 0],
+                      ['Visit', m.pipeline?.visit ?? 0],
+                      ['Hot', m.pipeline?.hot ?? 0, 'text-rose-600'],
+                      ['Closing', m.pipeline?.closing ?? 0, 'text-emerald-600'],
+                      ['Follow-ups due', m.followUpDetail?.due ?? 0],
+                    ]}
+                  />
 
                   <div>
-                    <p className="eyebrow mb-2">Lead pipeline</p>
-                    <Rows
-                      items={[
-                        ['Fresh', m.pipeline?.fresh ?? 0],
-                        ['Contacted', m.pipeline?.contacted ?? 0],
-                        ['Interested', m.pipeline?.interested ?? 0],
-                        ['Presentation', m.pipeline?.presentation ?? 0],
-                        ['Visit', m.pipeline?.visit ?? 0],
-                        ['Hot', m.pipeline?.hot ?? 0, 'text-rose-600'],
-                        ['Closing', m.pipeline?.closing ?? 0, 'text-emerald-600'],
-                      ]}
-                    />
-                  </div>
-
-                  <div>
-                    <p className="eyebrow mb-2">Alerts on this desk</p>
-                    <ul className="space-y-2">
+                    <p className="eyebrow mb-1.5">Alerts</p>
+                    <ul className="space-y-1.5">
                       {(m.notices || []).map((n) => {
                         const { icon: Icon, tone } = noticeIcon[n.level] || noticeIcon.warning;
                         return (
-                          <li key={n.text} className="flex items-start gap-2.5 rounded-xl bg-surface-soft px-3.5 py-2.5">
-                            <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg ${tone}`}>
+                          <li key={n.text} className="flex items-center gap-2.5">
+                            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg ${tone}`}>
                               <Icon size={13} />
                             </span>
-                            <span className="min-w-0 flex-1 text-sm text-ink-700">{n.text}</span>
+                            <span className="min-w-0 flex-1 truncate text-sm text-ink-700">{n.text}</span>
                             <span className="num shrink-0 text-xs text-ink-400">{n.at}</span>
                           </li>
                         );
                       })}
                       {(m.notices || []).length === 0 && (
-                        <li className="rounded-xl bg-surface-soft px-3.5 py-3 text-sm text-ink-500">
-                          Nothing flagged today.
-                        </li>
+                        <li className="text-sm text-ink-500">Nothing flagged today.</li>
                       )}
                     </ul>
                   </div>
-                </div>
-              )}
 
-              {tab === 'Attendance' && (
-                <div className="space-y-5">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <Stat label="First login" value={d.login || '—'} />
-                    <Stat label="Last logout" value={d.logout || '—'} />
-                    <Stat label="Working hours" value={d.working || '—'} />
-                    <Stat label="Break time" value={d.breaks || '—'} />
-                    <Stat label="Idle time" value={d.idle || '—'} />
-                    <Stat
-                      label="Late by"
-                      value={d.lateBy ? `${d.lateBy} min` : 'On time'}
-                      tone={d.lateBy ? 'text-amber-600' : 'text-emerald-600'}
-                    />
-                  </div>
-                  <Meter left="Attendance this month" right={`${d.attendancePct ?? 0}%`} pct={d.attendancePct ?? 0} />
-                  <Rows
-                    items={[
-                      ['Today', m.attendance],
-                      ['Working from', d.mode || 'Office'],
-                      ['Login source', d.source || 'Web app'],
-                      ['Regularisation', d.regularisation || 'None pending'],
-                    ]}
-                  />
-                  <button className="btn-ghost" onClick={() => toast(`Reminder sent to ${m.name.split(' ')[0]}`)}>
+                  <button className="btn-line" onClick={() => toast(`Reminder sent to ${m.name.split(' ')[0]}`)}>
                     Send a reminder
                   </button>
                 </div>
               )}
 
+              {tab === 'Activity' && (
+                <div className="space-y-5">
+                  <Group
+                    title="Attendance today"
+                    items={[
+                      ['First login', d.login || '—'],
+                      ['Last logout', d.logout || '—'],
+                      ['Working hours', d.working || '—'],
+                      ['Break time', d.breaks || '—'],
+                      ['Idle time', d.idle || '—'],
+                      ['Late by', d.lateBy ? `${d.lateBy} min` : 'On time', d.lateBy ? 'text-amber-600' : 'text-emerald-600'],
+                      ['Working from', d.mode || 'Office'],
+                      ['Login source', d.source || '—'],
+                      ['Regularisation', d.regularisation || 'None pending'],
+                      ['Attendance this month', `${d.attendancePct ?? 0}%`],
+                    ]}
+                  />
+
+                  {(m.attendanceFlags || []).length > 0 && (
+                    <div>
+                      <p className="eyebrow mb-1.5">Flagged on attendance</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {m.attendanceFlags.map((f) => (
+                          <Badge key={f} tone="amber">{f}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {m.visitTrack && (
+                    <div>
+                      <p className="eyebrow mb-1.5">Field tracking</p>
+                      <div className="rounded-xl bg-surface-soft px-4 py-3">
+                        <p className="text-sm font-bold text-ink-900">{m.visitTrack.place}</p>
+                        <p className="text-xs text-ink-500">
+                          Checked in {m.visitTrack.checkIn} · checked out {m.visitTrack.checkOut}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {['Scheduled', 'En Route', 'Reached', 'Meeting', 'Completed'].map((st) => (
+                            <span
+                              key={st}
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                st === m.visitTrack.stage ? 'bg-sky-500 text-white' : 'bg-white text-ink-400'
+                              }`}
+                            >
+                              {st}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="eyebrow mb-2">Activity log</p>
+                    <ol className="relative space-y-0 border-l border-ink-900/10 pl-5">
+                      {(m.activityLog || []).map((a, i) => (
+                        <li key={`${a.at}-${i}`} className="relative pb-4 last:pb-0">
+                          <span className="absolute -left-[25px] top-1 grid h-3 w-3 place-items-center rounded-full border-2 border-white bg-brand-500" />
+                          <p className="text-sm font-semibold text-ink-800">{a.text}</p>
+                          <p className="mt-0.5 text-xs text-ink-400">
+                            <span className="num">{a.at}</span> · {a.kind}
+                          </p>
+                        </li>
+                      ))}
+                      {(m.activityLog || []).length === 0 && (
+                        <li className="text-sm text-ink-500">No activity recorded today.</li>
+                      )}
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {tab === 'Leads' && (
+                <div className="space-y-5">
+                  <Meter
+                    left={`Workload · ${workload.level}`}
+                    right={String(workload.load)}
+                    pct={Math.min(100, workload.load)}
+                    tone={workload.level === 'Low' ? 'bg-emerald-500' : workload.level === 'Normal' ? 'bg-amber-400' : 'bg-rose-500'}
+                  />
+                  <Group
+                    title="Lead workload"
+                    items={[
+                      ['Total assigned', m.leads ?? 0],
+                      ['Fresh', m.leadMix?.fresh ?? 0],
+                      ['Contacted', m.leadMix?.contacted ?? 0],
+                      ['Interested', m.leadMix?.interested ?? 0],
+                      ['Presentation pending', m.leadMix?.presentationPending ?? 0],
+                      ['Presentation completed', m.leadMix?.presentationDone ?? 0],
+                      ['Visit scheduled', m.leadMix?.visitScheduled ?? 0],
+                      ['Follow-up pending', m.leadMix?.followUpPending ?? 0, 'text-amber-600'],
+                      ['Hot', m.leadMix?.hot ?? 0, 'text-rose-600'],
+                      ['Warm', m.leadMix?.warm ?? 0],
+                      ['Cold', m.leadMix?.cold ?? 0],
+                      ['No response', m.leadMix?.noResponse ?? 0],
+                      ['Closed', m.leadMix?.closed ?? 0, 'text-emerald-600'],
+                      ['Lost', m.leadMix?.lost ?? 0, 'text-rose-600'],
+                    ]}
+                  />
+                  <Group
+                    title="Follow-ups by category"
+                    items={[
+                      ['Day 1', m.followUpMix?.day1 ?? 0],
+                      ['Day 3', m.followUpMix?.day3 ?? 0],
+                      ['Day 6', m.followUpMix?.day6 ?? 0],
+                      ['Final follow-up', m.followUpMix?.final ?? 0],
+                      ['Payment follow-up', m.followUpMix?.payment ?? 0],
+                      ['Presentation follow-up', m.followUpMix?.presentation ?? 0],
+                      ['Visit follow-up', m.followUpMix?.visit ?? 0],
+                      ['Membership activation', m.followUpMix?.membership ?? 0],
+                    ]}
+                  />
+                  <div className="flex flex-wrap gap-1.5">
+                    <button className="btn-action btn-sm" onClick={() => toast(`Pick the leads to move off ${m.name.split(' ')[0]}`)}>
+                      Reassign leads
+                    </button>
+                    <button className="btn-line btn-sm" onClick={() => toast('Opening the lead list')}>
+                      View all leads
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {tab === 'Work' && (
                 <div className="space-y-5">
-                  <div>
-                    <p className="eyebrow mb-2">Calls</p>
-                    <Rows
-                      items={[
-                        ['Total calls', m.calls ?? 0],
-                        ['Connected', m.callDetail?.connected ?? 0, 'text-emerald-600'],
-                        ['Not answered', m.callDetail?.notAnswered ?? 0],
-                        ['Busy / wrong number', (m.callDetail?.busy ?? 0) + (m.callDetail?.wrongNumber ?? 0)],
-                        ['Callback requested', m.callDetail?.callback ?? 0],
-                        ['Average call', m.callDetail?.avgDuration ?? '—'],
-                        ['Total talk time', m.callDetail?.talkTime ?? '—'],
-                        [
-                          'Connection rate',
-                          `${m.calls ? Math.round(((m.callDetail?.connected ?? 0) / m.calls) * 100) : 0}%`,
-                        ],
-                      ]}
-                    />
-                  </div>
+                  <Group
+                    title="Calls"
+                    items={[
+                      ['Total calls', m.calls ?? 0],
+                      ['Connected', m.callDetail?.connected ?? 0, 'text-emerald-600'],
+                      ['Not answered', m.callDetail?.notAnswered ?? 0],
+                      ['Busy / wrong number', (m.callDetail?.busy ?? 0) + (m.callDetail?.wrongNumber ?? 0)],
+                      ['Callback requested', m.callDetail?.callback ?? 0],
+                      ['Average call', m.callDetail?.avgDuration ?? '—'],
+                      ['Talk time', m.callDetail?.talkTime ?? '—'],
+                      ['Connection rate', pct(m.callDetail?.connected ?? 0, m.calls)],
+                    ]}
+                  />
 
-                  <div>
-                    <p className="eyebrow mb-2">Presentations</p>
-                    <Rows
-                      items={[
-                        ['Scheduled', m.presentationDetail?.scheduled ?? 0],
-                        ['Completed', m.presentationDetail?.completed ?? 0],
-                        ['No show', m.presentationDetail?.noShow ?? 0],
-                        ['Converted', m.presentationDetail?.converted ?? 0, 'text-emerald-600'],
-                        ['Pending decision', m.presentationDetail?.pending ?? 0],
-                        [
-                          'Presentation → closing',
-                          `${
-                            m.presentationDetail?.completed
-                              ? Math.round(((m.presentationDetail?.converted ?? 0) / m.presentationDetail.completed) * 100)
-                              : 0
-                          }%`,
-                        ],
-                      ]}
-                    />
-                  </div>
+                  <Group
+                    title="Presentations and visits"
+                    items={[
+                      ['Presentations scheduled', m.presentationDetail?.scheduled ?? 0],
+                      ['Completed', m.presentationDetail?.completed ?? 0],
+                      ['No show', m.presentationDetail?.noShow ?? 0],
+                      ['Converted', m.presentationDetail?.converted ?? 0, 'text-emerald-600'],
+                      [
+                        'Presentation → closing',
+                        pct(m.presentationDetail?.converted ?? 0, m.presentationDetail?.completed),
+                      ],
+                      ['Visits scheduled', m.visitDetail?.scheduled ?? 0],
+                      ['Visits completed', m.visitDetail?.completed ?? 0],
+                      ['Revenue from visits', m.visitDetail?.revenue ? inr(m.visitDetail.revenue) : '—'],
+                    ]}
+                  />
 
-                  <div>
-                    <p className="eyebrow mb-2">Customer visits</p>
-                    <Rows
-                      items={[
-                        ['Scheduled', m.visitDetail?.scheduled ?? 0],
-                        ['Completed', m.visitDetail?.completed ?? 0],
-                        ['Cancelled / no show', (m.visitDetail?.cancelled ?? 0) + (m.visitDetail?.noShow ?? 0)],
-                        ['Converted', m.visitDetail?.converted ?? 0, 'text-emerald-600'],
-                        ['Revenue from visits', m.visitDetail?.revenue ? inr(m.visitDetail.revenue) : '—'],
-                      ]}
-                    />
-                  </div>
+                  <Group
+                    title="Follow-ups"
+                    items={[
+                      ['Due today', m.followUpDetail?.due ?? 0],
+                      ['Completed', m.followUpDetail?.completed ?? 0, 'text-emerald-600'],
+                      ['Pending', m.followUpDetail?.pending ?? 0],
+                      ['Overdue', m.followUpDetail?.overdue ?? 0, 'text-rose-600'],
+                      ['Missed', m.followUpDetail?.missed ?? 0],
+                      ['Discipline', pct(m.followUpDetail?.completed ?? 0, m.followUpDetail?.due)],
+                    ]}
+                  />
 
-                  <div>
-                    <p className="eyebrow mb-2">Follow-ups</p>
-                    <Rows
-                      items={[
-                        ['Due today', m.followUpDetail?.due ?? 0],
-                        ['Completed', m.followUpDetail?.completed ?? 0, 'text-emerald-600'],
-                        ['Pending', m.followUpDetail?.pending ?? 0],
-                        ['Overdue', m.followUpDetail?.overdue ?? 0, 'text-rose-600'],
-                        ['Missed', m.followUpDetail?.missed ?? 0],
-                        [
-                          'Follow-up discipline',
-                          `${
-                            m.followUpDetail?.due
-                              ? Math.round(((m.followUpDetail?.completed ?? 0) / m.followUpDetail.due) * 100)
-                              : 0
-                          }%`,
-                        ],
-                      ]}
-                    />
-                  </div>
-
-                  <div>
-                    <p className="eyebrow mb-2">Sales and revenue</p>
-                    <Rows
-                      items={[
-                        ["Today's closings", m.salesDetail?.today ?? 0],
-                        ['Closings this month', m.salesDetail?.closings ?? 0],
-                        ['Pending closings', m.salesDetail?.pending ?? 0],
-                        ['Average ticket', m.salesDetail?.avgTicket ? inr(m.salesDetail.avgTicket) : '—'],
-                        ['Revenue this month', rev.mtd ? inr(rev.mtd) : '—', 'text-brand-700'],
-                        ['Collected', rev.collected ? inr(rev.collected) : '—'],
-                        ['Outstanding', rev.outstanding ? inr(rev.outstanding) : '—', rev.outstanding ? 'text-amber-600' : ''],
-                        ['Previous month', rev.previous ? inr(rev.previous) : '—'],
-                      ]}
-                    />
-                  </div>
+                  <Group
+                    title="Sales and revenue"
+                    items={[
+                      ["Today's closings", m.salesDetail?.today ?? 0],
+                      ['Closings this month', m.salesDetail?.closings ?? 0],
+                      ['Pending closings', m.salesDetail?.pending ?? 0],
+                      ['Average ticket', m.salesDetail?.avgTicket ? inr(m.salesDetail.avgTicket) : '—'],
+                      ['Revenue this month', rev.mtd ? inr(rev.mtd) : '—', 'text-brand-700'],
+                      ['Collected', rev.collected ? inr(rev.collected) : '—'],
+                      ['Outstanding', rev.outstanding ? inr(rev.outstanding) : '—', rev.outstanding ? 'text-amber-600' : ''],
+                      ['Previous month', rev.previous ? inr(rev.previous) : '—'],
+                    ]}
+                  />
                 </div>
               )}
 
               {tab === 'Targets' && (
                 <div className="space-y-5">
                   <Meter
-                    left={`Revenue target · ${shortInr(m.target || 0)}`}
+                    left={`Revenue · ${inr(m.revenue || 0)} of ${shortInr(m.target || 0)}`}
                     right={`${targetPct}%`}
                     pct={targetPct}
                     tone={targetPct >= 100 ? 'bg-emerald-500' : 'bg-brand-500'}
                   />
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <Stat label="Achieved" value={inr(m.revenue || 0)} tone="text-brand-700" />
-                    <Stat label="Target gap" value={inr(Math.max(0, (m.target || 0) - (m.revenue || 0)))} />
-                    <Stat label="Rank on the desk" value={rank > 0 ? `#${rank}` : '—'} />
+
+                  <div className="space-y-3.5">
+                    {[
+                      ['Leads', m.leads ?? 0, targets.leads],
+                      ['Calls', m.calls ?? 0, targets.calls],
+                      ['Presentations', m.presentations ?? 0, targets.presentations],
+                      ['Visits', m.visits ?? 0, targets.visits],
+                      ['Closings', m.bookings ?? 0, targets.closings],
+                    ].map(([label, done, goal]) => (
+                      <Meter
+                        key={label}
+                        left={label}
+                        right={`${done} / ${goal ?? 0}`}
+                        pct={goal ? (done / goal) * 100 : 0}
+                        tone={goal && done >= goal ? 'bg-emerald-500' : 'bg-brand-500'}
+                      />
+                    ))}
                   </div>
 
                   <div>
-                    <p className="eyebrow mb-2">Targets against work done</p>
-                    <div className="space-y-3.5">
-                      {[
-                        ['Leads', m.leads ?? 0, targets.leads],
-                        ['Calls', m.calls ?? 0, targets.calls],
-                        ['Presentations', m.presentations ?? 0, targets.presentations],
-                        ['Visits', m.visits ?? 0, targets.visits],
-                        ['Closings', m.bookings ?? 0, targets.closings],
-                      ].map(([label, done, goal]) => (
-                        <Meter
-                          key={label}
-                          left={label}
-                          right={`${done} / ${goal ?? 0}`}
-                          pct={goal ? (done / goal) * 100 : 0}
-                          tone={goal && done >= goal ? 'bg-emerald-500' : 'bg-brand-500'}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="eyebrow mb-2">Productivity score</p>
+                    <p className="eyebrow mb-1.5">Productivity score</p>
                     <div className="flex items-center gap-3">
                       <p className="num font-display text-3xl font-extrabold text-ink-900">{score}</p>
                       <span className="text-sm text-ink-500">out of 100</span>
                       <Badge tone={bandTone}>{band}</Badge>
+                      <span className="num ml-auto text-sm text-ink-500">
+                        Target gap {inr(Math.max(0, (m.target || 0) - (m.revenue || 0)))}
+                      </span>
                     </div>
                     <div className="mt-3">
-                      <Rows
+                      <Group
                         items={[
                           ['Attendance · 10', m.score?.attendance ?? 0],
                           ['Calls · 15', m.score?.calls ?? 0],
@@ -499,24 +555,26 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
               )}
 
               {tab === 'Tasks' && (
-                <div className="space-y-5">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <Stat label="Total" value={m.tasksTotal ?? 0} />
-                    <Stat label="Completed" value={m.tasksDone ?? 0} tone="text-emerald-600" />
-                    <Stat label="Pending" value={m.taskDetail?.pending ?? 0} />
-                    <Stat
-                      label="Overdue"
-                      value={m.taskDetail?.overdue ?? 0}
-                      tone={m.taskDetail?.overdue ? 'text-rose-600' : 'text-ink-900'}
-                    />
-                  </div>
-                  <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+                <div className="space-y-4">
+                  <Strip
+                    items={[
+                      ['Total', m.tasksTotal ?? 0],
+                      ['Completed', m.tasksDone ?? 0, 'text-emerald-600'],
+                      ['Pending', m.taskDetail?.pending ?? 0],
+                      [
+                        'Overdue',
+                        m.taskDetail?.overdue ?? 0,
+                        m.taskDetail?.overdue ? 'text-rose-600' : 'text-ink-900',
+                      ],
+                    ]}
+                  />
+                  <ul className="divide-y divide-ink-900/[0.07]">
                     {tasks.map((t) => (
-                      <li key={t.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                      <li key={t.id} className="flex items-center justify-between gap-3 py-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-ink-900">{t.title}</p>
-                          <p className="mt-0.5 text-xs text-ink-500">
-                            {t.id} · {t.customer} · due {t.due}
+                          <p className="truncate text-sm font-bold text-ink-900">{t.title}</p>
+                          <p className="mt-0.5 truncate text-xs text-ink-500">
+                            {t.customer} · due {t.due}
                           </p>
                         </div>
                         <Badge tone={t.bucket === 'overdue' ? 'rose' : t.bucket === 'done' ? 'green' : 'sky'} dot>
@@ -525,9 +583,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
                       </li>
                     ))}
                     {tasks.length === 0 && (
-                      <li className="px-4 py-6 text-center text-sm text-ink-500">
-                        Nothing assigned right now.
-                      </li>
+                      <li className="py-6 text-center text-sm text-ink-500">Nothing assigned right now.</li>
                     )}
                   </ul>
                   <button className="btn-primary" onClick={() => toast(`Task assigned to ${m.name.split(' ')[0]}`)}>

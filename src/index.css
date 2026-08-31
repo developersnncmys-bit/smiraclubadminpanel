@@ -75,6 +75,64 @@
     @apply px-2.5 py-1.5 text-xs;
   }
 
+  /* -- The panel's own buttons ------------------------------------------- */
+
+  /**
+   * The action button: a raised teal pill with an inner highlight and a lift
+   * on hover. This is the panel's signature control — used for anything that
+   * starts work (assign, schedule, reassign, resolve).
+   */
+  .btn-action {
+    @apply btn relative rounded-xl bg-gradient-to-b from-brand-500 to-brand-700 px-4 py-2.5 text-white
+           shadow-[0_1px_0_rgba(255,255,255,0.28)_inset,0_8px_18px_-8px_rgba(11,132,114,0.75)]
+           transition-all duration-150 hover:-translate-y-px
+           hover:shadow-[0_1px_0_rgba(255,255,255,0.28)_inset,0_12px_22px_-8px_rgba(11,132,114,0.8)]
+           active:translate-y-0 active:from-brand-600 active:to-brand-800;
+  }
+
+  /** The same shape, quieter: a white pill on a hairline that tints on hover. */
+  .btn-line {
+    @apply btn rounded-xl border border-ink-900/10 bg-white px-3.5 py-2 text-ink-700 shadow-xs
+           transition-all duration-150 hover:-translate-y-px hover:border-brand-300
+           hover:bg-brand-50 hover:text-brand-700 hover:shadow-raised active:translate-y-0;
+  }
+
+  /** Destructive twin of .btn-line, for resolve-and-dismiss style actions. */
+  .btn-line-danger {
+    @apply btn-line hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700;
+  }
+
+  /**
+   * A quick-action tile: icon above a label, in a grid. Used for the action
+   * rails the client's sheet asks for on every module.
+   */
+  .qa {
+    @apply flex flex-col items-center justify-center gap-1.5 rounded-xl border border-ink-900/[0.07]
+           bg-white px-2 py-3 text-[11px] font-bold leading-tight text-ink-600 shadow-xs
+           transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-300
+           hover:bg-brand-50 hover:text-brand-700 hover:shadow-raised;
+  }
+
+  /** A segmented control: one track, the live segment lifted out of it. */
+  .seg {
+    @apply inline-flex items-center gap-1 rounded-xl bg-surface-soft p-1;
+  }
+
+  .seg-item {
+    @apply rounded-lg px-3 py-1.5 text-xs font-bold text-ink-500 transition-all duration-150
+           hover:text-ink-800;
+  }
+
+  .seg-item-on {
+    @apply bg-white text-brand-700 shadow-xs;
+  }
+
+  /** A left colour rail on a row — how live status reads at a glance. */
+  .rail {
+    @apply relative overflow-hidden rounded-2xl before:absolute before:inset-y-0 before:left-0
+           before:w-1 before:content-[''];
+  }
+
   /* Square icon button used across tables and cards. */
   .icon-btn {
     @apply grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-900/10 bg-white text-ink-500

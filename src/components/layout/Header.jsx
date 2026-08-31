@@ -68,6 +68,27 @@ function LiveClock() {
  * row, the pages inside the active section on the second. No sidebar — the
  * content keeps the full width of the window.
  */
+const PRESETS = ['Today', 'Last 7 days', 'Last 30 days', 'This quarter', 'This year'];
+
+/** yyyy-mm-dd, the value a date input speaks. */
+const iso = (d) =>
+  [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+
+/** "05 Aug 2026" — how a date reads everywhere else in the panel. */
+const niceDate = (value) => {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+/** Ready-made spans, so the common case is one click rather than two pickers. */
+const QUICK = [
+  { label: 'This week', dates: () => { const t = new Date(); const s = new Date(t); s.setDate(t.getDate() - t.getDay() + 1); return [iso(s), iso(t)]; } },
+  { label: 'Last month', dates: () => { const t = new Date(); return [iso(new Date(t.getFullYear(), t.getMonth() - 1, 1)), iso(new Date(t.getFullYear(), t.getMonth(), 0))]; } },
+  { label: 'This month', dates: () => { const t = new Date(); return [iso(new Date(t.getFullYear(), t.getMonth(), 1)), iso(t)]; } },
+  { label: 'This year', dates: () => { const t = new Date(); return [iso(new Date(t.getFullYear(), 0, 1)), iso(t)]; } },
+];
+
 export default function Header({ onOpenMobile }) {
   const navigate = useNavigate();
   const {
@@ -91,10 +112,14 @@ export default function Header({ onOpenMobile }) {
   const [notifications, setNotifications] = useState(seedNotifications);
   const [bellOpen, setBellOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const searchRef = useRef(null);
   const searchBoxRef = useRef(null);
   const bellRef = useRef(null);
   const menuRef = useRef(null);
+  const rangeRef = useRef(null);
 
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -120,6 +145,7 @@ export default function Header({ onOpenMobile }) {
       if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false);
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
       if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) setSearchOpen(false);
+      if (rangeRef.current && !rangeRef.current.contains(e.target)) setRangeOpen(false);
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
@@ -162,18 +188,84 @@ export default function Header({ onOpenMobile }) {
 
         <div className="ml-auto flex items-center gap-2 py-2">
           {/* Which slice of the business every page should show */}
-          <label className="relative hidden xl:block">
+          <div className="relative hidden xl:block" ref={rangeRef}>
             <CalendarRange size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
             <select
-              value={range}
-              onChange={(e) => setRange(e.target.value)}
+              value={PRESETS.includes(range) ? range : 'custom'}
+              onChange={(e) => {
+                if (e.target.value === 'custom') setRangeOpen(true);
+                else setRange(e.target.value);
+              }}
               className="cursor-pointer appearance-none rounded-lg border border-ink-900/10 bg-white py-2 pl-7 pr-7 text-sm font-semibold text-ink-700 outline-none transition hover:border-ink-900/20"
             >
-              {['Today', 'Last 7 days', 'Last 30 days', 'This quarter', 'This year'].map((o) => (
+              {PRESETS.map((o) => (
                 <option key={o}>{o}</option>
               ))}
+              <option value="custom">{PRESETS.includes(range) ? 'Custom range…' : range}</option>
             </select>
-          </label>
+
+            {rangeOpen && (
+              <div className="absolute right-0 top-11 z-40 w-[290px] rounded-xl bg-white p-4 shadow-lift ring-1 ring-ink-900/[0.07]">
+                <p className="eyebrow mb-2">Custom date range</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="label">From</span>
+                    <input type="date" className="input py-2" value={from} onChange={(e) => setFrom(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="label">To</span>
+                    <input type="date" className="input py-2" value={to} onChange={(e) => setTo(e.target.value)} />
+                  </label>
+                </div>
+                {from && to && from > to && (
+                  <p className="mt-2 text-xs font-semibold text-rose-600">The start date is after the end date.</p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {QUICK.map((q) => (
+                    <button
+                      key={q.label}
+                      className="chip border border-ink-900/10 bg-white text-ink-600 hover:text-ink-900"
+                      onClick={() => {
+                        const [f, t] = q.dates();
+                        setFrom(f);
+                        setTo(t);
+                      }}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    className="btn-action btn-sm"
+                    disabled={!from || !to || from > to}
+                    onClick={() => {
+                      setRange(`${niceDate(from)} – ${niceDate(to)}`);
+                      setRangeOpen(false);
+                    }}
+                  >
+                    Apply
+                  </button>
+                  <button className="btn-line btn-sm" onClick={() => setRangeOpen(false)}>
+                    Cancel
+                  </button>
+                  {!PRESETS.includes(range) && (
+                    <button
+                      className="btn-line btn-sm ml-auto"
+                      onClick={() => {
+                        setRange('Last 7 days');
+                        setFrom('');
+                        setTo('');
+                        setRangeOpen(false);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <label className="relative hidden xl:block">
             <UsersRound size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />

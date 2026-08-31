@@ -16,6 +16,10 @@ import PartnerProfile from '../components/partners/PartnerProfile.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
+import Block from '../components/ui/Block.jsx';
+import Stat from '../components/ui/Stat.jsx';
+import SectionTabs from '../components/ui/SectionTabs.jsx';
+import KpiRow from '../components/ui/KpiRow.jsx';
 import {
   onboardingFlow,
   approvalStates,
@@ -40,31 +44,6 @@ const approvalTone = {
   Rejected: 'rose',
   Suspended: 'rose',
 };
-
-function Block({ title, note, wide, action, children }) {
-  return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-base font-extrabold text-ink-900">{title}</h3>
-          {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-function Stat({ label, value, hint, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-xl font-extrabold ${tone}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
-    </div>
-  );
-}
 
 /**
  * A partner's score out of a hundred, from the six things the client's sheet
@@ -600,31 +579,14 @@ export default function Partners() {
         </button>
       </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="card px-4 py-4">
-            <p className="text-sm font-semibold text-ink-500">{k.label}</p>
-            <p className={`num mt-1 font-display text-2xl font-extrabold ${k.tone || 'text-ink-900'}`}>{k.value}</p>
-            {k.hint && <p className="mt-0.5 text-xs text-ink-400">{k.hint}</p>}
-          </div>
-        ))}
-      </div>
+      <KpiRow items={kpis} cols={8} />
 
-      <div className="mb-5 mt-6 flex flex-wrap gap-2">
-        {VIEWS.map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-              view === v
-                ? 'bg-ink-900 text-white shadow-sm'
-                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
-            }`}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
+      <SectionTabs
+        className="mb-5 mt-6"
+        items={VIEWS}
+        value={view}
+        onChange={setView}
+      />
 
       <div className="grid gap-5 xl:grid-cols-2">{body[view]}</div>
 

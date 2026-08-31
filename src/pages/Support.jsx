@@ -18,6 +18,9 @@ import FormModal from '../components/ui/FormModal.jsx';
 import TicketDetails from '../components/support/TicketDetails.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
+import Block from '../components/ui/Block.jsx';
+import Stat from '../components/ui/Stat.jsx';
+import KpiRow from '../components/ui/KpiRow.jsx';
 import {
   ticketStages,
   stageTone,
@@ -30,32 +33,6 @@ import {
 
 const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
 const CATEGORIES = Object.keys(ticketCategories);
-
-/** A plain box. */
-function Block({ title, note, wide, action, children }) {
-  return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-base font-extrabold text-ink-900">{title}</h3>
-          {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-function Stat({ label, value, hint, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-xl font-extrabold ${tone}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
-    </div>
-  );
-}
 
 /**
  * Support and complaints, built to the client's sheet: the funnel, the ticket
@@ -201,15 +178,7 @@ export default function Support() {
         </button>
       </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="card px-4 py-4">
-            <p className="text-sm font-semibold text-ink-500">{k.label}</p>
-            <p className={`num mt-1 font-display text-2xl font-extrabold ${k.tone || 'text-ink-900'}`}>{k.value}</p>
-            {k.hint && <p className="mt-0.5 text-xs text-ink-400">{k.hint}</p>}
-          </div>
-        ))}
-      </div>
+      <KpiRow items={kpis} cols={8} />
 
       <div className="card mt-6 flex flex-wrap items-center gap-2 px-4 py-3.5">
         <p className="eyebrow mr-1">Quick actions</p>

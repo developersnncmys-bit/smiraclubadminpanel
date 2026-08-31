@@ -1,21 +1,9 @@
 import { useState } from 'react';
 import {
-  Plus,
-  Crown,
-  Check,
-  X,
-  Pencil,
-  Trash2,
-  Globe,
-  EyeOff,
-  Sparkles,
-  UserPlus,
-  IndianRupee,
-  ShieldCheck,
-  Gift,
+  Plus, Crown, Check, X, Pencil, Trash2, Globe, EyeOff, Sparkles, Gift,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
-import StatCard from '../components/ui/StatCard.jsx';
+import KpiRow from '../components/ui/KpiRow.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
@@ -271,11 +259,16 @@ export default function Memberships({ embedded = false }) {
         </PageHeader>
       )}
 
-      <div className="mb-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Globe} label="Live on website" value={`${published.length} / ${memberships.length}`} />
-        <StatCard icon={UserPlus} label="Website signups" value={memberSignups.length} />
-        <StatCard icon={ShieldCheck} label="Active members" value={activeMembers} />
-        <StatCard icon={IndianRupee} label="Membership value" value={inr(membershipRevenue)} skin="brand" />
+      <div className="mb-8">
+        <KpiRow
+          cols={4}
+          items={[
+            { label: 'Live on website', value: `${published.length} / ${memberships.length}` },
+            { label: 'Website signups', value: memberSignups.length },
+            { label: 'Active members', value: activeMembers },
+            { label: 'Membership value', value: inr(membershipRevenue), tone: 'text-brand-700' },
+          ]}
+        />
       </div>
 
       {/* Plans ------------------------------------------------------------ */}

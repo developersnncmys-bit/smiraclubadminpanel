@@ -16,6 +16,9 @@ import {
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { inr } from '../../data/mockData.js';
+import Stat from '../ui/Stat.jsx';
+import Field from '../ui/Field.jsx';
+import DrawerTabs from '../ui/DrawerTabs.jsx';
 import {
   onboardingFlow,
   settlementFlow,
@@ -29,24 +32,6 @@ const TABS = [
 ];
 
 const docTone = { Verified: 'green', Submitted: 'sky', Pending: 'amber', Missing: 'rose', Expired: 'rose' };
-
-function Field({ label, children }) {
-  return (
-    <div className="border-b border-ink-900/[0.07] px-4 py-2.5">
-      <p className="eyebrow">{label}</p>
-      <div className="mt-1 text-sm text-ink-800">{children}</div>
-    </div>
-  );
-}
-
-function Stat({ label, value, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-lg font-extrabold ${tone}`}>{value}</p>
-    </div>
-  );
-}
 
 /**
  * One partner, from the paperwork that got them on board to the money that
@@ -103,19 +88,19 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
                 </p>
               )}
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <a href={`tel:${digits(p.phone)}`} className="grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white" title="Call">
+                <a href={`tel:${digits(p.phone)}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Call">
                   <Phone size={15} />
                 </a>
-                <a href={`https://wa.me/${digits(p.whatsapp)}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500 text-white" title="WhatsApp">
+                <a href={`https://wa.me/${digits(p.whatsapp)}`} target="_blank" rel="noreferrer" className="icon-btn h-9 w-9 hover:border-emerald-400 hover:text-emerald-600" title="WhatsApp">
                   <MessageCircle size={15} />
                 </a>
-                <a href={`mailto:${p.email}`} className="grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white" title="Email">
+                <a href={`mailto:${p.email}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Email">
                   <Mail size={15} />
                 </a>
-                <button onClick={() => actions.approve(p)} className="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-white" title="Approve">
+                <button onClick={() => actions.approve(p)} className="icon-btn h-9 w-9 disabled:opacity-40" title="Approve">
                   <ShieldCheck size={15} />
                 </button>
-                <button onClick={() => actions.suspend(p)} className="grid h-9 w-9 place-items-center rounded-full bg-rose-500 text-white" title="Suspend">
+                <button onClick={() => actions.suspend(p)} className="icon-btn-danger h-9 w-9" title="Suspend">
                   <Ban size={15} />
                 </button>
               </div>
@@ -140,19 +125,7 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
           </section>
 
           <section className="card flex min-h-0 flex-col overflow-hidden">
-            <div className="no-scrollbar flex overflow-x-auto border-b border-ink-900/[0.07] bg-surface-soft/50">
-              {TABS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-bold transition ${
-                    tab === t ? 'border-brand-600 bg-white text-brand-700' : 'border-transparent text-ink-500 hover:text-ink-800'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+            <DrawerTabs items={TABS} value={tab} onChange={setTab} />
 
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
               {tab === 'Overview' && (

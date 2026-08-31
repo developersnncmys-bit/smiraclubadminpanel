@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 const MARKERS = {
   '/': 'Needs a person',
   '/team': 'High workload',
-  '/enquiries': 'Sales overview',
+  '/enquiries': 'Pipeline value',
   '/bookings': 'Booking desk',
   '/customers': 'Memberships',
   '/memberships': 'Membership plans',

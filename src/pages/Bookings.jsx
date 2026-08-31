@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import {
-  Plus, CalendarCheck, Wallet, Users, TrendingUp, Pencil, Trash2, Tag, Receipt,
-  LayoutGrid, Rows3, Crown,
+  Plus, Pencil, Trash2, Tag, Receipt, LayoutGrid, Rows3, Crown,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
-import StatCard from '../components/ui/StatCard.jsx';
+import KpiRow from '../components/ui/KpiRow.jsx';
 import RowMenu from '../components/ui/RowMenu.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
@@ -17,6 +16,7 @@ import { useApp, byOwner } from '../store/AppStore.jsx';
 import { useNavigate } from 'react-router-dom';
 import { bookingStatusTone, bookingTypes, bookingSources, inr, shortInr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
+import SectionTabs from '../components/ui/SectionTabs.jsx';
 
 const STATUSES = ['Confirmed', 'Part paid', 'Pending', 'Completed', 'Cancelled'];
 
@@ -163,27 +163,15 @@ export default function Bookings() {
         </button>
       </PageHeader>
 
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        {[
+      <SectionTabs
+        className="mb-5"
+        items={[
           { key: 'list', label: 'Bookings', icon: Rows3, count: rows.length },
           { key: 'overview', label: 'Booking desk', icon: LayoutGrid },
-        ].map((v) => (
-          <button
-            key={v.key}
-            onClick={() => setView(v.key)}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-              view === v.key
-                ? 'bg-ink-900 text-white shadow-sm'
-                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
-            }`}
-          >
-            <v.icon size={15} /> {v.label}
-            {v.count != null && (
-              <span className={`num ${view === v.key ? 'text-white/60' : 'text-ink-400'}`}>{v.count}</span>
-            )}
-          </button>
-        ))}
-      </div>
+        ]}
+        value={view}
+        onChange={setView}
+      />
 
       {view === 'overview' && (
         <BookingOverview
@@ -222,12 +210,15 @@ export default function Bookings() {
 
       {view === 'list' && (
       <>
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={CalendarCheck} label="Total bookings" value={rows.length} skin="brand" />
-        <StatCard icon={TrendingUp} label="Booked value" value={shortInr(booked)} />
-        <StatCard icon={Wallet} label="Collected" value={shortInr(collected)} />
-        <StatCard icon={Users} label="Travellers" value={pax} />
-      </div>
+      <KpiRow
+        cols={4}
+        items={[
+          { label: 'Total bookings', value: rows.length },
+          { label: 'Booked value', value: shortInr(booked) },
+          { label: 'Collected', value: shortInr(collected), tone: 'text-brand-700' },
+          { label: 'Travellers', value: pax },
+        ]}
+      />
 
       <DataTable
         columns={columns}

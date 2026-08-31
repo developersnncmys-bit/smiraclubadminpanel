@@ -17,6 +17,9 @@ import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr } from '../data/mockData.js';
+import Block from '../components/ui/Block.jsx';
+import Stat from '../components/ui/Stat.jsx';
+import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
   homepageSections,
   offerTypes,
@@ -61,31 +64,6 @@ const SECTIONS = [
   'Redemptions',
   'Fraud controls',
 ];
-
-function Block({ title, note, wide, action, children }) {
-  return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-base font-extrabold text-ink-900">{title}</h3>
-          {note && <p className="mt-0.5 text-sm text-ink-500">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-function Stat({ label, value, hint, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-xl font-extrabold ${tone}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
-    </div>
-  );
-}
 
 function Table({ head, rows, empty = 'Nothing here yet.', foot }) {
   return (
@@ -857,21 +835,12 @@ export default function Offers() {
         </button>
       </PageHeader>
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        {SECTIONS.map((s) => (
-          <button
-            key={s}
-            onClick={() => setSection(s)}
-            className={`rounded-xl px-3.5 py-2 text-sm font-bold transition ${
-              section === s
-                ? 'bg-ink-900 text-white shadow-sm'
-                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
+      <SectionTabs
+        className="mb-5"
+        items={SECTIONS}
+        value={section}
+        onChange={setSection}
+      />
 
       <div className="grid gap-5 xl:grid-cols-2">{body[section]}</div>
     </>

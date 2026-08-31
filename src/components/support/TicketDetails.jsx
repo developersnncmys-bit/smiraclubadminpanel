@@ -16,27 +16,11 @@ import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { stageTone, ticketStages, priorities, escalationLevels } from '../../data/supportData.js';
 import { inr } from '../../data/mockData.js';
+import Stat from '../ui/Stat.jsx';
+import Field from '../ui/Field.jsx';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
-
-function Field({ label, children }) {
-  return (
-    <div className="border-b border-ink-900/[0.07] px-4 py-2.5">
-      <p className="eyebrow">{label}</p>
-      <div className="mt-1 text-sm text-ink-800">{children}</div>
-    </div>
-  );
-}
-
-function Stat({ label, value, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-lg font-extrabold ${tone}`}>{value}</p>
-    </div>
-  );
-}
 
 /**
  * One ticket, end to end: who is complaining and what they are worth, what
@@ -124,28 +108,28 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
                 )}
               </div>
               <div className="mt-4 flex justify-center gap-2">
-                <a href={`tel:${phone}`} className="grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white" title="Call">
+                <a href={`tel:${phone}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Call">
                   <Phone size={15} />
                 </a>
                 <a
                   href={`https://wa.me/${phone}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500 text-white"
+                  className="icon-btn h-9 w-9 hover:border-emerald-400 hover:text-emerald-600"
                   title="WhatsApp"
                 >
                   <MessageCircle size={15} />
                 </a>
                 <button
                   onClick={() => actions.escalate(t)}
-                  className="grid h-9 w-9 place-items-center rounded-full bg-rose-500 text-white"
+                  className="icon-btn-danger h-9 w-9"
                   title="Escalate"
                 >
                   <ArrowUpRight size={15} />
                 </button>
                 <button
                   onClick={() => actions.assign(t)}
-                  className="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-white"
+                  className="icon-btn h-9 w-9 disabled:opacity-40"
                   title="Reassign"
                 >
                   <UserCheck size={15} />

@@ -18,28 +18,10 @@ import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { bookingStatusTone, signupTone, inr } from '../../data/mockData.js';
 import { findMembership, membershipStanding } from '../../lib/membership.js';
+import Stat from '../ui/Stat.jsx';
+import Field from '../ui/Field.jsx';
 
 const digits = (value) => String(value || '').replace(/[^\d]/g, '');
-
-/** Label over value. */
-function Field({ label, children }) {
-  return (
-    <div className="border-b border-ink-900/[0.07] px-4 py-3">
-      <p className="eyebrow">{label}</p>
-      <div className="mt-1.5 text-sm text-ink-800">{children}</div>
-    </div>
-  );
-}
-
-/** A number with its caption. */
-function Stat({ label, value, tone = 'text-ink-900' }) {
-  return (
-    <div className="rounded-xl bg-surface-soft px-4 py-3.5">
-      <p className="text-xs font-semibold text-ink-500">{label}</p>
-      <p className={`num mt-1 font-display text-xl font-extrabold ${tone}`}>{value}</p>
-    </div>
-  );
-}
 
 const barTone = {
   green: 'bg-emerald-500',
@@ -158,7 +140,7 @@ export default function BookingDetails({
                   onClick={() => { window.location.href = `tel:${phone}`; }}
                   disabled={!phone}
                   title="Call"
-                  className="grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white transition hover:opacity-90 disabled:opacity-30"
+                  className="icon-btn h-9 w-9 disabled:opacity-40"
                 >
                   <Phone size={15} />
                 </button>
@@ -166,7 +148,7 @@ export default function BookingDetails({
                   onClick={() => window.open(`https://wa.me/${phone}`, '_blank')}
                   disabled={!phone}
                   title="WhatsApp"
-                  className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500 text-white transition hover:opacity-90 disabled:opacity-30"
+                  className="icon-btn h-9 w-9 hover:border-emerald-400 hover:text-emerald-600"
                 >
                   <MessageCircle size={15} />
                 </button>
@@ -174,14 +156,14 @@ export default function BookingDetails({
                   onClick={() => { window.location.href = `mailto:${person.email}`; }}
                   disabled={!person.email}
                   title="Email"
-                  className="grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white transition hover:opacity-90 disabled:opacity-30"
+                  className="icon-btn h-9 w-9 disabled:opacity-40"
                 >
                   <Mail size={15} />
                 </button>
                 <button
                   onClick={() => onEdit(b)}
                   title="Edit booking"
-                  className="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-white transition hover:opacity-90"
+                  className="icon-btn h-9 w-9 disabled:opacity-40"
                 >
                   <Pencil size={15} />
                 </button>

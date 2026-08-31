@@ -58,8 +58,8 @@ function Group({ title, items }) {
             key={label}
             className="flex items-center justify-between gap-3 border-b border-ink-900/[0.07] py-2"
           >
-            <dt className="text-sm text-ink-500">{label}</dt>
-            <dd className={`num text-sm font-bold ${tone || 'text-ink-900'}`}>{value}</dd>
+            <dt className="min-w-0 truncate text-[13px] text-ink-500">{label}</dt>
+            <dd className={`num shrink-0 text-[13px] font-bold ${tone || 'text-ink-900'}`}>{value}</dd>
           </div>
         ))}
       </dl>
@@ -73,8 +73,10 @@ function Strip({ items }) {
     <div className="grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
       {items.map(([label, value, tone]) => (
         <div key={label} className="px-4 py-3">
-          <p className={`num font-display text-lg font-extrabold ${tone || 'text-ink-900'}`}>{value}</p>
-          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-400">{label}</p>
+          <p className={`num truncate font-display text-lg font-extrabold leading-none ${tone || 'text-ink-900'}`}>
+            {value}
+          </p>
+          <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">{label}</p>
         </div>
       ))}
     </div>
@@ -148,7 +150,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
 
-      <aside className="flex h-full w-full max-w-[880px] flex-col bg-surface-base shadow-lift">
+      <aside className="flex h-full w-full max-w-[980px] flex-col bg-surface-base shadow-lift">
         <header className="flex items-center gap-3 border-b border-ink-900/[0.07] bg-white px-5 py-3.5">
           <h2 className="font-display text-lg font-extrabold text-ink-900">{m.name}</h2>
           <span className="num text-sm text-ink-400">{m.empId || m.id}</span>
@@ -168,7 +170,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 lg:grid-cols-[290px_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 lg:grid-cols-[330px_minmax(0,1fr)]">
           {/* Who they are, and what they are on right now */}
           <section className="card h-fit p-5">
             <div className="flex items-center gap-3">
@@ -181,8 +183,10 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
                 />
               </span>
               <div className="min-w-0">
-                <p className="truncate font-display text-base font-extrabold text-ink-900">{m.name}</p>
-                <p className="truncate text-sm text-ink-500">{m.role}</p>
+                <p className="truncate font-display text-[1.05rem] font-extrabold leading-tight text-ink-900">
+                  {m.name}
+                </p>
+                <p className="truncate text-[13px] text-ink-500">{m.role}</p>
               </div>
             </div>
 
@@ -199,40 +203,47 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
               )}
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-1.5">
+            <div className="mt-3.5 flex flex-wrap gap-1.5">
               {quick.map((q) => (
-                <button key={q.label} onClick={q.run} className="qa">
-                  <q.icon size={16} />
-                  {q.short}
+                <button key={q.label} onClick={q.run} className="btn-line btn-sm" title={q.label}>
+                  <q.icon size={13} /> {q.short}
                 </button>
               ))}
             </div>
 
             {/* The one thing management opens this drawer to see */}
-            <div className="mt-4 rounded-xl bg-surface-soft px-3.5 py-3">
-              <p className="text-sm font-bold text-ink-900">{m.activityType || 'Idle'}</p>
-              <p className="text-sm text-ink-600">{m.activity || '—'}</p>
-              <p className="mt-1 text-xs text-ink-400">
+            <div className="mt-4 rounded-xl bg-surface-soft px-4 py-3.5">
+              <p className="eyebrow">Doing now</p>
+              <p className="mt-1 text-[15px] font-bold leading-snug text-ink-900">{m.activityType || 'Idle'}</p>
+              <p className="mt-0.5 text-[13px] leading-snug text-ink-600">{m.activity || '—'}</p>
+              <p className="mt-1.5 text-xs text-ink-400">
                 since {m.activityStarted || '—'} · last active {m.lastActive}
               </p>
               {m.current && (
-                <p className="mt-2 border-t border-ink-900/[0.07] pt-2 text-xs text-ink-600">
-                  <b className="text-ink-800">{m.current.customer}</b> — next: {m.current.next}
+                <p className="mt-2.5 border-t border-ink-900/[0.07] pt-2.5 text-xs leading-relaxed text-ink-600">
+                  <b className="text-ink-800">{m.current.customer}</b>
+                  <br />
+                  next: {m.current.next}
                 </p>
               )}
             </div>
 
-            <div className="mt-4">
-              <Group
-                items={[
-                  ['Team', m.department || 'Sales desk'],
-                  ['Working from', `${d.mode || 'Office'} · ${d.source || 'Web app'}`],
-                  ['Phone', m.phone],
-                  ['Email', <span key="e" className="break-all text-ink-800">{m.email}</span>],
-                  ['Account', m.status],
-                ]}
-              />
-            </div>
+            {/* The record, one field a line so nothing breaks mid-word */}
+            <dl className="mt-4">
+              {[
+                ['Employee ID', <span className="num">{m.empId || m.id}</span>],
+                ['Team', m.department || 'Sales desk'],
+                ['Working from', `${d.mode || 'Office'} · ${d.source || 'Web app'}`],
+                ['Phone', <span className="num whitespace-nowrap">{m.phone}</span>],
+                ['Email', <span className="break-words">{m.email}</span>],
+                ['Account', m.status],
+              ].map(([label, v]) => (
+                <div key={label} className="border-b border-ink-900/[0.07] py-2 last:border-0">
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">{label}</dt>
+                  <dd className="mt-0.5 text-[13px] font-semibold leading-snug text-ink-800">{v}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
 
           {/* Everything the sheet tracks, one tab at a time */}
@@ -250,7 +261,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
                       ['Visits', m.visits ?? 0],
                       ['Follow-ups', m.followUpDetail?.due ?? 0],
                       ['Closings', m.bookings ?? 0, 'text-emerald-600'],
-                      ['Revenue', m.revenue ? inr(m.revenue) : '—', 'text-brand-700'],
+                      ['Revenue', m.revenue ? shortInr(m.revenue) : '—', 'text-brand-700'],
                       ['Score', `${score}`, scoreText],
                     ]}
                   />

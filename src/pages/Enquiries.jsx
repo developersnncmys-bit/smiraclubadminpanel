@@ -433,7 +433,7 @@ export default function Enquiries() {
             { label: 'Open pipeline', value: open.length, hint: 'being worked on', icon: Layers, progress: rows.length ? Math.round((open.length / rows.length) * 100) : 0 },
             { label: 'Presentations', value: presented.length, hint: 'sent or scheduled', icon: Presentation, progress: rows.length ? Math.round((presented.length / rows.length) * 100) : 0 },
             { label: 'Won', value: won.length, hint: 'closed as customers', icon: Trophy, progress: rows.length ? Math.round((won.length / rows.length) * 100) : 0, tone: 'text-emerald-600' },
-            { label: 'Pipeline value', value: inr(value(open)), hint: `across ${open.length} open leads`, icon: IndianRupee, tone: 'text-brand-700' },
+            { label: 'Pipeline value', value: shortInr(value(open)), hint: `${open.length} open leads`, icon: IndianRupee, tone: 'text-brand-700' },
             { label: 'Pending payments', value: shortInr(pending), hint: 'still to collect', icon: Wallet, tone: pending ? 'text-amber-600' : 'text-ink-900' },
           ]}
         />

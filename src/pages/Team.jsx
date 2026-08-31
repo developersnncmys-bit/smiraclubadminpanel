@@ -428,7 +428,7 @@ export default function Team() {
             { label: 'Follow-ups', value: `${fuDone}/${fuDue}`, hint: `${fuOverdue} overdue`, icon: CalendarClock, progress: pct(fuDone, fuDue), tone: fuOverdue ? 'text-amber-600' : 'text-ink-900' },
             { label: 'Presentations', value: presDone, hint: `${presConv} converted`, icon: Presentation, progress: pct(presConv, presDone) },
             { label: 'Closings', value: closings, hint: `${visitsDone} visits completed`, icon: Trophy, tone: 'text-emerald-600' },
-            { label: 'Revenue', value: inr(revenue), hint: `of ${shortInr(target)} target`, icon: IndianRupee, progress: achievement, tone: 'text-brand-700' },
+            { label: 'Revenue', value: shortInr(revenue), hint: `of ${shortInr(target)} target`, icon: IndianRupee, progress: achievement, tone: 'text-brand-700' },
           ]}
         />
       </div>

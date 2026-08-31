@@ -34,34 +34,35 @@ export default function KpiRow({ items, cols = 4 }) {
         const skin = SKIN[k.tone] || PLAIN;
         const pct = k.progress == null ? null : Math.max(0, Math.min(100, Math.round(k.progress)));
         return (
-          <div key={k.label} className="card card-hover px-3.5 py-2.5">
-            <div className="flex items-center gap-2.5">
+          <div key={k.label} className="card card-hover px-3.5 py-3">
+            {/* The label owns its line, so it never loses room to the number */}
+            <div className="flex items-center gap-2">
               {k.icon && (
-                <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${skin.chip}`}>
-                  <k.icon size={14} strokeWidth={2.3} />
+                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg ${skin.chip}`}>
+                  <k.icon size={13} strokeWidth={2.4} />
                 </span>
               )}
               <p className="min-w-0 flex-1 truncate text-[11px] font-bold uppercase tracking-[0.06em] text-ink-400">
                 {k.label}
               </p>
-              <p className={`num shrink-0 font-display text-lg font-extrabold leading-none ${k.tone || 'text-ink-900'}`}>
-                {k.value}
-              </p>
             </div>
 
-            {(pct != null || k.hint) && (
-              <div className="mt-2 flex items-center gap-2">
-                {pct != null && (
-                  <span className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-surface-soft">
-                    <span className={`block h-full rounded-full ${skin.bar}`} style={{ width: `${pct}%` }} />
-                  </span>
-                )}
-                <p className="min-w-0 flex-1 truncate text-[11px] text-ink-400">
-                  {pct != null && <span className="num font-bold text-ink-500">{pct}% </span>}
-                  {k.hint}
-                </p>
-              </div>
+            <div className="mt-1.5 flex items-baseline gap-2">
+              <p className={`num min-w-0 truncate font-display text-xl font-extrabold leading-none ${k.tone || 'text-ink-900'}`}>
+                {k.value}
+              </p>
+              {pct != null && (
+                <span className="num ml-auto shrink-0 text-[11px] font-bold text-ink-400">{pct}%</span>
+              )}
+            </div>
+
+            {pct != null && (
+              <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-surface-soft">
+                <span className={`block h-full rounded-full ${skin.bar}`} style={{ width: `${pct}%` }} />
+              </span>
             )}
+
+            {k.hint && <p className="mt-1.5 truncate text-[11px] text-ink-400">{k.hint}</p>}
           </div>
         );
       })}

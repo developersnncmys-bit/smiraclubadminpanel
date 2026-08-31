@@ -19,7 +19,7 @@ import KpiRow from '../components/ui/KpiRow.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { inr, membershipAmount } from '../data/mockData.js';
+import { inr, shortInr, membershipAmount } from '../data/mockData.js';
 
 const BILLING = ['Yearly', 'Half-yearly', 'Monthly', 'Lifetime'];
 
@@ -283,7 +283,7 @@ export default function Memberships({ embedded = false }) {
             },
             { label: 'Website signups', value: memberSignups.length, icon: UserPlus },
             { label: 'Active members', value: activeMembers, icon: ShieldCheck },
-            { label: 'Membership value', value: inr(membershipRevenue), icon: IndianRupee, tone: 'text-brand-700' },
+            { label: 'Membership value', value: shortInr(membershipRevenue), icon: IndianRupee, tone: 'text-brand-700' },
           ]}
         />
       </div>

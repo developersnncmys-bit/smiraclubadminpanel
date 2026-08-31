@@ -42,7 +42,13 @@ export default function MenuButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={variant === 'action' ? 'btn-action' : 'btn-line'}
+        className={
+          {
+            action: 'btn-action',
+            dark: 'btn inline-flex items-center gap-2 rounded-xl bg-ink-900 px-3.5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-ink-800',
+            line: 'btn-line',
+          }[variant] || 'btn-line'
+        }
         title={title}
       >
         {Icon && <Icon size={15} />}

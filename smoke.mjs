@@ -14,8 +14,8 @@ const MARKERS = {
   '/': 'Needs a person',
   '/team': 'High workload',
   '/enquiries': 'Pipeline value',
-  '/bookings': 'Booking desk',
-  '/customers': 'Memberships',
+  '/bookings': 'Booked value',
+  '/customers': 'Gifts to hand over',
   '/memberships': 'Membership plans',
   '/partners': 'Every partner',
   '/offers': 'Revenue from offers',
@@ -25,7 +25,7 @@ const MARKERS = {
   '/whatsapp': 'Conversations today',
   '/inventory': 'Inventory value',
   '/revenue': 'Total revenue',
-  '/reports': 'Report builder',
+  '/reports': 'The headline numbers',
   '/support': 'Complaint funnel',
 };
 

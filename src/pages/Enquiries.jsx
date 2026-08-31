@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Phone, Mail, MessageCircle, FileText, Plus, Upload, Pencil, Trash2, UserCheck, Tag,
-  Crown, LayoutGrid, Rows3, Search, Download, UserPlus, ArrowRightLeft, CalendarClock,
-  Presentation, Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal, X, Filter, Zap,
-  Users, Layers, Trophy, IndianRupee,
+  Phone, MessageCircle, FileText, Plus, Upload, Pencil,
+  Trash2, UserCheck, Tag, Crown, LayoutGrid, Rows3,
+  Search, Download, UserPlus, ArrowRightLeft, CalendarClock, Presentation,
+  Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal,
+  X, Filter, Zap, Users, Layers, Trophy,
+  IndianRupee, Eye, Mail,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -21,7 +23,7 @@ import LeadDetails from '../components/sales/LeadDetails.jsx';
 import SalesOverview from '../components/sales/SalesOverview.jsx';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
-import { statusTone, enquiryStatuses, inr, shortInr } from '../data/mockData.js';
+import { statusTone, enquiryStatuses, stageProbability, inr, shortInr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
 import { findMembership, membershipStanding } from '../lib/membership.js';
 
@@ -65,6 +67,38 @@ const STAGE = {
   Lost: { dot: 'bg-rose-400', rail: 'before:bg-rose-400' },
 };
 const priorityTone = { High: 'rose', Medium: 'amber', Low: 'slate' };
+
+/** One fact on a lead card: the value, then what it is. */
+function Fact({ label, value, tone }) {
+  return (
+    <div className="min-w-0 px-1 text-center">
+      <p className={`num truncate font-display text-sm font-extrabold leading-none ${tone || 'text-ink-900'}`}>
+        {value}
+      </p>
+      <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-ink-400">{label}</p>
+    </div>
+  );
+}
+
+/** How likely this stage is to close, drawn the way the team's score is. */
+function Ring({ value, size = 44 }) {
+  const r = (size - 7) / 2;
+  const c = 2 * Math.PI * r;
+  const stroke = value >= 70 ? '#10b981' : value >= 40 ? '#f59e0b' : '#94a3b8';
+  return (
+    <span className="relative inline-grid shrink-0 place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eef2f7" strokeWidth="6" />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="6"
+          strokeLinecap="round" strokeDasharray={c}
+          strokeDashoffset={c - (Math.min(100, Math.max(0, value)) / 100) * c}
+        />
+      </svg>
+      <span className="num absolute text-[11px] font-extrabold text-ink-900">{value}%</span>
+    </span>
+  );
+}
 const digits = (phone) => String(phone).replace(/[^\d]/g, '');
 
 /**
@@ -251,6 +285,13 @@ export default function Enquiries() {
     { label: 'Change status', icon: Tag, onClick: () => setStatusFor([r.id]) },
     { label: 'Schedule follow-up', icon: CalendarClock, onClick: () => act('task', { type: 'Follow-up', title: `Follow up with ${r.name}`, customer: r.name, suggest: `Follow-up — ${r.destination}` }) },
     { label: 'Create quotation', icon: FileText, onClick: () => makeQuote(r) },
+    {
+      label: 'Send email',
+      icon: Mail,
+      onClick: () => {
+        window.location.href = `mailto:${r.email}?subject=${encodeURIComponent(`Your ${r.destination} trip`)}`;
+      },
+    },
     { label: 'Delete', icon: Trash2, danger: true, onClick: () => setConfirm([r.id]) },
   ];
 
@@ -472,67 +513,73 @@ export default function Enquiries() {
           </div>
 
           {layout === 'cards' && (
-            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+            <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
               {listRows.map((r) => {
                 const plan = planOf(r);
+                const chance = Math.round((stageProbability[r.status] || 0) * 100);
                 return (
-                  <article key={r.id} className={`card rail ${STAGE[r.status]?.rail || 'before:bg-ink-400'} p-5 pl-6`}>
+                  <article
+                    key={r.id}
+                    onClick={() => setViewing(r)}
+                    className={`card rail ${STAGE[r.status]?.rail || 'before:bg-ink-400'} cursor-pointer p-4 pl-5 transition hover:shadow-raised`}
+                  >
+                    {/* Who, and where they sit in the pipeline */}
                     <div className="flex items-start gap-3">
-                      <button onClick={() => setViewing(r)} className="shrink-0" title="Open the lead">
-                        <Avatar name={r.name} />
-                      </button>
+                      <Avatar name={r.name} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <button onClick={() => setViewing(r)} className="min-w-0 text-left">
-                            <p className="truncate font-display text-base font-extrabold text-ink-900 hover:text-brand-700">
+                          <div className="min-w-0">
+                            <p className="truncate font-display text-[15px] font-extrabold leading-tight text-ink-900">
                               {r.name}
                             </p>
                             <p className="num truncate text-xs text-ink-500">{r.id} · {r.phone}</p>
-                          </button>
-                          <div className="flex shrink-0 items-center gap-1.5">
-                            {plan && (
-                              <Badge tone="amber"><Crown size={11} /> {plan.signup.plan}</Badge>
-                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            {plan && <Badge tone="amber"><Crown size={11} /> {plan.signup.plan}</Badge>}
                             <RowMenu items={menuFor(r)} />
                           </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           <Badge tone={statusTone[r.status]} dot>{r.status}</Badge>
                           {r.priority && <Badge tone={priorityTone[r.priority] || 'slate'}>{r.priority}</Badge>}
-                          {r.label && <Badge tone="sky">{r.label}</Badge>}
-                          {r.owner === 'Unassigned' ? (
-                            <button className="chip border border-orange-300 bg-orange-50 text-orange-700" onClick={() => setAssignFor([r.id])}>
+                          {r.owner === 'Unassigned' && (
+                            <button
+                              className="chip border border-orange-300 bg-orange-50 text-orange-700"
+                              onClick={(e) => { e.stopPropagation(); setAssignFor([r.id]); }}
+                            >
                               Unassigned
                             </button>
-                          ) : (
-                            <span className="chip bg-surface-soft text-ink-600">{r.owner}</span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* What they asked for */}
-                    <div className="mt-4 grid grid-cols-2 divide-x divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] py-3 sm:grid-cols-4">
-                      {[
-                        ['Destination', r.destination],
-                        ['Travellers', r.pax],
-                        ['Travel date', r.travelDate || '—'],
-                        ['Budget', r.budget ? inr(r.budget) : '—'],
-                      ].map(([label, v]) => (
-                        <div key={label} className="px-3 text-center">
-                          <p className="num truncate font-display text-sm font-extrabold text-ink-900">{v}</p>
-                          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-400">{label}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500">
-                      <span className="inline-flex items-center gap-1"><Clock size={11} /> last contact {r.lastContact || '—'}</span>
-                      <span className={r.nextFollowUp ? 'font-semibold text-ink-700' : ''}>next {r.nextFollowUp || 'nothing scheduled'}</span>
-                      <span>via {r.source}</span>
+                    {/* The one line that says what they want */}
+                    <p className="mt-3 truncate text-[13px] text-ink-700">
+                      <span className="font-bold text-ink-900">{r.destination}</span>
+                      {` · ${r.pax} pax · ${r.travelDate || 'dates open'}`}
+                    </p>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-ink-400">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock size={11} /> last contact {r.lastContact || '—'}
+                      </span>
+                      <span className={r.nextFollowUp ? 'font-semibold text-ink-600' : ''}>
+                        next {r.nextFollowUp || 'nothing scheduled'}
+                      </span>
                     </p>
 
-                    <div className="mt-4 flex flex-wrap gap-1.5">
+                    {/* The three facts management reads, and the chance of closing */}
+                    <div className="mt-3 flex items-center gap-3 border-t border-ink-900/[0.07] pt-3">
+                      <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
+                        <Fact label="Budget" value={r.budget ? shortInr(r.budget) : '—'} tone="text-brand-700" />
+                        <Fact label="Source" value={r.source || '—'} />
+                        <Fact label="Owner" value={r.owner === 'Unassigned' ? '—' : r.owner} />
+                      </div>
+                      <Ring value={chance} />
+                    </div>
+
+                    {/* Three actions; the rest live in the lead panel */}
+                    <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                       <a href={`tel:${digits(r.phone)}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
                       <a
                         href={`https://wa.me/${digits(r.phone)}?text=${encodeURIComponent(`Hi ${r.name}, thanks for your ${r.destination} enquiry with Smira Club!`)}`}
@@ -540,25 +587,20 @@ export default function Enquiries() {
                       >
                         <MessageCircle size={13} /> WhatsApp
                       </a>
-                      <a href={`mailto:${r.email}?subject=${encodeURIComponent(`Your ${r.destination} trip`)}`} className="btn-line btn-sm">
-                        <Mail size={13} /> Email
-                      </a>
-                      <button className="btn-line btn-sm" onClick={() => makeQuote(r)}><FileText size={13} /> Quote</button>
-                      <button
-                        className="btn-line btn-sm"
-                        onClick={() => act('task', { type: 'Follow-up', title: `Follow up with ${r.name}`, customer: r.name, suggest: `Follow-up — ${r.destination}` })}
-                      >
-                        <CalendarClock size={13} /> Follow-up
+                      <button className="btn-line btn-sm" onClick={() => setViewing(r)}>
+                        <Eye size={13} /> Details
                       </button>
-                      <button className="btn-action btn-sm" onClick={() => setStatusFor([r.id])}>
-                        <Tag size={13} /> Move stage
-                      </button>
+                      {!['Won', 'Lost'].includes(r.status) && (
+                        <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([r.id])}>
+                          <Tag size={13} /> Move stage
+                        </button>
+                      )}
                     </div>
                   </article>
                 );
               })}
               {listRows.length === 0 && (
-                <div className="card border-dashed p-14 text-center text-sm text-ink-500 xl:col-span-2">
+                <div className="card border-dashed p-14 text-center text-sm text-ink-500 lg:col-span-2 2xl:col-span-3">
                   No leads match this view.
                 </div>
               )}

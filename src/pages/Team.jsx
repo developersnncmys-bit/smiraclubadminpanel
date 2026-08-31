@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  UserPlus, Phone, MessageCircle, Pencil, Trash2, ShieldCheck, Send, AlertTriangle,
-  CheckCircle2, Info, Trophy, Search, Download, ClipboardPlus, Shuffle, Clock, MapPin,
-  History, Target, Users, Presentation, Route, CalendarClock, ListChecks, Radio, Zap, PhoneCall, IndianRupee,
-  UserCheck, UserCog, StickyNote, Flag, RefreshCw, ArrowRightLeft, Eye, BellRing,
+  UserPlus, Phone, MessageCircle, Pencil, Trash2, ShieldCheck, Send, AlertTriangle, CheckCircle2, Info, Trophy, Search, Download, ClipboardPlus, Shuffle, Clock, Target, Presentation, Route, CalendarClock, ListChecks, Radio, Zap, PhoneCall, IndianRupee, UserCheck, UserCog, StickyNote, Flag, RefreshCw, ArrowRightLeft, Eye, BellRing,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
@@ -462,106 +459,79 @@ export default function Team() {
             <p className="num text-sm text-ink-500">{rows.length} shown</p>
           </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+          <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
             {rows.map((m) => {
               const w = workloadOf(m);
               const rank = rankOf(m);
-              const d = m.day || {};
               const idle = idleMinutes(m);
-              const band = scoreBand(m.productivity ?? 0);
               const flagged = (m.notices || []).filter((n) => n.level !== 'positive').length;
               return (
-                <article key={m.id} className={`card rail ${LIVE[m.live]?.rail || 'before:bg-ink-400'} p-5 pl-6`}>
-                  {/* Who */}
+                <article
+                  key={m.id}
+                  onClick={() => setViewing(m)}
+                  className={`card rail ${LIVE[m.live]?.rail || 'before:bg-ink-400'} cursor-pointer p-4 pl-5 transition hover:shadow-raised`}
+                >
+                  {/* Who, and how they are placed */}
                   <div className="flex items-start gap-3">
-                    <button onClick={() => setViewing(m)} className="relative shrink-0" title="Open the employee drawer">
+                    <span className="relative shrink-0">
                       <Avatar name={m.name} />
                       <span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-2 ring-white ${LIVE[m.live]?.dot}`} />
-                    </button>
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <button onClick={() => setViewing(m)} className="min-w-0 text-left">
-                          <p className="truncate font-display text-base font-extrabold text-ink-900 hover:text-brand-700">{m.name}</p>
-                          <p className="truncate text-xs text-ink-500">
-                            <span className="num">{m.empId}</span> · {m.role} · {m.department}
+                        <div className="min-w-0">
+                          <p className="truncate font-display text-[15px] font-extrabold leading-tight text-ink-900">
+                            {m.name}
                           </p>
-                        </button>
-                        <div className="flex shrink-0 items-center gap-1.5">
+                          <p className="truncate text-xs text-ink-500">{m.role}</p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                           {rank === 1 && <Badge tone="amber"><Trophy size={11} /> #1</Badge>}
+                          {flagged > 0 && <Badge tone="rose" dot>{flagged}</Badge>}
                           <RowMenu items={menuFor(m)} />
                         </div>
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         <Badge tone={LIVE[m.live]?.tone || 'slate'} dot>{m.live}</Badge>
-                        <Badge tone={attendanceTone[m.attendance] || 'slate'}>{m.attendance}</Badge>
                         <Badge tone={w.tone}>{`${w.level} workload`}</Badge>
-                        {flagged > 0 && <Badge tone="rose" dot><AlertTriangle size={11} /> {flagged}</Badge>}
                       </div>
                     </div>
                   </div>
 
-                  {/* Doing now (column C) and last active (column D) */}
-                  <div className={`mt-4 rounded-xl px-3.5 py-3 ${LIVE[m.live]?.soft || 'bg-surface-soft'}`}>
-                    <p className="text-[11px] font-bold uppercase tracking-wide opacity-70">Doing now</p>
-                    <p className="mt-0.5 truncate text-sm font-bold">{m.activityType || 'No activity'}</p>
-                    <p className="truncate text-sm opacity-80">{m.activity || '—'}</p>
-                    <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs opacity-70">
-                      <span className="inline-flex items-center gap-1"><Clock size={11} /> since {m.activityStarted || '—'}</span>
-                      <span className={idle >= 30 ? 'font-bold text-rose-700' : ''}>last active {m.lastActive}</span>
-                      <span className="inline-flex items-center gap-1"><MapPin size={11} /> {d.mode || 'Office'} · {d.source || '—'}</span>
-                    </p>
-                    {m.visitTrack && (
-                      <p className="mt-1.5 border-t border-current/10 pt-1.5 text-xs opacity-80">
-                        Visit · {m.visitTrack.stage} at {m.visitTrack.place} · in {m.visitTrack.checkIn}
-                      </p>
-                    )}
-                  </div>
+                  {/* The one line that says what they are on */}
+                  <p className="mt-3 truncate text-[13px] text-ink-700">
+                    <span className="font-bold text-ink-900">{m.activityType || 'No activity'}</span>
+                    {m.activity ? ` · ${m.activity}` : ''}
+                  </p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-ink-400">
+                    <span className="inline-flex items-center gap-1">
+                      <Clock size={11} /> since {m.activityStarted || '—'}
+                    </span>
+                    <span className={idle >= 30 ? 'font-bold text-rose-600' : ''}>last active {m.lastActive}</span>
+                  </p>
 
-                  {/* The counters the sheet puts on this card */}
-                  <div className="mt-4 grid grid-cols-4 divide-x divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] py-3 sm:grid-cols-7">
-                    <Tick label="Calls" value={m.calls} />
-                    <Tick label="Conn." value={m.callDetail?.connected} tone="text-emerald-600" />
-                    <Tick label="Present." value={m.presentations} />
-                    <Tick label="Visits" value={m.visits} />
-                    <Tick label="F/up due" value={m.followUpDetail?.due} tone={m.followUpDetail?.overdue ? 'text-rose-600' : ''} />
-                    <Tick label="Tasks" value={`${m.tasksDone ?? 0}/${m.tasksTotal ?? 0}`} />
-                    <Tick label="Closed" value={m.bookings} tone="text-emerald-600" />
-                  </div>
-
-                  {/* Workload level (column Q) and score (column N) */}
-                  <div className="mt-4 flex items-center gap-4">
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-baseline justify-between gap-2 text-xs">
-                        <span className="font-semibold text-ink-600">
-                          Workload · {w.leadLoad} leads · {w.followLoad} follow-ups · {w.openTasks} open · {w.priority} priority
-                        </span>
-                        <span className="num font-bold text-ink-900">{w.load}</span>
-                      </p>
-                      <Bar className="mt-1.5" pct={Math.min(100, w.load)} tone={w.level === 'Low' ? 'bg-emerald-500' : w.level === 'Normal' ? 'bg-amber-400' : 'bg-rose-500'} />
-                      <p className="mt-2.5 flex items-baseline justify-between gap-2 text-xs">
-                        <span className="font-semibold text-ink-600">Target {shortInr(m.target || 0)}</span>
-                        <span className="num font-bold text-brand-700">{inr(m.revenue || 0)} · {pct(m.revenue, m.target)}%</span>
-                      </p>
-                      <Bar className="mt-1.5" pct={pct(m.revenue, m.target)} tone={pct(m.revenue, m.target) >= 100 ? 'bg-emerald-500' : 'bg-brand-500'} />
+                  {/* The four numbers management reads first, and the score */}
+                  <div className="mt-3 flex items-center gap-3 border-t border-ink-900/[0.07] pt-3">
+                    <div className="grid min-w-0 flex-1 grid-cols-4 gap-2">
+                      <Tick label="Calls" value={m.calls} />
+                      <Tick label="F/up" value={m.followUpDetail?.due} tone={m.followUpDetail?.overdue ? 'text-rose-600' : ''} />
+                      <Tick label="Closed" value={m.bookings} tone="text-emerald-600" />
+                      <Tick label="Revenue" value={m.revenue ? shortInr(m.revenue) : '—'} tone="text-brand-700" />
                     </div>
-                    <div className="shrink-0 text-center">
-                      <Ring value={m.productivity ?? 0} />
-                      <p className={`mt-1 text-[10px] font-bold uppercase tracking-wide ${band.text}`}>
-                        {band.label}
-                      </p>
-                    </div>
+                    <Ring value={m.productivity ?? 0} size={44} />
                   </div>
 
-                  {/* Management actions the sheet lists on the live card */}
-                  <div className="mt-4 flex flex-wrap gap-1.5">
+                  {/* Three actions; the rest live in the drawer */}
+                  <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <a href={`tel:${digits(m.phone)}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
-                    <a href={`https://wa.me/${digits(m.phone)}`} target="_blank" rel="noreferrer" className="btn-line btn-sm"><MessageCircle size={13} /> WhatsApp</a>
-                    <button className="btn-line btn-sm" onClick={() => act('task', { member: m, type: 'Call', title: `Assign a task to ${m.name.split(' ')[0]}` })}><ClipboardPlus size={13} /> Assign task</button>
-                    <button className="btn-line btn-sm" onClick={() => navigate('/enquiries')}><Users size={13} /> Leads</button>
-                    <button className="btn-line btn-sm" onClick={() => setViewing(m)}><History size={13} /> Activity log</button>
-                    <button className="btn-line btn-sm" onClick={() => act('message', { member: m, title: `Remind ${m.name.split(' ')[0]}`, kind: 'Reminder', placeholder: 'What do they need to do?' })}><BellRing size={13} /> Remind</button>
+                    <a href={`https://wa.me/${digits(m.phone)}`} target="_blank" rel="noreferrer" className="btn-line btn-sm">
+                      <MessageCircle size={13} /> WhatsApp
+                    </a>
+                    <button className="btn-line btn-sm" onClick={() => setViewing(m)}>
+                      <Eye size={13} /> Details
+                    </button>
                     {['High', 'Overloaded'].includes(w.level) && (
-                      <button className="btn-action btn-sm" onClick={() => act('rebalance', { member: m })}>
+                      <button className="btn-action btn-sm ml-auto" onClick={() => act('rebalance', { member: m })}>
                         <Shuffle size={13} /> Rebalance
                       </button>
                     )}

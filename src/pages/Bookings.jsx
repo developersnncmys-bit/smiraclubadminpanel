@@ -1,21 +1,15 @@
 import { useState } from 'react';
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  Tag,
-  Receipt,
-  LayoutGrid,
-  Rows3,
-  Crown,
-  CalendarCheck,
-  Wallet,
-  Users,
+  Plus, Pencil, Trash2, Tag, Receipt, LayoutGrid,
+  Rows3, Crown, CalendarCheck, Wallet, Users, Search,
+  Download, Filter, Zap, Eye, Clock, AlertTriangle,
+  UserPlus, Warehouse,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
+import MenuButton from '../components/ui/MenuButton.jsx';
 import RowMenu from '../components/ui/RowMenu.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
@@ -30,6 +24,47 @@ import SectionTabs from '../components/ui/SectionTabs.jsx';
 
 const STATUSES = ['Confirmed', 'Part paid', 'Pending', 'Completed', 'Cancelled'];
 
+/** The colour every booking status reads by — the menu and the rails agree. */
+const STATUS = {
+  Confirmed: { dot: 'bg-emerald-500', rail: 'before:bg-emerald-500' },
+  'Part paid': { dot: 'bg-amber-400', rail: 'before:bg-amber-400' },
+  Pending: { dot: 'bg-sky-500', rail: 'before:bg-sky-500' },
+  Completed: { dot: 'bg-brand-500', rail: 'before:bg-brand-500' },
+  Cancelled: { dot: 'bg-rose-400', rail: 'before:bg-rose-400' },
+};
+
+/** One fact on a booking card: the value, then what it is. */
+function Fact({ label, value, tone }) {
+  return (
+    <div className="min-w-0 px-1 text-center">
+      <p className={`num truncate font-display text-sm font-extrabold leading-none ${tone || 'text-ink-900'}`}>
+        {value}
+      </p>
+      <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-ink-400">{label}</p>
+    </div>
+  );
+}
+
+/** How much of the trip is paid for, drawn the way the team's score is. */
+function Ring({ value, size = 44 }) {
+  const r = (size - 7) / 2;
+  const c = 2 * Math.PI * r;
+  const stroke = value >= 100 ? '#10b981' : value > 0 ? '#f59e0b' : '#94a3b8';
+  return (
+    <span className="relative inline-grid shrink-0 place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eef2f7" strokeWidth="6" />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="6"
+          strokeLinecap="round" strokeDasharray={c}
+          strokeDashoffset={c - (Math.min(100, Math.max(0, value)) / 100) * c}
+        />
+      </svg>
+      <span className="num absolute text-[10px] font-extrabold text-ink-900">{value}%</span>
+    </span>
+  );
+}
+
 export default function Bookings() {
   const {
     bookings, packages, team, customers, memberSignups, memberships, invoices,
@@ -42,6 +77,9 @@ export default function Bookings() {
   const [statusFor, setStatusFor] = useState(null);
   const [viewing, setViewing] = useState(null); // the booking panel
   const [view, setView] = useState('list'); // 'list' | 'overview'
+  const [status, setStatus] = useState('All');
+  const [query, setQuery] = useState('');
+  const [layout, setLayout] = useState('cards');
 
   const rows = byOwner(bookings, owner);
   const consultants = team.filter((t) => t.bookings > 0).map((t) => t.name.split(' ')[0]);
@@ -49,6 +87,41 @@ export default function Bookings() {
   const booked = rows.reduce((s, b) => s + b.amount, 0);
   const collected = rows.reduce((s, b) => s + b.paid, 0);
   const pax = rows.reduce((s, b) => s + b.pax, 0);
+  const outstanding = rows.reduce((s, b) => s + Math.max(0, Number(b.amount || 0) - Number(b.paid || 0)), 0);
+
+  const matches = (b) => {
+    if (status !== 'All' && b.status !== status) return false;
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return [b.id, b.customer, b.pkg, b.destination, b.hotel, b.vendor, b.owner].some((v) =>
+      String(v || '').toLowerCase().includes(q)
+    );
+  };
+  const listRows = rows.filter(matches);
+
+  const exportBookings = () =>
+    downloadCsv('smira-club-bookings', rows, [
+      { key: 'id', header: 'Booking' }, { key: 'customer', header: 'Customer' },
+      { key: 'membership', header: 'Membership' }, { key: 'bookingType', header: 'Type' },
+      { key: 'hotel', header: 'Hotel' }, { key: 'vendor', header: 'Vendor' },
+      { key: 'destination', header: 'Destination' }, { key: 'checkIn', header: 'Check-in' },
+      { key: 'checkOut', header: 'Check-out' }, { key: 'rooms', header: 'Rooms' },
+      { key: 'pax', header: 'Guests' }, { key: 'amount', header: 'Amount' },
+      { key: 'paid', header: 'Paid' }, { key: 'status', header: 'Status' },
+      { key: 'owner', header: 'Assigned to' }, { key: 'source', header: 'Source' },
+      { key: 'created', header: 'Created' },
+    ]);
+
+  /** The actions the desk starts work with, as one menu. */
+  const quickActions = [
+    { label: 'New booking', icon: Plus, run: () => { setEditing(null); setFormOpen(true); } },
+    { label: 'Record payment', icon: Wallet, run: () => navigate('/payment') },
+    { label: 'Raise invoice', icon: Receipt, run: () => (rows[0] ? raiseInvoice(rows[0]) : toast('No booking to invoice', 'info')) },
+    { label: 'Change status', icon: Tag, run: () => (rows[0] ? setStatusFor([rows[0].id]) : toast('No booking yet', 'info')) },
+    { label: 'Add customer', icon: UserPlus, run: () => navigate('/customers') },
+    { label: 'Travel inventory', icon: Warehouse, run: () => navigate('/inventory') },
+    { label: 'Export', icon: Download, run: exportBookings },
+  ];
 
   const fields = [
     { name: 'customer', label: 'Customer', type: 'text', required: true },
@@ -161,9 +234,15 @@ export default function Bookings() {
 
   return (
     <>
-      <PageHeader title="Bookings" subtitle="Every confirmed and in-progress trip">
+      <PageHeader
+        title="Bookings"
+        subtitle={`${rows.length} trips · ${shortInr(booked)} booked · ${shortInr(outstanding)} still to collect`}
+      >
+        <button className="btn-line" onClick={exportBookings}>
+          <Download size={16} /> Export
+        </button>
         <button
-          className="btn-primary"
+          className="btn-action"
           onClick={() => {
             setEditing(null);
             setFormOpen(true);
@@ -173,8 +252,65 @@ export default function Bookings() {
         </button>
       </PageHeader>
 
+      {/* Pick a status, or start something */}
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+        <h2 className="font-display text-base font-extrabold text-ink-900">Bookings</h2>
+
+        <MenuButton
+          label={status === 'All' ? `All statuses · ${rows.length}` : `${status} · ${rows.filter((b) => b.status === status).length}`}
+          icon={Filter}
+          value={status}
+          width="w-[270px]"
+          items={[
+            { key: 'All', label: 'All statuses', count: rows.length },
+            ...STATUSES.map((st) => {
+              const list = rows.filter((b) => b.status === st);
+              return {
+                key: st,
+                label: st,
+                count: list.length,
+                dot: STATUS[st]?.dot || 'bg-ink-400',
+                hint: list.length ? shortInr(list.reduce((sum, b) => sum + Number(b.amount || 0), 0)) : null,
+              };
+            }),
+          ]}
+          onSelect={(key) => {
+            setStatus(key);
+            setView('list');
+          }}
+        />
+
+        <MenuButton
+          label="Quick actions"
+          icon={Zap}
+          variant="action"
+          width="w-[250px]"
+          items={quickActions.map((q) => ({ key: q.label, label: q.label, icon: q.icon }))}
+          onSelect={(key) => quickActions.find((q) => q.label === key)?.run()}
+        />
+
+        <p className="num ml-auto text-sm text-ink-500">
+          {rows.filter((b) => b.status === 'Confirmed').length} confirmed · {pax} travellers ·{' '}
+          {shortInr(collected)} collected
+        </p>
+      </section>
+
+      <div className="mt-4">
+        <KpiRow
+          cols={6}
+          items={[
+            { label: 'Bookings', value: rows.length, icon: CalendarCheck, hint: `${rows.filter((b) => b.status === 'Confirmed').length} confirmed` },
+            { label: 'Booked value', value: shortInr(booked), icon: Receipt },
+            { label: 'Collected', value: shortInr(collected), icon: Wallet, tone: 'text-brand-700', progress: booked ? Math.round((collected / booked) * 100) : 0 },
+            { label: 'Outstanding', value: shortInr(outstanding), icon: AlertTriangle, tone: outstanding ? 'text-amber-600' : 'text-ink-900', hint: 'still to collect' },
+            { label: 'Travellers', value: pax, icon: Users },
+            { label: 'Members', value: rows.filter((b) => b.membership).length, icon: Crown, hint: 'booked on a plan' },
+          ]}
+        />
+      </div>
+
       <SectionTabs
-        className="mb-5"
+        className="mt-6"
         items={[
           { key: 'list', label: 'Bookings', icon: Rows3, count: rows.length },
           { key: 'overview', label: 'Booking desk', icon: LayoutGrid },
@@ -219,38 +355,146 @@ export default function Bookings() {
       )}
 
       {view === 'list' && (
-      <>
-      <KpiRow
-        cols={4}
-        items={[
-          { label: 'Total bookings', value: rows.length, icon: CalendarCheck },
-          { label: 'Booked value', value: shortInr(booked), icon: Receipt },
-          { label: 'Collected', value: shortInr(collected), icon: Wallet, tone: 'text-brand-700', progress: booked ? Math.round((collected / booked) * 100) : 0 },
-          { label: 'Travellers', value: pax, icon: Users },
-        ]}
-      />
+        <>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <div className="relative min-w-[220px] flex-1">
+              <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+              <input
+                className="input pl-10"
+                placeholder="Search booking ID, customer, package or hotel…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            {status !== 'All' && (
+              <button className="btn-line btn-sm" onClick={() => setStatus('All')}>{status} · clear</button>
+            )}
+            <div className="seg">
+              <button onClick={() => setLayout('cards')} className={`seg-item ${layout === 'cards' ? 'seg-item-on' : ''}`}>
+                <LayoutGrid size={13} className="mr-1 inline" /> Cards
+              </button>
+              <button onClick={() => setLayout('table')} className={`seg-item ${layout === 'table' ? 'seg-item-on' : ''}`}>
+                <Rows3 size={13} className="mr-1 inline" /> Table
+              </button>
+            </div>
+          </div>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        searchKeys={['id', 'customer', 'pkg', 'destination', 'hotel', 'vendor']}
-        searchPlaceholder="Search by booking ID, customer or package…"
-        filters={[
-          { key: 'status', label: 'Status', options: STATUSES },
-          { key: 'bookingType', label: 'Type', options: bookingTypes },
-          { key: 'membership', label: 'Membership', options: memberships.map((p) => p.name) },
-          { key: 'source', label: 'Source', options: bookingSources },
-          { key: 'owner', label: 'Assigned to', options: consultants },
-        ]}
-        exportName="smira-club-bookings"
-        emptyLabel="No bookings match this view"
-        onRowClick={(r) => setViewing(r)}
-        bulkActions={[
-          { label: 'Change status', icon: Tag, onClick: (ids) => setStatusFor(ids) },
-          { label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) },
-        ]}
-      />
-      </>
+          {layout === 'cards' && (
+            <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+              {listRows.map((b) => {
+                const paidPct = b.amount ? Math.round((b.paid / b.amount) * 100) : 0;
+                const due = Math.max(0, Number(b.amount || 0) - Number(b.paid || 0));
+                return (
+                  <article
+                    key={b.id}
+                    onClick={() => setViewing(b)}
+                    className={`card rail ${STATUS[b.status]?.rail || 'before:bg-ink-400'} cursor-pointer p-4 pl-5 transition hover:shadow-raised`}
+                  >
+                    {/* Who is travelling, and how the booking stands */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-[15px] font-extrabold leading-tight text-ink-900">
+                          {b.customer}
+                        </p>
+                        <p className="num truncate text-xs text-ink-500">{b.id} · {b.pkg || b.hotel}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {b.membership && <Badge tone="amber"><Crown size={11} /> {b.membership}</Badge>}
+                        <RowMenu
+                          items={[
+                            { label: 'Edit booking', icon: Pencil, onClick: () => { setEditing(b); setFormOpen(true); } },
+                            { label: 'Change status', icon: Tag, onClick: () => setStatusFor([b.id]) },
+                            { label: 'Raise invoice', icon: Receipt, onClick: () => raiseInvoice(b) },
+                            { label: 'Record payment', icon: Wallet, onClick: () => navigate('/payment') },
+                            { label: 'Delete', icon: Trash2, danger: true, onClick: () => setConfirm([b.id]) },
+                          ]}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <Badge tone={bookingStatusTone[b.status]} dot>{b.status}</Badge>
+                      <Badge tone="sky">{b.bookingType || 'Package'}</Badge>
+                      {b.freeStay && <Badge tone="green">Free stay</Badge>}
+                    </div>
+
+                    {/* The one line that says what the trip is */}
+                    <p className="mt-3 truncate text-[13px] text-ink-700">
+                      <span className="font-bold text-ink-900">{b.destination}</span>
+                      {` · ${b.pax} pax · ${b.nights || 0} nights`}
+                    </p>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-ink-400">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock size={11} /> {b.checkIn || b.departure} → {b.checkOut || '—'}
+                      </span>
+                      <span className={due ? 'font-semibold text-amber-600' : 'text-emerald-600'}>
+                        {due ? `${shortInr(due)} due` : 'paid in full'}
+                      </span>
+                    </p>
+
+                    {/* The three facts management reads, and how much is paid */}
+                    <div className="mt-3 flex items-center gap-3 border-t border-ink-900/[0.07] pt-3">
+                      <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
+                        <Fact label="Value" value={shortInr(b.amount)} tone="text-brand-700" />
+                        <Fact label="Rooms" value={b.rooms || 1} />
+                        <Fact label="Owner" value={b.owner || '—'} />
+                      </div>
+                      <Ring value={paidPct} />
+                    </div>
+
+                    {/* Three actions; the rest live in the booking panel */}
+                    <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button className="btn-line btn-sm" onClick={() => raiseInvoice(b)}>
+                        <Receipt size={13} /> Invoice
+                      </button>
+                      <button className="btn-line btn-sm" onClick={() => navigate('/payment')}>
+                        <Wallet size={13} /> Payment
+                      </button>
+                      <button className="btn-line btn-sm" onClick={() => setViewing(b)}>
+                        <Eye size={13} /> Details
+                      </button>
+                      {b.status !== 'Cancelled' && (
+                        <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([b.id])}>
+                          <Tag size={13} /> Change status
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+              {listRows.length === 0 && (
+                <div className="card border-dashed p-14 text-center text-sm text-ink-500 lg:col-span-2 2xl:col-span-3">
+                  No bookings match this view.
+                </div>
+              )}
+            </div>
+          )}
+
+          {layout === 'table' && (
+            <div className="mt-4">
+              <DataTable
+                columns={columns}
+                rows={listRows}
+                searchKeys={['id', 'customer', 'pkg', 'destination', 'hotel', 'vendor']}
+                searchPlaceholder="Search by booking ID, customer or package…"
+                filters={[
+                  { key: 'status', label: 'Status', options: STATUSES },
+                  { key: 'bookingType', label: 'Type', options: bookingTypes },
+                  { key: 'membership', label: 'Membership', options: memberships.map((p) => p.name) },
+                  { key: 'source', label: 'Source', options: bookingSources },
+                  { key: 'owner', label: 'Assigned to', options: consultants },
+                ]}
+                exportName="smira-club-bookings"
+                emptyLabel="No bookings match this view"
+                onRowClick={(r) => setViewing(r)}
+                bulkActions={[
+                  { label: 'Change status', icon: Tag, onClick: (ids) => setStatusFor(ids) },
+                  { label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) },
+                ]}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {viewing && (

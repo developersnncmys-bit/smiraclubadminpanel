@@ -4,6 +4,7 @@ import {
   Phone, Mail, MessageCircle, FileText, Plus, Upload, Pencil, Trash2, UserCheck, Tag,
   Crown, LayoutGrid, Rows3, Search, Download, UserPlus, ArrowRightLeft, CalendarClock,
   Presentation, Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal, X, Filter, Zap,
+  Users, Layers, Trophy, IndianRupee,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -428,12 +429,12 @@ export default function Enquiries() {
         <KpiRow
           cols={6}
           items={[
-            { label: 'Total leads', value: rows.length, hint: `${unassigned.length} unassigned` },
-            { label: 'Open pipeline', value: open.length, hint: 'being worked on' },
-            { label: 'Presentations', value: presented.length, hint: 'sent or scheduled' },
-            { label: 'Won', value: won.length, hint: `${rows.length ? Math.round((won.length / rows.length) * 100) : 0}% of everything`, tone: 'text-emerald-600' },
-            { label: 'Pipeline value', value: inr(value(open)), tone: 'text-brand-700', hint: 'open leads' },
-            { label: 'Pending payments', value: shortInr(pending), hint: 'still to collect', tone: pending ? 'text-amber-600' : 'text-ink-900' },
+            { label: 'Total leads', value: rows.length, hint: `${unassigned.length} unassigned`, icon: Users },
+            { label: 'Open pipeline', value: open.length, hint: 'being worked on', icon: Layers, progress: rows.length ? Math.round((open.length / rows.length) * 100) : 0 },
+            { label: 'Presentations', value: presented.length, hint: 'sent or scheduled', icon: Presentation, progress: rows.length ? Math.round((presented.length / rows.length) * 100) : 0 },
+            { label: 'Won', value: won.length, hint: 'closed as customers', icon: Trophy, progress: rows.length ? Math.round((won.length / rows.length) * 100) : 0, tone: 'text-emerald-600' },
+            { label: 'Pipeline value', value: inr(value(open)), hint: `across ${open.length} open leads`, icon: IndianRupee, tone: 'text-brand-700' },
+            { label: 'Pending payments', value: shortInr(pending), hint: 'still to collect', icon: Wallet, tone: pending ? 'text-amber-600' : 'text-ink-900' },
           ]}
         />
       </div>

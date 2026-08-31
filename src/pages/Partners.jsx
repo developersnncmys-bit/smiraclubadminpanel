@@ -8,6 +8,13 @@ import {
   Send,
   Star,
   Download,
+  Handshake,
+  Clock,
+  CalendarCheck,
+  IndianRupee,
+  Wallet,
+  CheckCircle2,
+  Headphones,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -97,14 +104,14 @@ export default function Partners() {
   const pendingApproval = partners.filter((p) => p.approval !== 'Approved' && p.approval !== 'Suspended');
 
   const kpis = [
-    { label: 'Partners', value: partners.length, hint: `${active.length} active` },
-    { label: 'Waiting on approval', value: pendingApproval.length, tone: pendingApproval.length ? 'text-amber-600' : undefined },
-    { label: 'Suspended', value: partners.filter((p) => p.status === 'Suspended').length, tone: 'text-rose-600' },
-    { label: 'Booking value', value: shortInr(bookingValue), tone: 'text-brand-700' },
-    { label: 'Our commission', value: shortInr(commission), tone: 'text-emerald-600' },
-    { label: 'Payable', value: shortInr(payable), tone: payable ? 'text-amber-600' : undefined },
-    { label: 'Paid so far', value: shortInr(paid) },
-    { label: 'Open partner tickets', value: partnerTickets.filter((t) => t.stage !== 'Closed').length },
+    { icon: Handshake, label: 'Partners', value: partners.length, hint: `${active.length} active` },
+    { icon: Clock, label: 'Waiting on approval', value: pendingApproval.length, tone: pendingApproval.length ? 'text-amber-600' : undefined },
+    { icon: Ban, label: 'Suspended', value: partners.filter((p) => p.status === 'Suspended').length, tone: 'text-rose-600' },
+    { icon: CalendarCheck, label: 'Booking value', value: shortInr(bookingValue), tone: 'text-brand-700' },
+    { icon: IndianRupee, label: 'Our commission', value: shortInr(commission), tone: 'text-emerald-600' },
+    { icon: Wallet, label: 'Payable', value: shortInr(payable), tone: payable ? 'text-amber-600' : undefined },
+    { icon: CheckCircle2, label: 'Paid so far', value: shortInr(paid) },
+    { icon: Headphones, label: 'Open partner tickets', value: partnerTickets.filter((t) => t.stage !== 'Closed').length },
   ];
 
   const exportPartners = () =>

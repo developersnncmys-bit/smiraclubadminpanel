@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   UserPlus, Phone, MessageCircle, Pencil, Trash2, ShieldCheck, Send, AlertTriangle,
   CheckCircle2, Info, Trophy, Search, Download, ClipboardPlus, Shuffle, Clock, MapPin,
-  History, Target, Users, Presentation, Route, CalendarClock, ListChecks, Radio, Zap,
+  History, Target, Users, Presentation, Route, CalendarClock, ListChecks, Radio, Zap, PhoneCall, IndianRupee,
   UserCheck, UserCog, StickyNote, Flag, RefreshCw, ArrowRightLeft, Eye, BellRing,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
@@ -423,12 +423,12 @@ export default function Team() {
         <KpiRow
           cols={6}
           items={[
-            { label: 'Tasks', value: `${tasksDone}/${tasksTotal}`, hint: `${tasksOverdue} overdue`, tone: tasksOverdue ? 'text-rose-600' : 'text-ink-900' },
-            { label: 'Calls', value: calls, hint: `${connected} connected · ${pct(connected, calls)}%` },
-            { label: 'Follow-ups', value: `${fuDone}/${fuDue}`, hint: `${pct(fuDone, fuDue)}% discipline` },
-            { label: 'Presentations', value: presDone, hint: `${presConv} converted · ${pct(presConv, presDone)}%` },
-            { label: 'Closings', value: closings, hint: `${visitsDone} visits completed`, tone: 'text-emerald-600' },
-            { label: 'Revenue', value: inr(revenue), hint: `${achievement}% of ${shortInr(target)}`, tone: 'text-brand-700' },
+            { label: 'Tasks', value: `${tasksDone}/${tasksTotal}`, hint: `${tasksOverdue} overdue`, icon: ListChecks, progress: pct(tasksDone, tasksTotal), tone: tasksOverdue ? 'text-rose-600' : 'text-ink-900' },
+            { label: 'Calls', value: calls, hint: `${connected} connected`, icon: PhoneCall, progress: pct(connected, calls) },
+            { label: 'Follow-ups', value: `${fuDone}/${fuDue}`, hint: `${fuOverdue} overdue`, icon: CalendarClock, progress: pct(fuDone, fuDue), tone: fuOverdue ? 'text-amber-600' : 'text-ink-900' },
+            { label: 'Presentations', value: presDone, hint: `${presConv} converted`, icon: Presentation, progress: pct(presConv, presDone) },
+            { label: 'Closings', value: closings, hint: `${visitsDone} visits completed`, icon: Trophy, tone: 'text-emerald-600' },
+            { label: 'Revenue', value: inr(revenue), hint: `of ${shortInr(target)} target`, icon: IndianRupee, progress: achievement, tone: 'text-brand-700' },
           ]}
         />
       </div>

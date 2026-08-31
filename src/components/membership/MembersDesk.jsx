@@ -12,6 +12,9 @@ import {
   ArrowRight,
   AlertTriangle,
   Crown,
+  CheckCircle2,
+  CalendarClock,
+  Clock,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
@@ -122,12 +125,12 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
   const rewardsDue = rewards.filter((r) => !['Delivered', 'Cancelled'].includes(r.stage));
 
   const kpis = [
-    { label: 'Total members', value: members.length },
-    { label: 'Active', value: signups.filter((s) => s.status === 'Active').length, tone: 'text-emerald-600' },
-    { label: 'Expiring soon', value: expiringSoon.length, tone: expiringSoon.length ? 'text-amber-600' : undefined },
-    { label: 'Pending activation', value: signups.filter((s) => s.activation && s.activation.stage !== 'Activated').length },
-    { label: 'At risk', value: atRisk.length, tone: atRisk.length ? 'text-rose-600' : undefined },
-    { label: 'Gifts to hand over', value: rewardsDue.length },
+    { icon: Users, label: 'Total members', value: members.length },
+    { icon: CheckCircle2, label: 'Active', value: signups.filter((s) => s.status === 'Active').length, tone: 'text-emerald-600' },
+    { icon: CalendarClock, label: 'Expiring soon', value: expiringSoon.length, tone: expiringSoon.length ? 'text-amber-600' : undefined },
+    { icon: Clock, label: 'Pending activation', value: signups.filter((s) => s.activation && s.activation.stage !== 'Activated').length },
+    { icon: AlertTriangle, label: 'At risk', value: atRisk.length, tone: atRisk.length ? 'text-rose-600' : undefined },
+    { icon: Gift, label: 'Gifts to hand over', value: rewardsDue.length },
     { label: 'Referrals', value: totalReferrals, hint: `${converted} converted` },
     { label: 'Member spend', value: shortInr(members.reduce((s, c) => s + Number(c.spend || 0), 0)), tone: 'text-brand-700' },
   ];

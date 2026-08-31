@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import {
-  Plus, Pencil, Trash2, Tag, Receipt, LayoutGrid, Rows3, Crown,
+  Plus,
+  Pencil,
+  Trash2,
+  Tag,
+  Receipt,
+  LayoutGrid,
+  Rows3,
+  Crown,
+  CalendarCheck,
+  Wallet,
+  Users,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -213,10 +223,10 @@ export default function Bookings() {
       <KpiRow
         cols={4}
         items={[
-          { label: 'Total bookings', value: rows.length },
-          { label: 'Booked value', value: shortInr(booked) },
-          { label: 'Collected', value: shortInr(collected), tone: 'text-brand-700' },
-          { label: 'Travellers', value: pax },
+          { label: 'Total bookings', value: rows.length, icon: CalendarCheck },
+          { label: 'Booked value', value: shortInr(booked), icon: Receipt },
+          { label: 'Collected', value: shortInr(collected), icon: Wallet, tone: 'text-brand-700', progress: booked ? Math.round((collected / booked) * 100) : 0 },
+          { label: 'Travellers', value: pax, icon: Users },
         ]}
       />
 

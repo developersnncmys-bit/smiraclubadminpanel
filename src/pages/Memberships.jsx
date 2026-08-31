@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import {
-  Plus, Crown, Check, X, Pencil, Trash2, Globe, EyeOff, Sparkles, Gift,
+  Plus,
+  Crown,
+  Check,
+  X,
+  Pencil,
+  Trash2,
+  Globe,
+  EyeOff,
+  Sparkles,
+  Gift,
+  UserPlus,
+  ShieldCheck,
+  IndianRupee,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
@@ -263,10 +275,15 @@ export default function Memberships({ embedded = false }) {
         <KpiRow
           cols={4}
           items={[
-            { label: 'Live on website', value: `${published.length} / ${memberships.length}` },
-            { label: 'Website signups', value: memberSignups.length },
-            { label: 'Active members', value: activeMembers },
-            { label: 'Membership value', value: inr(membershipRevenue), tone: 'text-brand-700' },
+            {
+              label: 'Live on website',
+              value: `${published.length} / ${memberships.length}`,
+              icon: Globe,
+              progress: memberships.length ? Math.round((published.length / memberships.length) * 100) : 0,
+            },
+            { label: 'Website signups', value: memberSignups.length, icon: UserPlus },
+            { label: 'Active members', value: activeMembers, icon: ShieldCheck },
+            { label: 'Membership value', value: inr(membershipRevenue), icon: IndianRupee, tone: 'text-brand-700' },
           ]}
         />
       </div>

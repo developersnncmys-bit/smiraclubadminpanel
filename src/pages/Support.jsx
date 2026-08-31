@@ -10,6 +10,11 @@ import {
   Star,
   AlertTriangle,
   Search,
+  Headphones,
+  AlarmClock,
+  Clock,
+  CheckCircle2,
+  Timer,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -79,14 +84,14 @@ export default function Support() {
     : 0;
 
   const kpis = [
-    { label: 'Open tickets', value: open.length },
-    { label: 'Critical', value: tickets.filter((t) => t.priority === 'Critical').length, tone: 'text-rose-600' },
-    { label: 'SLA breached', value: breached.length, tone: breached.length ? 'text-rose-600' : undefined },
-    { label: 'Approaching SLA', value: approaching.length, tone: approaching.length ? 'text-amber-600' : undefined },
-    { label: 'Escalated', value: escalated.length },
-    { label: 'Resolved', value: at('Resolved') + at('Customer confirmed') + at('Closed'), tone: 'text-emerald-600' },
-    { label: 'Average resolution', value: avgResolution ? `${avgResolution} hrs` : '—' },
-    { label: 'Satisfaction', value: csat === '—' ? '—' : `${csat}/5`, hint: `${rated.length} rated` },
+    { icon: Headphones, label: 'Open tickets', value: open.length },
+    { icon: AlertTriangle, label: 'Critical', value: tickets.filter((t) => t.priority === 'Critical').length, tone: 'text-rose-600' },
+    { icon: AlarmClock, label: 'SLA breached', value: breached.length, tone: breached.length ? 'text-rose-600' : undefined },
+    { icon: Clock, label: 'Approaching SLA', value: approaching.length, tone: approaching.length ? 'text-amber-600' : undefined },
+    { icon: ArrowUpRight, label: 'Escalated', value: escalated.length },
+    { icon: CheckCircle2, label: 'Resolved', value: at('Resolved') + at('Customer confirmed') + at('Closed'), tone: 'text-emerald-600' },
+    { icon: Timer, label: 'Average resolution', value: avgResolution ? `${avgResolution} hrs` : '—' },
+    { icon: Star, label: 'Satisfaction', value: csat === '—' ? '—' : `${csat}/5`, hint: `${rated.length} rated` },
   ];
 
   const exportTickets = () =>

@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   UserPlus, Phone, MessageCircle, Pencil, Trash2, ShieldCheck, Send, AlertTriangle,
   CheckCircle2, Info, Trophy, Search, Download, ClipboardPlus, Shuffle, Clock, MapPin,
-  History, Target, Users, Presentation, Route, CalendarClock, ListChecks,
+  History, Target, Users, Presentation, Route, CalendarClock, ListChecks, Radio, Zap,
   UserCheck, UserCog, StickyNote, Flag, RefreshCw, ArrowRightLeft, Eye, BellRing,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
+import MenuButton from '../components/ui/MenuButton.jsx';
 import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
@@ -372,48 +373,50 @@ export default function Team() {
         </button>
       </PageHeader>
 
-      {/* -- Live status board (column A) ------------------------------------ */}
-      <section className="card overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-900/[0.07] px-5 py-3">
-          <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink-900">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            </span>
-            Live status
-          </h2>
-          <p className="text-sm text-ink-500">Click a status to filter the desk</p>
-        </div>
-        <div className="grid grid-cols-2 divide-ink-900/[0.07] sm:grid-cols-4 sm:divide-x xl:grid-cols-8">
-          {liveStatuses.map((s) => {
-            const n = count((m) => m.live === s);
-            const on = liveFilter === s;
-            return (
-              <button
-                key={s}
-                onClick={() => { setLiveFilter(on ? 'All' : s); setSection('Live desk'); }}
-                className={`px-4 py-3.5 text-left transition ${on ? 'bg-brand-50' : 'hover:bg-surface-soft'}`}
-              >
-                <span className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${LIVE[s]?.dot || 'bg-ink-400'}`} />
-                  <span className={`num font-display text-xl font-extrabold ${on ? 'text-brand-700' : 'text-ink-900'}`}>{n}</span>
-                </span>
-                <span className="mt-0.5 block truncate text-[11px] font-bold uppercase tracking-wide text-ink-400">{s}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      {/* -- The desk bar: pick a status, or start something (columns A, R) -- */}
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+        <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink-900">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          </span>
+          Live status
+        </h2>
 
-      {/* -- Quick actions (column R) ---------------------------------------- */}
-      <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6 xl:grid-cols-12">
-        {quickActions.map((q) => (
-          <button key={q.label} className="qa" onClick={q.run}>
-            <q.icon size={17} />
-            {q.label}
-          </button>
-        ))}
-      </div>
+        <MenuButton
+          label={liveFilter === 'All' ? `All statuses · ${team.length}` : `${liveFilter} · ${count((m) => m.live === liveFilter)}`}
+          icon={Radio}
+          value={liveFilter}
+          width="w-[260px]"
+          items={[
+            { key: 'All', label: 'All statuses', count: team.length },
+            ...liveStatuses.map((st) => ({
+              key: st,
+              label: st,
+              count: count((m) => m.live === st),
+              dot: LIVE[st]?.dot || 'bg-ink-400',
+            })),
+          ]}
+          onSelect={(key) => {
+            setLiveFilter(key);
+            setSection('Live desk');
+          }}
+        />
+
+        <MenuButton
+          label="Quick actions"
+          icon={Zap}
+          variant="action"
+          width="w-[250px]"
+          items={quickActions.map((q) => ({ key: q.label, label: q.label, icon: q.icon }))}
+          onSelect={(key) => quickActions.find((q) => q.label === key)?.run()}
+        />
+
+        <p className="num ml-auto text-sm text-ink-500">
+          {online} online · {count((m) => m.attendance === 'Present')} present ·{' '}
+          {count((m) => m.live === 'Not logged in')} not logged in
+        </p>
+      </section>
 
       {/* -- What the desk has done today (columns E–L) ---------------------- */}
       <div className="mt-4">

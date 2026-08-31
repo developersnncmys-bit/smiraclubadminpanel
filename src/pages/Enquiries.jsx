@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Phone, Mail, MessageCircle, FileText, Plus, Upload, Pencil, Trash2, UserCheck, Tag,
   Crown, LayoutGrid, Rows3, Search, Download, UserPlus, ArrowRightLeft, CalendarClock,
-  Presentation, Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal, X,
+  Presentation, Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal, X, Filter, Zap,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -14,6 +14,7 @@ import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
+import MenuButton from '../components/ui/MenuButton.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import LeadDetails from '../components/sales/LeadDetails.jsx';
 import SalesOverview from '../components/sales/SalesOverview.jsx';
@@ -381,53 +382,47 @@ export default function Enquiries() {
         )}
       </div>
 
-      {/* The pipeline, as a board you can filter from */}
-      <section className="card overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-900/[0.07] px-5 py-3">
-          <h2 className="font-display text-base font-extrabold text-ink-900">Pipeline</h2>
-          <p className="text-sm text-ink-500">
-            {stage ? (
-              <button className="btn-line btn-sm" onClick={() => setStage(null)}>{stage} · clear filter</button>
-            ) : (
-              'Click a stage to filter the leads'
-            )}
-          </p>
-        </div>
-        <div className="grid grid-cols-3 divide-ink-900/[0.07] sm:grid-cols-5 sm:divide-x xl:grid-cols-9">
-          {enquiryStatuses.map((s) => {
-            const list = rows.filter((e) => e.status === s);
-            const on = stage === s;
-            return (
-              <button
-                key={s}
-                onClick={() => { setStage(on ? null : s); setSection('Leads'); }}
-                className={`px-4 py-3.5 text-left transition ${on ? 'bg-brand-50' : 'hover:bg-surface-soft'}`}
-              >
-                <span className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${STAGE[s]?.dot || 'bg-ink-400'}`} />
-                  <span className={`num font-display text-xl font-extrabold ${on ? 'text-brand-700' : 'text-ink-900'}`}>
-                    {list.length}
-                  </span>
-                </span>
-                <span className="mt-0.5 block truncate text-[11px] font-bold uppercase tracking-wide text-ink-400">{s}</span>
-                <span className="num mt-0.5 block truncate text-xs text-ink-500">
-                  {value(list) ? shortInr(value(list)) : '—'}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      {/* Pick a stage, or start something */}
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+        <h2 className="font-display text-base font-extrabold text-ink-900">Pipeline</h2>
 
-      {/* The actions the desk starts work with */}
-      <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6 xl:grid-cols-12">
-        {tiles.map((t) => (
-          <button key={t.label} className="qa" onClick={t.run}>
-            <t.icon size={17} />
-            {t.label}
-          </button>
-        ))}
-      </div>
+        <MenuButton
+          label={stage ? `${stage} · ${rows.filter((e) => e.status === stage).length}` : `All stages · ${rows.length}`}
+          icon={Filter}
+          value={stage || 'All'}
+          width="w-[280px]"
+          items={[
+            { key: 'All', label: 'All stages', count: rows.length },
+            ...enquiryStatuses.map((st) => {
+              const list = rows.filter((e) => e.status === st);
+              return {
+                key: st,
+                label: st,
+                count: list.length,
+                dot: STAGE[st]?.dot || 'bg-ink-400',
+                hint: value(list) ? shortInr(value(list)) : null,
+              };
+            }),
+          ]}
+          onSelect={(key) => {
+            setStage(key === 'All' ? null : key);
+            setSection('Leads');
+          }}
+        />
+
+        <MenuButton
+          label="Quick actions"
+          icon={Zap}
+          variant="action"
+          width="w-[250px]"
+          items={tiles.map((t) => ({ key: t.label, label: t.label, icon: t.icon }))}
+          onSelect={(key) => tiles.find((t) => t.label === key)?.run()}
+        />
+
+        <p className="num ml-auto text-sm text-ink-500">
+          {open.length} open · {won.length} won · {inr(value(open))} in play
+        </p>
+      </section>
 
       <div className="mt-4">
         <KpiRow

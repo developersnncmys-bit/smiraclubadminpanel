@@ -92,8 +92,9 @@ const tooltipStyle = {
  * rather than one long scroll: the numbers and the actions stay on screen, and
  * the pipeline, the performance, the team and today each get their own page.
  */
-export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoices = [], team, onPickStatus, onOpen, actions }) {
+export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoices = [], team, signups = [], onPickStatus, onOpen, actions }) {
   const [metric, setMetric] = useState('revenue');
+  const [lostBy, setLostBy] = useState('Reason');
   const [rankBy, setRankBy] = useState('revenue');
   const [feedKind, setFeedKind] = useState('All');
   const [duePriority, setDuePriority] = useState('Overdue');
@@ -146,6 +147,45 @@ export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoi
         worth: value(by((e) => e.status === stage)),
       };
     });
+
+  // -- Lost leads, cut the way the sheet asks --------------------------------
+  const monthOf = (value) => {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+      ? '—'
+      : d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+  };
+  const planOf = (e) => signups.find((sg) => sg.customer === e.name || sg.name === e.name)?.plan || 'Not a member';
+  const daysToLose = (e) => {
+    const from = new Date(e.created);
+    const to = new Date(e.lastContact);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return null;
+    return Math.max(0, Math.round((to - from) / 86400000));
+  };
+  const lostDays = lost.map(daysToLose).filter((d) => d != null);
+  const avgLostDays = lostDays.length
+    ? Math.round(lostDays.reduce((a, b) => a + b, 0) / lostDays.length)
+    : null;
+
+  const lostCut = {
+    Reason: (e) => e.lostReason || 'Not recorded',
+    Executive: (e) => e.owner || 'Unassigned',
+    Source: (e) => e.source || 'Unknown',
+    Destination: (e) => e.destination || '—',
+    Membership: planOf,
+    Month: (e) => monthOf(e.lastContact || e.created),
+  }[lostBy];
+  const lostRows = [...new Set(lost.map(lostCut))]
+    .map((label) => {
+      const mine = lost.filter((e) => lostCut(e) === label);
+      return {
+        label,
+        value: mine.length,
+        display: `${mine.length} · ${inr(value(mine))}`,
+        tone: 'bg-rose-400',
+      };
+    })
+    .sort((a, b) => b.value - a.value);
 
   // -- Sales performance -----------------------------------------------------
   const metricLabel = { revenue: 'Revenue', closings: 'Closings', customers: 'Customers', avgDeal: 'Average deal' }[metric];
@@ -573,32 +613,37 @@ export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoi
             <Block
               title="Why leads said no"
               note={lost.length ? `${lost.length} lost, worth ${inr(value(lost))}` : 'Nothing lost in this view'}
+              action={
+                <div className="seg">
+                  {['Reason', 'Executive', 'Source', 'Destination', 'Membership', 'Month'].map((k) => (
+                    <button
+                      key={k}
+                      onClick={() => setLostBy(k)}
+                      className={`seg-item ${lostBy === k ? 'seg-item-on' : ''}`}
+                    >
+                      {k}
+                    </button>
+                  ))}
+                </div>
+              }
             >
-              <List
-                empty="No leads lost yet."
-                rows={reasons
-                  .map((r) => {
-                    const n = lost.filter((e) => e.lostReason === r).length;
-                    return { label: r, value: n, display: `${n} leads`, tone: 'bg-rose-400' };
-                  })
-                  .sort((a, b) => b.value - a.value)}
-              />
+              <List empty="No leads lost yet." rows={lostRows} />
               {lost.length > 0 && (
-                <div className="mt-4 border-t border-ink-900/[0.07] pt-3 text-sm text-ink-600">
-                  <p>
-                    Most lost through{' '}
-                    <b className="text-ink-900">
-                      {sourcesUsed
-                        .map((s) => ({ s, n: lost.filter((e) => e.source === s).length }))
-                        .sort((a, b) => b.n - a.n)[0]?.s || '—'}
-                    </b>
-                  </p>
-                  <p className="mt-1">
-                    Lost by consultant:{' '}
-                    {[...new Set(lost.map((e) => e.owner))]
-                      .map((o) => `${o} ${lost.filter((e) => e.owner === o).length}`)
-                      .join(' · ')}
-                  </p>
+                <div className="mt-4 grid gap-3 border-t border-ink-900/[0.07] pt-3 sm:grid-cols-3">
+                  <Stat
+                    label="Average time before losing"
+                    value={avgLostDays == null ? '—' : `${avgLostDays} days`}
+                    hint="created to last contact"
+                  />
+                  <Stat
+                    label="Top reason"
+                    value={
+                      [...new Set(lost.map((e) => e.lostReason).filter(Boolean))]
+                        .map((r) => ({ r, n: lost.filter((e) => e.lostReason === r).length }))
+                        .sort((a, b) => b.n - a.n)[0]?.r || '—'
+                    }
+                  />
+                  <Stat label="Value lost" value={inr(value(lost))} tone="text-rose-600" />
                 </div>
               )}
             </Block>

@@ -706,6 +706,7 @@ export default function Enquiries() {
             bookings={bookings}
             invoices={invoices}
             team={team}
+            signups={memberSignups}
             onPickStatus={openStage}
             onOpen={(lead) => setViewing(lead)}
             actions={quickActions}

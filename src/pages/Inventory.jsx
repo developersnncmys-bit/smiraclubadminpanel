@@ -321,7 +321,7 @@ export default function Inventory() {
                 <option key={c.key}>{c.key}</option>
               ))}
             </select>
-            <button className="btn-ghost btn-sm" onClick={exportInventory}>
+            <button className="btn-line btn-sm" onClick={exportInventory}>
               <Download size={14} /> Export
             </button>
           </div>
@@ -545,7 +545,7 @@ export default function Inventory() {
                 <span className="block text-xs text-ink-500">{c.item === '—' ? 'Across the panel' : nameOf(c.item)}</span>
               </span>
               <span className="num text-sm font-semibold text-ink-700">{c.on}</span>
-              <button className="btn-ghost btn-sm" onClick={() => toast(`Renewal started for ${c.kind.toLowerCase()}`)}>
+              <button className="btn-line btn-sm" onClick={() => toast(`Renewal started for ${c.kind.toLowerCase()}`)}>
                 Renew
               </button>
             </li>
@@ -594,13 +594,13 @@ export default function Inventory() {
   return (
     <>
       <PageHeader title="Travel inventory" subtitle="What the agency holds, what it costs and what is left">
-        <button className="btn-ghost" onClick={() => toast('Import opens with the file work')}>
+        <button className="btn-line" onClick={() => toast('Import opens with the file work')}>
           <Upload size={16} /> Import
         </button>
-        <button className="btn-ghost" onClick={exportInventory}>
+        <button className="btn-line" onClick={exportInventory}>
           <Download size={16} /> Export
         </button>
-        <button className="btn-primary" onClick={() => toast('Pick a category to add stock to')}>
+        <button className="btn-action" onClick={() => toast('Pick a category to add stock to')}>
           <Plus size={16} /> Add inventory
         </button>
       </PageHeader>
@@ -705,16 +705,16 @@ export default function Inventory() {
                   ))}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button className="btn-ghost btn-sm" onClick={() => { update('inventory', viewing.id, { units: Number(viewing.units) + 1 }); toast('One unit added'); }}>
+                  <button className="btn-line btn-sm" onClick={() => { update('inventory', viewing.id, { units: Number(viewing.units) + 1 }); toast('One unit added'); }}>
                     Increase inventory
                   </button>
                   <button
-                    className="btn-ghost btn-sm"
+                    className="btn-line btn-sm"
                     onClick={() => { update('inventory', viewing.id, { blocked: Number(viewing.blocked || 0) + 1 }); toast('One unit blocked'); }}
                   >
                     Block a unit
                   </button>
-                  <button className="btn-ghost btn-sm" onClick={() => toast('Vendor asked to confirm')}>
+                  <button className="btn-line btn-sm" onClick={() => toast('Vendor asked to confirm')}>
                     Ask the vendor to confirm
                   </button>
                 </div>

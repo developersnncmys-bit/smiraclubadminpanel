@@ -597,7 +597,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
                       <li className="py-6 text-center text-sm text-ink-500">Nothing assigned right now.</li>
                     )}
                   </ul>
-                  <button className="btn-primary" onClick={() => toast(`Task assigned to ${m.name.split(' ')[0]}`)}>
+                  <button className="btn-action" onClick={() => toast(`Task assigned to ${m.name.split(' ')[0]}`)}>
                     <ClipboardPlus size={15} /> Assign a task
                   </button>
                 </div>

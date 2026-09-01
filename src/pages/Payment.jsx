@@ -375,7 +375,7 @@ export default function Payment() {
                 <option key={m}>{m}</option>
               ))}
             </select>
-            <button className="btn-ghost btn-sm" onClick={exportTransactions}>
+            <button className="btn-line btn-sm" onClick={exportTransactions}>
               <Download size={14} /> Export
             </button>
           </div>
@@ -453,10 +453,10 @@ export default function Payment() {
                 r.call,
                 r.whatsapp,
                 <span className="flex gap-1.5">
-                  <button className="btn-ghost btn-sm" onClick={() => toast(`Payment link sent to ${r.customer}`)}>
+                  <button className="btn-line btn-sm" onClick={() => toast(`Payment link sent to ${r.customer}`)}>
                     <Send size={13} /> Send link
                   </button>
-                  <button className="btn-ghost btn-sm" onClick={() => toast(`${inr(r.amount)} marked collected`)}>
+                  <button className="btn-line btn-sm" onClick={() => toast(`${inr(r.amount)} marked collected`)}>
                     Collect
                   </button>
                 </span>,
@@ -603,10 +603,10 @@ export default function Payment() {
                   {i.status}
                 </Badge>,
                 <span className="flex gap-1.5">
-                  <button className="btn-ghost btn-sm" onClick={() => toast(`Invoice ${i.id} sent`)}>
+                  <button className="btn-line btn-sm" onClick={() => toast(`Invoice ${i.id} sent`)}>
                     <Send size={13} /> Send
                   </button>
-                  <button className="btn-ghost btn-sm" onClick={() => toast(`Receipt for ${i.id} generated`)}>
+                  <button className="btn-line btn-sm" onClick={() => toast(`Receipt for ${i.id} generated`)}>
                     <Receipt size={13} /> Receipt
                   </button>
                 </span>,
@@ -637,7 +637,7 @@ export default function Payment() {
                   {r.stage}
                 </Badge>,
                 r.approvedBy,
-                <button className="btn-ghost btn-sm" onClick={() => toast(`${r.id} approved`)}>
+                <button className="btn-line btn-sm" onClick={() => toast(`${r.id} approved`)}>
                   Approve
                 </button>,
               ],
@@ -725,7 +725,7 @@ export default function Payment() {
           note="Every spend, and where it has got to"
           wide
           action={
-            <button className="btn-ghost btn-sm" onClick={() => toast('Expense raised for approval')}>
+            <button className="btn-line btn-sm" onClick={() => toast('Expense raised for approval')}>
               Raise an expense
             </button>
           }
@@ -824,10 +824,10 @@ export default function Payment() {
   return (
     <>
       <PageHeader title="Payment" subtitle={`Money in, money out and who is chasing it · ${range.toLowerCase()}`}>
-        <button className="btn-ghost" onClick={exportTransactions}>
+        <button className="btn-line" onClick={exportTransactions}>
           <Download size={16} /> Export
         </button>
-        <button className="btn-primary" onClick={() => setSection('Collections')}>
+        <button className="btn-action" onClick={() => setSection('Collections')}>
           <Send size={16} /> Send a payment link
         </button>
       </PageHeader>

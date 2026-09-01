@@ -217,7 +217,7 @@ export default function Partners() {
                       <Badge tone={s.tone}>{s.value ? `${s.value} · ${s.band}` : s.band}</Badge>
                     </td>
                     <td className="py-2.5 text-right">
-                      <button className="btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setViewing(p); }}>
+                      <button className="btn-line btn-sm" onClick={(e) => { e.stopPropagation(); setViewing(p); }}>
                         {p.approval === 'Approved' ? 'View' : 'Review'}
                       </button>
                     </td>
@@ -268,13 +268,13 @@ export default function Partners() {
                   {p.approval}
                 </Badge>
                 <span className="flex gap-1.5">
-                  <button className="btn-ghost btn-sm" onClick={() => setViewing(p)}>
+                  <button className="btn-line btn-sm" onClick={() => setViewing(p)}>
                     <FileText size={13} /> Documents
                   </button>
-                  <button className="btn-ghost btn-sm" onClick={() => actions.approve(p)}>
+                  <button className="btn-line btn-sm" onClick={() => actions.approve(p)}>
                     <ShieldCheck size={13} /> Approve
                   </button>
-                  <button className="btn-ghost btn-sm" onClick={() => actions.suspend(p)}>
+                  <button className="btn-line btn-sm" onClick={() => actions.suspend(p)}>
                     <Ban size={13} /> Suspend
                   </button>
                 </span>
@@ -365,10 +365,10 @@ export default function Partners() {
                   </span>
                 </span>
                 <Badge tone={t.stage === 'Closed' ? 'green' : 'amber'}>{t.stage}</Badge>
-                <button className="btn-ghost btn-sm" onClick={() => toast(`${t.id} assigned`)}>
+                <button className="btn-line btn-sm" onClick={() => toast(`${t.id} assigned`)}>
                   Assign
                 </button>
-                <button className="btn-ghost btn-sm" onClick={() => toast(`${t.id} resolved`)}>
+                <button className="btn-line btn-sm" onClick={() => toast(`${t.id} resolved`)}>
                   Resolve
                 </button>
               </li>
@@ -520,7 +520,7 @@ export default function Partners() {
       <Block title="What goes out to partners" note="Straight from the panel, over WhatsApp" wide>
         <div className="flex flex-wrap gap-2">
           {partnerMessageKinds.map((k) => (
-            <button key={k} className="btn-ghost btn-sm" onClick={() => toast(`${k} queued for every active partner`)}>
+            <button key={k} className="btn-line btn-sm" onClick={() => toast(`${k} queued for every active partner`)}>
               <Send size={13} /> {k}
             </button>
           ))}
@@ -546,11 +546,11 @@ export default function Partners() {
   return (
     <>
       <PageHeader title="Partners" subtitle="Everyone the agency sells through, and what they are owed">
-        <button className="btn-ghost" onClick={exportPartners}>
+        <button className="btn-line" onClick={exportPartners}>
           <Download size={16} /> Export
         </button>
         <button
-          className="btn-primary"
+          className="btn-action"
           onClick={() => {
             create('partners', {
               name: 'New partner',

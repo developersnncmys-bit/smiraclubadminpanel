@@ -346,7 +346,7 @@ export default function BookingDetails({
             <section className="card p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="font-display text-base font-extrabold text-ink-900">Payment</h3>
-                <button className="btn-ghost btn-sm" onClick={() => onInvoice(b)}>
+                <button className="btn-line btn-sm" onClick={() => onInvoice(b)}>
                   <Receipt size={14} /> Raise invoice
                 </button>
               </div>

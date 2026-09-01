@@ -236,7 +236,7 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
                   onChange={(e) => setNote(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addNote()}
                 />
-                <button className="btn-primary shrink-0" onClick={addNote}>
+                <button className="btn-action shrink-0" onClick={addNote}>
                   Add
                 </button>
               </div>
@@ -266,11 +266,11 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
               )}
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <button className="btn-primary" onClick={resolve}>
+                <button className="btn-action" onClick={resolve}>
                   Mark resolved
                 </button>
                 <button
-                  className="btn-ghost"
+                  className="btn-line"
                   disabled={t.stage !== 'Resolved' && t.stage !== 'Customer confirmed'}
                   onClick={() =>
                     onUpdate(t.id, {
@@ -282,7 +282,7 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
                   Customer confirmed
                 </button>
                 <button
-                  className="btn-ghost disabled:opacity-40"
+                  className="btn-line disabled:opacity-40"
                   disabled={!t.resolution?.note || t.stage === 'Closed'}
                   onClick={() => onUpdate(t.id, { stage: 'Closed' })}
                   title={t.resolution?.note ? 'Close the ticket' : 'Write the resolution first'}

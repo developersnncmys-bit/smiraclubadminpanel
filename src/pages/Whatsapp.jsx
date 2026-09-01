@@ -409,7 +409,7 @@ export default function Whatsapp() {
               <Badge tone={r.status === 'On' ? 'green' : 'slate'} dot>
                 {r.status}
               </Badge>,
-              <button className="btn-ghost btn-sm" onClick={() => toast(`${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`)}>
+              <button className="btn-line btn-sm" onClick={() => toast(`${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`)}>
                 {r.status === 'On' ? 'Turn off' : 'Turn on'}
               </button>,
             ],
@@ -425,7 +425,7 @@ export default function Whatsapp() {
           note="Sent → delivered → read → replied → leads → sales"
           wide
           action={
-            <button className="btn-ghost btn-sm" onClick={() => toast('Pick a segment to start a campaign')}>
+            <button className="btn-line btn-sm" onClick={() => toast('Pick a segment to start a campaign')}>
               <Megaphone size={14} /> New campaign
             </button>
           }
@@ -574,10 +574,10 @@ export default function Whatsapp() {
   return (
     <>
       <PageHeader title="WhatsApp" subtitle="The inbox, the bot behind it, and everything it feeds into the CRM">
-        <button className="btn-ghost" onClick={() => setSection('Templates')}>
+        <button className="btn-line" onClick={() => setSection('Templates')}>
           <FileText size={16} /> Templates
         </button>
-        <button className="btn-primary" onClick={() => setSection('Campaigns')}>
+        <button className="btn-action" onClick={() => setSection('Campaigns')}>
           <Megaphone size={16} /> New campaign
         </button>
       </PageHeader>
@@ -643,7 +643,7 @@ export default function Whatsapp() {
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
                     />
-                    <button className="btn-primary shrink-0" onClick={send}>
+                    <button className="btn-action shrink-0" onClick={send}>
                       <Send size={15} /> Send
                     </button>
                   </div>

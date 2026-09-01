@@ -1,16 +1,12 @@
 import { useState } from 'react';
 import {
-  UserPlus,
-  Crown,
-  CheckCircle2,
-  UserCheck,
-  CalendarClock,
-  ArrowUpRight,
-  Gift,
-  Wallet,
-  Search,
+  UserPlus, Crown, CheckCircle2, UserCheck, CalendarClock, ArrowUpRight,
+  Gift, Wallet, Search, Users, Clock, IndianRupee,
+  Zap,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
+import KpiRow from '../ui/KpiRow.jsx';
+import MenuButton from '../ui/MenuButton.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import {
   signupTone,
@@ -83,18 +79,51 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
   const due = rows.reduce((s, m) => s + Math.max(0, Number(m.amount || 0) - Number(m.paid || 0)), 0);
   const soon = (days) => rows.filter((m) => { const l = left(m); return l != null && l >= 0 && l <= days; });
 
+  const billed = rows.reduce((s, m) => s + Number(m.amount || 0), 0);
+
   const kpis = [
-    { label: 'Members', value: rows.length, hint: `${active.length} active` },
-    { label: 'Awaiting activation', value: pending.length, tone: pending.length ? 'text-amber-600' : undefined },
-    { label: 'Expiring in 30 days', value: soon(30).length, tone: soon(30).length ? 'text-amber-600' : undefined },
-    { label: 'Expired', value: expired.length, tone: expired.length ? 'text-rose-600' : undefined },
-    { label: 'Membership revenue', value: shortInr(revenue), tone: 'text-brand-700' },
-    { label: 'Still to collect', value: shortInr(due), tone: due ? 'text-amber-600' : undefined },
     {
-      label: 'Average membership',
-      value: rows.length ? inr(Math.round(rows.reduce((s, m) => s + Number(m.amount || 0), 0) / rows.length)) : '—',
+      label: 'Members',
+      value: rows.length,
+      icon: Users,
+      hint: `${active.length} active`,
+      progress: rows.length ? Math.round((active.length / rows.length) * 100) : 0,
     },
-    { label: 'Benefits saving', value: shortInr(rows.reduce((s, m) => s + Number(m.saving || 0), 0)), hint: 'given to members' },
+    {
+      label: 'Awaiting activation',
+      value: pending.length,
+      icon: Clock,
+      tone: pending.length ? 'text-amber-600' : 'text-ink-900',
+      hint: pending.length ? 'needs a person' : 'all activated',
+    },
+    {
+      label: 'Expiring in 30 days',
+      value: soon(30).length,
+      icon: CalendarClock,
+      tone: soon(30).length ? 'text-amber-600' : 'text-ink-900',
+      hint: `${expired.length} already expired`,
+    },
+    {
+      label: 'Membership revenue',
+      value: shortInr(revenue),
+      icon: IndianRupee,
+      tone: 'text-brand-700',
+      progress: billed ? Math.round((revenue / billed) * 100) : 0,
+      hint: `of ${shortInr(billed)} billed`,
+    },
+    {
+      label: 'Still to collect',
+      value: shortInr(due),
+      icon: Wallet,
+      tone: due ? 'text-amber-600' : 'text-ink-900',
+      hint: due ? 'chase these' : 'nothing due',
+    },
+    {
+      label: 'Benefits given',
+      value: shortInr(rows.reduce((s, m) => s + Number(m.saving || 0), 0)),
+      icon: Gift,
+      hint: `average plan ${rows.length ? shortInr(Math.round(billed / rows.length)) : '—'}`,
+    },
   ];
 
   const quick = [
@@ -113,26 +142,41 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
 
   return (
     <div className="space-y-6">
-      {/* Numbers first */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="card px-4 py-4">
-            <p className="text-sm font-semibold text-ink-500">{k.label}</p>
-            <p className={`num mt-1 font-display text-2xl font-extrabold ${k.tone || 'text-ink-900'}`}>{k.value}</p>
-            {k.hint && <p className="mt-0.5 text-xs text-ink-400">{k.hint}</p>}
-          </div>
-        ))}
-      </div>
+      {/* Pick a plan, or start something */}
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+        <h2 className="font-display text-base font-extrabold text-ink-900">Memberships</h2>
 
-      {/* Quick actions */}
-      <div className="card flex flex-wrap items-center gap-2 px-4 py-3.5">
-        <p className="eyebrow mr-1">Quick actions</p>
-        {quick.map((q) => (
-          <button key={q.label} className="btn-ghost btn-sm" onClick={q.run}>
-            <q.icon size={14} /> {q.label}
-          </button>
-        ))}
-      </div>
+        <MenuButton
+          label={plan === 'All' ? `All plans · ${rows.length}` : `${plan} · ${rows.filter((m) => m.plan === plan).length}`}
+          icon={Crown}
+          value={plan}
+          width="w-[270px]"
+          items={[
+            { key: 'All', label: 'All plans', count: rows.length },
+            ...allPlans.map((pl) => ({
+              key: pl.name,
+              label: pl.name,
+              count: rows.filter((m) => m.plan === pl.name).length,
+            })),
+          ]}
+          onSelect={setPlan}
+        />
+
+        <MenuButton
+          label="Quick actions"
+          icon={Zap}
+          variant="action"
+          width="w-[250px]"
+          items={quick.map((q) => ({ key: q.label, label: q.label, icon: q.icon }))}
+          onSelect={(key) => quick.find((q) => q.label === key)?.run()}
+        />
+
+        <p className="num ml-auto text-sm text-ink-500">
+          {active.length} active · {pending.length} awaiting activation · {soon(30).length} expiring
+        </p>
+      </section>
+
+      <KpiRow cols={6} items={kpis} />
 
       {/* The members table, with their filters */}
       <Block
@@ -154,12 +198,6 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
               <option value="All">All statuses</option>
               {['Active', 'New', 'Quoted', 'Expired', 'Suspended'].map((s) => (
                 <option key={s}>{s}</option>
-              ))}
-            </select>
-            <select className="input h-9 w-auto py-0 text-sm" value={plan} onChange={(e) => setPlan(e.target.value)}>
-              <option value="All">All plans</option>
-              {plans.map((p) => (
-                <option key={p.id}>{p.name}</option>
               ))}
             </select>
             <select className="input h-9 w-auto py-0 text-sm" value={expiring} onChange={(e) => setExpiring(e.target.value)}>
@@ -231,7 +269,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
                     </td>
                     <td className="py-2.5 text-ink-700">{m.expert || '—'}</td>
                     <td className="py-2.5 text-right">
-                      <button className="btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); onOpen(m); }}>
+                      <button className="btn-line btn-sm" onClick={(e) => { e.stopPropagation(); onOpen(m); }}>
                         View
                       </button>
                     </td>

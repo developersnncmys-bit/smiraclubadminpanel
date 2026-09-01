@@ -175,10 +175,10 @@ export default function Support() {
   return (
     <>
       <PageHeader title="Support and complaints" subtitle="Every complaint, who is on it, and how long it has left">
-        <button className="btn-ghost" onClick={exportTickets}>
+        <button className="btn-line" onClick={exportTickets}>
           <Download size={16} /> Export
         </button>
-        <button className="btn-primary" onClick={() => setFormOpen(true)}>
+        <button className="btn-action" onClick={() => setFormOpen(true)}>
           <Plus size={16} /> Create ticket
         </button>
       </PageHeader>
@@ -188,7 +188,7 @@ export default function Support() {
       <div className="card mt-6 flex flex-wrap items-center gap-2 px-4 py-3.5">
         <p className="eyebrow mr-1">Quick actions</p>
         {quick.map((q) => (
-          <button key={q.label} className="btn-ghost btn-sm" onClick={q.run}>
+          <button key={q.label} className="btn-line btn-sm" onClick={q.run}>
             <q.icon size={14} /> {q.label}
           </button>
         ))}

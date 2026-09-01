@@ -260,7 +260,7 @@ export default function Reports() {
           wide
           action={
             <button
-              className="btn-ghost btn-sm"
+              className="btn-line btn-sm"
               onClick={() =>
                 exportAs('smira-club-sales-performance', salesRows, [
                   { key: 'name', header: 'Salesperson' },
@@ -784,11 +784,11 @@ export default function Reports() {
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <button className="btn-primary" onClick={() => toast('Report saved')}>
+            <button className="btn-action" onClick={() => toast('Report saved')}>
               <Save size={15} /> Save report
             </button>
             <button
-              className="btn-ghost"
+              className="btn-line"
               onClick={() => {
                 setSchedules((list) => [
                   ...list,
@@ -809,13 +809,13 @@ export default function Reports() {
             >
               <CalendarClock size={15} /> Schedule
             </button>
-            <button className="btn-ghost" onClick={() => toast('Report emailed to the admin')}>
+            <button className="btn-line" onClick={() => toast('Report emailed to the admin')}>
               <Mail size={15} /> Email
             </button>
-            <button className="btn-ghost" onClick={() => exportAs('smira-club-custom-report', salesRows, [{ key: 'name', header: builder.dimension }, { key: 'revenue', header: builder.measure }])}>
+            <button className="btn-line" onClick={() => exportAs('smira-club-custom-report', salesRows, [{ key: 'name', header: builder.dimension }, { key: 'revenue', header: builder.measure }])}>
               <FileSpreadsheet size={15} /> Export Excel
             </button>
-            <button className="btn-ghost" onClick={printPdf}>
+            <button className="btn-line" onClick={printPdf}>
               <FileText size={15} /> Export PDF
             </button>
           </div>
@@ -830,7 +830,7 @@ export default function Reports() {
           note="Daily, weekly and monthly, to whoever needs them"
           wide
           action={
-            <button className="btn-ghost btn-sm" onClick={() => setSection('Report builder')}>
+            <button className="btn-line btn-sm" onClick={() => setSection('Report builder')}>
               <Plus size={14} /> New schedule
             </button>
           }
@@ -874,13 +874,13 @@ export default function Reports() {
                   <span className="block text-sm font-bold text-ink-900">{label}</span>
                   <span className="num block text-xs text-ink-500">{rows.length} rows</span>
                 </span>
-                <button className="btn-ghost btn-sm" onClick={() => exportAs(`smira-club-${label.toLowerCase()}`, rows, columns)}>
+                <button className="btn-line btn-sm" onClick={() => exportAs(`smira-club-${label.toLowerCase()}`, rows, columns)}>
                   <FileSpreadsheet size={13} /> Excel
                 </button>
-                <button className="btn-ghost btn-sm" onClick={() => exportAs(`smira-club-${label.toLowerCase()}`, rows, columns)}>
+                <button className="btn-line btn-sm" onClick={() => exportAs(`smira-club-${label.toLowerCase()}`, rows, columns)}>
                   <Download size={13} /> CSV
                 </button>
-                <button className="btn-ghost btn-sm" onClick={printPdf}>
+                <button className="btn-line btn-sm" onClick={printPdf}>
                   <FileText size={13} /> PDF
                 </button>
               </li>
@@ -894,10 +894,10 @@ export default function Reports() {
   return (
     <>
       <PageHeader title="Report and analytics" subtitle={`Fifteen reports over the same data · ${range.toLowerCase()}`}>
-        <button className="btn-ghost" onClick={() => setSection('Export centre')}>
+        <button className="btn-line" onClick={() => setSection('Export centre')}>
           <FileSpreadsheet size={16} /> Export centre
         </button>
-        <button className="btn-primary" onClick={printPdf}>
+        <button className="btn-action" onClick={printPdf}>
           <Download size={16} /> Download PDF
         </button>
       </PageHeader>

@@ -250,10 +250,10 @@ export default function Memberships({ embedded = false }) {
           <p className="mr-auto text-sm text-ink-500">
             Plans published on your website — features here are what members get
           </p>
-          <button className="btn-ghost" onClick={simulateSignup}>
+          <button className="btn-line" onClick={simulateSignup}>
             <Sparkles size={16} /> Simulate signup
           </button>
-          <button className="btn-primary" onClick={addPlan}>
+          <button className="btn-action" onClick={addPlan}>
             <Plus size={16} /> Add plan
           </button>
         </div>
@@ -262,10 +262,10 @@ export default function Memberships({ embedded = false }) {
           title="Memberships"
           subtitle="Plans published on your website — features here are what members get"
         >
-          <button className="btn-ghost" onClick={simulateSignup}>
+          <button className="btn-line" onClick={simulateSignup}>
             <Sparkles size={16} /> Simulate signup
           </button>
-          <button className="btn-primary" onClick={addPlan}>
+          <button className="btn-action" onClick={addPlan}>
             <Plus size={16} /> Add plan
           </button>
         </PageHeader>

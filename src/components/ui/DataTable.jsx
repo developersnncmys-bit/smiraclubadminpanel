@@ -116,7 +116,7 @@ export default function DataTable({
             className={`btn py-2 ${
               showPanel || Object.values(active).some(Boolean)
                 ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-600/20'
-                : 'btn-ghost'
+                : 'btn-line'
             }`}
           >
             <SlidersHorizontal size={15} /> Filters
@@ -148,7 +148,7 @@ export default function DataTable({
           ))}
         </div>
 
-        <button className="btn-ghost py-2" onClick={() => downloadCsv(exportName, filtered, columns)}>
+        <button className="btn-line py-2" onClick={() => downloadCsv(exportName, filtered, columns)}>
           <Download size={15} /> Export
         </button>
       </div>
@@ -178,7 +178,7 @@ export default function DataTable({
           ))}
           <div className="flex items-end">
             <button
-              className="btn-ghost w-full"
+              className="btn-line w-full"
               onClick={() => {
                 setActive({});
                 setPage(1);

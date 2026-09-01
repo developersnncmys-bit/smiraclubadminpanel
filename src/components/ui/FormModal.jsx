@@ -72,10 +72,10 @@ export default function FormModal({
       size={size}
       footer={
         <>
-          <button className="btn-ghost" onClick={onClose}>
+          <button className="btn-line" onClick={onClose}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={submit}>
+          <button className="btn-action" onClick={submit}>
             {submitLabel}
           </button>
         </>

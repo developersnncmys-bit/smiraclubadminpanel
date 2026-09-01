@@ -310,7 +310,7 @@ export default function Offers() {
         note="Drag, reorder, publish — this is what the website shows"
         wide
         action={
-          <button className="btn-ghost btn-sm" onClick={() => toast('Homepage published')}>
+          <button className="btn-line btn-sm" onClick={() => toast('Homepage published')}>
             <Send size={14} /> Publish
           </button>
         }
@@ -325,7 +325,7 @@ export default function Offers() {
               <Badge tone={s.live ? 'green' : 'slate'} dot>
                 {s.live ? 'Live' : 'Hidden'}
               </Badge>
-              <button className="btn-ghost btn-sm" onClick={() => toast(`${s.name} ${s.live ? 'hidden' : 'published'}`)}>
+              <button className="btn-line btn-sm" onClick={() => toast(`${s.name} ${s.live ? 'hidden' : 'published'}`)}>
                 {s.live ? 'Hide' : 'Show'}
               </button>
             </li>
@@ -340,7 +340,7 @@ export default function Offers() {
         note="What it gives, who it is for, when it runs and how much is left"
         wide
         action={
-          <button className="btn-primary btn-sm" onClick={() => setSection('Create offer')}>
+          <button className="btn-action btn-sm" onClick={() => setSection('Create offer')}>
             <Plus size={14} /> New offer
           </button>
         }
@@ -395,7 +395,7 @@ export default function Offers() {
           note="Name it, choose what it gives, then who and how often"
           wide
           action={
-            <button className="btn-primary btn-sm" onClick={() => toast('Offer sent for approval')}>
+            <button className="btn-action btn-sm" onClick={() => toast('Offer sent for approval')}>
               <Plus size={14} /> Save and submit
             </button>
           }
@@ -741,10 +741,10 @@ export default function Offers() {
                     '—'
                   ) : (
                     <span className="flex gap-1.5">
-                      <button className="btn-ghost btn-sm" onClick={() => toast(`${o.name} approved`)}>
+                      <button className="btn-line btn-sm" onClick={() => toast(`${o.name} approved`)}>
                         Approve
                       </button>
-                      <button className="btn-ghost btn-sm" onClick={() => toast(`${o.name} sent back`)}>
+                      <button className="btn-line btn-sm" onClick={() => toast(`${o.name} sent back`)}>
                         Send back
                       </button>
                     </span>
@@ -795,7 +795,7 @@ export default function Offers() {
               >
                 {r.status}
               </Badge>,
-              <button className="btn-ghost btn-sm" onClick={() => toast(`${r.id} reversed`)}>
+              <button className="btn-line btn-sm" onClick={() => toast(`${r.id} reversed`)}>
                 Reverse
               </button>,
             ],
@@ -827,10 +827,10 @@ export default function Offers() {
   return (
     <>
       <PageHeader title="Offers and promotions" subtitle="Who gets it, what it costs us, and what it brings back">
-        <button className="btn-ghost" onClick={() => setSection('Homepage')}>
+        <button className="btn-line" onClick={() => setSection('Homepage')}>
           <Eye size={16} /> Homepage
         </button>
-        <button className="btn-primary" onClick={() => setSection('Create offer')}>
+        <button className="btn-action" onClick={() => setSection('Create offer')}>
           <Plus size={16} /> New offer
         </button>
       </PageHeader>

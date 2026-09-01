@@ -152,11 +152,11 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
 
   return (
     <div className="space-y-6">
-      <KpiRow items={kpis} cols={8} />
+      <KpiRow items={kpis} cols={6} />
 
       {/* The six views the sheet asks for */}
       <SectionTabs items={TABS} value={tab} onChange={setTab}>
-        <button className="btn-primary ml-auto" onClick={actions.addMember}>
+        <button className="btn-action ml-auto" onClick={actions.addMember}>
           <Plus size={16} /> Add member
         </button>
       </SectionTabs>
@@ -219,21 +219,21 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
                     ))}
                   </ul>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <a href={`tel:${String(c.phone).replace(/[^\d]/g, '')}`} className="btn-ghost btn-sm">
+                    <a href={`tel:${String(c.phone).replace(/[^\d]/g, '')}`} className="btn-line btn-sm">
                       <Phone size={13} /> Call
                     </a>
                     <a
                       href={`https://wa.me/${String(c.phone).replace(/[^\d]/g, '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="btn-ghost btn-sm"
+                      className="btn-line btn-sm"
                     >
                       <MessageCircle size={13} /> WhatsApp
                     </a>
-                    <button className="btn-ghost btn-sm" onClick={() => actions.note(`Offer sent to ${c.name}`)}>
+                    <button className="btn-line btn-sm" onClick={() => actions.note(`Offer sent to ${c.name}`)}>
                       Send offer
                     </button>
-                    <button className="btn-ghost btn-sm" onClick={() => actions.note(`Follow-up task created for ${c.name}`)}>
+                    <button className="btn-line btn-sm" onClick={() => actions.note(`Follow-up task created for ${c.name}`)}>
                       Create task
                     </button>
                   </div>
@@ -310,7 +310,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
                       <span className="block truncate text-sm font-bold text-ink-900">{member.name}</span>
                       <span className="block truncate text-xs text-ink-500">{text}</span>
                     </span>
-                    <button className="btn-ghost btn-sm" onClick={() => onOpen(member)}>
+                    <button className="btn-line btn-sm" onClick={() => onOpen(member)}>
                       Open
                     </button>
                   </li>
@@ -384,10 +384,10 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
                         {d.kind} · in {d.days} days
                       </span>
                     </span>
-                    <button className="btn-ghost btn-sm" onClick={() => actions.note(`Personalised offer sent to ${d.c.name}`)}>
+                    <button className="btn-line btn-sm" onClick={() => actions.note(`Personalised offer sent to ${d.c.name}`)}>
                       Send offer
                     </button>
-                    <button className="btn-ghost btn-sm" onClick={() => actions.note(`Gift assigned to ${d.c.name}`)}>
+                    <button className="btn-line btn-sm" onClick={() => actions.note(`Gift assigned to ${d.c.name}`)}>
                       Assign gift
                     </button>
                   </li>
@@ -495,7 +495,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
                       {r.gift} · due {r.due} · {r.officer}
                     </span>
                   </span>
-                  <button className="btn-ghost btn-sm" onClick={() => actions.note(`${r.gift} marked delivered`)}>
+                  <button className="btn-line btn-sm" onClick={() => actions.note(`${r.gift} marked delivered`)}>
                     Mark delivered
                   </button>
                 </li>

@@ -18,7 +18,7 @@ export default function ConfirmDialog({
       size="sm"
       footer={
         <>
-          <button className="btn-ghost" onClick={onClose}>
+          <button className="btn-line" onClick={onClose}>
             Cancel
           </button>
           <button

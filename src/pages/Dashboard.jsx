@@ -227,7 +227,7 @@ export default function Dashboard() {
           title="Leads"
           note={`${enquiries.length} in the pipeline · ${enquiries.length ? Math.round((won.length / enquiries.length) * 100) : 0}% become customers`}
           action={
-            <button className="btn-ghost btn-sm" onClick={() => navigate('/enquiries')}>
+            <button className="btn-line btn-sm" onClick={() => navigate('/enquiries')}>
               Open
             </button>
           }
@@ -243,7 +243,7 @@ export default function Dashboard() {
           title="Trips"
           note={`${bookings.length} on the books · ${inr(bookingValue)} booked`}
           action={
-            <button className="btn-ghost btn-sm" onClick={() => navigate('/bookings')}>
+            <button className="btn-line btn-sm" onClick={() => navigate('/bookings')}>
               Open
             </button>
           }
@@ -272,7 +272,7 @@ export default function Dashboard() {
           title="The desk today"
           note={`${online} of ${team.length} online`}
           action={
-            <button className="btn-ghost btn-sm" onClick={() => navigate('/team')}>
+            <button className="btn-line btn-sm" onClick={() => navigate('/team')}>
               Open
             </button>
           }
@@ -302,7 +302,7 @@ export default function Dashboard() {
         note="One number from each, and a way in"
         wide
         action={
-          <button className="btn-ghost btn-sm" onClick={() => navigate('/reports')}>
+          <button className="btn-line btn-sm" onClick={() => navigate('/reports')}>
             <PieChart size={14} /> All reports
           </button>
         }

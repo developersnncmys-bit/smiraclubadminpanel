@@ -180,7 +180,7 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
                       </span>
                       <span className="flex items-center gap-2">
                         <Badge tone={docTone[d.status] || 'slate'}>{d.status}</Badge>
-                        <button className="btn-ghost btn-sm" onClick={() => actions.requestDocs(p, d.name)}>
+                        <button className="btn-line btn-sm" onClick={() => actions.requestDocs(p, d.name)}>
                           Request
                         </button>
                       </span>

@@ -307,13 +307,13 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
                     </td>
                     <td className="py-2.5">
                       <span className="flex justify-end gap-1.5">
-                        <button className="btn-ghost btn-sm" onClick={() => actions.note(`Sent to ${b.hotel}`)}>
+                        <button className="btn-line btn-sm" onClick={() => actions.note(`Sent to ${b.hotel}`)}>
                           <Send size={13} /> Send
                         </button>
                         <a href={`tel:${String(b.vendorContact?.phone || '').replace(/[^\d+]/g, '')}`} className="icon-btn h-8 w-8" title="Call the hotel">
                           <Phone size={13} />
                         </a>
-                        <button className="btn-ghost btn-sm" onClick={() => actions.note('Confirmation upload comes with the storage work')}>
+                        <button className="btn-line btn-sm" onClick={() => actions.note('Confirmation upload comes with the storage work')}>
                           <Upload size={13} /> Upload
                         </button>
                       </span>
@@ -457,7 +457,7 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
                     <td className="py-2.5 text-ink-600">{b.handledBy?.confirmed || '—'}</td>
                     <td className="py-2.5 text-ink-600">{b.handledBy?.modified || '—'}</td>
                     <td className="py-2.5 text-right">
-                      <button className="btn-ghost btn-sm" onClick={() => actions.note(`${b.id} reassigned`)}>
+                      <button className="btn-line btn-sm" onClick={() => actions.note(`${b.id} reassigned`)}>
                         Reassign
                       </button>
                     </td>
@@ -510,13 +510,13 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
           wide
           action={
             <div className="flex gap-1.5">
-              <button className="btn-ghost btn-sm" onClick={actions.exportBookings}>
+              <button className="btn-line btn-sm" onClick={actions.exportBookings}>
                 <FileSpreadsheet size={14} /> Excel
               </button>
-              <button className="btn-ghost btn-sm" onClick={actions.exportBookings}>
+              <button className="btn-line btn-sm" onClick={actions.exportBookings}>
                 <Download size={14} /> CSV
               </button>
-              <button className="btn-ghost btn-sm" onClick={() => actions.note('Opening the print dialog — choose Save as PDF')}>
+              <button className="btn-line btn-sm" onClick={() => actions.note('Opening the print dialog — choose Save as PDF')}>
                 <FileText size={14} /> PDF
               </button>
             </div>

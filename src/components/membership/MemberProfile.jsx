@@ -225,7 +225,7 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
                   Quotation <b className="text-ink-900">{m.quote}</b> was raised for this membership.
                 </p>
               )}
-              <button className="btn-ghost mt-4" onClick={() => actions.recordPayment()}>
+              <button className="btn-line mt-4" onClick={() => actions.recordPayment()}>
                 Record a payment
               </button>
             </section>

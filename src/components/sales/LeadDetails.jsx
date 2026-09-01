@@ -138,7 +138,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
 
               <button
                 onClick={() => toast('Add packages and add-ons to this lead', 'info')}
-                className="btn-ghost mt-4 w-full justify-center"
+                className="btn-line mt-4 w-full justify-center"
               >
                 <ShoppingCart size={15} /> Add packages
               </button>
@@ -269,7 +269,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
                   {t.count !== null && ` (${t.count})`}
                 </button>
               ))}
-              <button className="btn-primary btn-sm ml-auto" onClick={() => setAdding((a) => !a)}>
+              <button className="btn-action btn-sm ml-auto" onClick={() => setAdding((a) => !a)}>
                 <Plus size={14} /> Add activity
               </button>
             </div>
@@ -284,7 +284,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
                   placeholder="What happened? e.g. Called, asked for a revised quote"
                   className="input bg-white"
                 />
-                <button className="btn-primary shrink-0" onClick={addActivity}>
+                <button className="btn-action shrink-0" onClick={addActivity}>
                   Save
                 </button>
               </div>

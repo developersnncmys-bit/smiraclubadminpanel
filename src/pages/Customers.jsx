@@ -278,7 +278,7 @@ export default function Customers() {
       >
         {view === 'table' && (
           <button
-            className="btn-primary"
+            className="btn-action"
             onClick={() => {
               setEditing(null);
               setFormOpen(true);
@@ -374,11 +374,11 @@ export default function Customers() {
         subtitle={viewing ? `${viewing.id} · ${viewing.city || 'City not recorded'}` : ''}
         footer={
           <>
-            <button className="btn-ghost" onClick={() => setViewing(null)}>
+            <button className="btn-line" onClick={() => setViewing(null)}>
               Close
             </button>
             <button
-              className="btn-primary"
+              className="btn-action"
               onClick={() => {
                 setEditing(viewing);
                 setViewing(null);
@@ -482,7 +482,7 @@ export default function Customers() {
               ) : (
                 <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-ink-900/15 px-4 py-3">
                   <p className="flex-1 text-sm text-ink-500">No membership yet.</p>
-                  <button className="btn-ghost btn-sm" onClick={() => setView('plans')}>
+                  <button className="btn-line btn-sm" onClick={() => setView('plans')}>
                     View plans
                   </button>
                 </div>

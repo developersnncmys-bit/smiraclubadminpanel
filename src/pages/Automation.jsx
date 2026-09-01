@@ -232,7 +232,7 @@ export default function Automation() {
         note="When this happens, if that is true, then do this"
         wide
         action={
-          <button className="btn-primary btn-sm" onClick={() => toast('Rule saved and switched on')}>
+          <button className="btn-action btn-sm" onClick={() => toast('Rule saved and switched on')}>
             <Plus size={14} /> Create rule
           </button>
         }
@@ -317,7 +317,7 @@ export default function Automation() {
             title={r.name}
             note={`${r.runs} runs · ${r.errors} errors · last ran ${r.lastRun.toLowerCase()}`}
             action={
-              <button className="btn-ghost btn-sm" onClick={() => toast(`${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`)}>
+              <button className="btn-line btn-sm" onClick={() => toast(`${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`)}>
                 {r.status === 'On' ? 'Turn off' : 'Turn on'}
               </button>
             }
@@ -364,7 +364,7 @@ export default function Automation() {
         note="Add, remove, rename or reorder — this is the pipeline the desk works"
         wide
         action={
-          <button className="btn-ghost btn-sm" onClick={() => toast('Stage added')}>
+          <button className="btn-line btn-sm" onClick={() => toast('Stage added')}>
             <Plus size={14} /> Add stage
           </button>
         }
@@ -375,7 +375,7 @@ export default function Automation() {
               <GripVertical size={15} className="shrink-0 text-ink-300" />
               <span className="num w-6 shrink-0 text-sm font-bold text-ink-400">{i + 1}</span>
               <span className="min-w-0 flex-1 text-sm font-semibold text-ink-800">{s}</span>
-              <button className="btn-ghost btn-sm" onClick={() => toast(`${s} renamed`)}>
+              <button className="btn-line btn-sm" onClick={() => toast(`${s} renamed`)}>
                 Rename
               </button>
             </li>
@@ -520,7 +520,7 @@ export default function Automation() {
         note="Once a field exists, a rule can check it"
         wide
         action={
-          <button className="btn-ghost btn-sm" onClick={() => toast('Field added')}>
+          <button className="btn-line btn-sm" onClick={() => toast('Field added')}>
             <Plus size={14} /> Add field
           </button>
         }
@@ -578,10 +578,10 @@ export default function Automation() {
   return (
     <>
       <PageHeader title="Automation" subtitle="What the panel does without anyone asking it">
-        <button className="btn-ghost" onClick={() => setSection('Templates')}>
+        <button className="btn-line" onClick={() => setSection('Templates')}>
           Templates
         </button>
-        <button className="btn-primary" onClick={() => setSection('Builder')}>
+        <button className="btn-action" onClick={() => setSection('Builder')}>
           <Plus size={16} /> New rule
         </button>
       </PageHeader>

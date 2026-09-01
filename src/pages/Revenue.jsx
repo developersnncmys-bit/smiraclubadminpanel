@@ -569,7 +569,7 @@ export default function Revenue() {
         wide
         action={
           <button
-            className="btn-ghost btn-sm"
+            className="btn-line btn-sm"
             onClick={() =>
               exportAs('smira-club-revenue-ledger', ledger, [
                 { key: 'date', header: 'Date' },
@@ -924,10 +924,10 @@ export default function Revenue() {
         wide
         action={
           <div className="flex gap-1.5">
-            <button className="btn-ghost btn-sm" onClick={() => exportAs('smira-club-revenue-ledger', ledger, [{ key: 'date', header: 'Date' }, { key: 'customer', header: 'Customer' }, { key: 'net', header: 'Net' }, { key: 'paid', header: 'Paid' }])}>
+            <button className="btn-line btn-sm" onClick={() => exportAs('smira-club-revenue-ledger', ledger, [{ key: 'date', header: 'Date' }, { key: 'customer', header: 'Customer' }, { key: 'net', header: 'Net' }, { key: 'paid', header: 'Paid' }])}>
               <FileSpreadsheet size={14} /> Excel
             </button>
-            <button className="btn-ghost btn-sm" onClick={printPdf}>
+            <button className="btn-line btn-sm" onClick={printPdf}>
               <FileText size={14} /> PDF
             </button>
           </div>
@@ -947,10 +947,10 @@ export default function Revenue() {
   return (
     <>
       <PageHeader title="Revenue" subtitle={`Money in, money out and what is left · ${range.toLowerCase()}`}>
-        <button className="btn-ghost" onClick={() => setSection('Reports')}>
+        <button className="btn-line" onClick={() => setSection('Reports')}>
           <FileSpreadsheet size={16} /> Reports
         </button>
-        <button className="btn-primary" onClick={printPdf}>
+        <button className="btn-action" onClick={printPdf}>
           <Download size={16} /> Download PDF
         </button>
       </PageHeader>

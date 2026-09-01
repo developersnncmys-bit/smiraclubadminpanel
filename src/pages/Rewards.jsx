@@ -266,7 +266,7 @@ export default function Rewards() {
         note="No developer needed — this is how a campaign gets built"
         wide
         action={
-          <button className="btn-primary btn-sm" onClick={() => toast('Reward rule created and switched on')}>
+          <button className="btn-action btn-sm" onClick={() => toast('Reward rule created and switched on')}>
             <Plus size={14} /> Create reward
           </button>
         }
@@ -537,10 +537,10 @@ export default function Rewards() {
                     {r.reward} · {r.reason} · {inr(r.value)}
                   </span>
                 </span>
-                <button className="btn-ghost btn-sm" onClick={() => toast(`${r.reward} approved for ${r.customer}`)}>
+                <button className="btn-line btn-sm" onClick={() => toast(`${r.reward} approved for ${r.customer}`)}>
                   Approve
                 </button>
-                <button className="btn-ghost btn-sm" onClick={() => toast(`${r.reward} rejected`)}>
+                <button className="btn-line btn-sm" onClick={() => toast(`${r.reward} rejected`)}>
                   Reject
                 </button>
               </li>
@@ -549,7 +549,7 @@ export default function Rewards() {
               <li className="px-4 py-6 text-center text-sm text-ink-500">Nothing waiting.</li>
             )}
           </ul>
-          <button className="btn-ghost mt-3" onClick={() => toast('All pending rewards approved')}>
+          <button className="btn-line mt-3" onClick={() => toast('All pending rewards approved')}>
             Approve everything pending
           </button>
         </Block>
@@ -581,7 +581,7 @@ export default function Rewards() {
         <div className="mt-4">
           <Flow steps={dispatchFlow} />
         </div>
-        <button className="btn-ghost mt-4" onClick={() => toast('Marked as dispatched')}>
+        <button className="btn-line mt-4" onClick={() => toast('Marked as dispatched')}>
           <Truck size={15} /> Mark the next one dispatched
         </button>
       </Block>
@@ -648,7 +648,7 @@ export default function Rewards() {
           note="Temporary rules, with a budget and an end date"
           wide
           action={
-            <button className="btn-ghost btn-sm" onClick={() => setSection('Rule builder')}>
+            <button className="btn-line btn-sm" onClick={() => setSection('Rule builder')}>
               <Plus size={14} /> New campaign
             </button>
           }
@@ -710,7 +710,7 @@ export default function Rewards() {
         note="So a sale can be traced back to whoever brought it in"
         wide
         action={
-          <button className="btn-ghost btn-sm" onClick={() => toast('Coupon code created')}>
+          <button className="btn-line btn-sm" onClick={() => toast('Coupon code created')}>
             <Plus size={14} /> Create code
           </button>
         }
@@ -763,10 +763,10 @@ export default function Rewards() {
   return (
     <>
       <PageHeader title="Rewards, refer and earn" subtitle="What members earn, what it costs us, and how it reaches them">
-        <button className="btn-ghost" onClick={() => setSection('Refer and earn')}>
+        <button className="btn-line" onClick={() => setSection('Refer and earn')}>
           <Share2 size={16} /> Referrals
         </button>
-        <button className="btn-primary" onClick={() => setSection('Rule builder')}>
+        <button className="btn-action" onClick={() => setSection('Rule builder')}>
           <Plus size={16} /> Create reward
         </button>
       </PageHeader>

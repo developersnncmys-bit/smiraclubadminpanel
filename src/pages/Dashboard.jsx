@@ -5,6 +5,16 @@ import {
   MessageCircle, Warehouse, Gift, Megaphone, AlertTriangle, TrendingUp,
 } from 'lucide-react';
 import { useState } from 'react';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
 import MenuButton from '../components/ui/MenuButton.jsx';
@@ -13,7 +23,7 @@ import Block from '../components/ui/Block.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { inr, shortInr, enquiryStatuses, bookingStatusTone } from '../data/mockData.js';
+import { inr, shortInr, enquiryStatuses, bookingStatusTone, salesTrend } from '../data/mockData.js';
 import { daysUntil } from '../lib/membership.js';
 import { expenses as expenseBudget } from '../data/revenueData.js';
 import { receivables, salary } from '../data/paymentData.js';
@@ -204,43 +214,56 @@ export default function Dashboard() {
 
       {section === 'Overview' && (
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <section className="card relative overflow-hidden p-6">
-          <span className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl" />
-          <div className="relative">
-            <p className="eyebrow">{`Revenue · ${range.toLowerCase()}`}</p>
-            <p className="num mt-2 font-display text-5xl font-extrabold leading-none text-ink-900">{inr(revenue)}</p>
-            <p className="mt-2 text-sm text-ink-500">
-              {inr(membershipPaid)} memberships · {inr(markup)} booking markup · {achievement}% of {shortInr(target)} target
-            </p>
-
-            {/* Revenue → costs → profit, on one line */}
-            <ul className="mt-6 space-y-3">
-              {moneySteps.map((s) => (
-                <li key={s.label}>
-                  <p className="flex items-baseline justify-between text-sm">
-                    <span className="text-ink-500">{s.label}</span>
-                    <span className="num font-bold">{inr(s.value)}</span>
-                  </p>
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-soft">
-                    <div
-                      className={`h-full rounded-full ${s.tone}`}
-                      style={{ width: `${Math.round((Math.abs(s.value) / moneyTop) * 100)}%` }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-5 flex flex-wrap gap-2 text-sm">
-              <span className="inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5">
-                <TrendingUp size={14} className="text-emerald-600" /> {margin}% margin
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-surface-soft px-3 py-1.5">
-                <Wallet size={14} className="text-ink-400" /> {inr(outstanding + membershipDue)} still to collect
-              </span>
-            </div>
+        <Block
+          title="Money"
+          note="Last 30 days — the bars are what closed, the line is the daily target"
+        >
+          <div className="h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={salesTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="4 6" stroke="rgba(11,21,36,0.07)" vertical={false} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#96a2b4' }} dy={6} />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={58}
+                  tick={{ fontSize: 11, fill: '#96a2b4' }}
+                  tickFormatter={(v) => shortInr(v)}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(20,165,140,0.06)' }}
+                  formatter={(v, name) => [name === 'Closings' ? v : inr(v), name]}
+                  labelFormatter={(d) => `Day ${d}`}
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: '1px solid rgba(11,21,36,0.06)',
+                    boxShadow: '0 20px 45px -20px rgba(11,21,36,0.28)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                />
+                <Bar dataKey="revenue" name="Revenue" fill="#0b8472" radius={[6, 6, 3, 3]} maxBarSize={16} />
+                <Line type="monotone" dataKey="target" name="Daily target" stroke="#f0a04b" strokeWidth={2} dot={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
-        </section>
+
+          {/* Where the money came from — the tiles above say how much */}
+          <div className="mt-4 grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
+            {[
+              ['Membership', team.reduce((a, m) => a + Number(m.revenueDetail?.sources?.Membership || 0), 0), 'text-ink-900'],
+              ['Booking', team.reduce((a, m) => a + Number(m.revenueDetail?.sources?.Booking || 0), 0), 'text-ink-900'],
+              ['Add-ons', team.reduce((a, m) => a + Number(m.revenueDetail?.sources?.Addons || 0), 0), 'text-ink-900'],
+              ['Collected', team.reduce((a, m) => a + Number(m.revenueDetail?.collected || 0), 0), 'text-emerald-600'],
+            ].map(([label, v, tone]) => (
+              <div key={label} className="px-4 py-3">
+                <p className={`num truncate font-display text-lg font-extrabold leading-none ${tone}`}>{shortInr(v)}</p>
+                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">{label}</p>
+              </div>
+            ))}
+          </div>
+        </Block>
+
         <Block title="Needs a person" note="Straight from the data, most serious first">
           <ul className="space-y-1.5">
             {alerts.slice(0, 6).map((a) => (

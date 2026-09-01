@@ -24,6 +24,7 @@ import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
 import Block from '../components/ui/Block.jsx';
+import FormModal from '../components/ui/FormModal.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
@@ -80,6 +81,8 @@ function scoreOf(p) {
  */
 export default function Partners() {
   const { partners, update, create, toast } = useApp();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [view, setView] = useState('Partners');
   const [viewing, setViewing] = useState(null);
   const [query, setQuery] = useState('');
@@ -105,14 +108,67 @@ export default function Partners() {
 
   const kpis = [
     { icon: Handshake, label: 'Partners', value: partners.length, hint: `${active.length} active` },
-    { icon: Clock, label: 'Waiting on approval', value: pendingApproval.length, tone: pendingApproval.length ? 'text-amber-600' : undefined },
+    { icon: Clock, label: 'Waiting', value: pendingApproval.length, tone: pendingApproval.length ? 'text-amber-600' : undefined },
     { icon: Ban, label: 'Suspended', value: partners.filter((p) => p.status === 'Suspended').length, tone: 'text-rose-600' },
-    { icon: CalendarCheck, label: 'Booking value', value: shortInr(bookingValue), tone: 'text-brand-700' },
-    { icon: IndianRupee, label: 'Our commission', value: shortInr(commission), tone: 'text-emerald-600' },
+    { icon: CalendarCheck, label: 'Booked', value: shortInr(bookingValue), tone: 'text-brand-700' },
+    { icon: IndianRupee, label: 'Commission', value: shortInr(commission), tone: 'text-emerald-600' },
     { icon: Wallet, label: 'Payable', value: shortInr(payable), tone: payable ? 'text-amber-600' : undefined },
     { icon: CheckCircle2, label: 'Paid so far', value: shortInr(paid) },
-    { icon: Headphones, label: 'Open partner tickets', value: partnerTickets.filter((t) => t.stage !== 'Closed').length },
+    { icon: Headphones, label: 'Open tickets', value: partnerTickets.filter((t) => t.stage !== 'Closed').length },
   ];
+
+  /** The details the desk needs before a partner can be reviewed. */
+  const partnerFields = [
+    { name: 'name', label: 'Partner name', type: 'text', required: true },
+    { name: 'category', label: 'Category', type: 'select', options: partnerCategories },
+    { name: 'businessType', label: 'Business type', type: 'text', placeholder: 'Resort, DMC, fleet…' },
+    { name: 'location', label: 'Location', type: 'text', placeholder: 'Jimbaran, Bali' },
+    { name: 'contact', label: 'Contact person', type: 'text', required: true },
+    { name: 'phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 ' },
+    { name: 'whatsapp', label: 'WhatsApp', type: 'tel', placeholder: 'same as phone if blank' },
+    { name: 'email', label: 'Email', type: 'email' },
+    { name: 'commission', label: 'Commission (%)', type: 'number' },
+    { name: 'ratePlan', label: 'Rate plan', type: 'text', full: true, placeholder: 'Contract 2026-A · ocean view suite ₹42,000' },
+    { name: 'registration', label: 'Registration number', type: 'text' },
+    { name: 'gst', label: 'GST', type: 'text' },
+    { name: 'pan', label: 'PAN', type: 'text' },
+    { name: 'upi', label: 'UPI', type: 'text' },
+    { name: 'bank', label: 'Bank account', type: 'text', full: true, placeholder: 'HDFC · ****4471' },
+  ];
+
+  const savePartner = (values) => {
+    const clean = { ...values, whatsapp: values.whatsapp || values.phone };
+    if (editing) {
+      update('partners', editing.id, clean, { message: `${clean.name} updated` });
+      setEditing(null);
+      return;
+    }
+    const id = create(
+      'partners',
+      {
+        ...clean,
+        submitted: 'today',
+        verification: 'Pending',
+        approval: 'Pending review',
+        stage: 'Registration',
+        status: 'Pending',
+        bookings: 0, confirmed: 0, cancelled: 0, failed: 0,
+        revenue: 0, commissionEarned: 0, payable: 0, paid: 0,
+        responseMins: null, rating: null, repeat: 0, rooms: 0,
+        ratePlan: clean.ratePlan || '—',
+        documents: [
+          { name: 'Business registration', status: 'Missing' },
+          { name: 'Contract', status: 'Missing' },
+          { name: 'Bank details', status: 'Missing' },
+          { name: 'Tax certificate', status: 'Missing' },
+        ],
+        activity: [{ at: 'today', text: 'Added from the panel' }],
+      },
+      { silent: true }
+    );
+    toast(`${clean.name} added — ${id} is waiting on documents`);
+    setView('Onboarding');
+  };
 
   const exportPartners = () =>
     downloadCsv('smira-club-partners', partners, [
@@ -135,6 +191,11 @@ export default function Partners() {
     suspend: (p) => update('partners', p.id, { approval: 'Suspended', status: 'Suspended' }, { message: `${p.name} suspended` }),
     requestDocs: (p, doc) => toast(`${doc} requested from ${p.name}`),
     message: (p, kind) => toast(`${kind} sent to ${p.name}`),
+    edit: (p) => {
+      setViewing(null);
+      setEditing(p);
+      setFormOpen(true);
+    },
   };
 
   const body = {
@@ -552,41 +613,15 @@ export default function Partners() {
         <button
           className="btn-action"
           onClick={() => {
-            create('partners', {
-              name: 'New partner',
-              category: 'Hotel',
-              location: '—',
-              businessType: '—',
-              contact: '—',
-              phone: '',
-              whatsapp: '',
-              email: '',
-              gst: '—', pan: '—', upi: '—', bank: '—', registration: '—', contract: '—',
-              commission: 10,
-              submitted: 'today',
-              verification: 'Pending',
-              approval: 'Pending review',
-              stage: 'Registration',
-              status: 'Pending',
-              bookings: 0, confirmed: 0, cancelled: 0, failed: 0,
-              revenue: 0, commissionEarned: 0, payable: 0, paid: 0,
-              responseMins: null, rating: null, repeat: 0, rooms: 0, ratePlan: '—',
-              documents: [
-                { name: 'Business registration', status: 'Missing' },
-                { name: 'Contract', status: 'Missing' },
-                { name: 'Bank details', status: 'Missing' },
-                { name: 'Tax certificate', status: 'Missing' },
-              ],
-              activity: [{ at: 'today', text: 'Added from the panel' }],
-            });
-            setView('Onboarding');
+            setEditing(null);
+            setFormOpen(true);
           }}
         >
           <Plus size={16} /> Add partner
         </button>
       </PageHeader>
 
-      <KpiRow items={kpis} cols={8} />
+      <KpiRow items={kpis} cols={4} />
 
       <SectionTabs
         className="mb-5 mt-6"
@@ -596,6 +631,17 @@ export default function Partners() {
       />
 
       <div className="grid gap-5 xl:grid-cols-2">{body[view]}</div>
+
+      <FormModal
+        open={formOpen}
+        onClose={() => { setFormOpen(false); setEditing(null); }}
+        onSubmit={savePartner}
+        title={editing ? `Edit ${editing.name}` : 'Add partner'}
+        subtitle={editing ? editing.id : 'They land in onboarding, waiting on their documents'}
+        fields={partnerFields}
+        initial={editing || { category: partnerCategories[0], commission: 10 }}
+        submitLabel={editing ? 'Save changes' : 'Add partner'}
+      />
 
       {viewing && (
         <PartnerProfile

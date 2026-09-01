@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import {
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Phone,
-  MessageCircle,
-  Mail,
-  CheckCircle2,
-  Circle,
-  FileText,
-  Star,
-  ShieldCheck,
-  Ban,
+  X, ChevronLeft, ChevronRight, Phone, MessageCircle, Mail,
+  CheckCircle2, Circle, FileText, Star, ShieldCheck, Ban,
+  Pencil,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
@@ -103,6 +94,11 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
                 <button onClick={() => actions.suspend(p)} className="icon-btn-danger h-9 w-9" title="Suspend">
                   <Ban size={15} />
                 </button>
+                {actions.edit && (
+                  <button onClick={() => actions.edit(p)} className="icon-btn h-9 w-9" title="Edit partner">
+                    <Pencil size={15} />
+                  </button>
+                )}
               </div>
             </div>
 

@@ -291,33 +291,62 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
       <div className="grid gap-5 xl:grid-cols-2">
         {/* Activation management */}
         <Block title="Activation" note="Every new membership, from payment to activated">
-          <ul className="space-y-2">
-            {activationStages.map((stage) => {
+          {/* Where the new memberships are stuck */}
+          <ol className="space-y-2">
+            {activationStages.map((stage, i) => {
               const at = rows.filter((m) => m.activation?.stage === stage);
+              const on = at.length > 0;
               return (
-                <li key={stage} className="rounded-xl border border-ink-900/[0.07] px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-bold text-ink-800">{stage}</span>
-                    <span className="num text-sm font-bold text-ink-900">{at.length}</span>
-                  </div>
-                  {at.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => onOpen(m)}
-                      className="mt-2 flex w-full items-center gap-2.5 rounded-lg bg-surface-soft px-3 py-2 text-left"
-                    >
-                      <Avatar name={m.name} size="sm" />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-ink-800">{m.name}</span>
-                        <span className="block truncate text-xs text-ink-500">
-                          {m.plan} · expert {m.expert || 'not assigned'} · by {m.activation?.deadline}
-                        </span>
-                      </span>
-                    </button>
-                  ))}
+                <li key={stage} className="flex items-center gap-3">
+                  <span
+                    className={`num grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] font-extrabold ${
+                      on ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-400'
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className={`min-w-0 flex-1 truncate text-[13px] ${on ? 'font-bold text-ink-900' : 'text-ink-500'}`}>
+                    {stage}
+                  </span>
+                  <span className="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-surface-soft">
+                    <span
+                      className={`block h-full rounded-full ${on ? 'bg-brand-500' : ''}`}
+                      style={{ width: `${rows.length ? Math.round((at.length / rows.length) * 100) : 0}%` }}
+                    />
+                  </span>
+                  <span className={`num w-5 shrink-0 text-right text-[13px] font-bold ${on ? 'text-ink-900' : 'text-ink-300'}`}>
+                    {at.length}
+                  </span>
                 </li>
               );
             })}
+          </ol>
+
+          {/* Everyone waiting, with the stage they are waiting at */}
+          <p className="eyebrow mb-2 mt-4">Who is waiting</p>
+          <ul className="divide-y divide-ink-900/[0.07]">
+            {rows
+              .filter((m) => m.activation?.stage)
+              .map((m) => (
+                <li key={m.id}>
+                  <button
+                    onClick={() => onOpen(m)}
+                    className="flex w-full items-center gap-2.5 rounded-lg py-2.5 text-left transition hover:bg-surface-soft"
+                  >
+                    <Avatar name={m.name} size="sm" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-bold text-ink-900">{m.name}</span>
+                      <span className="block truncate text-xs text-ink-500">
+                        {m.plan} · expert {m.expert || 'not assigned'} · by {m.activation?.deadline}
+                      </span>
+                    </span>
+                    <Badge tone={m.activation.stage === 'Activated' ? 'green' : 'amber'}>{m.activation.stage}</Badge>
+                  </button>
+                </li>
+              ))}
+            {rows.filter((m) => m.activation?.stage).length === 0 && (
+              <li className="py-6 text-center text-sm text-ink-500">Nothing waiting to be activated.</li>
+            )}
           </ul>
           <p className="mt-3 text-xs text-ink-400">
             Each membership tracks contact, explanation, documents and the welcome gift.
@@ -326,41 +355,68 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
 
         {/* Expiry and renewal */}
         <Block title="Expiry and renewal" note="Who to call, and how the renewal is going">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[45, 30, 15, 7].map((d) => (
-              <Stat key={d} label={`Expiring in ${d} days`} value={soon(d).length} tone={soon(d).length ? 'text-amber-600' : 'text-ink-900'} />
+          {/* How close the expiries are */}
+          <div className="grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
+            {[7, 15, 30, 45].map((d) => (
+              <div key={d} className="px-4 py-3">
+                <p className={`num font-display text-lg font-extrabold leading-none ${soon(d).length ? 'text-amber-600' : 'text-ink-300'}`}>
+                  {soon(d).length}
+                </p>
+                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">
+                  in {d} days
+                </p>
+              </div>
             ))}
           </div>
-          <div className="mt-4">
-            <List
-              empty="No renewals in flight."
-              rows={renewalStages.map((stage) => ({
-                label: stage,
-                value: rows.filter((m) => m.renewal?.stage === stage).length,
-                display: rows.filter((m) => m.renewal?.stage === stage).length,
-                tone: stage === 'Renewal lost' ? 'bg-rose-400' : 'bg-brand-500',
-              }))}
-            />
-          </div>
-          <ul className="mt-4 divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+
+          {/* Where each renewal conversation has reached */}
+          <p className="eyebrow mb-2 mt-4">Renewal conversations</p>
+          <ol className="space-y-2">
+            {renewalStages.map((stage) => {
+              const at = rows.filter((m) => m.renewal?.stage === stage);
+              const lost = stage === 'Renewal lost';
+              return (
+                <li key={stage} className="flex items-center gap-3">
+                  <span className={`min-w-0 flex-1 truncate text-[13px] ${at.length ? 'font-bold text-ink-900' : 'text-ink-500'}`}>
+                    {stage}
+                  </span>
+                  <span className="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-surface-soft">
+                    <span
+                      className={`block h-full rounded-full ${lost ? 'bg-rose-400' : 'bg-brand-500'}`}
+                      style={{ width: `${rows.length ? Math.round((at.length / rows.length) * 100) : 0}%` }}
+                    />
+                  </span>
+                  <span className={`num w-5 shrink-0 text-right text-[13px] font-bold ${at.length ? 'text-ink-900' : 'text-ink-300'}`}>
+                    {at.length}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+
+          <p className="eyebrow mb-2 mt-4">Who to call</p>
+          <ul className="divide-y divide-ink-900/[0.07]">
             {rows
               .filter((m) => m.renewal?.stage && m.renewal.stage !== '—')
               .map((m) => (
-                <li key={m.id} className="flex items-center gap-3 px-4 py-3">
-                  <button onClick={() => onOpen(m)} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
+                <li key={m.id}>
+                  <button
+                    onClick={() => onOpen(m)}
+                    className="flex w-full items-center gap-2.5 rounded-lg py-2.5 text-left transition hover:bg-surface-soft"
+                  >
                     <Avatar name={m.name} size="sm" />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-ink-900">{m.name}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-bold text-ink-900">{m.name}</span>
                       <span className="block truncate text-xs text-ink-500">
                         {m.renewal.note || m.plan} · contacted {m.renewal.contactedOn}
                       </span>
                     </span>
+                    <Badge tone={m.renewal.stage === 'Renewal lost' ? 'rose' : 'sky'}>{m.renewal.stage}</Badge>
                   </button>
-                  <Badge tone={m.renewal.stage === 'Renewal lost' ? 'rose' : 'sky'}>{m.renewal.stage}</Badge>
                 </li>
               ))}
             {rows.filter((m) => m.renewal?.stage && m.renewal.stage !== '—').length === 0 && (
-              <li className="px-4 py-6 text-center text-sm text-ink-500">No renewal conversations yet.</li>
+              <li className="py-6 text-center text-sm text-ink-500">No renewal conversations yet.</li>
             )}
           </ul>
         </Block>

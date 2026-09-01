@@ -18,6 +18,7 @@ import { stageTone, ticketStages, priorities, escalationLevels } from '../../dat
 import { inr } from '../../data/mockData.js';
 import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
+import RecordTrail from '../ui/RecordTrail.jsx';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
@@ -315,6 +316,10 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
                 </p>
               )}
             </section>
+          </div>
+          {/* Everything that has happened on this complaint */}
+          <div className="lg:col-span-2">
+            <RecordTrail id={t.id} name={t.customer} tasks={[]} />
           </div>
         </div>
       </aside>

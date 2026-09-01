@@ -18,6 +18,7 @@ import { signupTone, activationStages, inr } from '../../data/mockData.js';
 import { membershipStanding } from '../../lib/membership.js';
 import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
+import RecordTrail from '../ui/RecordTrail.jsx';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 
@@ -248,6 +249,10 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
                 )}
               </ol>
             </section>
+          </div>
+          {/* Everything that has happened with this member */}
+          <div className="lg:col-span-2">
+            <RecordTrail id={member.id} name={member.name} tasks={[]} />
           </div>
         </div>
       </aside>

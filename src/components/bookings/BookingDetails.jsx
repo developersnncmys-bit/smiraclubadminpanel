@@ -20,6 +20,7 @@ import { bookingStatusTone, signupTone, inr } from '../../data/mockData.js';
 import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
+import RecordTrail from '../ui/RecordTrail.jsx';
 
 const digits = (value) => String(value || '').replace(/[^\d]/g, '');
 
@@ -423,6 +424,14 @@ export default function BookingDetails({
                 )}
               </ul>
             </section>
+          </div>
+          {/* Everything that has happened on this booking */}
+          <div className="lg:col-span-2">
+            <RecordTrail
+              id={b.id}
+              name={b.customer}
+              tasks={[]}
+            />
           </div>
         </div>
       </aside>

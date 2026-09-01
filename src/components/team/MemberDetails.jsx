@@ -17,6 +17,7 @@ import {
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import DrawerTabs from '../ui/DrawerTabs.jsx';
+import RecordTrail from '../ui/RecordTrail.jsx';
 import { inr, shortInr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
 
@@ -604,6 +605,10 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
               )}
             </div>
           </section>
+          {/* Everything management has logged against this employee */}
+          <div className="lg:col-span-2">
+            <RecordTrail id={m.id} name={m.name} tasks={tasks} />
+          </div>
         </div>
       </aside>
     </div>

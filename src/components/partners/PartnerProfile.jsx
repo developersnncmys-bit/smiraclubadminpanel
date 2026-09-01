@@ -9,6 +9,7 @@ import Avatar from '../ui/Avatar.jsx';
 import { inr } from '../../data/mockData.js';
 import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
+import RecordTrail from '../ui/RecordTrail.jsx';
 import DrawerTabs from '../ui/DrawerTabs.jsx';
 import {
   onboardingFlow,
@@ -326,6 +327,10 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
               )}
             </div>
           </section>
+          {/* Everything that has happened with this partner */}
+          <div className="lg:col-span-2">
+            <RecordTrail id={p.id} name={p.name} tasks={[]} />
+          </div>
         </div>
       </aside>
     </div>

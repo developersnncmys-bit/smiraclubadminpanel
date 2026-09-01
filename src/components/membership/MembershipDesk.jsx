@@ -46,7 +46,8 @@ function List({ rows, empty = 'Nothing here yet.' }) {
  * with their filters, the activation run, the renewal ladder, what benefits
  * have actually been used, and where the membership money comes from.
  */
-export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions }) {
+export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions, switcher }) {
+  const [section, setSection] = useState('Members');
   const [status, setStatus] = useState('All');
   const [plan, setPlan] = useState('All');
   const [expiring, setExpiring] = useState('All');
@@ -89,21 +90,21 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
       progress: rows.length ? Math.round((active.length / rows.length) * 100) : 0,
     },
     {
-      label: 'Awaiting activation',
+      label: 'Awaiting',
       value: pending.length,
       icon: Clock,
       tone: pending.length ? 'text-amber-600' : 'text-ink-900',
       hint: pending.length ? 'needs a person' : 'all activated',
     },
     {
-      label: 'Expiring in 30 days',
+      label: 'Expiring',
       value: soon(30).length,
       icon: CalendarClock,
       tone: soon(30).length ? 'text-amber-600' : 'text-ink-900',
       hint: `${expired.length} already expired`,
     },
     {
-      label: 'Membership revenue',
+      label: 'Revenue',
       value: shortInr(revenue),
       icon: IndianRupee,
       tone: 'text-brand-700',
@@ -111,14 +112,14 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
       hint: `of ${shortInr(billed)} billed`,
     },
     {
-      label: 'Still to collect',
+      label: 'To collect',
       value: shortInr(due),
       icon: Wallet,
       tone: due ? 'text-amber-600' : 'text-ink-900',
       hint: due ? 'chase these' : 'nothing due',
     },
     {
-      label: 'Benefits given',
+      label: 'Benefits',
       value: shortInr(rows.reduce((s, m) => s + Number(m.saving || 0), 0)),
       icon: Gift,
       hint: `average plan ${rows.length ? shortInr(Math.round(billed / rows.length)) : '—'}`,
@@ -143,7 +144,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
     <div className="space-y-6">
       {/* Pick a plan, or start something */}
       <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
-        <h2 className="font-display text-base font-extrabold text-ink-900">Memberships</h2>
+        {switcher}
 
         <MenuButton
           label={plan === 'All' ? `All plans · ${rows.length}` : `${plan} · ${rows.filter((m) => m.plan === plan).length}`}
@@ -177,7 +178,24 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
 
       <KpiRow cols={6} items={kpis} />
 
+      <div className="flex flex-wrap gap-2">
+        {['Members', 'Activation & renewal', 'Benefits & money'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setSection(tab)}
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition ${
+              section === tab
+                ? 'bg-ink-900 text-white shadow-sm'
+                : 'bg-white text-ink-600 ring-1 ring-ink-900/[0.07] hover:text-ink-900'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
       {/* The members table, with their filters */}
+      {section === 'Members' && (
       <Block
         title="Members"
         note="Everyone on a plan, and where their membership stands"
@@ -286,9 +304,12 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
           </table>
         </div>
       </Block>
+      )}
 
       <div className="grid gap-5 xl:grid-cols-2">
         {/* Activation management */}
+        {section === 'Activation & renewal' && (
+        <>
         <Block title="Activation" note="Every new membership, from payment to activated">
           {/* Where the new memberships are stuck */}
           <ol className="space-y-2">
@@ -421,6 +442,10 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
         </Block>
 
         {/* Benefits tracking */}
+        </>
+        )}
+
+        {section === 'Benefits & money' && (
         <Block title="Benefits" note="What was given out, and what is still on the table" wide>
           {(() => {
             const kinds = benefitKinds
@@ -482,7 +507,9 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
           })()}
         </Block>
 
-        {/* Membership revenue */}
+        )}
+
+        {section === 'Benefits & money' && (
         <Block title="Membership revenue" note="Where the membership money comes from" wide>
           <div className="grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
             {[
@@ -537,6 +564,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
             </div>
           </div>
         </Block>
+        )}
       </div>
     </div>
   );

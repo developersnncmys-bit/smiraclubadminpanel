@@ -290,6 +290,7 @@ export default function Customers() {
       </PageHeader>
 
       {/* People on the left, the plans they hold on the right */}
+      {view !== 'memberships' && (
       <SectionTabs
         className="mb-5"
         items={[
@@ -301,11 +302,24 @@ export default function Customers() {
         value={view}
         onChange={setView}
       />
+      )}
 
       {view === 'memberships' && (
         <MembershipDesk
           rows={memberSignups}
           plans={memberships}
+          switcher={
+            <SectionTabs
+              items={[
+                { key: 'people', label: 'Members', icon: UserRound, count: customers.length },
+                { key: 'table', label: 'Member list', icon: Rows3, count: customers.length },
+                { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
+                { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
+              ]}
+              value={view}
+              onChange={setView}
+            />
+          }
           onOpen={(m) => setMemberOpen(m)}
           actions={{
             addMember: () => { setEditing(null); setFormOpen(true); },

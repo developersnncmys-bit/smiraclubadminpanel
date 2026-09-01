@@ -15,6 +15,7 @@ import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
 import MenuButton from '../components/ui/MenuButton.jsx';
+import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
   ticketStages,
   stageTone,
@@ -36,6 +37,7 @@ const CATEGORIES = Object.keys(ticketCategories);
 export default function Support() {
   const { tickets, team, customers, bookings, create, update, toast } = useApp();
   const [viewing, setViewing] = useState(null);
+  const [section, setSection] = useState('Tickets');
   const [formOpen, setFormOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [stage, setStage] = useState('All');
@@ -185,7 +187,7 @@ export default function Support() {
             { key: 'All', label: 'All stages', count: tickets.length },
             ...ticketStages.map((st) => ({ key: st, label: st, count: at(st) })),
           ]}
-          onSelect={setStage}
+          onSelect={(key) => { setStage(key); setSection('Tickets'); }}
         />
 
         <MenuButton
@@ -206,305 +208,322 @@ export default function Support() {
         <KpiRow items={kpis} cols={8} />
       </div>
 
-      {/* The funnel */}
-      <div className="mt-6 grid gap-5 xl:grid-cols-2">
-        <Block title="Complaint funnel" note="Click a stage to see those tickets">
-          <ol className="grid gap-x-6 sm:grid-cols-2">
-            {ticketStages.map((st, i) => {
-              const n = at(st);
-              const on = stage === st;
-              return (
-                <li key={st}>
-                  <button
-                    onClick={() => setStage(on ? 'All' : st)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition ${
-                      on ? 'bg-brand-50' : 'hover:bg-surface-soft'
-                    }`}
-                  >
-                    <span
-                      className={`num grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] font-extrabold ${
-                        n ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-400'
-                      }`}
-                    >
-                      {i + 1}
-                    </span>
-                    <span className={`min-w-0 flex-1 truncate text-[13px] ${n ? 'font-bold text-ink-900' : 'text-ink-500'}`}>
-                      {st}
-                    </span>
-                    <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-soft">
-                      <span
-                        className={`block h-full rounded-full ${st === 'Escalated' ? 'bg-rose-400' : 'bg-brand-500'}`}
-                        style={{ width: `${tickets.length ? Math.round((n / tickets.length) * 100) : 0}%` }}
-                      />
-                    </span>
-                    <span className={`num w-5 shrink-0 text-right text-[13px] font-bold ${n ? 'text-ink-900' : 'text-ink-300'}`}>
-                      {n}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-          <p className="mt-3 text-sm text-ink-600">
-            {tickets.length} tickets · {Math.round(((at('Closed') + at('Customer confirmed')) / (tickets.length || 1)) * 100)}%
-            resolved and confirmed
-          </p>
-        </Block>
+      <SectionTabs
+        className="mt-6"
+        items={[
+          { key: 'Tickets', label: 'Tickets', count: rows.length },
+          { key: 'Funnel & team', label: 'Funnel & team' },
+          { key: 'SLA & escalation', label: 'SLA & escalation' },
+          { key: 'Categories', label: 'Categories' },
+          { key: 'Satisfaction', label: 'Satisfaction' },
+        ]}
+        value={section}
+        onChange={setSection}
+      />
 
-        <Block title="Who is carrying what" note="Open, in progress, overdue and resolved per executive">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Executive', 'Open', 'In progress', 'Overdue', 'Resolved'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
+      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+        {section === 'Tickets' && (
+          <Block
+            title="Tickets"
+            note="Their columns, their filters"
+            wide
+            action={
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+                  <input
+                    className="input h-9 w-44 py-0 pl-9 text-sm"
+                    placeholder="Search tickets…"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                </div>
+                <select className="input h-9 w-auto py-0 text-sm" value={stage} onChange={(e) => setStage(e.target.value)}>
+                  <option value="All">All statuses</option>
+                  {ticketStages.map((s) => (
+                    <option key={s}>{s}</option>
                   ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {workload.map((w) => (
-                  <tr key={w.name}>
-                    <td className="py-2.5 font-bold text-ink-900">{w.name}</td>
-                    <td className="num py-2.5 text-ink-700">{w.open}</td>
-                    <td className="num py-2.5 text-ink-700">{w.progress}</td>
-                    <td className={`num py-2.5 font-bold ${w.overdue ? 'text-rose-600' : 'text-ink-700'}`}>{w.overdue}</td>
-                    <td className="num py-2.5 font-bold text-emerald-600">{w.resolved}</td>
+                </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={priority} onChange={(e) => setPriority(e.target.value)}>
+                  <option value="All">All priorities</option>
+                  {priorities.map((p) => (
+                    <option key={p.key}>{p.key}</option>
+                  ))}
+                </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <option value="All">All categories</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={executive} onChange={(e) => setExecutive(e.target.value)}>
+                  <option value="All">All executives</option>
+                  {consultants.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={sla} onChange={(e) => setSla(e.target.value)}>
+                  <option value="All">Any SLA</option>
+                  {['Within', 'Approaching', 'Breached'].map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead>
+                  <tr className="border-b border-ink-900/[0.07] text-left">
+                    {['Ticket', 'Customer', 'Membership', 'Category', 'Booking', 'Executive', 'Priority', 'Status', 'SLA', 'Level', 'Rating'].map((h) => (
+                      <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-3 text-xs text-ink-400">
-            Tickets are assigned on department, team, category, workload, priority, location or partner.
-          </p>
-        </Block>
+                </thead>
+                <tbody className="divide-y divide-ink-900/[0.07]">
+                  {rows.map((t) => (
+                    <tr key={t.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(t)}>
+                      <td className="num py-2.5 font-bold text-brand-700">
+                        {t.id}
+                        <span className="block text-xs font-normal text-ink-400">{t.created}</span>
+                      </td>
+                      <td className="py-2.5">
+                        <span className="flex items-center gap-2.5">
+                          <Avatar name={t.customer} size="sm" />
+                          <span className="min-w-0">
+                            <span className="block truncate font-bold text-ink-900">{t.customer}</span>
+                            <span className="num block text-xs text-ink-400">{t.phone}</span>
+                          </span>
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-ink-700">{t.membership}</td>
+                      <td className="py-2.5">
+                        <span className="block font-semibold text-ink-800">{t.category}</span>
+                        <span className="block text-xs text-ink-500">{t.subCategory}</span>
+                      </td>
+                      <td className="num py-2.5 text-ink-700">{t.booking}</td>
+                      <td className="py-2.5 text-ink-700">{t.executive}</td>
+                      <td className="py-2.5">
+                        <Badge tone={priorities.find((p) => p.key === t.priority)?.tone || 'slate'}>{t.priority}</Badge>
+                      </td>
+                      <td className="py-2.5">
+                        <Badge tone={stageTone[t.stage]} dot>
+                          {t.stage}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5">
+                        <Badge tone={slaTone[t.slaState]}>{t.slaState}</Badge>
+                      </td>
+                      <td className="num py-2.5 text-ink-700">L{t.escalation || 1}</td>
+                      <td className="py-2.5">
+                        {t.rating ? (
+                          <span className="num flex items-center gap-1 font-bold text-amber-600">
+                            <Star size={12} className="fill-amber-400 text-amber-400" /> {t.rating}
+                          </span>
+                        ) : (
+                          <span className="text-ink-400">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {rows.length === 0 && (
+                    <tr>
+                      <td colSpan={11} className="py-6 text-center text-ink-500">
+                        No ticket matches this view.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Block>
+        )}
 
-        {/* The ticket list */}
-        <Block
-          title="Tickets"
-          note="Their columns, their filters"
-          wide
-          action={
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
-                <input
-                  className="input h-9 w-44 py-0 pl-9 text-sm"
-                  placeholder="Search tickets…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+        {section === 'Funnel & team' && (
+          <>
+            <Block title="Complaint funnel" note="Click a stage to see those tickets">
+              <ol className="grid gap-x-6 sm:grid-cols-2">
+                {ticketStages.map((st, i) => {
+                  const n = at(st);
+                  const on = stage === st;
+                  return (
+                    <li key={st}>
+                      <button
+                        onClick={() => { setStage(on ? 'All' : st); setSection('Tickets'); }}
+                        className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition ${
+                          on ? 'bg-brand-50' : 'hover:bg-surface-soft'
+                        }`}
+                      >
+                        <span
+                          className={`num grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] font-extrabold ${
+                            n ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-400'
+                          }`}
+                        >
+                          {i + 1}
+                        </span>
+                        <span className={`min-w-0 flex-1 truncate text-[13px] ${n ? 'font-bold text-ink-900' : 'text-ink-500'}`}>
+                          {st}
+                        </span>
+                        <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-soft">
+                          <span
+                            className={`block h-full rounded-full ${st === 'Escalated' ? 'bg-rose-400' : 'bg-brand-500'}`}
+                            style={{ width: `${tickets.length ? Math.round((n / tickets.length) * 100) : 0}%` }}
+                          />
+                        </span>
+                        <span className={`num w-5 shrink-0 text-right text-[13px] font-bold ${n ? 'text-ink-900' : 'text-ink-300'}`}>
+                          {n}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="mt-3 text-sm text-ink-600">
+                {tickets.length} tickets · {Math.round(((at('Closed') + at('Customer confirmed')) / (tickets.length || 1)) * 100)}%
+                resolved and confirmed
+              </p>
+            </Block>
+            <Block title="Who is carrying what" note="Open, in progress, overdue and resolved per executive">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[420px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Executive', 'Open', 'In progress', 'Overdue', 'Resolved'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {workload.map((w) => (
+                      <tr key={w.name}>
+                        <td className="py-2.5 font-bold text-ink-900">{w.name}</td>
+                        <td className="num py-2.5 text-ink-700">{w.open}</td>
+                        <td className="num py-2.5 text-ink-700">{w.progress}</td>
+                        <td className={`num py-2.5 font-bold ${w.overdue ? 'text-rose-600' : 'text-ink-700'}`}>{w.overdue}</td>
+                        <td className="num py-2.5 font-bold text-emerald-600">{w.resolved}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-xs text-ink-400">
+                Tickets are assigned on department, team, category, workload, priority, location or partner.
+              </p>
+            </Block>
+          </>
+        )}
+
+        {section === 'SLA & escalation' && (
+          <>
+            <Block title="SLA clock" note="First response and resolution targets by priority">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Stat label="Within SLA" value={tickets.filter((t) => t.slaState === 'Within').length} tone="text-emerald-600" />
+                <Stat label="Approaching" value={approaching.length} tone="text-amber-600" />
+                <Stat label="Breached" value={breached.length} tone="text-rose-600" />
+              </div>
+              <ul className="mt-4 divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+                {priorities.map((p) => (
+                  <li key={p.key} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <Badge tone={p.tone}>{p.key}</Badge>
+                    <span className="min-w-0 flex-1 text-xs text-ink-500">{p.note}</span>
+                    <span className="num text-sm text-ink-700">
+                      first reply {p.firstResponse} min · resolve in {p.resolution} hrs
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Block>
+            <Block title="Escalation" note="Where a ticket goes when it stalls">
+              <ol className="space-y-1.5">
+                {escalationLevels.map((l, i) => (
+                  <li key={l} className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft px-4 py-2.5">
+                    <span className="text-sm font-semibold text-ink-800">{l}</span>
+                    <span className="num text-sm font-bold text-ink-900">
+                      {tickets.filter((t) => (t.escalation || 1) === i + 1).length}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <p className="eyebrow mt-4">It climbs when</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {escalationTriggers.map((t) => (
+                  <span key={t} className="chip text-ink-500">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </Block>
+          </>
+        )}
+
+        {section === 'Categories' && (
+          <Block title="What people complain about" note="Every category, and what sits inside it" wide>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {CATEGORIES.map((c) => (
+                <div key={c} className="rounded-xl border border-ink-900/[0.07] p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold text-ink-900">{c}</p>
+                    <span className="num text-sm font-bold text-ink-900">
+                      {tickets.filter((t) => t.category === c).length}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {ticketCategories[c].map((sub) => (
+                      <span key={sub} className="chip text-ink-500">
+                        {sub}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Block>
+        )}
+
+        {section === 'Satisfaction' && (
+          <>
+            <Block title="How it felt to the customer" note="Asked after every resolution">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Stat label="Average rating" value={csat === '—' ? '—' : `${csat}/5`} tone="text-amber-600" />
+                <Stat label="Rated" value={rated.length} />
+                <Stat
+                  label="Poor ratings"
+                  value={rated.filter((t) => t.rating <= 2).length}
+                  tone={rated.some((t) => t.rating <= 2) ? 'text-rose-600' : 'text-ink-900'}
                 />
               </div>
-              <select className="input h-9 w-auto py-0 text-sm" value={stage} onChange={(e) => setStage(e.target.value)}>
-                <option value="All">All statuses</option>
-                {ticketStages.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-              <select className="input h-9 w-auto py-0 text-sm" value={priority} onChange={(e) => setPriority(e.target.value)}>
-                <option value="All">All priorities</option>
-                {priorities.map((p) => (
-                  <option key={p.key}>{p.key}</option>
-                ))}
-              </select>
-              <select className="input h-9 w-auto py-0 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="All">All categories</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-              <select className="input h-9 w-auto py-0 text-sm" value={executive} onChange={(e) => setExecutive(e.target.value)}>
-                <option value="All">All executives</option>
-                {consultants.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-              <select className="input h-9 w-auto py-0 text-sm" value={sla} onChange={(e) => setSla(e.target.value)}>
-                <option value="All">Any SLA</option>
-                {['Within', 'Approaching', 'Breached'].map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          }
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Ticket', 'Customer', 'Membership', 'Category', 'Booking', 'Executive', 'Priority', 'Status', 'SLA', 'Level', 'Rating'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {rows.map((t) => (
-                  <tr key={t.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(t)}>
-                    <td className="num py-2.5 font-bold text-brand-700">
-                      {t.id}
-                      <span className="block text-xs font-normal text-ink-400">{t.created}</span>
-                    </td>
-                    <td className="py-2.5">
-                      <span className="flex items-center gap-2.5">
-                        <Avatar name={t.customer} size="sm" />
-                        <span className="min-w-0">
-                          <span className="block truncate font-bold text-ink-900">{t.customer}</span>
-                          <span className="num block text-xs text-ink-400">{t.phone}</span>
-                        </span>
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-ink-700">{t.membership}</td>
-                    <td className="py-2.5">
-                      <span className="block font-semibold text-ink-800">{t.category}</span>
-                      <span className="block text-xs text-ink-500">{t.subCategory}</span>
-                    </td>
-                    <td className="num py-2.5 text-ink-700">{t.booking}</td>
-                    <td className="py-2.5 text-ink-700">{t.executive}</td>
-                    <td className="py-2.5">
-                      <Badge tone={priorities.find((p) => p.key === t.priority)?.tone || 'slate'}>{t.priority}</Badge>
-                    </td>
-                    <td className="py-2.5">
-                      <Badge tone={stageTone[t.stage]} dot>
-                        {t.stage}
-                      </Badge>
-                    </td>
-                    <td className="py-2.5">
-                      <Badge tone={slaTone[t.slaState]}>{t.slaState}</Badge>
-                    </td>
-                    <td className="num py-2.5 text-ink-700">L{t.escalation || 1}</td>
-                    <td className="py-2.5">
-                      {t.rating ? (
-                        <span className="num flex items-center gap-1 font-bold text-amber-600">
-                          <Star size={12} className="fill-amber-400 text-amber-400" /> {t.rating}
-                        </span>
-                      ) : (
-                        <span className="text-ink-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={11} className="py-6 text-center text-ink-500">
-                      No ticket matches this view.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Block>
-
-        {/* SLA */}
-        <Block title="SLA clock" note="First response and resolution targets by priority">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Within SLA" value={tickets.filter((t) => t.slaState === 'Within').length} tone="text-emerald-600" />
-            <Stat label="Approaching" value={approaching.length} tone="text-amber-600" />
-            <Stat label="Breached" value={breached.length} tone="text-rose-600" />
-          </div>
-          <ul className="mt-4 divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-            {priorities.map((p) => (
-              <li key={p.key} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <Badge tone={p.tone}>{p.key}</Badge>
-                <span className="min-w-0 flex-1 text-xs text-ink-500">{p.note}</span>
-                <span className="num text-sm text-ink-700">
-                  first reply {p.firstResponse} min · resolve in {p.resolution} hrs
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Block>
-
-        {/* Escalation */}
-        <Block title="Escalation" note="Where a ticket goes when it stalls">
-          <ol className="space-y-1.5">
-            {escalationLevels.map((l, i) => (
-              <li key={l} className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft px-4 py-2.5">
-                <span className="text-sm font-semibold text-ink-800">{l}</span>
-                <span className="num text-sm font-bold text-ink-900">
-                  {tickets.filter((t) => (t.escalation || 1) === i + 1).length}
-                </span>
-              </li>
-            ))}
-          </ol>
-          <p className="eyebrow mt-4">It climbs when</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {escalationTriggers.map((t) => (
-              <span key={t} className="chip text-ink-500">
-                {t}
-              </span>
-            ))}
-          </div>
-        </Block>
-
-        {/* Who is carrying what */}
-
-        {/* Categories */}
-        <Block title="What people complain about" note="Every category, and what sits inside it" wide>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {CATEGORIES.map((c) => (
-              <div key={c} className="rounded-xl border border-ink-900/[0.07] p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-bold text-ink-900">{c}</p>
-                  <span className="num text-sm font-bold text-ink-900">
-                    {tickets.filter((t) => t.category === c).length}
+              <ul className="mt-4 space-y-2.5">
+                {consultants.map((c) => {
+                  const mine = rated.filter((t) => t.executive === c);
+                  const avg = mine.length ? (mine.reduce((s, t) => s + t.rating, 0) / mine.length).toFixed(1) : null;
+                  return (
+                    <li key={c} className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft px-4 py-2.5">
+                      <span className="text-sm font-semibold text-ink-700">{c}</span>
+                      <span className="num text-sm font-bold text-ink-900">{avg ? `${avg}/5` : 'not rated'}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-3 flex items-start gap-2 text-xs text-ink-500">
+                <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
+                One and two star ratings raise a follow-up task on their own.
+              </p>
+            </Block>
+            <Block title="What the panel does on its own" note="From the complaint landing to the rating coming back">
+              <div className="flex flex-wrap gap-2">
+                {supportAutomation.map((a) => (
+                  <span key={a} className="chip text-ink-600">
+                    {a}
                   </span>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {ticketCategories[c].map((sub) => (
-                    <span key={sub} className="chip text-ink-500">
-                      {sub}
-                    </span>
-                  ))}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </Block>
-
-        {/* Satisfaction */}
-        <Block title="How it felt to the customer" note="Asked after every resolution">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Average rating" value={csat === '—' ? '—' : `${csat}/5`} tone="text-amber-600" />
-            <Stat label="Rated" value={rated.length} />
-            <Stat
-              label="Poor ratings"
-              value={rated.filter((t) => t.rating <= 2).length}
-              tone={rated.some((t) => t.rating <= 2) ? 'text-rose-600' : 'text-ink-900'}
-            />
-          </div>
-          <ul className="mt-4 space-y-2.5">
-            {consultants.map((c) => {
-              const mine = rated.filter((t) => t.executive === c);
-              const avg = mine.length ? (mine.reduce((s, t) => s + t.rating, 0) / mine.length).toFixed(1) : null;
-              return (
-                <li key={c} className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft px-4 py-2.5">
-                  <span className="text-sm font-semibold text-ink-700">{c}</span>
-                  <span className="num text-sm font-bold text-ink-900">{avg ? `${avg}/5` : 'not rated'}</span>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="mt-3 flex items-start gap-2 text-xs text-ink-500">
-            <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
-            One and two star ratings raise a follow-up task on their own.
-          </p>
-        </Block>
-
-        {/* Automation */}
-        <Block title="What the panel does on its own" note="From the complaint landing to the rating coming back">
-          <div className="flex flex-wrap gap-2">
-            {supportAutomation.map((a) => (
-              <span key={a} className="chip text-ink-600">
-                {a}
-              </span>
-            ))}
-          </div>
-        </Block>
+            </Block>
+          </>
+        )}
       </div>
 
       {viewing && (

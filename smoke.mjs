@@ -26,7 +26,7 @@ const MARKERS = {
   '/inventory': 'Inventory value',
   '/revenue': 'Total revenue',
   '/reports': 'The headline numbers',
-  '/support': 'Complaint funnel',
+  '/support': 'Search tickets',
 };
 
 const entry = `

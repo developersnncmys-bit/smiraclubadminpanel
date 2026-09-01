@@ -1,20 +1,8 @@
 import { useState } from 'react';
 import {
-  Plus,
-  UserCheck,
-  ArrowUpRight,
-  MessageCircle,
-  Phone,
-  StickyNote,
-  Download,
-  Star,
-  AlertTriangle,
-  Search,
-  Headphones,
-  AlarmClock,
-  Clock,
-  CheckCircle2,
-  Timer,
+  Plus, UserCheck, ArrowUpRight, MessageCircle, Phone, StickyNote,
+  Download, Star, AlertTriangle, Search, Headphones, AlarmClock,
+  Clock, CheckCircle2, Timer, Filter, Zap,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -26,6 +14,7 @@ import { downloadCsv } from '../lib/csv.js';
 import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
+import MenuButton from '../components/ui/MenuButton.jsx';
 import {
   ticketStages,
   stageTone,
@@ -84,13 +73,13 @@ export default function Support() {
     : 0;
 
   const kpis = [
-    { icon: Headphones, label: 'Open tickets', value: open.length },
+    { icon: Headphones, label: 'Open', value: open.length },
     { icon: AlertTriangle, label: 'Critical', value: tickets.filter((t) => t.priority === 'Critical').length, tone: 'text-rose-600' },
-    { icon: AlarmClock, label: 'SLA breached', value: breached.length, tone: breached.length ? 'text-rose-600' : undefined },
-    { icon: Clock, label: 'Approaching SLA', value: approaching.length, tone: approaching.length ? 'text-amber-600' : undefined },
+    { icon: AlarmClock, label: 'Breached', value: breached.length, tone: breached.length ? 'text-rose-600' : undefined },
+    { icon: Clock, label: 'Approaching', value: approaching.length, tone: approaching.length ? 'text-amber-600' : undefined },
     { icon: ArrowUpRight, label: 'Escalated', value: escalated.length },
     { icon: CheckCircle2, label: 'Resolved', value: at('Resolved') + at('Customer confirmed') + at('Closed'), tone: 'text-emerald-600' },
-    { icon: Timer, label: 'Average resolution', value: avgResolution ? `${avgResolution} hrs` : '—' },
+    { icon: Timer, label: 'Avg resolution', value: avgResolution ? `${avgResolution} hrs` : '—' },
     { icon: Star, label: 'Satisfaction', value: csat === '—' ? '—' : `${csat}/5`, hint: `${rated.length} rated` },
   ];
 
@@ -183,37 +172,79 @@ export default function Support() {
         </button>
       </PageHeader>
 
-      <KpiRow items={kpis} cols={8} />
+      {/* Pick a stage, or start something */}
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+        <h2 className="font-display text-base font-extrabold text-ink-900">Complaints</h2>
 
-      <div className="card mt-6 flex flex-wrap items-center gap-2 px-4 py-3.5">
-        <p className="eyebrow mr-1">Quick actions</p>
-        {quick.map((q) => (
-          <button key={q.label} className="btn-line btn-sm" onClick={q.run}>
-            <q.icon size={14} /> {q.label}
-          </button>
-        ))}
+        <MenuButton
+          label={stage === 'All' ? `All stages · ${tickets.length}` : `${stage} · ${at(stage)}`}
+          icon={Filter}
+          value={stage}
+          width="w-[260px]"
+          items={[
+            { key: 'All', label: 'All stages', count: tickets.length },
+            ...ticketStages.map((st) => ({ key: st, label: st, count: at(st) })),
+          ]}
+          onSelect={setStage}
+        />
+
+        <MenuButton
+          label="Quick actions"
+          icon={Zap}
+          variant="action"
+          width="w-[250px]"
+          items={quick.map((q) => ({ key: q.label, label: q.label, icon: q.icon }))}
+          onSelect={(key) => quick.find((q) => q.label === key)?.run()}
+        />
+
+        <p className="num ml-auto text-sm text-ink-500">
+          {open.length} open · {breached.length} past SLA · {escalated.length} escalated
+        </p>
+      </section>
+
+      <div className="mt-4">
+        <KpiRow items={kpis} cols={4} />
       </div>
 
       {/* The funnel */}
       <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <Block title="Complaint funnel" note="Click a stage to see those tickets" wide>
-          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {ticketStages.map((s) => (
-              <li key={s}>
-                <button
-                  onClick={() => setStage(stage === s ? 'All' : s)}
-                  className={`w-full rounded-xl px-4 py-3 text-left transition ${
-                    stage === s ? 'bg-brand-50 ring-1 ring-brand-600/25' : 'bg-surface-soft hover:bg-surface-soft/70'
-                  }`}
-                >
-                  <span className="flex items-center justify-between gap-2">
-                    <Badge tone={stageTone[s]}>{s}</Badge>
-                    <span className="num text-sm font-bold text-ink-900">{at(s)}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <ol className="space-y-1">
+            {ticketStages.map((st, i) => {
+              const n = at(st);
+              const on = stage === st;
+              return (
+                <li key={st}>
+                  <button
+                    onClick={() => setStage(on ? 'All' : st)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition ${
+                      on ? 'bg-brand-50' : 'hover:bg-surface-soft'
+                    }`}
+                  >
+                    <span
+                      className={`num grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] font-extrabold ${
+                        n ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-400'
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className={`min-w-0 flex-1 truncate text-[13px] ${n ? 'font-bold text-ink-900' : 'text-ink-500'}`}>
+                      {st}
+                    </span>
+                    <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-surface-soft">
+                      <span
+                        className={`block h-full rounded-full ${st === 'Escalated' ? 'bg-rose-400' : 'bg-brand-500'}`}
+                        style={{ width: `${tickets.length ? Math.round((n / tickets.length) * 100) : 0}%` }}
+                      />
+                    </span>
+                    <span className={`num w-5 shrink-0 text-right text-[13px] font-bold ${n ? 'text-ink-900' : 'text-ink-300'}`}>
+                      {n}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
           <p className="mt-3 text-sm text-ink-600">
             {tickets.length} tickets · {Math.round(((at('Closed') + at('Customer confirmed')) / (tickets.length || 1)) * 100)}%
             resolved and confirmed

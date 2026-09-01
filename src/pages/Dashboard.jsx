@@ -1,30 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowRight,
-  UsersRound,
-  Users,
-  CalendarCheck,
-  Crown,
-  UserRound,
-  Handshake,
-  Headphones,
-  PieChart,
-  IndianRupee,
-  Wallet,
-  Zap,
-  MessageCircle,
-  Warehouse,
-  Gift,
-  Megaphone,
-  AlertTriangle,
-  TrendingUp,
+  ArrowRight, UsersRound, Users, CalendarCheck, Crown, UserRound,
+  Handshake, Headphones, PieChart, IndianRupee, Wallet, Zap,
+  MessageCircle, Warehouse, Gift, Megaphone, AlertTriangle, TrendingUp,
 } from 'lucide-react';
+import { useState } from 'react';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import KpiRow from '../components/ui/KpiRow.jsx';
+import MenuButton from '../components/ui/MenuButton.jsx';
+import SectionTabs from '../components/ui/SectionTabs.jsx';
 import Block from '../components/ui/Block.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { inr, shortInr, enquiryStatuses, statusTone, bookingStatusTone } from '../data/mockData.js';
+import { inr, shortInr, enquiryStatuses, bookingStatusTone } from '../data/mockData.js';
 import { daysUntil } from '../lib/membership.js';
 import { expenses as expenseBudget } from '../data/revenueData.js';
 import { receivables, salary } from '../data/paymentData.js';
@@ -94,6 +83,7 @@ function Funnel({ steps, tone = 'bg-brand-500' }) {
  */
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [section, setSection] = useState('Overview');
   const {
     team, enquiries, bookings, memberSignups, memberships, customers,
     invoices, payments, tickets, partners, inventory, range,
@@ -109,7 +99,9 @@ export default function Dashboard() {
   const bookingValue = bookings.reduce((s, b) => s + Number(b.amount || 0), 0);
   const partnerCost = bookings.reduce((s, b) => s + Number(b.vendorContact?.payable || 0), 0);
   const markup = Math.max(0, bookingValue - partnerCost);
-  const revenue = membershipPaid + markup;
+  // The company's revenue is what the desk booked — the same roll-up Team
+  // Status reports, so profit and achievement agree across the panel.
+  const revenue = team.reduce((s, m) => s + Number(m.revenue || 0), 0);
   const target = team.reduce((s, m) => s + Number(m.target || 0), 0);
   const achievement = target ? Math.round((revenue / target) * 100) : 0;
 
@@ -144,6 +136,18 @@ export default function Dashboard() {
     ...(failedJobs ? [{ level: 'warning', text: `${failedJobs} automation job failed`, to: '/automation' }] : []),
   ];
 
+  /** The things the day starts with, wherever they live. */
+  const quickActions = [
+    { label: 'Add lead', icon: Users, run: () => navigate('/enquiries?new=1') },
+    { label: 'New booking', icon: CalendarCheck, run: () => navigate('/bookings') },
+    { label: 'Add member', icon: UserRound, run: () => navigate('/customers') },
+    { label: 'Create ticket', icon: Headphones, run: () => navigate('/support') },
+    { label: 'Record payment', icon: Wallet, run: () => navigate('/payment') },
+    { label: 'Add partner', icon: Handshake, run: () => navigate('/partners') },
+    { label: 'Team status', icon: UsersRound, run: () => navigate('/team') },
+    { label: 'All reports', icon: PieChart, run: () => navigate('/reports') },
+  ];
+
   /** The money, as three steps rather than a table. */
   const moneySteps = [
     { label: 'Revenue', value: revenue, tone: 'bg-brand-500', text: 'text-brand-700' },
@@ -156,15 +160,57 @@ export default function Dashboard() {
     <>
       <PageHeader title="Dashboard" subtitle={`The whole business on one page · ${range.toLowerCase()}`} />
 
-      {/* What the money did, and what wants a person */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+      {/* One bar: what to start, and how the day stands */}
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+        <h2 className="font-display text-base font-extrabold text-ink-900">Today</h2>
+
+        <SectionTabs
+          items={[
+            { key: 'Overview', label: 'Overview' },
+            { key: 'Work', label: 'Work' },
+            { key: 'Modules', label: 'Modules', count: 15 },
+          ]}
+          value={section}
+          onChange={setSection}
+        />
+
+        <MenuButton
+          label="Quick actions"
+          icon={Zap}
+          variant="action"
+          width="w-[250px]"
+          items={quickActions.map((q) => ({ key: q.label, label: q.label, icon: q.icon }))}
+          onSelect={(key) => quickActions.find((q) => q.label === key)?.run()}
+        />
+
+        <p className="num ml-auto text-sm text-ink-500">
+          {online} of {team.length} online · {openLeads.length} open leads · {openTickets.length} open complaints
+        </p>
+      </section>
+
+      <div className="mt-4">
+        <KpiRow
+          cols={6}
+          items={[
+            { label: 'Revenue', value: shortInr(revenue), icon: IndianRupee, tone: 'text-brand-700', progress: achievement, hint: `of ${shortInr(target)} target` },
+            { label: 'Costs', value: shortInr(totalExpenses), icon: Wallet, hint: 'office, staff and business' },
+            { label: 'Profit', value: shortInr(profit), icon: TrendingUp, tone: profit >= 0 ? 'text-emerald-600' : 'text-rose-600', hint: `${margin}% margin` },
+            { label: 'Open leads', value: openLeads.length, icon: Users, hint: `${shortInr(openLeads.reduce((s, e) => s + Number(e.budget || 0), 0))} in play` },
+            { label: 'Trips', value: bookings.length, icon: CalendarCheck, hint: `${shortInr(bookingValue)} booked` },
+            { label: 'Outstanding', value: shortInr(outstanding + membershipDue), icon: AlertTriangle, tone: outstanding + membershipDue ? 'text-amber-600' : 'text-ink-900', hint: 'still to collect' },
+          ]}
+        />
+      </div>
+
+      {section === 'Overview' && (
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <section className="card relative overflow-hidden p-6">
           <span className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl" />
           <div className="relative">
             <p className="eyebrow">{`Revenue · ${range.toLowerCase()}`}</p>
             <p className="num mt-2 font-display text-5xl font-extrabold leading-none text-ink-900">{inr(revenue)}</p>
             <p className="mt-2 text-sm text-ink-500">
-              {inr(membershipPaid)} memberships · {inr(markup)} booking markup · {achievement}% of {shortInr(target)}
+              {inr(membershipPaid)} memberships · {inr(markup)} booking markup · {achievement}% of {shortInr(target)} target
             </p>
 
             {/* Revenue → costs → profit, on one line */}
@@ -195,7 +241,6 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
-
         <Block title="Needs a person" note="Straight from the data, most serious first">
           <ul className="space-y-1.5">
             {alerts.slice(0, 6).map((a) => (
@@ -219,10 +264,11 @@ export default function Dashboard() {
             )}
           </ul>
         </Block>
-      </div>
+        </div>
+      )}
 
-      {/* Where the work is */}
-      <div className="mt-5 grid gap-5 xl:grid-cols-3">
+      {section === 'Work' && (
+        <div className="mt-5 grid gap-5 xl:grid-cols-3">
         <Block
           title="Leads"
           note={`${enquiries.length} in the pipeline · ${enquiries.length ? Math.round((won.length / enquiries.length) * 100) : 0}% become customers`}
@@ -294,9 +340,11 @@ export default function Dashboard() {
             ))}
           </ul>
         </Block>
-      </div>
+        </div>
+      )}
 
-      {/* Everything else, one line each */}
+      {section === 'Modules' && (
+        <div className="mt-5">
       <Block
         title="Every module"
         note="One number from each, and a way in"
@@ -424,6 +472,9 @@ export default function Dashboard() {
           />
         </div>
       </Block>
+        </div>
+      )}
+
     </>
   );
 }

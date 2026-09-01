@@ -203,13 +203,13 @@ export default function Support() {
       </section>
 
       <div className="mt-4">
-        <KpiRow items={kpis} cols={4} />
+        <KpiRow items={kpis} cols={8} />
       </div>
 
       {/* The funnel */}
       <div className="mt-6 grid gap-5 xl:grid-cols-2">
-        <Block title="Complaint funnel" note="Click a stage to see those tickets" wide>
-          <ol className="space-y-1">
+        <Block title="Complaint funnel" note="Click a stage to see those tickets">
+          <ol className="grid gap-x-6 sm:grid-cols-2">
             {ticketStages.map((st, i) => {
               const n = at(st);
               const on = stage === st;
@@ -231,7 +231,7 @@ export default function Support() {
                     <span className={`min-w-0 flex-1 truncate text-[13px] ${n ? 'font-bold text-ink-900' : 'text-ink-500'}`}>
                       {st}
                     </span>
-                    <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-surface-soft">
+                    <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-soft">
                       <span
                         className={`block h-full rounded-full ${st === 'Escalated' ? 'bg-rose-400' : 'bg-brand-500'}`}
                         style={{ width: `${tickets.length ? Math.round((n / tickets.length) * 100) : 0}%` }}
@@ -248,6 +248,36 @@ export default function Support() {
           <p className="mt-3 text-sm text-ink-600">
             {tickets.length} tickets · {Math.round(((at('Closed') + at('Customer confirmed')) / (tickets.length || 1)) * 100)}%
             resolved and confirmed
+          </p>
+        </Block>
+
+        <Block title="Who is carrying what" note="Open, in progress, overdue and resolved per executive">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[420px] text-sm">
+              <thead>
+                <tr className="border-b border-ink-900/[0.07] text-left">
+                  {['Executive', 'Open', 'In progress', 'Overdue', 'Resolved'].map((h) => (
+                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-900/[0.07]">
+                {workload.map((w) => (
+                  <tr key={w.name}>
+                    <td className="py-2.5 font-bold text-ink-900">{w.name}</td>
+                    <td className="num py-2.5 text-ink-700">{w.open}</td>
+                    <td className="num py-2.5 text-ink-700">{w.progress}</td>
+                    <td className={`num py-2.5 font-bold ${w.overdue ? 'text-rose-600' : 'text-ink-700'}`}>{w.overdue}</td>
+                    <td className="num py-2.5 font-bold text-emerald-600">{w.resolved}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-xs text-ink-400">
+            Tickets are assigned on department, team, category, workload, priority, location or partner.
           </p>
         </Block>
 
@@ -412,35 +442,6 @@ export default function Support() {
         </Block>
 
         {/* Who is carrying what */}
-        <Block title="Who is carrying what" note="Open, in progress, overdue and resolved per executive">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Executive', 'Open', 'In progress', 'Overdue', 'Resolved'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {workload.map((w) => (
-                  <tr key={w.name}>
-                    <td className="py-2.5 font-bold text-ink-900">{w.name}</td>
-                    <td className="num py-2.5 text-ink-700">{w.open}</td>
-                    <td className="num py-2.5 text-ink-700">{w.progress}</td>
-                    <td className={`num py-2.5 font-bold ${w.overdue ? 'text-rose-600' : 'text-ink-700'}`}>{w.overdue}</td>
-                    <td className="num py-2.5 font-bold text-emerald-600">{w.resolved}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-3 text-xs text-ink-400">
-            Tickets are assigned on department, team, category, workload, priority, location or partner.
-          </p>
-        </Block>
 
         {/* Categories */}
         <Block title="What people complain about" note="Every category, and what sits inside it" wide>

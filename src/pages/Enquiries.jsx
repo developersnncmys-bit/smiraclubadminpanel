@@ -6,7 +6,7 @@ import {
   Search, Download, UserPlus, ArrowRightLeft, CalendarClock, Presentation,
   Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal,
   X, Filter, Zap, Users, Layers, Trophy,
-  IndianRupee, Eye, Mail,
+  IndianRupee, Eye, Mail, Check,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -121,6 +121,11 @@ export default function Enquiries() {
   const [importOpen, setImportOpen] = useState(false);
   const [assignFor, setAssignFor] = useState(null);
   const [statusFor, setStatusFor] = useState(null);
+  const [sourceFor, setSourceFor] = useState(null);
+  const [followUpFor, setFollowUpFor] = useState(null);
+  const [waFor, setWaFor] = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [draft, setDraft] = useState('');
   const [viewing, setViewing] = useState(null);
   const [section, setSection] = useState('Leads');
   const [stage, setStage] = useState(null);
@@ -167,6 +172,32 @@ export default function Enquiries() {
     setStage(null);
     setQuery('');
   };
+
+  const pick = (id) =>
+    setSelected((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
+
+  /** The six bulk actions the sheet asks for, on whatever is ticked. */
+  const bulkActions = [
+    { label: 'Bulk assign', icon: UserCheck, run: (ids) => setAssignFor(ids) },
+    { label: 'Bulk WhatsApp', icon: MessageCircle, run: (ids) => { setDraft(''); setWaFor(ids); } },
+    { label: 'Bulk follow-up', icon: CalendarClock, run: (ids) => { setDraft(''); setFollowUpFor(ids); } },
+    { label: 'Bulk change stage', icon: Tag, run: (ids) => setStatusFor(ids) },
+    { label: 'Bulk change source', icon: Filter, run: (ids) => setSourceFor(ids) },
+    {
+      label: 'Bulk export',
+      icon: Download,
+      run: (ids) => {
+        const chosen = rows.filter((e) => ids.includes(e.id));
+        downloadCsv('smira-club-selected-leads', chosen, [
+          { key: 'id', header: 'Enquiry' }, { key: 'name', header: 'Client' },
+          { key: 'phone', header: 'Phone' }, { key: 'destination', header: 'Destination' },
+          { key: 'budget', header: 'Budget' }, { key: 'status', header: 'Status' },
+          { key: 'source', header: 'Source' }, { key: 'owner', header: 'Owner' },
+        ]);
+        toast(`${chosen.length} lead(s) exported`);
+      },
+    },
+  ];
 
   /** The plan this lead already holds, if any, and how long it has left. */
   const planOf = (lead) => {
@@ -512,6 +543,28 @@ export default function Enquiries() {
             </div>
           </div>
 
+          {selected.length > 0 && (
+            <div className="card mt-3 flex flex-wrap items-center gap-3 px-4 py-2.5">
+              <p className="num text-sm font-bold text-ink-900">
+                {selected.length} selected
+              </p>
+              <MenuButton
+                label="Bulk actions"
+                icon={Layers}
+                variant="action"
+                width="w-[240px]"
+                items={bulkActions.map((b) => ({ key: b.label, label: b.label, icon: b.icon }))}
+                onSelect={(key) => bulkActions.find((b) => b.label === key)?.run(selected)}
+              />
+              <button className="btn-line btn-sm" onClick={() => setSelected(listRows.map((r) => r.id))}>
+                Select all {listRows.length}
+              </button>
+              <button className="btn-line btn-sm ml-auto" onClick={() => setSelected([])}>
+                Clear
+              </button>
+            </div>
+          )}
+
           {layout === 'cards' && (
             <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
               {listRows.map((r) => {
@@ -525,6 +578,17 @@ export default function Enquiries() {
                   >
                     {/* Who, and where they sit in the pipeline */}
                     <div className="flex items-start gap-3">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); pick(r.id); }}
+                        title="Select this lead"
+                        className={`mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-md border transition ${
+                          selected.includes(r.id)
+                            ? 'border-brand-600 bg-brand-600 text-white'
+                            : 'border-ink-900/20 bg-white hover:border-brand-400'
+                        }`}
+                      >
+                        {selected.includes(r.id) && <Check size={13} strokeWidth={3} />}
+                      </button>
                       <Avatar name={r.name} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
@@ -624,8 +688,7 @@ export default function Enquiries() {
                 emptyLabel="No enquiries match this view"
                 onRowClick={(r) => setViewing(r)}
                 bulkActions={[
-                  { label: 'Assign', icon: UserCheck, onClick: (ids) => setAssignFor(ids) },
-                  { label: 'Change status', icon: Tag, onClick: (ids) => setStatusFor(ids) },
+                  ...bulkActions.map((b) => ({ label: b.label.replace('Bulk ', ''), icon: b.icon, onClick: b.run })),
                   { label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) },
                 ]}
               />
@@ -688,6 +751,7 @@ export default function Enquiries() {
               onClick={() => {
                 updateMany('enquiries', assignFor, { owner: o }, `Assigned to ${o}`);
                 setAssignFor(null);
+                setSelected([]);
               }}
               className="flex w-full items-center gap-3 rounded-xl border border-ink-900/10 px-4 py-3 text-left transition hover:border-brand-400 hover:bg-brand-50"
             >
@@ -713,6 +777,7 @@ export default function Enquiries() {
               onClick={() => {
                 updateMany('enquiries', statusFor, { status: s }, `Moved to ${s}`);
                 setStatusFor(null);
+                setSelected([]);
               }}
               className="flex w-full items-center gap-3 rounded-xl border border-ink-900/10 px-4 py-3 text-left transition hover:border-brand-400 hover:bg-brand-50"
             >
@@ -720,6 +785,113 @@ export default function Enquiries() {
             </button>
           ))}
         </div>
+      </Modal>
+
+      {/* Bulk change source */}
+      <Modal
+        open={Boolean(sourceFor)}
+        onClose={() => setSourceFor(null)}
+        title="Change source"
+        subtitle={`${sourceFor?.length || 0} lead(s) selected`}
+        size="sm"
+      >
+        <div className="space-y-2">
+          {SOURCES.map((src) => (
+            <button
+              key={src}
+              onClick={() => {
+                updateMany('enquiries', sourceFor, { source: src }, `Source set to ${src}`);
+                setSourceFor(null);
+                setSelected([]);
+              }}
+              className="flex w-full items-center gap-3 rounded-xl border border-ink-900/10 px-4 py-3 text-left transition hover:border-brand-400 hover:bg-brand-50"
+            >
+              <span className="font-semibold text-ink-800">{src}</span>
+            </button>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Bulk follow-up */}
+      <Modal
+        open={Boolean(followUpFor)}
+        onClose={() => setFollowUpFor(null)}
+        title="Schedule a follow-up"
+        subtitle={`${followUpFor?.length || 0} lead(s) selected`}
+        size="sm"
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              className="btn-action"
+              disabled={!draft.trim()}
+              onClick={() => {
+                updateMany('enquiries', followUpFor, { nextFollowUp: draft.trim() }, `Follow-up set for ${followUpFor.length} lead(s)`);
+                setFollowUpFor(null);
+                setSelected([]);
+              }}
+            >
+              Set follow-up
+            </button>
+            <button className="btn-line" onClick={() => setFollowUpFor(null)}>Cancel</button>
+          </div>
+        }
+      >
+        <label className="label">When</label>
+        <input
+          className="input"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Tomorrow 11:00 am"
+        />
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {['Today 4:00 pm', 'Tomorrow 11:00 am', 'In 3 days', 'Next week'].map((w) => (
+            <button key={w} className="btn-line btn-sm" onClick={() => setDraft(w)}>{w}</button>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Bulk WhatsApp */}
+      <Modal
+        open={Boolean(waFor)}
+        onClose={() => setWaFor(null)}
+        title="Send WhatsApp"
+        subtitle={`${waFor?.length || 0} lead(s) selected`}
+        size="md"
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              className="btn-action"
+              disabled={!draft.trim()}
+              onClick={() => {
+                const chosen = rows.filter((e) => waFor.includes(e.id));
+                const first = chosen[0];
+                if (first) {
+                  window.open(
+                    `https://wa.me/${digits(first.phone)}?text=${encodeURIComponent(draft.trim())}`,
+                    '_blank'
+                  );
+                }
+                updateMany('enquiries', waFor, { lastContact: 'just now' }, `WhatsApp queued for ${chosen.length} lead(s)`);
+                setWaFor(null);
+                setSelected([]);
+              }}
+            >
+              Send
+            </button>
+            <button className="btn-line" onClick={() => setWaFor(null)}>Cancel</button>
+          </div>
+        }
+      >
+        <label className="label">Message</label>
+        <textarea
+          className="input min-h-[110px]"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Hi, thanks for your enquiry with Smira Club…"
+        />
+        <p className="mt-2 text-xs text-ink-500">
+          The first chat opens now; the rest are queued and every lead is marked contacted.
+        </p>
       </Modal>
 
       {/* Import */}

@@ -16,6 +16,7 @@ import Stat from '../components/ui/Stat.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
 import MenuButton from '../components/ui/MenuButton.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
+import SupportActions from '../components/support/SupportActions.jsx';
 import {
   ticketStages,
   stageTone,
@@ -35,9 +36,11 @@ const CATEGORIES = Object.keys(ticketCategories);
  * the escalation ladder and how the resolution felt to the customer.
  */
 export default function Support() {
-  const { tickets, team, customers, bookings, create, update, toast } = useApp();
+  const store = useApp();
+  const { tickets, team, customers, bookings, create, update, updateMany, toast } = store;
   const [viewing, setViewing] = useState(null);
   const [section, setSection] = useState('Tickets');
+  const [action, setAction] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [stage, setStage] = useState('All');
@@ -143,11 +146,11 @@ export default function Support() {
 
   const quick = [
     { icon: Plus, label: 'Create ticket', run: () => setFormOpen(true) },
-    { icon: UserCheck, label: 'Assign ticket', run: () => toast('Open a ticket to assign it', 'info') },
-    { icon: ArrowUpRight, label: 'Escalate', run: () => toast('Open a ticket to escalate it', 'info') },
-    { icon: MessageCircle, label: 'Send WhatsApp', run: () => toast('WhatsApp goes out with the messaging work', 'info') },
-    { icon: Phone, label: 'Call customer', run: () => toast('Open a ticket to call the customer', 'info') },
-    { icon: StickyNote, label: 'Add internal note', run: () => toast('Open a ticket to add a note', 'info') },
+    { icon: UserCheck, label: 'Assign ticket', run: () => setAction('assign') },
+    { icon: ArrowUpRight, label: 'Escalate', run: () => setAction('escalate') },
+    { icon: MessageCircle, label: 'Send WhatsApp', run: () => setAction('whatsapp') },
+    { icon: Phone, label: 'Call customer', run: () => setAction('call') },
+    { icon: StickyNote, label: 'Add internal note', run: () => setAction('note') },
     { icon: Download, label: 'Export report', run: exportTickets },
   ];
 
@@ -525,6 +528,17 @@ export default function Support() {
           </>
         )}
       </div>
+
+      {action && (
+        <SupportActions
+          action={action}
+          tickets={tickets}
+          team={team}
+          store={store}
+          onOpen={(t) => setViewing(t)}
+          onClose={() => setAction(null)}
+        />
+      )}
 
       {viewing && (
         <TicketDetails

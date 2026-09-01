@@ -19,7 +19,6 @@ import {
 } from '../../data/mockData.js';
 import { daysUntil } from '../../lib/membership.js';
 import Block from '../ui/Block.jsx';
-import Stat from '../ui/Stat.jsx';
 
 /** Label, value, proportional bar. */
 function List({ rows, empty = 'Nothing here yet.' }) {
@@ -423,48 +422,95 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
 
         {/* Benefits tracking */}
         <Block title="Benefits" note="What was given out, and what is still on the table" wide>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Benefit or service', 'Allocated', 'Used', 'Remaining'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
+          {(() => {
+            const kinds = benefitKinds
+              .map((kind) => {
+                const allocated = rows.reduce(
+                  (s, m) => s + Number((m.benefits || []).find((b) => b.name === kind)?.allocated || 0),
+                  0
+                );
+                const used = rows.reduce(
+                  (s, m) => s + Number((m.benefits || []).find((b) => b.name === kind)?.used || 0),
+                  0
+                );
+                return { kind, allocated, used, left: Math.max(0, allocated - used) };
+              })
+              .sort((a, b) => b.allocated - a.allocated);
+            const allocated = kinds.reduce((s, k) => s + k.allocated, 0);
+            const used = kinds.reduce((s, k) => s + k.used, 0);
+
+            return (
+              <>
+                <div className="grid grid-cols-3 divide-x divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07]">
+                  {[
+                    ['Allocated', allocated, 'text-ink-900'],
+                    ['Used', used, 'text-emerald-600'],
+                    ['Still on the table', Math.max(0, allocated - used), 'text-ink-900'],
+                  ].map(([label, v, tone]) => (
+                    <div key={label} className="px-4 py-3">
+                      <p className={`num font-display text-lg font-extrabold leading-none ${tone}`}>{v}</p>
+                      <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">
+                        {label}
+                      </p>
+                    </div>
                   ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {benefitKinds.map((kind) => {
-                  const allocated = rows.reduce(
-                    (s, m) => s + Number((m.benefits || []).find((b) => b.name === kind)?.allocated || 0),
-                    0
-                  );
-                  const used = rows.reduce(
-                    (s, m) => s + Number((m.benefits || []).find((b) => b.name === kind)?.used || 0),
-                    0
-                  );
-                  return (
-                    <tr key={kind}>
-                      <td className="py-2.5 font-semibold text-ink-800">{kind}</td>
-                      <td className="num py-2.5 text-ink-700">{allocated}</td>
-                      <td className="num py-2.5 font-bold text-emerald-600">{used}</td>
-                      <td className="num py-2.5 text-ink-700">{Math.max(0, allocated - used)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                </div>
+
+                <ul className="mt-4 space-y-2.5">
+                  {kinds.map((k) => {
+                    const pct = k.allocated ? Math.round((k.used / k.allocated) * 100) : 0;
+                    return (
+                      <li key={k.kind}>
+                        <p className="flex items-baseline justify-between gap-3 text-[13px]">
+                          <span className={`truncate ${k.allocated ? 'font-semibold text-ink-700' : 'text-ink-400'}`}>
+                            {k.kind}
+                          </span>
+                          <span className="num shrink-0 text-ink-500">
+                            <b className={k.used ? 'text-emerald-600' : 'text-ink-400'}>{k.used}</b> of {k.allocated} used
+                            <span className="ml-2 text-ink-400">{k.left} left</span>
+                          </span>
+                        </p>
+                        <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-surface-soft">
+                          <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            );
+          })()}
         </Block>
 
         {/* Membership revenue */}
         <Block title="Membership revenue" note="Where the membership money comes from" wide>
-          <div className="grid gap-3 sm:grid-cols-4">
-            <Stat label="Collected" value={inr(revenue)} tone="text-brand-700" />
-            <Stat label="Pending" value={inr(due)} tone={due ? 'text-amber-600' : 'text-ink-900'} />
-            <Stat label="New memberships" value={rows.filter((m) => !m.renewal?.stage || m.renewal.stage === '—').length} />
-            <Stat label="Renewals in flight" value={rows.filter((m) => m.renewal?.stage && m.renewal.stage !== '—').length} />
+          <div className="grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
+            {[
+              ['Collected', shortInr(revenue), 'text-brand-700'],
+              ['Pending', shortInr(due), due ? 'text-amber-600' : 'text-ink-300'],
+              ['New memberships', rows.filter((m) => !m.renewal?.stage || m.renewal.stage === '—').length, 'text-ink-900'],
+              ['Renewals in flight', rows.filter((m) => m.renewal?.stage && m.renewal.stage !== '—').length, 'text-ink-900'],
+            ].map(([label, v, tone]) => (
+              <div key={label} className="px-4 py-3">
+                <p className={`num truncate font-display text-lg font-extrabold leading-none ${tone}`}>{v}</p>
+                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3">
+            <p className="flex items-baseline justify-between gap-3 text-[13px]">
+              <span className="font-semibold text-ink-700">Collected against billed</span>
+              <span className="num font-bold text-ink-900">
+                {revenue + due ? Math.round((revenue / (revenue + due)) * 100) : 0}%
+              </span>
+            </p>
+            <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-surface-soft">
+              <span
+                className="block h-full rounded-full bg-brand-500"
+                style={{ width: `${revenue + due ? Math.round((revenue / (revenue + due)) * 100) : 0}%` }}
+              />
+            </span>
           </div>
 
           <div className="mt-5 grid gap-5 lg:grid-cols-2">

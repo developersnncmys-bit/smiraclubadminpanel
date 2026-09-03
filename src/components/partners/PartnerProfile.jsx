@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   X, ChevronLeft, ChevronRight, Phone, MessageCircle, Mail,
   CheckCircle2, Circle, FileText, Star, ShieldCheck, Ban,
-  Pencil,
+  Pencil, BadgeCheck, XCircle,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
@@ -89,9 +89,19 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
                 <a href={`mailto:${p.email}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Email">
                   <Mail size={15} />
                 </a>
+                {actions.verify && (
+                  <button onClick={() => actions.verify(p)} className="icon-btn h-9 w-9" title="Verify documents">
+                    <BadgeCheck size={15} />
+                  </button>
+                )}
                 <button onClick={() => actions.approve(p)} className="icon-btn h-9 w-9 disabled:opacity-40" title="Approve">
                   <ShieldCheck size={15} />
                 </button>
+                {actions.reject && (
+                  <button onClick={() => actions.reject(p)} className="icon-btn-danger h-9 w-9" title="Reject">
+                    <XCircle size={15} />
+                  </button>
+                )}
                 <button onClick={() => actions.suspend(p)} className="icon-btn-danger h-9 w-9" title="Suspend">
                   <Ban size={15} />
                 </button>

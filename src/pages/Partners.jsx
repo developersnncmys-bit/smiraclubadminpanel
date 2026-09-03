@@ -1,20 +1,8 @@
 import { useState } from 'react';
 import {
-  Plus,
-  Search,
-  ShieldCheck,
-  FileText,
-  Ban,
-  Send,
-  Star,
-  Download,
-  Handshake,
-  Clock,
-  CalendarCheck,
-  IndianRupee,
-  Wallet,
-  CheckCircle2,
-  Headphones,
+  Plus, Search, ShieldCheck, FileText, Ban, Send,
+  Star, Download, Handshake, Clock, CalendarCheck, IndianRupee,
+  Wallet, CheckCircle2, Headphones, BadgeCheck, XCircle,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -187,7 +175,26 @@ export default function Partners() {
     ]);
 
   const actions = {
+    verify: (p) =>
+      update(
+        'partners',
+        p.id,
+        {
+          verification: 'Verified',
+          approval: 'Verification pending',
+          stage: 'Verification',
+          documents: (p.documents || []).map((d) => (d.status === 'Submitted' ? { ...d, status: 'Verified' } : d)),
+        },
+        { message: `${p.name} verified — ready for approval` }
+      ),
     approve: (p) => update('partners', p.id, { approval: 'Approved', status: 'Active', stage: 'Active' }, { message: `${p.name} approved` }),
+    reject: (p) =>
+      update(
+        'partners',
+        p.id,
+        { approval: 'Rejected', status: 'Rejected', stage: 'Admin review' },
+        { message: `${p.name} rejected` }
+      ),
     suspend: (p) => update('partners', p.id, { approval: 'Suspended', status: 'Suspended' }, { message: `${p.name} suspended` }),
     requestDocs: (p, doc) => toast(`${doc} requested from ${p.name}`),
     message: (p, kind) => toast(`${kind} sent to ${p.name}`),
@@ -223,7 +230,7 @@ export default function Partners() {
             </select>
             <select className="input h-9 w-auto py-0 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="All">All statuses</option>
-              {['Active', 'Pending', 'Suspended'].map((s) => (
+              {['Active', 'Pending', 'Suspended', 'Rejected'].map((s) => (
                 <option key={s}>{s}</option>
               ))}
             </select>
@@ -332,10 +339,19 @@ export default function Partners() {
                   <button className="btn-line btn-sm" onClick={() => setViewing(p)}>
                     <FileText size={13} /> Documents
                   </button>
-                  <button className="btn-line btn-sm" onClick={() => actions.approve(p)}>
+                  <button className="btn-line btn-sm" onClick={() => actions.requestDocs(p, 'Documents')}>
+                    <FileText size={13} /> Request papers
+                  </button>
+                  <button className="btn-line btn-sm" onClick={() => actions.verify(p)}>
+                    <BadgeCheck size={13} /> Verify
+                  </button>
+                  <button className="btn-action btn-sm" onClick={() => actions.approve(p)}>
                     <ShieldCheck size={13} /> Approve
                   </button>
-                  <button className="btn-line btn-sm" onClick={() => actions.suspend(p)}>
+                  <button className="btn-line-danger btn-sm" onClick={() => actions.reject(p)}>
+                    <XCircle size={13} /> Reject
+                  </button>
+                  <button className="btn-line-danger btn-sm" onClick={() => actions.suspend(p)}>
                     <Ban size={13} /> Suspend
                   </button>
                 </span>
@@ -526,6 +542,28 @@ export default function Partners() {
             <Stat label="Smira commission" value={inr(commission)} tone="text-emerald-600" />
             <Stat label="Partner payable" value={inr(payable)} tone={payable ? 'text-amber-600' : 'text-ink-900'} />
             <Stat label="Paid to partners" value={inr(paid)} />
+            <Stat
+              label="Pending payouts"
+              value={inr(
+                seedSettlements
+                  .filter((x) => !['Partner paid', 'Settlement closed'].includes(x.stage))
+                  .reduce((s, x) => s + Number(x.payable || 0), 0)
+              )}
+              tone="text-amber-600"
+              hint={`${seedSettlements.filter((x) => !['Partner paid', 'Settlement closed'].includes(x.stage)).length} settlements open`}
+            />
+            <Stat
+              label="Refunds"
+              value={inr(
+                Math.abs(
+                  seedSettlements
+                    .filter((x) => Number(x.adjustment || 0) < 0)
+                    .reduce((s, x) => s + Number(x.adjustment || 0), 0)
+                )
+              )}
+              tone="text-rose-600"
+              hint="taken off settlements"
+            />
             <Stat label="Taxes" value={inr(seedSettlements.reduce((s, x) => s + Number(x.tax || 0), 0))} />
             <Stat label="Adjustments" value={inr(seedSettlements.reduce((s, x) => s + Number(x.adjustment || 0), 0))} />
           </div>

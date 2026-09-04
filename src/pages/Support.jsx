@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Plus, UserCheck, ArrowUpRight, MessageCircle, Phone, StickyNote,
   Download, Star, AlertTriangle, Search, Headphones, AlarmClock,
-  Clock, CheckCircle2, Timer, Filter, Zap,
+  Clock, CheckCircle2, Timer, Filter, Zap, ArrowLeftRight, Users,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -25,6 +25,7 @@ import {
   escalationLevels,
   escalationTriggers,
   supportAutomation,
+  supportDepartments,
 } from '../data/supportData.js';
 
 const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
@@ -48,8 +49,23 @@ export default function Support() {
   const [category, setCategory] = useState('All');
   const [executive, setExecutive] = useState('All');
   const [sla, setSla] = useState('All');
+  const [period, setPeriod] = useState('All');
+  const [membership, setMembership] = useState('All');
+  const [hotel, setHotel] = useState('All');
+  const [level, setLevel] = useState('All');
 
   const consultants = team.map((m) => m.name.split(' ')[0]);
+  const list = (key) => [...new Set(tickets.map((t) => t[key]).filter((v) => v && v !== '—'))];
+
+  /** Tickets carry their date as text, so read the day off the front of it. */
+  const daysAgo = (value) => {
+    const a = new Date(String(value || '').replace(/,.*$/, ''));
+    if (Number.isNaN(a.getTime())) return 0;
+    const b = new Date();
+    a.setHours(0, 0, 0, 0);
+    b.setHours(0, 0, 0, 0);
+    return Math.round((b - a) / 86400000);
+  };
 
   const matches = (t) => {
     if (stage !== 'All' && t.stage !== stage) return false;
@@ -57,6 +73,14 @@ export default function Support() {
     if (category !== 'All' && t.category !== category) return false;
     if (executive !== 'All' && t.executive !== executive) return false;
     if (sla !== 'All' && t.slaState !== sla) return false;
+    if (membership !== 'All' && t.membership !== membership) return false;
+    if (hotel !== 'All' && t.hotel !== hotel) return false;
+    if (level === 'Escalated' && (t.escalation || 1) < 2) return false;
+    if (level !== 'All' && level !== 'Escalated' && (t.escalation || 1) !== Number(level)) return false;
+    if (period !== 'All') {
+      const d = daysAgo(t.created);
+      if (d < 0 || d > Number(period)) return false;
+    }
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return [t.id, t.customer, t.phone, t.subCategory, t.booking, t.hotel].some((v) =>
@@ -103,6 +127,7 @@ export default function Support() {
       { key: 'created', header: 'Created' },
       { key: 'updated', header: 'Last updated' },
       { key: 'slaState', header: 'SLA' },
+      { key: 'resolutionMins', header: 'Resolution mins' },
       { key: 'escalation', header: 'Escalation level' },
       { key: 'rating', header: 'Rating' },
     ]);
@@ -147,6 +172,8 @@ export default function Support() {
   const quick = [
     { icon: Plus, label: 'Create ticket', run: () => setFormOpen(true) },
     { icon: UserCheck, label: 'Assign ticket', run: () => setAction('assign') },
+    { icon: Users, label: 'Reassign ticket', run: () => setAction('reassign') },
+    { icon: ArrowLeftRight, label: 'Transfer to another desk', run: () => setAction('transfer') },
     { icon: ArrowUpRight, label: 'Escalate', run: () => setAction('escalate') },
     { icon: MessageCircle, label: 'Send WhatsApp', run: () => setAction('whatsapp') },
     { icon: Phone, label: 'Call customer', run: () => setAction('call') },
@@ -271,14 +298,39 @@ export default function Support() {
                     <option key={s}>{s}</option>
                   ))}
                 </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={period} onChange={(e) => setPeriod(e.target.value)}>
+                  <option value="All">Any date</option>
+                  <option value="0">Raised today</option>
+                  <option value="7">Last 7 days</option>
+                  <option value="30">Last 30 days</option>
+                </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={membership} onChange={(e) => setMembership(e.target.value)}>
+                  <option value="All">Any membership</option>
+                  {list('membership').map((m) => (
+                    <option key={m}>{m}</option>
+                  ))}
+                </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={hotel} onChange={(e) => setHotel(e.target.value)}>
+                  <option value="All">Any hotel</option>
+                  {list('hotel').map((h) => (
+                    <option key={h}>{h}</option>
+                  ))}
+                </select>
+                <select className="input h-9 w-auto py-0 text-sm" value={level} onChange={(e) => setLevel(e.target.value)}>
+                  <option value="All">Any level</option>
+                  <option value="Escalated">Escalated only</option>
+                  {[1, 2, 3, 4].map((n) => (
+                    <option key={n} value={String(n)}>Level {n}</option>
+                  ))}
+                </select>
               </div>
             }
           >
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-sm">
+              <table className="w-full min-w-[1180px] text-sm">
                 <thead>
                   <tr className="border-b border-ink-900/[0.07] text-left">
-                    {['Ticket', 'Customer', 'Membership', 'Category', 'Booking', 'Executive', 'Priority', 'Status', 'SLA', 'Level', 'Rating'].map((h) => (
+                    {['Ticket', 'Customer', 'Membership', 'Category', 'Booking', 'Executive', 'Priority', 'Status', 'Updated', 'SLA', 'Resolution', 'Level', 'Rating'].map((h) => (
                       <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
                         {h}
                       </th>
@@ -316,8 +368,12 @@ export default function Support() {
                           {t.stage}
                         </Badge>
                       </td>
+                      <td className="num py-2.5 text-xs text-ink-500">{t.updated}</td>
                       <td className="py-2.5">
                         <Badge tone={slaTone[t.slaState]}>{t.slaState}</Badge>
+                      </td>
+                      <td className="num py-2.5 text-ink-700">
+                        {t.resolutionMins ? `${Math.round(t.resolutionMins / 60)} hrs` : '—'}
                       </td>
                       <td className="num py-2.5 text-ink-700">L{t.escalation || 1}</td>
                       <td className="py-2.5">
@@ -333,7 +389,7 @@ export default function Support() {
                   ))}
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={11} className="py-6 text-center text-ink-500">
+                      <td colSpan={13} className="py-6 text-center text-ink-500">
                         No ticket matches this view.
                       </td>
                     </tr>
@@ -351,6 +407,7 @@ export default function Support() {
                 {ticketStages.map((st, i) => {
                   const n = at(st);
                   const on = stage === st;
+                  const share = tickets.length ? Math.round((n / tickets.length) * 100) : 0;
                   return (
                     <li key={st}>
                       <button
@@ -378,6 +435,7 @@ export default function Support() {
                         <span className={`num w-5 shrink-0 text-right text-[13px] font-bold ${n ? 'text-ink-900' : 'text-ink-300'}`}>
                           {n}
                         </span>
+                        <span className="num w-9 shrink-0 text-right text-[11px] font-semibold text-ink-400">{share}%</span>
                       </button>
                     </li>
                   );
@@ -511,6 +569,19 @@ export default function Support() {
                   );
                 })}
               </ul>
+              <p className="eyebrow mb-2 mt-5">By category</p>
+              <ul className="space-y-2.5">
+                {CATEGORIES.map((c) => {
+                  const mine = rated.filter((t) => t.category === c);
+                  const avg = mine.length ? (mine.reduce((s, t) => s + t.rating, 0) / mine.length).toFixed(1) : null;
+                  return (
+                    <li key={c} className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft px-4 py-2.5">
+                      <span className="min-w-0 truncate text-sm font-semibold text-ink-700">{c}</span>
+                      <span className="num shrink-0 text-sm font-bold text-ink-900">{avg ? `${avg}/5` : 'not rated'}</span>
+                    </li>
+                  );
+                })}
+              </ul>
               <p className="mt-3 flex items-start gap-2 text-xs text-ink-500">
                 <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
                 One and two star ratings raise a follow-up task on their own.
@@ -535,6 +606,7 @@ export default function Support() {
           tickets={tickets}
           team={team}
           store={store}
+          departments={supportDepartments}
           onOpen={(t) => setViewing(t)}
           onClose={() => setAction(null)}
         />
@@ -554,6 +626,28 @@ export default function Support() {
             escalate: (t) =>
               patch(t.id, { escalation: Math.min(4, (t.escalation || 1) + 1), stage: 'Escalated' }),
             assign: () => toast('Pick the executive from the ticket list', 'info'),
+            poorRating: (t, stars) => {
+              create(
+                'tasks',
+                {
+                  title: `Call ${t.customer} about the ${stars} star rating on ${t.id}`,
+                  customer: t.customer,
+                  type: 'Follow-up',
+                  due: 'today',
+                  created: 'just now',
+                  owner: t.executive,
+                  createdBy: 'System',
+                  bucket: 'today',
+                  priority: 'High',
+                  status: 'Pending',
+                  lastAction: `${stars} star rating on ${t.id}`,
+                  nextAction: 'Call the member and find out what went wrong',
+                  note: `${t.category} · ${t.subCategory}`,
+                },
+                { silent: true }
+              );
+              toast(`${stars} star rating — follow-up raised for ${t.executive}`, 'danger');
+            },
           }}
         />
       )}

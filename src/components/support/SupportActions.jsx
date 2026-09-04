@@ -51,7 +51,7 @@ function TicketRow({ t }) {
  * a ticket really changes hands, an escalation really moves the ladder, and a
  * note really lands on the ticket's timeline.
  */
-export default function SupportActions({ action, tickets, team, onClose, store, onOpen }) {
+export default function SupportActions({ action, tickets, team, onClose, store, onOpen, departments = [] }) {
   const { update, updateMany, toast } = store;
 
   const consultants = team.map((m) => firstName(m.name));
@@ -59,12 +59,14 @@ export default function SupportActions({ action, tickets, team, onClose, store, 
 
   const [picked, setPicked] = useState([]);
   const [owner, setOwner] = useState(consultants[0] || '');
+  const [desk, setDesk] = useState(departments[0] || 'Support');
   const [text, setText] = useState('');
 
   useEffect(() => {
     setPicked([]);
     setText('');
     setOwner(consultants[0] || '');
+    setDesk(departments[0] || 'Support');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 
@@ -111,6 +113,110 @@ export default function SupportActions({ action, tickets, team, onClose, store, 
         <label className="label">Assign to</label>
         <select className="input mb-4" value={owner} onChange={(e) => setOwner(e.target.value)}>
           {consultants.map((c) => <option key={c}>{c}</option>)}
+        </select>
+        <div className="space-y-2">
+          {open.map((t) => (
+            <Pick key={t.id} on={picked.includes(t.id)} onToggle={() => toggle(t.id)}>
+              <TicketRow t={t} />
+            </Pick>
+          ))}
+          {open.length === 0 && <p className="py-8 text-center text-sm text-ink-500">Nothing open.</p>}
+        </div>
+      </Modal>
+    );
+  }
+
+  // -- Reassign to a different executive ------------------------------------
+  if (action === 'reassign') {
+    const assigned = open.filter((t) => t.executive);
+    return (
+      <Modal
+        open
+        onClose={onClose}
+        title="Reassign tickets"
+        subtitle="Takes them off one executive and puts them on another"
+        size="md"
+        footer={footer(
+          `Reassign ${picked.length || ''}`,
+          () => {
+            chosen.forEach((t) =>
+              update(
+                'tickets',
+                t.id,
+                {
+                  executive: owner,
+                  stage: t.stage === 'New' ? 'Assigned' : t.stage,
+                  timeline: [
+                    ...(t.timeline || []),
+                    { at: now(), who: 'Management', channel: 'Panel', text: `Reassigned from ${t.executive} to ${owner}` },
+                  ],
+                  updated: 'just now',
+                },
+                { silent: true }
+              )
+            );
+            toast(`${picked.length} ticket(s) moved to ${owner}`);
+            onClose();
+          },
+          !picked.length || !owner
+        )}
+      >
+        <label className="label">Move them to</label>
+        <select className="input mb-4" value={owner} onChange={(e) => setOwner(e.target.value)}>
+          {consultants.map((c) => <option key={c}>{c}</option>)}
+        </select>
+        <div className="space-y-2">
+          {assigned.map((t) => (
+            <Pick key={t.id} on={picked.includes(t.id)} onToggle={() => toggle(t.id)}>
+              <TicketRow t={t} />
+            </Pick>
+          ))}
+          {assigned.length === 0 && (
+            <p className="py-8 text-center text-sm text-ink-500">Nothing is assigned to anyone yet.</p>
+          )}
+        </div>
+      </Modal>
+    );
+  }
+
+  // -- Transfer to another desk ---------------------------------------------
+  if (action === 'transfer') {
+    return (
+      <Modal
+        open
+        onClose={onClose}
+        title="Transfer to another desk"
+        subtitle="The new desk picks it up and assigns it"
+        size="md"
+        footer={footer(
+          `Transfer ${picked.length || ''}`,
+          () => {
+            chosen.forEach((t) =>
+              update(
+                'tickets',
+                t.id,
+                {
+                  department: desk,
+                  executive: '',
+                  stage: 'New',
+                  timeline: [
+                    ...(t.timeline || []),
+                    { at: now(), who: 'Management', channel: 'Panel', text: `Transferred from ${t.department} to ${desk}` },
+                  ],
+                  updated: 'just now',
+                },
+                { silent: true }
+              )
+            );
+            toast(`${picked.length} ticket(s) transferred to ${desk}`);
+            onClose();
+          },
+          !picked.length || !desk
+        )}
+      >
+        <label className="label">Which desk</label>
+        <select className="input mb-4" value={desk} onChange={(e) => setDesk(e.target.value)}>
+          {departments.map((d) => <option key={d}>{d}</option>)}
         </select>
         <div className="space-y-2">
           {open.map((t) => (

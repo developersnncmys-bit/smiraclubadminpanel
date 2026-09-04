@@ -106,6 +106,17 @@ export const escalationTriggers = [
   'Several unresolved attempts',
 ];
 
+/** The desks a ticket can be transferred to. */
+export const supportDepartments = [
+  'Support',
+  'Bookings',
+  'Payments',
+  'Membership',
+  'Operations',
+  'Partner desk',
+  'Customer service',
+];
+
 /** What the panel does on its own once a complaint lands. */
 export const supportAutomation = [
   'Create a ticket from a WhatsApp complaint',

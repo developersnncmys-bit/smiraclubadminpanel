@@ -11,6 +11,7 @@ import {
   UserCheck,
   Star,
   AlertTriangle,
+  Check,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
@@ -30,7 +31,16 @@ const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
  */
 export default function TicketDetails({ ticket, list, customer, bookings = [], onClose, onJump, onUpdate, actions }) {
   const [note, setNote] = useState('');
-  const [resolution, setResolution] = useState(ticket?.resolution?.note || '');
+  const [res, setRes] = useState({
+    note: ticket?.resolution?.note || '',
+    action: ticket?.resolution?.action || '',
+    refund: ticket?.resolution?.refund || '',
+    compensation: ticket?.resolution?.compensation || '',
+    partner: ticket?.resolution?.partner || '',
+    contacted: ticket?.resolution?.contacted || false,
+    remarks: ticket?.resolution?.remarks || '',
+  });
+  const set = (key, value) => setRes((r) => ({ ...r, [key]: value }));
 
   if (!ticket) return null;
 
@@ -51,16 +61,33 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
   };
 
   const resolve = () => {
-    if (!resolution.trim()) {
+    if (!res.note.trim()) {
       actions.note('Write what was done before resolving this', 'danger');
       return;
     }
     onUpdate(t.id, {
       stage: 'Resolved',
-      resolution: { ...(t.resolution || {}), note: resolution.trim(), contacted: true, confirmed: false },
-      timeline: [...(t.timeline || []), { at: 'just now', who: 'You', channel: 'Resolution', text: resolution.trim() }],
+      updated: 'just now',
+      resolution: {
+        ...(t.resolution || {}),
+        note: res.note.trim(),
+        action: res.action.trim(),
+        refund: Number(res.refund) || 0,
+        compensation: Number(res.compensation) || 0,
+        partner: res.partner.trim() || '—',
+        remarks: res.remarks.trim(),
+        contacted: res.contacted,
+        confirmed: false,
+      },
+      timeline: [...(t.timeline || []), { at: 'just now', who: 'You', channel: 'Resolution', text: res.note.trim() }],
     });
     actions.note(`${t.id} marked resolved — waiting on the customer to confirm`);
+  };
+
+  /** A star lands on the ticket, and a poor one raises the follow-up. */
+  const rate = (n) => {
+    onUpdate(t.id, { rating: n, updated: 'just now' });
+    if (n <= 2) actions.poorRating?.(t, n);
   };
 
   return (
@@ -253,16 +280,83 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
               <textarea
                 className="input mt-4 min-h-[90px] resize-y"
                 placeholder="What was done, and what the customer was told…"
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
+                value={res.note}
+                onChange={(e) => set('note', e.target.value)}
               />
 
-              {t.resolution && (
-                <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                  <Stat label="Action taken" value={t.resolution.action || '—'} />
-                  <Stat label="Refund" value={t.resolution.refund ? inr(t.resolution.refund) : 'None'} />
-                  <Stat label="Compensation" value={t.resolution.compensation ? inr(t.resolution.compensation) : 'None'} />
-                  <Stat label="Partner response" value={t.resolution.partner || '—'} />
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="label">Action taken</span>
+                  <input
+                    className="input"
+                    placeholder="Refund raised, upgrade arranged…"
+                    value={res.action}
+                    onChange={(e) => set('action', e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Partner response</span>
+                  <input
+                    className="input"
+                    placeholder="What the hotel or partner said"
+                    value={res.partner}
+                    onChange={(e) => set('partner', e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Refund amount</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={res.refund}
+                    onChange={(e) => set('refund', e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="label">Compensation</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={res.compensation}
+                    onChange={(e) => set('compensation', e.target.value)}
+                  />
+                </label>
+              </div>
+
+              <label className="block">
+                <span className="label mt-3">Internal remarks</span>
+                <textarea
+                  className="input min-h-[64px] resize-y"
+                  placeholder="Anything the desk should know, not the customer…"
+                  value={res.remarks}
+                  onChange={(e) => set('remarks', e.target.value)}
+                />
+              </label>
+
+              <button
+                onClick={() => set('contacted', !res.contacted)}
+                className={`mt-3 flex w-full items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm transition ${
+                  res.contacted ? 'border-brand-400 bg-brand-50 text-ink-900' : 'border-ink-900/[0.07] text-ink-600 hover:bg-surface-soft'
+                }`}
+              >
+                <span
+                  className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${
+                    res.contacted ? 'border-brand-600 bg-brand-600 text-white' : 'border-ink-900/20 bg-white'
+                  }`}
+                >
+                  {res.contacted && <Check size={13} strokeWidth={3} />}
+                </span>
+                The customer has been told what was done
+              </button>
+
+              {(Number(res.refund) > 0 || Number(res.compensation) > 0) && (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Stat label="Refund" value={inr(Number(res.refund) || 0)} tone="text-rose-600" />
+                  <Stat label="Compensation" value={inr(Number(res.compensation) || 0)} tone="text-amber-600" />
                 </div>
               )}
 
@@ -276,6 +370,7 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
                   onClick={() =>
                     onUpdate(t.id, {
                       stage: 'Customer confirmed',
+                      updated: 'just now',
                       resolution: { ...(t.resolution || {}), confirmed: true },
                     })
                   }
@@ -299,7 +394,7 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
               <p className="mt-0.5 text-sm text-ink-500">Asked automatically once the ticket is resolved</p>
               <div className="mt-3 flex items-center gap-1.5">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <button key={n} onClick={() => onUpdate(t.id, { rating: n })} title={`${n} star`}>
+                  <button key={n} onClick={() => rate(n)} title={`${n} star`}>
                     <Star
                       size={22}
                       className={n <= (t.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-ink-300'}

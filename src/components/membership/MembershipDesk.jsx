@@ -51,6 +51,10 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
   const [status, setStatus] = useState('All');
   const [plan, setPlan] = useState('All');
   const [expiring, setExpiring] = useState('All');
+  const [expert, setExpert] = useState('All');
+  const [branch, setBranch] = useState('All');
+  const [payment, setPayment] = useState('All');
+  const [activation, setActivation] = useState('All');
   const [query, setQuery] = useState('');
 
   const left = (m) => daysUntil(m.expiresOn);
@@ -64,6 +68,15 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
       const l = left(m);
       if (l == null || l < 0 || l > Number(expiring)) return false;
     }
+    if (expert !== 'All' && m.expert !== expert) return false;
+    if (branch !== 'All' && m.branch !== branch) return false;
+    if (activation !== 'All' && m.activation?.stage !== activation) return false;
+    if (payment !== 'All') {
+      const paid = Number(m.paid || 0);
+      const due = Number(m.amount || 0);
+      const state = paid >= due && due > 0 ? 'Paid' : paid > 0 ? 'Partial' : 'Pending';
+      if (state !== payment) return false;
+    }
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return [m.name, m.id, m.phone, m.email, m.plan, m.expert].some((v) =>
@@ -71,6 +84,28 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
     );
   };
   const list = rows.filter(matches);
+
+  /** Membership money by when it came in, the way the sheet reads it. */
+  const sameDay = (value, d) => {
+    const x = new Date(value);
+    return (
+      !Number.isNaN(x.getTime()) &&
+      x.getDate() === d.getDate() &&
+      x.getMonth() === d.getMonth() &&
+      x.getFullYear() === d.getFullYear()
+    );
+  };
+  const soldOn = (d) =>
+    rows.filter((m) => sameDay(m.startedOn || m.received, d)).reduce((s2, m) => s2 + Number(m.paid || 0), 0);
+  const now = new Date();
+  const soldThisMonth = rows
+    .filter((m) => {
+      const x = new Date(m.startedOn || m.received);
+      return !Number.isNaN(x.getTime()) && x.getMonth() === now.getMonth() && x.getFullYear() === now.getFullYear();
+    })
+    .reduce((s2, m) => s2 + Number(m.paid || 0), 0);
+  const renewalCount = rows.filter((m) => m.renewal?.stage && m.renewal.stage !== '—').length;
+  const newCount = rows.length - renewalCount;
 
   const active = rows.filter(isActive);
   const pending = rows.filter((m) => m.activation && m.activation.stage !== 'Activated');
@@ -222,6 +257,22 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
               <option value="7">Expiring in 7 days</option>
               <option value="15">Expiring in 15 days</option>
               <option value="30">Expiring in 30 days</option>
+            </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={payment} onChange={(e) => setPayment(e.target.value)}>
+              <option value="All">Any payment</option>
+              {['Paid', 'Partial', 'Pending'].map((o) => <option key={o}>{o}</option>)}
+            </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={activation} onChange={(e) => setActivation(e.target.value)}>
+              <option value="All">Any activation</option>
+              {activationStages.map((o) => <option key={o}>{o}</option>)}
+            </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={expert} onChange={(e) => setExpert(e.target.value)}>
+              <option value="All">All executives</option>
+              {[...new Set(rows.map((m) => m.expert).filter(Boolean))].map((o) => <option key={o}>{o}</option>)}
+            </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={branch} onChange={(e) => setBranch(e.target.value)}>
+              <option value="All">All branches</option>
+              {[...new Set(rows.map((m) => m.branch).filter(Boolean))].map((o) => <option key={o}>{o}</option>)}
             </select>
           </div>
         }
@@ -540,6 +591,20 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
             </span>
           </div>
 
+          <div className="mt-4 grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
+            {[
+              ['Today', shortInr(soldOn(new Date())), 'text-ink-900'],
+              ['This month', shortInr(soldThisMonth), 'text-brand-700'],
+              ['New', newCount, 'text-ink-900'],
+              ['Renewals', renewalCount, 'text-ink-900'],
+            ].map(([label, v, tone]) => (
+              <div key={label} className="px-4 py-3">
+                <p className={`num truncate font-display text-lg font-extrabold leading-none ${tone}`}>{v}</p>
+                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">{label}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <div>
               <p className="eyebrow mb-2">By plan</p>
@@ -548,6 +613,17 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
                   const mine = rows.filter((m) => m.planId === p.id);
                   const v = mine.reduce((s, m) => s + Number(m.paid || 0), 0);
                   return { label: `${p.name} · ${mine.length}`, value: v, display: v ? inr(v) : '—' };
+                })}
+              />
+            </div>
+            <div>
+              <p className="eyebrow mb-2">By branch</p>
+              <List
+                empty="No branch recorded on these memberships."
+                rows={[...new Set(rows.map((m) => m.branch).filter(Boolean))].map((b) => {
+                  const mine = rows.filter((m) => m.branch === b);
+                  const v = mine.reduce((s2, m) => s2 + Number(m.paid || 0), 0);
+                  return { label: `${b} · ${mine.length}`, value: v, display: v ? inr(v) : '—' };
                 })}
               />
             </div>

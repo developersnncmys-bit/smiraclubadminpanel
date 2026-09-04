@@ -139,18 +139,31 @@ export default function Memberships({ embedded = false }) {
   const planFields = [
     { name: 'name', label: 'Plan name', type: 'text', required: true },
     { name: 'billing', label: 'Billing cycle', type: 'select', options: BILLING },
+    { name: 'duration', label: 'Duration', type: 'text', placeholder: '12 months' },
     { name: 'price', label: 'Price per member (₹)', type: 'number', required: true },
     { name: 'discount', label: 'Package discount (%)', type: 'number', help: 'Members get this off every package' },
+    { name: 'persons', label: 'Persons covered', type: 'number' },
+    { name: 'rooms', label: 'Rooms per free stay', type: 'number' },
+    { name: 'freeNights', label: 'Free stay nights', type: 'number' },
+    { name: 'freeValidity', label: 'Free stay validity', type: 'text', placeholder: '12 months from joining' },
     { name: 'tagline', label: 'Tagline shown on the website', type: 'text', full: true },
   ];
 
-  const savePlan = (values) => {
+  const savePlan = ({ freeNights, freeValidity, ...values }) => {
+    const withStay = {
+      ...values,
+      freeStay: {
+        nights: Number(freeNights || 0),
+        rooms: Number(values.rooms || 0),
+        validity: freeValidity || '12 months from joining',
+      },
+    };
     if (editing) {
-      update('memberships', editing.id, values);
+      update('memberships', editing.id, withStay);
     } else {
       const accent = ACCENT_KEYS[memberships.length % ACCENT_KEYS.length];
       create('memberships', {
-        ...values,
+        ...withStay,
         features: [],
         gifts: [],
         published: false,
@@ -514,7 +527,15 @@ export default function Memberships({ embedded = false }) {
         title={editing ? `Edit ${editing.name}` : 'Add membership plan'}
         subtitle={editing ? editing.id : 'Features are added on the plan card after saving'}
         fields={planFields}
-        initial={editing || { billing: 'Yearly', discount: 5 }}
+        initial={
+          editing
+            ? {
+                ...editing,
+                freeNights: editing.freeStay?.nights ?? 0,
+                freeValidity: editing.freeStay?.validity || '',
+              }
+            : { billing: 'Yearly', duration: '12 months', discount: 5, persons: 2, rooms: 1, freeNights: 1 }
+        }
         submitLabel={editing ? 'Save changes' : 'Create plan'}
       />
 

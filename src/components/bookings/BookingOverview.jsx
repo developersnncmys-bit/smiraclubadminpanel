@@ -66,6 +66,13 @@ const daysAway = (value) => {
  */
 export default function BookingOverview({ rows, invoices = [], signups = [], onOpen, actions }) {
   const [window, setWindow] = useState(7);
+  const [month, setMonth] = useState(() => {
+    const t = new Date();
+    return new Date(t.getFullYear(), t.getMonth(), 1);
+  });
+  const [calHotel, setCalHotel] = useState('All');
+  const [calDestination, setCalDestination] = useState('All');
+  const [calType, setCalType] = useState('All');
 
   const value = (list) => list.reduce((s, b) => s + Number(b.amount || 0), 0);
   const paidOf = (list) => list.reduce((s, b) => s + Number(b.paid || 0), 0);
@@ -100,6 +107,52 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
   const dated = Object.entries(byDate).sort((a, b) => (day(a[0]) || 0) - (day(b[0]) || 0));
 
   const queue = rows.filter((b) => b.confirmation && b.confirmation.status !== 'Hotel confirmed');
+
+  // -- The booking calendar -------------------------------------------------
+  const calRows = rows.filter(
+    (b) =>
+      (calHotel === 'All' || b.hotel === calHotel) &&
+      (calDestination === 'All' || b.destination === calDestination) &&
+      (calType === 'All' || (b.bookingType || 'Package') === calType)
+  );
+  const hotels = [...new Set(rows.map((b) => b.hotel).filter(Boolean))];
+  const destinations = [...new Set(rows.map((b) => b.destination).filter(Boolean))];
+  const types = [...new Set(rows.map((b) => b.bookingType || 'Package'))];
+
+  const sameDay = (value, d) => {
+    const x = new Date(value);
+    return (
+      !Number.isNaN(x.getTime()) &&
+      x.getDate() === d.getDate() &&
+      x.getMonth() === d.getMonth() &&
+      x.getFullYear() === d.getFullYear()
+    );
+  };
+
+  const monthName = month.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const firstWeekday = (month.getDay() + 6) % 7; // weeks start Monday
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const cells = [
+    ...Array.from({ length: firstWeekday }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => new Date(month.getFullYear(), month.getMonth(), i + 1)),
+  ];
+
+  /** Everything happening on one day, in the order the sheet lists it. */
+  const eventsOn = (d) => [
+    ...calRows.filter((b) => sameDay(b.checkIn || b.departure, d)).map((b) => ({ b, kind: 'Check-in' })),
+    ...calRows.filter((b) => sameDay(b.checkOut, d)).map((b) => ({ b, kind: 'Check-out' })),
+    ...calRows
+      .filter((b) => sameDay(b.created, d))
+      .map((b) => ({ b, kind: b.status === 'Cancelled' ? 'Cancelled' : b.status === 'Confirmed' ? 'Confirmed' : 'Pending' })),
+  ];
+
+  const eventTone = {
+    'Check-in': 'bg-brand-50 text-brand-700 ring-brand-600/20',
+    'Check-out': 'bg-sky-50 text-sky-700 ring-sky-600/20',
+    Confirmed: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+    Pending: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+    Cancelled: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+  };
   const collected = paidOf(rows);
   const outstanding = value(rows) - collected;
 
@@ -239,6 +292,94 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
               ),
             }))}
           />
+        </Block>
+
+        {/* The month, as the sheet asks for it */}
+        <Block
+          title="Booking calendar"
+          note={`${monthName} — check-ins, check-outs and what was booked`}
+          wide
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <select className="input h-9 w-auto py-0 text-sm" value={calHotel} onChange={(e) => setCalHotel(e.target.value)}>
+                <option value="All">All hotels</option>
+                {hotels.map((h) => <option key={h}>{h}</option>)}
+              </select>
+              <select className="input h-9 w-auto py-0 text-sm" value={calDestination} onChange={(e) => setCalDestination(e.target.value)}>
+                <option value="All">All destinations</option>
+                {destinations.map((d) => <option key={d}>{d}</option>)}
+              </select>
+              <select className="input h-9 w-auto py-0 text-sm" value={calType} onChange={(e) => setCalType(e.target.value)}>
+                <option value="All">All types</option>
+                {types.map((t) => <option key={t}>{t}</option>)}
+              </select>
+              <span className="seg">
+                <button
+                  className="seg-item"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                >
+                  ‹
+                </button>
+                <button
+                  className="seg-item seg-item-on"
+                  onClick={() => {
+                    const t = new Date();
+                    setMonth(new Date(t.getFullYear(), t.getMonth(), 1));
+                  }}
+                >
+                  Today
+                </button>
+                <button
+                  className="seg-item"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                >
+                  ›
+                </button>
+              </span>
+            </div>
+          }
+        >
+          <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl bg-ink-900/[0.07]">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+              <div key={d} className="bg-surface-soft px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-ink-400">
+                {d}
+              </div>
+            ))}
+            {cells.map((d, i) => {
+              if (!d) return <div key={`blank-${i}`} className="min-h-[92px] bg-surface-card/40" />;
+              const events = eventsOn(d);
+              const today = sameDay(new Date(), d);
+              return (
+                <div key={d.toISOString()} className={`min-h-[92px] bg-surface-card p-1.5 ${today ? 'ring-1 ring-inset ring-brand-500' : ''}`}>
+                  <p className={`num mb-1 text-[11px] font-bold ${today ? 'text-brand-700' : 'text-ink-400'}`}>
+                    {d.getDate()}
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {events.slice(0, 3).map((e, n) => (
+                      <button
+                        key={`${e.b.id}-${e.kind}-${n}`}
+                        onClick={() => onOpen(e.b)}
+                        title={`${e.b.id} · ${e.b.customer} · ${e.b.hotel || e.b.pkg}`}
+                        className={`truncate rounded-md px-1.5 py-1 text-left text-[10px] font-bold ring-1 ring-inset transition hover:opacity-80 ${eventTone[e.kind]}`}
+                      >
+                        {e.kind} · {e.b.customer.split(' ')[0]}
+                      </button>
+                    ))}
+                    {events.length > 3 && (
+                      <span className="num px-1.5 text-[10px] font-bold text-ink-400">+{events.length - 3} more</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {['Check-in', 'Check-out', 'Confirmed', 'Pending', 'Cancelled'].map((k) => (
+              <span key={k} className={`chip ring-1 ring-inset ${eventTone[k]}`}>{k}</span>
+            ))}
+            <span className="ml-auto text-xs text-ink-400">Click any entry to open the booking</span>
+          </div>
         </Block>
 
         {/* Free stay management */}
@@ -433,7 +574,7 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Booking', 'Customer', 'Assigned to', 'Role', 'Created by', 'Confirmed by', 'Modified by', ''].map((h) => (
+                  {['Booking', 'Customer', 'Assigned to', 'Role', 'Created by', 'Confirmed by', 'Modified by', 'Cancelled by', ''].map((h) => (
                     <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
                       {h}
                     </th>
@@ -456,6 +597,7 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
                     <td className="py-2.5 text-ink-600">{b.handledBy?.created || '—'}</td>
                     <td className="py-2.5 text-ink-600">{b.handledBy?.confirmed || '—'}</td>
                     <td className="py-2.5 text-ink-600">{b.handledBy?.modified || '—'}</td>
+                    <td className="py-2.5 text-ink-600">{b.handledBy?.cancelled || '—'}</td>
                     <td className="py-2.5 text-right">
                       <button className="btn-line btn-sm" onClick={() => actions.note(`${b.id} reassigned`)}>
                         Reassign

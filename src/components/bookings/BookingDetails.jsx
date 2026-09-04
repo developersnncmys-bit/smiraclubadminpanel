@@ -176,7 +176,14 @@ export default function BookingDetails({
             </Field>
             <Field label="Email">{person.email || 'Not on record'}</Field>
             {person.city && <Field label="City">{person.city}</Field>}
-            <Field label="Handled by">{b.owner}</Field>
+            <Field label="Handled by">{b.assignedRole ? `${b.owner} · ${b.assignedRole}` : b.owner}</Field>
+            <Field label="Who touched this booking">
+              <span className="block text-[13px] leading-relaxed">
+                Created by {b.handledBy?.created || '—'} · confirmed by {b.handledBy?.confirmed || '—'}
+                <br />
+                Last changed by {b.handledBy?.modified || '—'} · cancelled by {b.handledBy?.cancelled || '—'}
+              </span>
+            </Field>
           </section>
 
           <div className="space-y-5">

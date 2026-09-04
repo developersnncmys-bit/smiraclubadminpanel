@@ -89,6 +89,15 @@ export default function Bookings() {
   const pax = rows.reduce((s, b) => s + b.pax, 0);
   const outstanding = rows.reduce((s, b) => s + Math.max(0, Number(b.amount || 0) - Number(b.paid || 0)), 0);
 
+  /** The two the sheet filters by that the record only implies. */
+  const withDerived = (b) => ({
+    ...b,
+    phone: b.phone || customers.find((c) => c.name === b.customer)?.phone || '',
+    paymentStatus:
+      Number(b.paid || 0) >= Number(b.amount || 0) ? 'Paid' : Number(b.paid || 0) > 0 ? 'Partial' : 'Pending',
+    stayKind: b.freeStay ? 'Free stay' : 'Paid',
+  });
+
   const matches = (b) => {
     if (status !== 'All' && b.status !== status) return false;
     const q = query.trim().toLowerCase();
@@ -97,7 +106,7 @@ export default function Bookings() {
       String(v || '').toLowerCase().includes(q)
     );
   };
-  const listRows = rows.filter(matches);
+  const listRows = rows.filter(matches).map(withDerived);
 
   const exportBookings = () =>
     downloadCsv('smira-club-bookings', rows, [
@@ -475,12 +484,15 @@ export default function Bookings() {
               <DataTable
                 columns={columns}
                 rows={listRows}
-                searchKeys={['id', 'customer', 'pkg', 'destination', 'hotel', 'vendor']}
-                searchPlaceholder="Search by booking ID, customer or package…"
+                searchKeys={['id', 'customer', 'phone', 'pkg', 'destination', 'hotel', 'vendor']}
+                searchPlaceholder="Search by booking ID, customer, mobile, package or hotel…"
                 filters={[
                   { key: 'status', label: 'Status', options: STATUSES },
+                  { key: 'paymentStatus', label: 'Payment', options: ['Paid', 'Partial', 'Pending'] },
                   { key: 'bookingType', label: 'Type', options: bookingTypes },
                   { key: 'membership', label: 'Membership', options: memberships.map((p) => p.name) },
+                  { key: 'stayKind', label: 'Free / paid', options: ['Free stay', 'Paid'] },
+                  { key: 'vendor', label: 'Vendor', options: [...new Set(rows.map((b) => b.vendor).filter(Boolean))] },
                   { key: 'source', label: 'Source', options: bookingSources },
                   { key: 'owner', label: 'Assigned to', options: consultants },
                 ]}

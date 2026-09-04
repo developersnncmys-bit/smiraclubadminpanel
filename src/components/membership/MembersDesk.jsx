@@ -1,20 +1,8 @@
 import { useState } from 'react';
 import {
-  Users,
-  HeartHandshake,
-  MessageCircle,
-  Gift,
-  Share2,
-  RefreshCw,
-  Cake,
-  Phone,
-  Plus,
-  ArrowRight,
-  AlertTriangle,
-  Crown,
-  CheckCircle2,
-  CalendarClock,
-  Clock,
+  Users, HeartHandshake, MessageCircle, Gift, Share2, RefreshCw,
+  Cake, Phone, Plus, ArrowRight, AlertTriangle, Crown,
+  CheckCircle2, CalendarClock, Clock, UserPlus, Ban, IndianRupee,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
@@ -124,15 +112,28 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
   const converted = members.reduce((s, c) => s + Number(c.referral?.converted || 0), 0);
   const rewardsDue = rewards.filter((r) => !['Delivered', 'Cancelled'].includes(r.stage));
 
+  const activeCount = signups.filter((s) => s.status === 'Active').length;
+  const expiredCount = signups.filter(
+    (s) => s.status === 'Expired' || (daysUntil(s.expiresOn) != null && daysUntil(s.expiresOn) < 0)
+  ).length;
+  const suspended = signups.filter((s) => ['Suspended', 'Cancelled'].includes(s.status)).length;
+  const thisMonth = new Date();
+  const joinedThisMonth = signups.filter((s) => {
+    const d = new Date(s.startedOn || s.received);
+    return !Number.isNaN(d.getTime()) && d.getMonth() === thisMonth.getMonth() && d.getFullYear() === thisMonth.getFullYear();
+  }).length;
+  const membershipMoney = signups.reduce((sum, s) => sum + Number(s.paid || 0), 0);
+
+  /** The eight figures the sheet opens this page with. */
   const kpis = [
-    { icon: Users, label: 'Total members', value: members.length },
-    { icon: CheckCircle2, label: 'Active', value: signups.filter((s) => s.status === 'Active').length, tone: 'text-emerald-600' },
-    { icon: CalendarClock, label: 'Expiring soon', value: expiringSoon.length, tone: expiringSoon.length ? 'text-amber-600' : undefined },
-    { icon: Clock, label: 'Pending activation', value: signups.filter((s) => s.activation && s.activation.stage !== 'Activated').length },
-    { icon: AlertTriangle, label: 'At risk', value: atRisk.length, tone: atRisk.length ? 'text-rose-600' : undefined },
-    { icon: Gift, label: 'Gifts to hand over', value: rewardsDue.length },
-    { label: 'Referrals', value: totalReferrals, hint: `${converted} converted` },
-    { label: 'Member spend', value: shortInr(members.reduce((s, c) => s + Number(c.spend || 0), 0)), tone: 'text-brand-700' },
+    { icon: Users, label: 'Total', value: members.length, hint: `${totalReferrals} referrals · ${converted} converted` },
+    { icon: CheckCircle2, label: 'Active', value: activeCount, tone: 'text-emerald-600', progress: signups.length ? Math.round((activeCount / signups.length) * 100) : 0 },
+    { icon: CalendarClock, label: 'Expiring', value: expiringSoon.length, tone: expiringSoon.length ? 'text-amber-600' : undefined, hint: 'within 45 days' },
+    { icon: AlertTriangle, label: 'Expired', value: expiredCount, tone: expiredCount ? 'text-rose-600' : undefined },
+    { icon: UserPlus, label: 'New', value: joinedThisMonth, hint: 'joined this month' },
+    { icon: Clock, label: 'Awaiting activation', value: signups.filter((s) => s.activation && s.activation.stage !== 'Activated').length },
+    { icon: Ban, label: 'Suspended', value: suspended, tone: suspended ? 'text-rose-600' : undefined, hint: 'or cancelled' },
+    { icon: IndianRupee, label: 'Revenue', value: shortInr(membershipMoney), tone: 'text-brand-700', hint: `${rewardsDue.length} gifts to hand over` },
   ];
 
   /** The badge line from their example — status, birthday, benefits, renewal. */
@@ -152,7 +153,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
 
   return (
     <div className="space-y-6">
-      <KpiRow items={kpis} cols={6} />
+      <KpiRow items={kpis} cols={8} />
 
       {/* The six views the sheet asks for */}
       <SectionTabs items={TABS} value={tab} onChange={setTab}>

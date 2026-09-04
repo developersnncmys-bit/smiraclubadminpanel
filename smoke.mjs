@@ -15,7 +15,7 @@ const MARKERS = {
   '/team': 'High workload',
   '/enquiries': 'Pipeline value',
   '/bookings': 'Booked value',
-  '/customers': 'Gifts to hand over',
+  '/customers': 'Awaiting activation',
   '/memberships': 'Membership plans',
   '/partners': 'Every partner',
   '/offers': 'Revenue from offers',

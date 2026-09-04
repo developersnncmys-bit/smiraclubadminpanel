@@ -575,7 +575,7 @@ export const memberSignups = [
   {
     id: 'MSU-09', name: 'Siddhesh Rane', email: 'siddhesh.r@gmail.com', phone: '+91 98201 44521', city: 'Mumbai',
     address: '12 Carter Road, Bandra West, Mumbai 400050', family: 2, branch: 'Mumbai',
-    planId: 'MEM-01', plan: 'Silver Explorer', members: 2, source: 'Instagram', received: '04 Oct 2025',
+    planId: 'MEM-01', plan: 'Silver Explorer', members: 2, movement: 'New', source: 'Instagram', received: '04 Oct 2025',
     status: 'Active', quote: '', startedOn: '04 Oct 2025', expiresOn: '03 Oct 2026',
     amount: 5899, paid: 5899, expert: 'Kabir', fieldOfficer: 'Ritik',
     activation: { stage: 'Activated', date: '05 Oct 2025', deadline: '11 Oct 2025', contacted: true, explained: true, documents: true, gift: 'Given' },
@@ -601,7 +601,7 @@ export const memberSignups = [
   {
     id: 'MSU-04', name: 'Ananya Deshmukh', email: 'ananya.d@gmail.com', phone: '+91 98330 21145', city: 'Pune',
     address: '31 Koregaon Park Annexe, Pune 411001', family: 4, branch: 'Pune',
-    planId: 'MEM-03', plan: 'Platinum Elite', members: 4, source: 'Website', received: '04 Aug 2026',
+    planId: 'MEM-03', plan: 'Platinum Elite', members: 4, movement: 'Upgrade', source: 'Website', received: '04 Aug 2026',
     status: 'New', quote: '', amount: 35396, paid: 0, expert: 'Sneha', fieldOfficer: '—',
     activation: { stage: 'Payment pending', date: '—', deadline: '11 Aug 2026', contacted: true, explained: false, documents: false, gift: 'Not given' },
     renewal: { stage: '—', contactedOn: '—', note: '' },
@@ -622,7 +622,7 @@ export const memberSignups = [
   {
     id: 'MSU-03', name: 'Rohan Bhatt', email: 'rohan.bhatt@outlook.com', phone: '+91 99201 55420', city: 'Mumbai',
     address: 'A-1202 Oberoi Splendor, Jogeshwari East, Mumbai 400060', family: 3, branch: 'Mumbai',
-    planId: 'MEM-02', plan: 'Gold Voyager', members: 2, source: 'Website', received: '10 Sep 2025',
+    planId: 'MEM-02', plan: 'Gold Voyager', members: 2, movement: 'New', source: 'Website', received: '10 Sep 2025',
     status: 'Active', quote: 'QUO-1189', startedOn: '10 Sep 2025', expiresOn: '09 Sep 2026',
     amount: 23598, paid: 23598, expert: 'Sneha', fieldOfficer: 'Ritik',
     activation: { stage: 'Activated', date: '11 Sep 2025', deadline: '17 Sep 2025', contacted: true, explained: true, documents: true, gift: 'Given' },
@@ -730,7 +730,7 @@ export const campaignTone = { Running: 'green', Paused: 'amber', Completed: 'vio
 export const team = [
   {
     id: 'USR-02', empId: 'EMP-102', name: 'Sneha Kulkarni', role: 'Senior Travel Consultant',
-    department: 'Sales desk', email: 'sneha@smiraclub.com', phone: '+91 98211 44556', status: 'Active',
+    department: 'Sales desk', email: 'sneha@smiraclub.com', branch: 'Mumbai', manager: 'Vikram Joshi', phone: '+91 98211 44556', status: 'Active',
     live: 'Online', attendance: 'Present',
     activity: 'On call with Ridhima Param', activityType: 'Calling leads', activityStarted: '03:12 pm',
     lastActive: '2 min ago', lastActivityKind: 'Lead call',
@@ -771,7 +771,7 @@ export const team = [
   },
   {
     id: 'USR-04', empId: 'EMP-104', name: 'Kabir Menon', role: 'Travel Consultant',
-    department: 'Sales desk', email: 'kabir@smiraclub.com', phone: '+91 90045 22119', status: 'Active',
+    department: 'Sales desk', email: 'kabir@smiraclub.com', branch: 'Mumbai', manager: 'Sneha Kulkarni', phone: '+91 90045 22119', status: 'Active',
     live: 'On customer visit', attendance: 'Present',
     activity: 'Customer meeting — Bandra', activityType: 'Customer visit', activityStarted: '02:40 pm',
     lastActive: '9 min ago', lastActivityKind: 'Visit check-in',
@@ -811,7 +811,7 @@ export const team = [
   },
   {
     id: 'USR-05', empId: 'EMP-101', name: 'Rahul Sharma', role: 'Travel Consultant',
-    department: 'Lead desk', email: 'rahul@smiraclub.com', phone: '+91 98765 43210', status: 'Active',
+    department: 'Lead desk', email: 'rahul@smiraclub.com', branch: 'Mumbai', manager: 'Sneha Kulkarni', phone: '+91 98765 43210', status: 'Active',
     live: 'Online', attendance: 'Present',
     activity: 'Calling fresh leads from the Instagram campaign', activityType: 'Calling leads', activityStarted: '03:12 pm',
     lastActive: '1 min ago', lastActivityKind: 'Lead call',
@@ -852,7 +852,7 @@ export const team = [
   },
   {
     id: 'USR-06', empId: 'EMP-103', name: 'Amit Verma', role: 'Travel Consultant',
-    department: 'Lead desk', email: 'amit@smiraclub.com', phone: '+91 99201 33447', status: 'Active',
+    department: 'Lead desk', email: 'amit@smiraclub.com', branch: 'Pune', manager: 'Priya Nair', phone: '+91 99201 33447', status: 'Active',
     live: 'Idle', attendance: 'Present',
     activity: 'No activity since the last call ended', activityType: 'Idle', activityStarted: '02:26 pm',
     lastActive: '34 min ago', lastActivityKind: 'Lead call',
@@ -891,7 +891,7 @@ export const team = [
   },
   {
     id: 'USR-07', empId: 'EMP-105', name: 'Priya Nair', role: 'Senior Travel Consultant',
-    department: 'Sales desk', email: 'priya@smiraclub.com', phone: '+91 98330 77218', status: 'Active',
+    department: 'Sales desk', email: 'priya@smiraclub.com', branch: 'Pune', manager: 'Vikram Joshi', phone: '+91 98330 77218', status: 'Active',
     live: 'In meeting', attendance: 'Work from home',
     activity: 'Platinum plan walkthrough — Sanjana Kapoor', activityType: 'Presentation', activityStarted: '03:00 pm',
     lastActive: 'now', lastActivityKind: 'Presentation',
@@ -929,7 +929,7 @@ export const team = [
   },
   {
     id: 'USR-08', empId: 'EMP-106', name: 'Imran Shaikh', role: 'Field Officer',
-    department: 'Field team', email: 'imran@smiraclub.com', phone: '+91 90820 11994', status: 'Active',
+    department: 'Field team', email: 'imran@smiraclub.com', branch: 'Mumbai', manager: 'Sneha Kulkarni', phone: '+91 90820 11994', status: 'Active',
     live: 'On customer visit', attendance: 'Field visit',
     activity: 'Home visit — Powai, Sanjana Kapoor', activityType: 'Customer visit', activityStarted: '02:15 pm',
     lastActive: '6 min ago', lastActivityKind: 'Visit check-in',
@@ -968,7 +968,7 @@ export const team = [
   },
   {
     id: 'USR-09', empId: 'EMP-107', name: 'Divya Rao', role: 'Visa & Documentation',
-    department: 'Operations', email: 'divya@smiraclub.com', phone: '+91 98676 20031', status: 'Active',
+    department: 'Operations', email: 'divya@smiraclub.com', branch: 'Mumbai', manager: 'Vikram Joshi', phone: '+91 98676 20031', status: 'Active',
     live: 'On break', attendance: 'Late',
     activity: 'Tea break', activityType: 'Break', activityStarted: '03:05 pm',
     lastActive: '11 min ago', lastActivityKind: 'Documentation',
@@ -1006,7 +1006,7 @@ export const team = [
   },
   {
     id: 'USR-10', empId: 'EMP-108', name: 'Vikram Joshi', role: 'Owner',
-    department: 'Management', email: 'vikram@smiraclub.com', phone: '+91 98190 55127', status: 'Active',
+    department: 'Management', email: 'vikram@smiraclub.com', branch: 'Mumbai', manager: '—', phone: '+91 98190 55127', status: 'Active',
     live: 'Offline', attendance: 'Half day',
     activity: 'Logged out after the partner meeting', activityType: 'Internal meeting', activityStarted: '12:40 pm',
     lastActive: '2h 10m ago', lastActivityKind: 'Internal meeting',
@@ -1043,7 +1043,7 @@ export const team = [
   },
   {
     id: 'USR-11', empId: 'EMP-109', name: 'Neha Pillai', role: 'Accounts',
-    department: 'Accounts', email: 'neha@smiraclub.com', phone: '+91 99872 40556', status: 'Active',
+    department: 'Accounts', email: 'neha@smiraclub.com', branch: 'Mumbai', manager: 'Vikram Joshi', phone: '+91 99872 40556', status: 'Active',
     live: 'Not logged in', attendance: 'Absent',
     activity: 'Has not logged in today', activityType: 'No activity', activityStarted: '—',
     lastActive: 'yesterday, 06:40 pm', lastActivityKind: 'Payment follow-up',
@@ -1079,7 +1079,7 @@ export const team = [
   },
   {
     id: 'USR-12', empId: 'EMP-110', name: 'Farhan Qureshi', role: 'Travel Consultant',
-    department: 'Sales desk', email: 'farhan@smiraclub.com', phone: '+91 98204 66713', status: 'Active',
+    department: 'Sales desk', email: 'farhan@smiraclub.com', branch: 'Pune', manager: 'Priya Nair', phone: '+91 98204 66713', status: 'Active',
     live: 'Leave', attendance: 'Leave',
     activity: 'On approved leave', activityType: 'No activity', activityStarted: '—',
     lastActive: '2 days ago', lastActivityKind: 'Lead call',

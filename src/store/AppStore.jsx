@@ -15,7 +15,7 @@ import * as inventorySeed from '../data/inventoryData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v29';
+const KEY = 'smira-club-admin:v30';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 

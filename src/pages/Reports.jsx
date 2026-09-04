@@ -43,6 +43,10 @@ import {
   reportRecipients,
   reportModules,
   reportMeasures,
+  leadSources,
+  bookingStates,
+  bookingKinds,
+  membershipStates,
 } from '../data/reportsData.js';
 
 const SECTIONS = [
@@ -122,6 +126,7 @@ export default function Reports() {
   const [section, setSection] = useState('Overview');
   const [builder, setBuilder] = useState({ module: 'Sales', dimension: 'Salesperson', measure: 'Revenue' });
   const [schedules, setSchedules] = useState(seedSchedules);
+  const [teamCut, setTeamCut] = useState({ employee: 'All', team: 'All', manager: 'All', branch: 'All' });
 
   const leads = byOwner(enquiries, owner);
   const trips = byOwner(bookings, owner);
@@ -138,6 +143,42 @@ export default function Reports() {
   const lost = leads.filter((e) => e.status === 'Lost');
 
   const chart = salesTrend.map((d) => ({ ...d }));
+
+  /** Records carry their dates as text, so read the day off the front. */
+  const dayOf = (value) => {
+    const d = new Date(String(value || '').replace(/,.*$/, ''));
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+  const ageInDays = (value) => {
+    const d = dayOf(value);
+    return d ? Math.max(0, Math.round((Date.now() - d.getTime()) / 86400000)) : null;
+  };
+  const average = (values) => {
+    const real = values.filter((v) => v != null);
+    return real.length ? Math.round(real.reduce((a, b) => a + b, 0) / real.length) : null;
+  };
+
+  const monthsLeft = (m) => daysUntil(m.expiresOn);
+  const isExpired = (m) => m.status === 'Expired' || (monthsLeft(m) ?? 1) < 0;
+
+  /** Where every membership stands, the seven ways the sheet reads it. */
+  const membershipsAt = (state) => {
+    if (state === 'Pending activation') return memberSignups.filter((m) => m.activation && m.activation.stage !== 'Activated');
+    if (state === 'Activated') return memberSignups.filter((m) => m.activation?.stage === 'Activated');
+    if (state === 'Expiring soon') {
+      return memberSignups.filter((m) => { const l = monthsLeft(m); return l != null && l >= 0 && l <= 45; });
+    }
+    if (state === 'Expired') return memberSignups.filter(isExpired);
+    return memberSignups.filter((m) => m.status === state);
+  };
+
+  const cancelledValue = trips
+    .filter((b) => b.status === 'Cancelled')
+    .reduce((sum, b) => sum + Number(b.amount || 0), 0);
+  const cancelledPayout = trips
+    .filter((b) => b.status === 'Cancelled')
+    .reduce((sum, b) => sum + Number(b.vendorContact?.payable || 0), 0);
+  const profit = Math.max(0, commission - Math.max(0, cancelledValue - cancelledPayout));
 
   const exportAs = (name, rows, columns) => {
     downloadCsv(name, rows, columns);
@@ -159,6 +200,9 @@ export default function Reports() {
     return {
       key: m.id,
       name: m.name,
+      department: m.department || '—',
+      manager: m.manager || '—',
+      branch: m.branch || '—',
       leads: mine.length,
       calls: m.calls ?? 0,
       connected: m.callDetail?.connected ?? Math.round((m.calls ?? 0) * 0.6),
@@ -177,7 +221,7 @@ export default function Reports() {
   });
 
   // -- Lead sources, with what each one costs -------------------------------
-  const sources = [...new Set(leads.map((e) => e.source).filter(Boolean))];
+  const sources = [...new Set([...leadSources, ...leads.map((e) => e.source).filter(Boolean)])];
   const sourceRows = sources.map((s) => {
     const all = leads.filter((e) => e.source === s);
     const w = all.filter((e) => e.status === 'Won');
@@ -199,6 +243,121 @@ export default function Reports() {
 
   // -- Vendors, from what has been booked with them -------------------------
   const vendors = [...new Set(trips.map((b) => b.vendor).filter(Boolean))];
+
+  // -- Employee, team, manager, branch --------------------------------------
+  const cut = (key, value) => setTeamCut((c) => ({ ...c, [key]: value }));
+  const teamRows = salesRows.filter(
+    (r) =>
+      (teamCut.employee === 'All' || r.name === teamCut.employee) &&
+      (teamCut.team === 'All' || r.department === teamCut.team) &&
+      (teamCut.manager === 'All' || r.manager === teamCut.manager) &&
+      (teamCut.branch === 'All' || r.branch === teamCut.branch)
+  );
+  const teamPicker = (key, label, options) => (
+    <select className="input h-9 w-auto py-0 text-sm" value={teamCut[key]} onChange={(e) => cut(key, e.target.value)}>
+      <option value="All">{label}</option>
+      {options.map((o) => (
+        <option key={o}>{o}</option>
+      ))}
+    </select>
+  );
+  const uniques = (key) => [...new Set(salesRows.map((r) => r[key]).filter((v) => v && v !== '—'))];
+
+  // -- Partners, from what each one has actually done -----------------------
+  const partnerRows = (partners || []).map((v) => {
+    const booked = Number(v.bookings || 0);
+    const earned = Number(v.commissionEarned || 0);
+    return {
+      key: v.id,
+      name: v.name,
+      kind: v.category || '—',
+      bookings: booked,
+      revenue: Number(v.revenue || 0),
+      commission: earned,
+      cancelRate: booked ? Math.round((Number(v.cancelled || 0) / booked) * 100) : 0,
+      rating: Number(v.rating || 0),
+      response: Number(v.responseMins || 0),
+      pending: Math.max(0, booked - Number(v.confirmed || 0) - Number(v.cancelled || 0) - Number(v.failed || 0)),
+      payout: Number(v.payable || 0),
+    };
+  });
+  const totalPartnerCommission = partnerRows.reduce((sum, r) => sum + r.commission, 0);
+
+  // -- The custom report the admin builds -----------------------------------
+  const builderSets = {
+    Sales: leads,
+    Leads: leads,
+    Membership: memberSignups,
+    Members: customers,
+    Bookings: trips,
+    Revenue: trips,
+    Team: team,
+    Partners: partners || [],
+    Support: tickets,
+  };
+  const monthOf = (value) => {
+    const d = dayOf(value);
+    return d ? d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '—';
+  };
+  const dimensionOf = {
+    Salesperson: (r) => r.owner,
+    'Lead source': (r) => r.source,
+    Stage: (r) => r.status,
+    Source: (r) => r.source,
+    Owner: (r) => r.owner,
+    Status: (r) => r.status,
+    Label: (r) => r.label,
+    Plan: (r) => r.plan,
+    Consultant: (r) => r.expert || r.owner || r.consultant,
+    'Renewal stage': (r) => (r.renewal?.stage && r.renewal.stage !== '—' ? r.renewal.stage : 'Not started'),
+    Engagement: (r) => r.engagement,
+    City: (r) => r.city,
+    Type: (r) => r.bookingType,
+    Hotel: (r) => r.hotel,
+    Destination: (r) => r.destination,
+    Employee: (r) => r.name,
+    Team: (r) => r.department,
+    Manager: (r) => r.manager,
+    Date: (r) => r.day || 'Today',
+    Vendor: (r) => r.vendor || r.name,
+    Category: (r) => r.category,
+    Executive: (r) => r.executive,
+    Priority: (r) => r.priority,
+    'SLA state': (r) => r.slaState,
+    Branch: (r) => r.branch,
+    Month: (r) => monthOf(r.created || r.received || r.startedOn || r.checkIn || r.submitted),
+  };
+  const valueOf = (r) => Number(r.revenue ?? r.budget ?? r.amount ?? r.paid ?? 0);
+  const closed = (r) => ['Won', 'Active', 'Confirmed', 'Completed', 'Closed', 'Resolved'].includes(r.status);
+
+  const builderRows = (() => {
+    const rows = builderSets[builder.module] || [];
+    const pick = dimensionOf[builder.dimension] || (() => '—');
+    const groups = new Map();
+    rows.forEach((r) => {
+      const key = pick(r) || '—';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+    return [...groups.entries()]
+      .map(([label, mine]) => {
+        const value = mine.reduce((sum, r) => sum + valueOf(r), 0);
+        const cost = Number(sourceCosts[label] || 0);
+        const target = mine.reduce((sum, r) => sum + Number(r.target || 0), 0);
+        const wonHere = mine.filter(closed).length;
+        let measure = String(mine.length);
+        if (builder.measure === 'Revenue') measure = value ? inr(value) : '—';
+        else if (builder.measure === 'Conversion %') measure = `${mine.length ? Math.round((wonHere / mine.length) * 100) : 0}%`;
+        else if (builder.measure === 'Average value') measure = mine.length && value ? inr(Math.round(value / mine.length)) : '—';
+        else if (builder.measure === 'Target vs achievement') {
+          measure = target ? `${Math.round((value / target) * 100)}% of ${shortInr(target)}` : '—';
+        } else if (builder.measure === 'Cost and ROI') {
+          measure = cost ? `${inr(cost)} spent · ${Math.round(((value - cost) / cost) * 100)}% ROI` : 'no spend';
+        }
+        return { key: label, label, count: mine.length, value, measure };
+      })
+      .sort((a, b) => b.value - a.value || b.count - a.count);
+  })();
 
   const sectionBody = {
     Overview: (
@@ -232,7 +391,7 @@ export default function Reports() {
       <div className="grid gap-5 xl:grid-cols-2">
         <Block title="Sales funnel" note="Count, share, drop-off and what each stage is worth" wide>
           <Table
-            head={['Stage', 'Leads', 'Share', 'Carried from last', 'Drop-off', 'Value']}
+            head={['Stage', 'Leads', 'Share', 'Carried from last', 'Drop-off', 'Avg time in stage', 'Value']}
             rows={enquiryStatuses
               .filter((s) => s !== 'Lost')
               .map((stage, i, all) => {
@@ -247,6 +406,10 @@ export default function Reports() {
                     num(`${leads.length ? Math.round((at.length / leads.length) * 100) : 0}%`),
                     carried == null ? '—' : num(`${carried}%`),
                     carried == null ? '—' : num(`${Math.max(0, 100 - carried)}%`),
+                    (() => {
+                      const d = average(at.map((e) => ageInDays(e.created)));
+                      return d == null ? '—' : num(`${d} days`);
+                    })(),
                     num(inr(at.reduce((s, e) => s + Number(e.budget || 0), 0))),
                   ],
                 };
@@ -371,11 +534,14 @@ export default function Reports() {
 
         <Block title="Membership status" note="Where every membership stands today">
           <Table
-            head={['Status', 'Memberships']}
-            rows={['Active', 'New', 'Quoted', 'Expired', 'Suspended', 'Cancelled'].map((s) => ({
-              key: s,
-              cells: [s, num(memberSignups.filter((m) => m.status === s).length)],
-            }))}
+            head={['Status', 'Memberships', 'Value']}
+            rows={membershipStates.map((state) => {
+              const at = membershipsAt(state);
+              return {
+                key: state,
+                cells: [state, num(at.length), num(inr(at.reduce((sum, m) => sum + Number(m.paid || 0), 0)))],
+              };
+            })}
           />
         </Block>
 
@@ -385,6 +551,9 @@ export default function Reports() {
             <Stat label="Renewals in flight" value={memberSignups.filter((m) => m.renewal?.stage && m.renewal.stage !== '—').length} />
             <Stat label="Expiring in 30 days" value={memberSignups.filter((m) => { const l = daysUntil(m.expiresOn); return l != null && l >= 0 && l <= 30; }).length} tone="text-amber-600" />
             <Stat label="Expired" value={memberSignups.filter((m) => (daysUntil(m.expiresOn) ?? 1) < 0).length} tone="text-rose-600" />
+            <Stat label="Upgrades" value={memberSignups.filter((m) => m.movement === 'Upgrade').length} tone="text-emerald-600" />
+            <Stat label="Downgrades" value={memberSignups.filter((m) => m.movement === 'Downgrade').length} tone="text-amber-600" />
+            <Stat label="Cancelled" value={memberSignups.filter((m) => m.status === 'Cancelled').length} />
             <Stat label="Membership revenue" value={inr(membershipRevenue)} tone="text-brand-700" />
             <Stat
               label="Conversion from signup"
@@ -398,11 +567,18 @@ export default function Reports() {
     Members: (
       <div className="grid gap-5 xl:grid-cols-2">
         <Block title="Member growth" note="Who joined, who is active and who is slipping">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <Stat label="Members" value={customers.length} />
-            <Stat label="Active memberships" value={memberSignups.filter((m) => m.status === 'Active').length} tone="text-emerald-600" />
+            <Stat
+              label="New members"
+              value={memberSignups.filter((m) => { const a = ageInDays(m.received || m.startedOn); return a != null && a <= 30; }).length}
+              hint="joined in 30 days"
+            />
+            <Stat label="Active members" value={memberSignups.filter((m) => m.status === 'Active').length} tone="text-emerald-600" />
             <Stat label="Inactive" value={customers.filter((c) => c.engagement === 'Low engagement' || c.engagement === 'At risk').length} />
-            <Stat label="Expiring members" value={memberSignups.filter((m) => { const l = daysUntil(m.expiresOn); return l != null && l >= 0 && l <= 45; }).length} tone="text-amber-600" />
+            <Stat label="Renewals" value={memberSignups.filter((m) => m.renewal?.stage && m.renewal.stage !== '—').length} />
+            <Stat label="Expiring members" value={membershipsAt('Expiring soon').length} tone="text-amber-600" />
+            <Stat label="Expired members" value={membershipsAt('Expired').length} tone="text-rose-600" />
           </div>
         </Block>
 
@@ -448,21 +624,37 @@ export default function Reports() {
       <div className="grid gap-5 xl:grid-cols-2">
         <Block title="Booking overview" note="Every booking by where it stands">
           <Table
-            head={['Status', 'Bookings', 'Value']}
-            rows={['Confirmed', 'Part paid', 'Pending', 'Completed', 'Cancelled'].map((s) => {
-              const at = trips.filter((b) => b.status === s);
-              return {
-                key: s,
-                cells: [s, num(at.length), num(inr(at.reduce((sum, b) => sum + Number(b.amount || 0), 0)))],
-              };
-            })}
+            head={['Status', 'Bookings', 'Share', 'Value']}
+            rows={[
+              {
+                key: 'total',
+                cells: [
+                  'Total bookings',
+                  num(trips.length),
+                  num('100%'),
+                  <span className="num font-bold text-brand-700">{inr(bookedValue)}</span>,
+                ],
+              },
+              ...bookingStates.map((state) => {
+                const at = trips.filter((b) => b.status === state);
+                return {
+                  key: state,
+                  cells: [
+                    state,
+                    num(at.length),
+                    num(`${trips.length ? Math.round((at.length / trips.length) * 100) : 0}%`),
+                    num(inr(at.reduce((sum, b) => sum + Number(b.amount || 0), 0))),
+                  ],
+                };
+              }),
+            ]}
           />
         </Block>
 
         <Block title="Booking performance" note="By what was sold">
           <Table
             head={['Type', 'Bookings', 'Value', 'Average']}
-            rows={[...new Set(trips.map((b) => b.bookingType || 'Package'))].map((t) => {
+            rows={[...new Set([...bookingKinds, ...trips.map((b) => b.bookingType || 'Package')])].map((t) => {
               const at = trips.filter((b) => (b.bookingType || 'Package') === t);
               const v = at.reduce((s, b) => s + Number(b.amount || 0), 0);
               return {
@@ -474,17 +666,15 @@ export default function Reports() {
         </Block>
 
         <Block title="What the bookings are worth" note="After the vendor is paid" wide>
-          <div className="grid gap-3 sm:grid-cols-4 xl:grid-cols-7">
+          <div className="grid gap-3 sm:grid-cols-4 xl:grid-cols-8">
             <Stat label="Booking value" value={inr(bookedValue)} tone="text-brand-700" />
             <Stat label="Collected" value={inr(collected)} />
             <Stat label="Pending" value={inr(pending)} tone={pending ? 'text-amber-600' : 'text-ink-900'} />
             <Stat label="Vendor payout" value={inr(payout)} />
             <Stat label="Commission" value={inr(commission)} tone="text-emerald-600" />
+            <Stat label="Profit" value={inr(profit)} tone="text-emerald-600" />
             <Stat label="Average booking" value={trips.length ? inr(Math.round(bookedValue / trips.length)) : '—'} />
-            <Stat
-              label="Cancellation value"
-              value={inr(trips.filter((b) => b.status === 'Cancelled').reduce((s, b) => s + Number(b.amount || 0), 0))}
-            />
+            <Stat label="Cancellation value" value={inr(cancelledValue)} tone={cancelledValue ? 'text-rose-600' : undefined} />
           </div>
         </Block>
       </div>
@@ -533,27 +723,41 @@ export default function Reports() {
 
     Team: (
       <div className="grid gap-5 xl:grid-cols-2">
-        <Block title="Daily team report" note="What the desk did today" wide>
+        <Block
+          title="Daily team report"
+          note="What the desk did today"
+          wide
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              {teamPicker('employee', 'Every employee', uniques('name'))}
+              {teamPicker('team', 'Every team', uniques('department'))}
+              {teamPicker('manager', 'Every manager', uniques('manager'))}
+              {teamPicker('branch', 'Every branch', uniques('branch'))}
+            </div>
+          }
+        >
           <Table
-            head={['Member', 'Calls', 'Connected', 'Leads', 'Follow-ups', 'Presentations', 'Visits', 'Closings', 'Revenue']}
-            rows={salesRows.map((r) => ({
+            head={['Member', 'Team', 'Branch', 'Calls', 'Connected', 'Leads', 'Follow-ups', 'Presentations', 'Visits', 'Closings', 'Revenue']}
+            empty="Nobody matches this cut."
+            rows={teamRows.map((r) => ({
               key: r.key,
               cells: [
-                r.name, num(r.calls), num(r.connected), num(r.leads), num(r.followUps),
+                r.name, r.department, r.branch,
+                num(r.calls), num(r.connected), num(r.leads), num(r.followUps),
                 num(r.presentations), num(r.visits), num(r.closings),
                 <span className="num font-bold text-brand-700">{r.revenue ? inr(r.revenue) : '—'}</span>,
               ],
             }))}
           />
-          <p className="mt-3 text-xs text-ink-400">
-            Management can read this by employee, team, manager, branch or date.
+          <p className="num mt-3 text-xs text-ink-400">
+            {teamRows.length} of {salesRows.length} on the desk · {inr(teamRows.reduce((sum, r) => sum + r.revenue, 0))} between them
           </p>
         </Block>
 
         <Block title="Leaderboard" note="Ranked on revenue, then closings" wide>
           <Table
             head={['Rank', 'Member', 'Revenue', 'Closings', 'Conversion', 'Qualified', 'Presentations', 'Follow-ups']}
-            rows={[...salesRows]
+            rows={[...teamRows]
               .sort((a, b) => b.revenue - a.revenue || b.closings - a.closings)
               .map((r, i) => ({
                 key: r.key,
@@ -571,13 +775,57 @@ export default function Reports() {
 
     Partners: (
       <div className="grid gap-5 xl:grid-cols-2">
-        <Block title="Partner and vendor performance" note="What we booked, what we owe and what we keep" wide>
+        <Block title="Partner and vendor performance" note="Every number the sheet asks of a partner" wide>
           <Table
-            head={['Vendor', 'Hotels', 'Bookings', 'Booking value', 'Payout', 'Commission', 'Pending confirmations']}
+            head={['Partner', 'Kind', 'Bookings', 'Revenue', 'Commission', 'Cancellation', 'Rating', 'Response', 'Pending', 'Payout', 'Profit share']}
+            empty="No partner on the books yet."
+            rows={partnerRows.map((r) => ({
+              key: r.key,
+              cells: [
+                r.name,
+                r.kind,
+                num(r.bookings),
+                <span className="num font-bold text-brand-700">{r.revenue ? inr(r.revenue) : '—'}</span>,
+                <span className="num font-bold text-emerald-600">{r.commission ? inr(r.commission) : '—'}</span>,
+                <span className={`num ${r.cancelRate > 10 ? 'font-bold text-rose-600' : 'text-ink-700'}`}>{r.cancelRate}%</span>,
+                num(r.rating ? `${r.rating.toFixed(1)}/5` : '—'),
+                num(r.response ? `${r.response} min` : '—'),
+                <span className={`num ${r.pending ? 'font-bold text-amber-600' : 'text-ink-700'}`}>{r.pending}</span>,
+                num(r.payout ? inr(r.payout) : '—'),
+                num(totalPartnerCommission ? `${Math.round((r.commission / totalPartnerCommission) * 100)}%` : '—'),
+              ],
+            }))}
+          />
+        </Block>
+
+        <Block title="By partner kind" note="Hotels, villas, restaurants, travel, transport and packages">
+          <Table
+            head={['Kind', 'Partners', 'Bookings', 'Revenue', 'Commission']}
+            rows={[...new Set(partnerRows.map((r) => r.kind))].map((kind) => {
+              const mine = partnerRows.filter((r) => r.kind === kind);
+              return {
+                key: kind,
+                cells: [
+                  kind,
+                  num(mine.length),
+                  num(mine.reduce((sum, r) => sum + r.bookings, 0)),
+                  num(inr(mine.reduce((sum, r) => sum + r.revenue, 0))),
+                  <span className="num font-bold text-emerald-600">
+                    {inr(mine.reduce((sum, r) => sum + r.commission, 0))}
+                  </span>,
+                ],
+              };
+            })}
+          />
+        </Block>
+
+        <Block title="What we booked with each vendor" note="Straight off the bookings, not the partner record">
+          <Table
+            head={['Vendor', 'Hotels', 'Bookings', 'Booking value', 'Payout', 'Commission', 'Pending']}
             rows={vendors.map((v) => {
               const mine = trips.filter((b) => b.vendor === v);
-              const value = mine.reduce((s, b) => s + Number(b.amount || 0), 0);
-              const owed = mine.reduce((s, b) => s + Number(b.vendorContact?.payable || 0), 0);
+              const value = mine.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+              const owed = mine.reduce((sum, b) => sum + Number(b.vendorContact?.payable || 0), 0);
               return {
                 key: v,
                 cells: [
@@ -591,16 +839,6 @@ export default function Reports() {
                 ],
               };
             })}
-          />
-        </Block>
-
-        <Block title="Partners on the books" note="Everyone the agency works with">
-          <Table
-            head={['Partner', 'Kind', 'Status']}
-            rows={(partners || []).map((p) => ({
-              key: p.id,
-              cells: [p.name, p.kind || p.type || '—', <Badge tone="green">{p.status || 'Active'}</Badge>],
-            }))}
           />
         </Block>
       </div>
@@ -781,7 +1019,26 @@ export default function Reports() {
 
           <p className="mt-4 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
             {builder.module} → {builder.dimension} → {builder.measure}
+            <span className="num ml-2 text-ink-400">
+              {builderRows.length} row{builderRows.length === 1 ? '' : 's'}
+            </span>
           </p>
+
+          <div className="mt-4">
+            <Table
+              head={[builder.dimension, 'Records', 'Value', builder.measure]}
+              empty="Nothing in this module to break down that way yet."
+              rows={builderRows.map((r) => ({
+                key: r.key,
+                cells: [
+                  r.label,
+                  num(r.count),
+                  <span className="num font-bold text-brand-700">{r.value ? inr(r.value) : '—'}</span>,
+                  num(r.measure),
+                ],
+              }))}
+            />
+          </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <button className="btn-action" onClick={() => toast('Report saved')}>
@@ -812,7 +1069,17 @@ export default function Reports() {
             <button className="btn-line" onClick={() => toast('Report emailed to the admin')}>
               <Mail size={15} /> Email
             </button>
-            <button className="btn-line" onClick={() => exportAs('smira-club-custom-report', salesRows, [{ key: 'name', header: builder.dimension }, { key: 'revenue', header: builder.measure }])}>
+            <button
+              className="btn-line"
+              onClick={() =>
+                exportAs('smira-club-custom-report', builderRows, [
+                  { key: 'label', header: builder.dimension },
+                  { key: 'count', header: 'Records' },
+                  { key: 'value', header: 'Value' },
+                  { key: 'measure', header: builder.measure },
+                ])
+              }
+            >
               <FileSpreadsheet size={15} /> Export Excel
             </button>
             <button className="btn-line" onClick={printPdf}>

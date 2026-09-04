@@ -4,18 +4,66 @@
  * schedule.
  */
 
+/** Every channel the sheet asks the lead report to track. */
+export const leadSources = [
+  'Facebook Ads',
+  'Instagram',
+  'WhatsApp',
+  'Website',
+  'Google Ads',
+  'Referral',
+  'Field team',
+  'Existing member',
+  'Campaign',
+  'Other',
+];
+
+/** Every state a booking can be reported in. */
+export const bookingStates = [
+  'Confirmed',
+  'Part paid',
+  'Pending',
+  'Completed',
+  'Cancelled',
+  'Rescheduled',
+  'Failed',
+  'No-show',
+];
+
+/** And everything the agency sells. */
+export const bookingKinds = [
+  'Hotel',
+  'Villa',
+  'Package',
+  'Transport',
+  'International trip',
+  'Restaurant',
+];
+
+/** Where a membership can stand on the membership report. */
+export const membershipStates = [
+  'Active',
+  'Pending activation',
+  'Activated',
+  'Expiring soon',
+  'Expired',
+  'Suspended',
+  'Cancelled',
+];
+
 /** What the agency spends on each channel, for cost per lead and ROI. */
 export const sourceCosts = {
   Website: 18000,
   Instagram: 42000,
   'Google Ads': 56000,
-  Facebook: 24000,
+  'Facebook Ads': 24000,
   WhatsApp: 6000,
   Referral: 0,
   'Walk-in': 0,
   'Field team': 30000,
   Campaign: 22000,
   'Existing member': 0,
+  Other: 0,
 };
 
 /** How members actually use the app and the website. */

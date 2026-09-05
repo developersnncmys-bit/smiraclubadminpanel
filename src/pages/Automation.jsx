@@ -9,6 +9,10 @@ import {
   GripVertical,
   ShieldCheck,
   MessageCircle,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Radio,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -21,9 +25,9 @@ import {
   operators,
   actions,
   builderShape,
-  rules,
-  leadStages,
-  followUpSequence,
+  rules as seedRules,
+  leadStages as seedStages,
+  followUpSequence as seedSequence,
   configureBy,
   branchRules,
   roleRules,
@@ -31,11 +35,16 @@ import {
   approvalSettings,
   whatsappRules,
   templateVariables,
-  escalationRules,
+  escalationRules as seedEscalations,
   templates,
-  customFields,
+  customFields as seedFields,
   history,
   structure,
+  waitOptions,
+  recipients,
+  failedJobs,
+  webhooks,
+  automationPermissions,
 } from '../data/automationData.js';
 
 const SECTIONS = [
@@ -51,6 +60,9 @@ const SECTIONS = [
   'Templates',
   'Custom fields',
   'History',
+  'Failed jobs',
+  'API and webhooks',
+  'Permissions',
   'Structure',
 ];
 
@@ -106,17 +118,76 @@ function RuleLine({ label, value, tone = 'bg-surface-soft text-ink-800' }) {
  * happened.
  */
 export default function Automation() {
-  const { toast } = useApp();
+  const { automations, create, update, remove, toast } = useApp();
   const [section, setSection] = useState('Dashboard');
+  const [stages, setStages] = useState(seedStages);
+  const [sequence, setSequence] = useState(seedSequence);
+  const [escalations, setEscalations] = useState(seedEscalations);
+  const [fields, setFields] = useState(seedFields);
+  const [newStage, setNewStage] = useState('');
+  const [newField, setNewField] = useState({ name: '', kind: 'Text', usedIn: 'Lead form' });
   const [draft, setDraft] = useState({
+    name: '',
     trigger: triggers[0],
-    field: conditionFields[0],
-    op: operators[0],
-    value: 'Website',
-    action: actions[0],
-    wait: 'After 10 minutes',
-    next: actions[2],
+    conditions: [{ field: conditionFields[0], op: operators[0], value: 'Website', join: 'AND' }],
+    steps: [{ wait: 'Immediately', action: actions[0] }],
+    otherwise: '',
   });
+
+  const rules = automations || [];
+
+  /** The builder's own edits. */
+  const setCondition = (i, patch) =>
+    setDraft((d) => ({ ...d, conditions: d.conditions.map((c, n) => (n === i ? { ...c, ...patch } : c)) }));
+  const addCondition = () =>
+    setDraft((d) => ({
+      ...d,
+      conditions: [...d.conditions, { field: conditionFields[0], op: operators[0], value: '', join: 'AND' }],
+    }));
+  const dropCondition = (i) =>
+    setDraft((d) => ({ ...d, conditions: d.conditions.filter((_, n) => n !== i) }));
+  const setStep = (i, patch) =>
+    setDraft((d) => ({ ...d, steps: d.steps.map((x, n) => (n === i ? { ...x, ...patch } : x)) }));
+  const addStep = () =>
+    setDraft((d) => ({ ...d, steps: [...d.steps, { wait: waitOptions[1], action: actions[0] }] }));
+  const dropStep = (i) => setDraft((d) => ({ ...d, steps: d.steps.filter((_, n) => n !== i) }));
+
+  const saveRule = () => {
+    if (!draft.name.trim()) { toast('Give the rule a name first', 'info'); return; }
+    create('automations', {
+      name: draft.name.trim(),
+      when: draft.trigger,
+      conditions: draft.conditions,
+      steps: draft.steps,
+      otherwise: draft.otherwise,
+      runs: 0,
+      completed: 0,
+      errors: 0,
+      status: 'On',
+      lastRun: 'never',
+    });
+    setDraft((d) => ({ ...d, name: '' }));
+    setSection('Rules');
+  };
+
+  const toggleRule = (r) =>
+    update('automations', r.id, { status: r.status === 'On' ? 'Off' : 'On' }, {
+      message: `${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`,
+    });
+  const runRule = (r) =>
+    update('automations', r.id, { runs: Number(r.runs || 0) + 1, completed: Number(r.completed || 0) + 1, lastRun: 'just now' }, {
+      message: `${r.name} ran once`,
+    });
+
+  /** Stages can be added, renamed, reordered and removed. */
+  const moveStage = (i, by) =>
+    setStages((list) => {
+      const to = i + by;
+      if (to < 0 || to >= list.length) return list;
+      const next = [...list];
+      [next[i], next[to]] = [next[to], next[i]];
+      return next;
+    });
 
   const on = rules.filter((r) => r.status === 'On');
   const runs = rules.reduce((s, r) => s + r.runs, 0);
@@ -175,7 +246,7 @@ export default function Automation() {
               {[
                 { label: 'Failed jobs', value: failed.length, tone: 'bg-rose-500' },
                 { label: 'Waiting on approval', value: approvalRules.length, tone: 'bg-amber-500' },
-                { label: 'Escalation rules', value: escalationRules.length, tone: 'bg-sky-500' },
+                { label: 'Escalation rules', value: escalations.length, tone: 'bg-sky-500' },
               ].map((r) => (
                 <li key={r.label} className="flex items-center gap-3 rounded-xl bg-surface-soft px-3.5 py-3">
                   <span className={`h-9 w-1.5 shrink-0 rounded-full ${r.tone}`} />
@@ -191,8 +262,8 @@ export default function Automation() {
           {[
             { label: 'Triggers available', value: triggers.length },
             { label: 'Actions available', value: actions.length },
-            { label: 'Lead stages', value: leadStages.length },
-            { label: 'Custom fields', value: customFields.length },
+            { label: 'Lead stages', value: stages.length },
+            { label: 'Custom fields', value: fields.length },
             { label: 'Approval chains', value: approvalRules.length },
             { label: 'Logged today', value: history.length },
           ].map((g) => (
@@ -229,83 +300,152 @@ export default function Automation() {
     Builder: (
       <Block
         title="Build a rule"
-        note="When this happens, if that is true, then do this"
+        note="When this happens, if that is true, then do this — and this if it is not"
         wide
         action={
-          <button className="btn-action btn-sm" onClick={() => toast('Rule saved and switched on')}>
-            <Plus size={14} /> Create rule
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="input h-9 w-52 py-0 text-sm"
+              placeholder="Name this rule"
+              value={draft.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            />
+            <button className="btn-action btn-sm" onClick={saveRule}>
+              <Plus size={14} /> Create rule
+            </button>
+          </div>
         }
       >
         <div className="space-y-4 rounded-xl border border-ink-900/[0.07] p-5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-ink-400">When</span>
-            <select className="input h-9 w-auto py-0 text-sm" value={draft.trigger} onChange={(e) => setDraft({ ...draft, trigger: e.target.value })}>
-              {triggers.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
+            <select
+              className="input h-9 w-auto py-0 text-sm"
+              value={draft.trigger}
+              onChange={(e) => setDraft({ ...draft, trigger: e.target.value })}
+            >
+              {triggers.map((t) => <option key={t}>{t}</option>)}
             </select>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-ink-400">If</span>
-            <select className="input h-9 w-auto py-0 text-sm" value={draft.field} onChange={(e) => setDraft({ ...draft, field: e.target.value })}>
-              {conditionFields.map((f) => (
-                <option key={f}>{f}</option>
-              ))}
-            </select>
-            <select className="input h-9 w-auto py-0 text-sm" value={draft.op} onChange={(e) => setDraft({ ...draft, op: e.target.value })}>
-              {operators.map((o) => (
-                <option key={o}>{o}</option>
-              ))}
-            </select>
-            <input className="input h-9 w-40 py-0 text-sm" value={draft.value} onChange={(e) => setDraft({ ...draft, value: e.target.value })} />
-            <button className="chip text-ink-600 hover:text-ink-900" onClick={() => toast('Second condition added')}>
-              and / or
-            </button>
-          </div>
+          {draft.conditions.map((c, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-2">
+              <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-ink-400">
+                {i === 0 ? 'If' : (
+                  <select
+                    className="input h-7 w-auto py-0 text-[11px] font-bold uppercase"
+                    value={c.join}
+                    onChange={(e) => setCondition(i, { join: e.target.value })}
+                  >
+                    <option>AND</option>
+                    <option>OR</option>
+                  </select>
+                )}
+              </span>
+              <select
+                className="input h-9 w-auto py-0 text-sm"
+                value={c.field}
+                onChange={(e) => setCondition(i, { field: e.target.value })}
+              >
+                {conditionFields.map((f) => <option key={f}>{f}</option>)}
+              </select>
+              <select
+                className="input h-9 w-auto py-0 text-sm"
+                value={c.op}
+                onChange={(e) => setCondition(i, { op: e.target.value })}
+              >
+                {operators.map((o) => <option key={o}>{o}</option>)}
+              </select>
+              <input
+                className="input h-9 w-40 py-0 text-sm"
+                value={c.value}
+                onChange={(e) => setCondition(i, { value: e.target.value })}
+              />
+              {draft.conditions.length > 1 && (
+                <button className="icon-btn-danger h-8 w-8" onClick={() => dropCondition(i)} title="Remove">
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button className="chip ml-16 text-ink-600 hover:text-ink-900" onClick={addCondition}>
+            <Plus size={12} /> and / or another condition
+          </button>
+
+          {draft.steps.map((step, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-2">
+              <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-ink-400">
+                {i === 0 ? 'Then' : 'Wait'}
+              </span>
+              {i > 0 && (
+                <select
+                  className="input h-9 w-auto py-0 text-sm"
+                  value={step.wait}
+                  onChange={(e) => setStep(i, { wait: e.target.value })}
+                >
+                  {waitOptions.map((w) => <option key={w}>{w}</option>)}
+                </select>
+              )}
+              <select
+                className="input h-9 w-auto py-0 text-sm"
+                value={step.action}
+                onChange={(e) => setStep(i, { action: e.target.value })}
+              >
+                {actions.map((a) => <option key={a}>{a}</option>)}
+              </select>
+              {draft.steps.length > 1 && (
+                <button className="icon-btn-danger h-8 w-8" onClick={() => dropStep(i)} title="Remove">
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button className="chip ml-16 text-ink-600 hover:text-ink-900" onClick={addStep}>
+            <Plus size={12} /> wait, then do something else
+          </button>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-ink-400">Then</span>
-            <select className="input h-9 w-auto py-0 text-sm" value={draft.action} onChange={(e) => setDraft({ ...draft, action: e.target.value })}>
-              {actions.map((a) => (
-                <option key={a}>{a}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-ink-400">Wait</span>
-            <select className="input h-9 w-auto py-0 text-sm" value={draft.wait} onChange={(e) => setDraft({ ...draft, wait: e.target.value })}>
-              {['Immediately', 'After 10 minutes', 'After 2 hours', 'After 3 days', 'After 7 days'].map((w) => (
-                <option key={w}>{w}</option>
-              ))}
-            </select>
-            <select className="input h-9 w-auto py-0 text-sm" value={draft.next} onChange={(e) => setDraft({ ...draft, next: e.target.value })}>
-              {actions.map((a) => (
-                <option key={a}>{a}</option>
-              ))}
+            <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-ink-400">Else</span>
+            <select
+              className="input h-9 w-auto py-0 text-sm"
+              value={draft.otherwise}
+              onChange={(e) => setDraft({ ...draft, otherwise: e.target.value })}
+            >
+              <option value="">Do nothing</option>
+              {actions.map((a) => <option key={a}>{a}</option>)}
             </select>
           </div>
 
           <div className="rounded-xl bg-surface-soft p-4">
             <p className="eyebrow">Reads as</p>
             <p className="mt-1.5 text-sm text-ink-800">
-              When <b>{draft.trigger.toLowerCase()}</b>, if <b>{draft.field.toLowerCase()}</b> {draft.op}{' '}
-              <b>{draft.value}</b>, then <b>{draft.action.toLowerCase()}</b> — {draft.wait.toLowerCase()},{' '}
-              <b>{draft.next.toLowerCase()}</b>.
+              When <b>{draft.trigger.toLowerCase()}</b>
+              {draft.conditions.map((c, i) => (
+                <span key={i}>
+                  {i === 0 ? ', if ' : ` ${c.join.toLowerCase()} `}
+                  <b>{c.field.toLowerCase()}</b> {c.op} <b>{c.value || 'anything'}</b>
+                </span>
+              ))}
+              , then{' '}
+              {draft.steps.map((step, i) => (
+                <span key={i}>
+                  {i > 0 && `, ${step.wait.toLowerCase()} `}
+                  <b>{step.action.toLowerCase()}</b>
+                </span>
+              ))}
+              {draft.otherwise ? <> — otherwise <b>{draft.otherwise.toLowerCase()}</b></> : null}.
             </p>
           </div>
-        </div>
 
-        <p className="eyebrow mt-5">The builder, step by step</p>
-        <ul className="mt-2 space-y-1.5">
-          {builderShape.map((s) => (
-            <li key={s} className="num rounded-lg bg-surface-soft px-3 py-2 text-sm text-ink-700">
-              {s}
-            </li>
-          ))}
-        </ul>
+          <div>
+            <p className="eyebrow">The shape the sheet asks for</p>
+            <ul className="mt-2 space-y-1">
+              {builderShape.map((line) => (
+                <li key={line} className="num text-[13px] text-ink-500">{line}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </Block>
     ),
 
@@ -315,19 +455,28 @@ export default function Automation() {
           <Block
             key={r.id}
             title={r.name}
-            note={`${r.runs} runs · ${r.errors} errors · last ran ${r.lastRun.toLowerCase()}`}
+            note={`${r.runs} runs · ${r.errors} errors · last ran ${String(r.lastRun || 'never').toLowerCase()}`}
             action={
-              <button className="btn-line btn-sm" onClick={() => toast(`${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`)}>
-                {r.status === 'On' ? 'Turn off' : 'Turn on'}
-              </button>
+              <span className="flex flex-wrap items-center gap-1.5">
+                <Badge tone={r.status === 'On' ? 'green' : 'slate'} dot>{r.status}</Badge>
+                <button className="btn-line btn-sm" onClick={() => runRule(r)}>
+                  <Play size={12} /> Run now
+                </button>
+                <button className="btn-line btn-sm" onClick={() => toggleRule(r)}>
+                  {r.status === 'On' ? 'Turn off' : 'Turn on'}
+                </button>
+                <button className="btn-line-danger btn-sm" onClick={() => remove('automations', r.id)}>
+                  Delete
+                </button>
+              </span>
             }
           >
             <div className="space-y-2.5">
               <RuleLine label="When" value={r.when} tone="bg-violet-100 text-violet-800" />
-              {r.conditions.map((c) => (
-                <RuleLine key={c.field} label="If" value={`${c.field} ${c.op} ${c.value}`} />
+              {(r.conditions || []).map((c, i) => (
+                <RuleLine key={`${c.field}-${i}`} label={i === 0 ? 'If' : c.join || 'And'} value={`${c.field} ${c.op} ${c.value}`} />
               ))}
-              {r.steps.map((s, i) => (
+              {(r.steps || []).map((s, i) => (
                 <RuleLine
                   key={`${s.wait}-${i}`}
                   label={i === 0 ? 'Then' : 'And'}
@@ -335,6 +484,7 @@ export default function Automation() {
                   tone="bg-brand-50 text-brand-800"
                 />
               ))}
+              {r.otherwise && <RuleLine label="Else" value={r.otherwise} tone="bg-amber-50 text-amber-800" />}
             </div>
           </Block>
         ))}
@@ -343,18 +493,41 @@ export default function Automation() {
 
     'Follow-ups': (
       <Block title="Follow-up sequence" note="What happens to a lead nobody has closed, and when" wide>
-        <ol className="space-y-3 border-l border-ink-900/[0.07] pl-4">
-          {followUpSequence.map((s) => (
-            <li key={s.at} className="relative">
-              <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white" />
-              <p className="text-sm font-bold text-ink-900">{s.does}</p>
-              <p className="flex items-center gap-1.5 text-xs text-ink-500">
-                <Clock size={11} /> {s.at}
-              </p>
+        <ol className="space-y-2">
+          {sequence.map((step, i) => (
+            <li key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-ink-900/[0.07] px-4 py-2.5">
+              <Clock size={14} className="shrink-0 text-ink-300" />
+              <select
+                className="input h-8 w-auto py-0 text-sm"
+                value={step.at}
+                onChange={(e) => setSequence((l) => l.map((x, n) => (n === i ? { ...x, at: e.target.value } : x)))}
+              >
+                {[...new Set([step.at, ...waitOptions])].map((w) => <option key={w}>{w}</option>)}
+              </select>
+              <select
+                className="input h-8 min-w-0 flex-1 py-0 text-sm"
+                value={step.does}
+                onChange={(e) => setSequence((l) => l.map((x, n) => (n === i ? { ...x, does: e.target.value } : x)))}
+              >
+                {[...new Set([step.does, ...actions])].map((a) => <option key={a}>{a}</option>)}
+              </select>
+              <button
+                className="icon-btn-danger h-8 w-8"
+                onClick={() => setSequence((l) => l.filter((_, n) => n !== i))}
+                title="Remove"
+              >
+                <Trash2 size={13} />
+              </button>
             </li>
           ))}
         </ol>
-        <p className="mt-4 text-xs text-ink-400">Every gap here is set by the admin — nothing is fixed in the code.</p>
+        <button
+          className="chip mt-3 text-ink-600 hover:text-ink-900"
+          onClick={() => setSequence((l) => [...l, { at: waitOptions[1], does: actions[0] }])}
+        >
+          <Plus size={12} /> Add a step
+        </button>
+        <p className="mt-3 text-xs text-ink-400">Every gap here is set by the admin — nothing is fixed in the code.</p>
       </Block>
     ),
 
@@ -364,19 +537,45 @@ export default function Automation() {
         note="Add, remove, rename or reorder — this is the pipeline the desk works"
         wide
         action={
-          <button className="btn-line btn-sm" onClick={() => toast('Stage added')}>
-            <Plus size={14} /> Add stage
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="input h-9 w-44 py-0 text-sm"
+              placeholder="New stage name"
+              value={newStage}
+              onChange={(e) => setNewStage(e.target.value)}
+            />
+            <button
+              className="btn-action btn-sm"
+              disabled={!newStage.trim()}
+              onClick={() => { setStages((l) => [...l, newStage.trim()]); setNewStage(''); toast('Stage added'); }}
+            >
+              <Plus size={14} /> Add stage
+            </button>
+          </div>
         }
       >
         <ul className="space-y-2">
-          {leadStages.map((s, i) => (
-            <li key={s} className="flex items-center gap-3 rounded-xl border border-ink-900/[0.07] px-4 py-2.5">
+          {stages.map((s, i) => (
+            <li key={`${s}-${i}`} className="flex items-center gap-3 rounded-xl border border-ink-900/[0.07] px-4 py-2.5">
               <GripVertical size={15} className="shrink-0 text-ink-300" />
               <span className="num w-6 shrink-0 text-sm font-bold text-ink-400">{i + 1}</span>
-              <span className="min-w-0 flex-1 text-sm font-semibold text-ink-800">{s}</span>
-              <button className="btn-line btn-sm" onClick={() => toast(`${s} renamed`)}>
-                Rename
+              <input
+                className="input h-8 min-w-0 flex-1 py-0 text-sm font-semibold"
+                value={s}
+                onChange={(e) => setStages((l) => l.map((x, n) => (n === i ? e.target.value : x)))}
+              />
+              <button className="icon-btn h-8 w-8" onClick={() => moveStage(i, -1)} title="Move up">
+                <ArrowUp size={13} />
+              </button>
+              <button className="icon-btn h-8 w-8" onClick={() => moveStage(i, 1)} title="Move down">
+                <ArrowDown size={13} />
+              </button>
+              <button
+                className="icon-btn-danger h-8 w-8"
+                onClick={() => setStages((l) => l.filter((_, n) => n !== i))}
+                title="Remove"
+              >
+                <Trash2 size={13} />
               </button>
             </li>
           ))}
@@ -480,16 +679,42 @@ export default function Automation() {
 
     Escalations: (
       <Block title="Nobody sits on a lead" note="Untouched for too long, and it climbs" wide>
-        <ol className="space-y-3 border-l border-ink-900/[0.07] pl-4">
-          {escalationRules.map((e) => (
-            <li key={e.after} className="relative">
-              <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" />
-              <p className="text-sm font-bold text-ink-900">{e.then}</p>
-              <p className="text-xs text-ink-500">{e.after}</p>
+        <ol className="space-y-2">
+          {escalations.map((e, i) => (
+            <li key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-ink-900/[0.07] px-4 py-2.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-ink-400">If untouched for</span>
+              <input
+                className="input h-8 w-36 py-0 text-sm"
+                value={e.after}
+                onChange={(e2) => setEscalations((l) => l.map((x, n) => (n === i ? { ...x, after: e2.target.value } : x)))}
+              />
+              <span className="text-xs font-bold uppercase tracking-wide text-ink-400">then tell</span>
+              <select
+                className="input h-8 min-w-0 flex-1 py-0 text-sm"
+                value={e.then}
+                onChange={(e2) => setEscalations((l) => l.map((x, n) => (n === i ? { ...x, then: e2.target.value } : x)))}
+              >
+                {[...new Set([e.then, ...recipients.map((r) => `Notify ${r.toLowerCase()}`)])].map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+              <button
+                className="icon-btn-danger h-8 w-8"
+                onClick={() => setEscalations((l) => l.filter((_, n) => n !== i))}
+                title="Remove"
+              >
+                <Trash2 size={13} />
+              </button>
             </li>
           ))}
         </ol>
-        <p className="mt-4 text-xs text-ink-400">Both the time and who gets told are set by the admin.</p>
+        <button
+          className="chip mt-3 text-ink-600 hover:text-ink-900"
+          onClick={() => setEscalations((l) => [...l, { after: '48 hours untouched', then: `Notify ${recipients[2].toLowerCase()}` }])}
+        >
+          <Plus size={12} /> Add an escalation
+        </button>
+        <p className="mt-3 text-xs text-ink-400">Both the time and who gets told are set by the admin.</p>
       </Block>
     ),
 
@@ -520,15 +745,63 @@ export default function Automation() {
         note="Once a field exists, a rule can check it"
         wide
         action={
-          <button className="btn-line btn-sm" onClick={() => toast('Field added')}>
-            <Plus size={14} /> Add field
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="input h-9 w-44 py-0 text-sm"
+              placeholder="Field name"
+              value={newField.name}
+              onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+            />
+            <select
+              className="input h-9 w-auto py-0 text-sm"
+              value={newField.kind}
+              onChange={(e) => setNewField({ ...newField, kind: e.target.value })}
+            >
+              {['Text', 'Number', 'Dropdown', 'Date', 'Yes or no', 'Money'].map((k) => <option key={k}>{k}</option>)}
+            </select>
+            <select
+              className="input h-9 w-auto py-0 text-sm"
+              value={newField.usedIn}
+              onChange={(e) => setNewField({ ...newField, usedIn: e.target.value })}
+            >
+              {['Lead form', 'Customer profile', 'Booking form', 'Membership form', 'Sales questions'].map((u) => (
+                <option key={u}>{u}</option>
+              ))}
+            </select>
+            <button
+              className="btn-action btn-sm"
+              disabled={!newField.name.trim()}
+              onClick={() => {
+                setFields((l) => [...l, { ...newField, name: newField.name.trim() }]);
+                setNewField({ name: '', kind: 'Text', usedIn: 'Lead form' });
+                toast('Field added — a rule can check it now');
+              }}
+            >
+              <Plus size={14} /> Add field
+            </button>
+          </div>
         }
       >
         <Table
-          head={['Field', 'Kind', 'Where it is used']}
-          rows={customFields.map((f) => ({ key: f.name, cells: [f.name, <Badge tone="teal">{f.kind}</Badge>, f.usedIn] }))}
+          head={['Field', 'Kind', 'Where it is used', '']}
+          rows={fields.map((f, i) => ({
+            key: `${f.name}-${i}`,
+            cells: [
+              f.name,
+              <Badge tone="teal">{f.kind}</Badge>,
+              f.usedIn,
+              <button
+                className="btn-line-danger btn-sm"
+                onClick={() => setFields((l) => l.filter((_, n) => n !== i))}
+              >
+                Remove
+              </button>,
+            ],
+          }))}
         />
+        <p className="mt-3 text-xs text-ink-400">
+          A field invented here shows up in the builder's condition list, so a rule can branch on it.
+        </p>
       </Block>
     ),
 
@@ -559,6 +832,78 @@ export default function Automation() {
             {failed.length} failed {failed.length === 1 ? 'job' : 'jobs'} — they sit here until somebody clears them.
           </p>
         )}
+      </Block>
+    ),
+
+    'Failed jobs': (
+      <Block title="Runs that did not finish" note="What broke, how many times it was tried, and what happens next" wide>
+        <Table
+          head={['Job', 'Rule', 'Ran at', 'What it was working on', 'Why it failed', 'Attempts', 'Stage', '']}
+          empty="Nothing has failed."
+          rows={failedJobs.map((j) => ({
+            key: j.id,
+            cells: [
+              <span className="num text-brand-700">{j.id}</span>,
+              j.rule,
+              <span className="num text-ink-500">{j.ran}</span>,
+              j.target,
+              <span className="text-rose-700">{j.reason}</span>,
+              <span className="num">{j.attempts}</span>,
+              <Badge tone={j.stage === 'Given up' ? 'rose' : j.stage === 'Retrying' ? 'amber' : 'slate'} dot>
+                {j.stage}
+              </Badge>,
+              <button className="btn-line btn-sm" onClick={() => toast(`${j.id} queued to run again`)}>
+                Retry
+              </button>,
+            ],
+          }))}
+        />
+      </Block>
+    ),
+
+    'API and webhooks': (
+      <Block title="What the panel listens to and shouts at" note="Where automation events come in from, and where they go" wide>
+        <Table
+          head={['Integration', 'Direction', 'Event', 'Endpoint', 'Status', 'Last fired', '']}
+          rows={webhooks.map((w) => ({
+            key: w.name,
+            cells: [
+              <span className="flex items-center gap-2">
+                <Radio size={14} className={w.status === 'Live' ? 'text-emerald-600' : 'text-ink-300'} />
+                {w.name}
+              </span>,
+              <Badge tone={w.direction === 'Incoming' ? 'sky' : 'violet'}>{w.direction}</Badge>,
+              w.event,
+              <span className="num truncate text-xs text-ink-500">{w.url}</span>,
+              <Badge tone={w.status === 'Live' ? 'green' : 'slate'} dot>{w.status}</Badge>,
+              <span className="num text-ink-500">{w.lastFired}</span>,
+              <button className="btn-line btn-sm" onClick={() => toast(`Test event sent to ${w.name}`)}>
+                Send test
+              </button>,
+            ],
+          }))}
+        />
+      </Block>
+    ),
+
+    Permissions: (
+      <Block title="Who may touch the automations" note="Creating a rule is not the same as switching one off" wide>
+        <Table
+          head={['Role', 'Create', 'Edit', 'Switch off', 'Approvals', 'Logs they can read']}
+          rows={automationPermissions.map((r) => ({
+            key: r.role,
+            cells: [
+              <span className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-brand-600" /> {r.role}
+              </span>,
+              r.create,
+              r.edit,
+              r.switchOff,
+              r.approvals,
+              r.logs,
+            ],
+          }))}
+        />
       </Block>
     ),
 

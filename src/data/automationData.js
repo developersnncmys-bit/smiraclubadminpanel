@@ -212,7 +212,7 @@ export const whatsappRules = [
   { when: 'Booking confirmed', then: 'Voucher' },
 ];
 
-export const templateVariables = ['{Customer name}', '{Membership}', '{Booking ID}', '{Amount}', '{Travel date}', '{Employee name}'];
+export const templateVariables = ['{Customer Name}', '{Membership}', '{Booking ID}', '{Amount}', '{Travel Date}', '{Employee Name}'];
 
 /** Nobody is allowed to sit on a lead. */
 export const escalationRules = [
@@ -281,4 +281,62 @@ export const structure = [
   'Failed jobs',
   'API and webhooks',
   'Automation permissions',
+];
+
+/** How long a step can wait before the next one runs. */
+export const waitOptions = [
+  'Immediately',
+  'After 10 minutes',
+  'After 30 minutes',
+  'After 2 hours',
+  'After 6 hours',
+  'After 24 hours',
+  'After 3 days',
+  'After 6 days',
+  'After 7 days',
+];
+
+/** Who a rule can hand something to. */
+export const recipients = [
+  'The employee',
+  'The team leader',
+  'The branch manager',
+  'The business head',
+  'Finance',
+  'The booking team',
+];
+
+/** Runs that did not finish, and why. */
+export const failedJobs = [
+  {
+    id: 'JOB-118', rule: 'Payment reminder on an overdue invoice', ran: '05 Sep 2026, 09:12 am',
+    target: 'INV-2044 · Ananya Deshmukh', reason: 'WhatsApp template not approved', attempts: 3, stage: 'Failed',
+  },
+  {
+    id: 'JOB-117', rule: 'Website lead to the Mumbai desk', ran: '04 Sep 2026, 06:40 pm',
+    target: 'LEAD-2293 · Aarti Menon', reason: 'No Mumbai executive was online', attempts: 2, stage: 'Retrying',
+  },
+  {
+    id: 'JOB-114', rule: 'Renewal campaign 45 days out', ran: '03 Sep 2026, 08:00 am',
+    target: 'MSU-03 · Rohan Bhatt', reason: 'Mobile number failed validation', attempts: 5, stage: 'Given up',
+  },
+];
+
+/** Where the panel pushes and pulls automation events. */
+export const webhooks = [
+  { name: 'Website lead form', direction: 'Incoming', url: 'https://smiraclub.com/api/hooks/lead', event: 'New lead', status: 'Live', lastFired: '05 Sep 2026, 09:41 am' },
+  { name: 'WhatsApp delivery receipts', direction: 'Incoming', url: 'https://smiraclub.com/api/hooks/wa', event: 'Message delivered or read', status: 'Live', lastFired: '05 Sep 2026, 09:44 am' },
+  { name: 'Payment gateway callback', direction: 'Incoming', url: 'https://smiraclub.com/api/hooks/pay', event: 'Payment received or failed', status: 'Live', lastFired: '05 Sep 2026, 08:20 am' },
+  { name: 'Accounting export', direction: 'Outgoing', url: 'https://books.smiraclub.com/api/entries', event: 'Payment received', status: 'Paused', lastFired: '02 Sep 2026, 07:00 pm' },
+  { name: 'Booking confirmation to the vendor', direction: 'Outgoing', url: 'https://partners.smiraclub.com/confirm', event: 'Booking confirmed', status: 'Live', lastFired: '04 Sep 2026, 06:05 pm' },
+];
+
+/** Who may touch the automations. */
+export const automationPermissions = [
+  { role: 'Super admin', create: 'Yes', edit: 'Yes', switchOff: 'Yes', approvals: 'Yes', logs: 'Everything' },
+  { role: 'Business head', create: 'Yes', edit: 'Yes', switchOff: 'Yes', approvals: 'Yes', logs: 'Everything' },
+  { role: 'Branch manager', create: 'Branch rules only', edit: 'Branch rules only', switchOff: 'Branch rules only', approvals: 'Up to the limit', logs: 'Own branch' },
+  { role: 'Sales head', create: 'Sales rules only', edit: 'Sales rules only', switchOff: 'No', approvals: 'Discounts only', logs: 'Own team' },
+  { role: 'Travel expert', create: 'No', edit: 'No', switchOff: 'No', approvals: 'No', logs: 'Own leads' },
+  { role: 'Finance', create: 'Payment rules only', edit: 'Payment rules only', switchOff: 'Payment rules only', approvals: 'Refunds and payments', logs: 'Money only' },
 ];

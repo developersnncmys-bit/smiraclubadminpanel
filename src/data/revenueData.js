@@ -25,6 +25,7 @@ export const expenses = {
     { label: 'Telephone', amount: 6800 },
     { label: 'Office supplies', amount: 5400 },
     { label: 'Maintenance', amount: 7200 },
+    { label: 'Other expenses', amount: 9800 },
   ],
   staff: [
     { label: 'Salaries', amount: 246000 },
@@ -33,6 +34,7 @@ export const expenses = {
     { label: 'Bonuses', amount: 12000 },
     { label: 'Reimbursements', amount: 8400 },
     { label: 'Advances', amount: 15000 },
+    { label: 'Other staff payments', amount: 6200 },
   ],
   business: [
     { label: 'Partner payments', amount: 121000 },
@@ -40,8 +42,15 @@ export const expenses = {
     { label: 'Payment gateway charges', amount: 6700 },
     { label: 'Refunds', amount: 0 },
     { label: 'Operational expenses', amount: 21000 },
+    { label: 'Other company expenses', amount: 7400 },
   ],
 };
+
+/** What the agency closed the last two years on, for the yearly graph. */
+export const previousYears = [
+  { year: '2024', revenue: 6420000, target: 7000000 },
+  { year: '2025', revenue: 8960000, target: 9000000 },
+];
 
 /** Cash the month opened with, for the closing position. */
 export const openingCash = 640000;
@@ -52,6 +61,13 @@ export const commissionSlabs = [
   { upTo: 700000, rate: 2 },
   { upTo: Infinity, rate: 3 },
 ];
+
+/** What sits on top of commission. */
+export const incentivePlan = {
+  incentiveRate: 2,
+  overrideRate: 0.5,
+  note: '2% of everything above target, and a 0.5% override on the team a manager carries',
+};
 
 export const branches = [
   { name: 'Mumbai', manager: 'Sneha Kulkarni', target: 400000 },

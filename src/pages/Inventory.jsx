@@ -29,6 +29,11 @@ import {
   holds,
   blackouts,
   contractAlerts,
+  membershipTiers,
+  rateRules,
+  vendorScores,
+  inventoryAlertKinds,
+  integrations,
 } from '../data/inventoryData.js';
 
 const SECTIONS = [
@@ -41,6 +46,9 @@ const SECTIONS = [
   'Reservations',
   'Contracts',
   'Automation',
+  'Alerts',
+  'Analytics',
+  'Import and API',
   'Permissions',
 ];
 
@@ -82,6 +90,13 @@ function Table({ head, rows, empty = 'Nothing here yet.' }) {
   );
 }
 
+/** What a rate type comes to once its rule is applied to the selling rate. */
+const rateFor = (item, rule) => {
+  const selling = Number(item.baseRate || 0) + Number(item.markup || 0);
+  if (rule.type === 'Member rate') return selling - Number(item.memberDiscount || 0);
+  return Math.round(selling * (1 + rule.pct / 100));
+};
+
 /** Base rate → markup → selling → member price, the way the sheet spells it. */
 function RateLine({ item }) {
   const selling = Number(item.baseRate) + Number(item.markup);
@@ -116,6 +131,13 @@ export default function Inventory() {
   const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');
   const [viewing, setViewing] = useState(null);
+  const [ratedItem, setRatedItem] = useState('INV-H01');
+  const [calItem, setCalItem] = useState('INV-H01');
+  const [month, setMonth] = useState(new Date(2026, 7, 1));
+  const [days, setDays] = useState(availability);
+  const [blocks, setBlocks] = useState(blackouts);
+  const [picked, setPicked] = useState(null);
+  const [newRate, setNewRate] = useState('');
 
   const nameOf = (id) => inventory.find((x) => x.id === id)?.name || id;
   const freeOf = (i) => Math.max(0, Number(i.units || 0) - Number(i.booked || 0) - Number(i.blocked || 0));
@@ -141,6 +163,97 @@ export default function Inventory() {
   const expiringSoon = contractAlerts.length;
 
   const vendors = [...new Set(inventory.map((i) => i.vendor))];
+
+  /** How much of an item is already spoken for, tiers plus channels plus buffer. */
+  const tierTotal = (i) => Object.values(i.allocation?.tiers || {}).reduce((s, n) => s + Number(n || 0), 0);
+  const allocatedOf = (i) =>
+    tierTotal(i) +
+    Object.values(i.allocation?.channels || {}).reduce((s, n) => s + Number(n || 0), 0) +
+    Number(i.allocation?.buffer || 0);
+
+  // -- The availability calendar --------------------------------------------
+  const DAY_MS = 86400000;
+  const key = (d) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, ' ');
+  const dayRow = (d) => days.find((a) => a.item === calItem && a.date === key(d));
+  const calStock = inventory.find((i) => i.id === calItem);
+  const inBlackout = (d) => {
+    const t = d.getTime();
+    return blocks.some((b) => {
+      if (b.item !== calItem) return false;
+      const from = new Date(b.from).getTime();
+      const to = new Date(b.to).getTime();
+      return !Number.isNaN(from) && !Number.isNaN(to) && t >= from && t <= to;
+    });
+  };
+  const monthGrid = (() => {
+    const first = new Date(month.getFullYear(), month.getMonth(), 1);
+    const start = new Date(first);
+    start.setDate(1 - ((first.getDay() + 6) % 7));
+    return Array.from({ length: 42 }, (_, n) => new Date(start.getTime() + n * DAY_MS));
+  })();
+
+  /** Writes a day back, creating the row when the calendar has never held one. */
+  const setDay = (patch) => {
+    if (!picked) { toast('Pick a day on the calendar first', 'info'); return; }
+    const date = key(picked);
+    setDays((list) => {
+      const at = list.findIndex((a) => a.item === calItem && a.date === date);
+      if (at === -1) {
+        return [...list, { date, item: calItem, left: freeOf(calStock), rate: sellingOf(calStock), ...patch }];
+      }
+      return list.map((a, i) => (i === at ? { ...a, ...patch } : a));
+    });
+  };
+  const dayActions = {
+    'Increase inventory': () => {
+      const row = dayRow(picked);
+      setDay({ left: Number(row?.left ?? freeOf(calStock)) + 1, note: '' });
+      toast('One more unit on sale that day');
+    },
+    'Reduce inventory': () => {
+      const row = dayRow(picked);
+      setDay({ left: Math.max(0, Number(row?.left ?? freeOf(calStock)) - 1) });
+      toast('One unit taken off that day');
+    },
+    'Block dates': () => { setDay({ left: 0, note: 'Blocked' }); toast('Nothing can be sold that day'); },
+    'Open dates': () => { setDay({ left: freeOf(calStock), note: '' }); toast('Back on sale'); },
+    'Change rate': () => {
+      if (!newRate) { toast('Type the new rate first', 'info'); return; }
+      setDay({ rate: Number(newRate) });
+      setNewRate('');
+      toast('Rate changed for that day');
+    },
+    'Add blackout': () => {
+      if (!picked) { toast('Pick a day first', 'info'); return; }
+      const date = key(picked);
+      setBlocks((list) => [...list, { item: calItem, from: date, to: date, reason: 'Added from the calendar' }]);
+      setDay({ left: 0, note: 'Blackout' });
+      toast('Blackout added');
+    },
+    'Override vendor availability': () => {
+      setDay({ left: Number(calStock?.units || 0), note: 'Overridden' });
+      toast("The vendor's number has been overridden");
+    },
+  };
+
+  // -- What needs somebody's attention right now ----------------------------
+  const alerts = [
+    ...soldOut.map((i) => ({ key: `so-${i.id}`, kind: 'Sold out', item: i.name, level: 'critical', note: 'Nothing left to sell' })),
+    ...lowStock.map((i) => ({ key: `lo-${i.id}`, kind: 'Low availability', item: i.name, level: 'warning', note: `${freeOf(i)} left` })),
+    ...missingRate.map((i) => ({ key: `mr-${i.id}`, kind: 'Missing rate', item: i.name, level: 'critical', note: 'Cannot be sold without a rate' })),
+    ...waiting.map((i) => ({ key: `wv-${i.id}`, kind: 'Waiting on the vendor', item: i.name, level: 'warning', note: i.confirmation })),
+    ...contractAlerts.map((c, n) => ({
+      key: `ca-${n}`, kind: c.kind, item: c.item === '—' ? 'Across the panel' : nameOf(c.item),
+      level: 'warning', note: `due ${c.on}`,
+    })),
+    ...inventory
+      .filter((i) => allocatedOf(i) >= Number(i.units || 0))
+      .map((i) => ({ key: `al-${i.id}`, kind: 'Allocation used up', item: i.name, level: 'warning', note: 'Every unit is spoken for' })),
+    ...blocks.map((b, n) => ({ key: `bl-${n}`, kind: 'Blackout', item: nameOf(b.item), level: 'info', note: `${b.from} to ${b.to}` })),
+    ...holds
+      .filter((h) => h.minutesLeft <= 5)
+      .map((h) => ({ key: `hd-${h.id}`, kind: 'Hold about to time out', item: nameOf(h.item), level: 'critical', note: `${h.minutesLeft} min left` })),
+  ];
 
   const exportInventory = () =>
     downloadCsv(
@@ -247,14 +360,18 @@ export default function Inventory() {
           </section>
         </div>
 
-        <div className="card grid divide-y divide-ink-900/[0.07] sm:grid-cols-2 sm:divide-y-0 xl:col-span-2 xl:grid-cols-3 2xl:grid-cols-6 sm:[&>*:not(:first-child)]:border-l sm:[&>*]:border-ink-900/[0.07]">
+        <div className="card grid divide-y divide-ink-900/[0.07] sm:grid-cols-2 sm:divide-y-0 xl:col-span-2 sm:grid-cols-2 lg:grid-cols-5 sm:[&>*]:border-ink-900/[0.07] lg:[&>*]:border-l lg:[&>*:nth-child(5n+1)]:border-l-0">
           {[
             { label: 'Total inventory', value: inventory.reduce((s, i) => s + Number(i.units || 0), 0), hint: `${inventory.length} items` },
-            { label: 'Active', value: active.length, hint: 'on sale' },
+            { label: 'Active inventory', value: active.length, hint: 'on sale' },
             { label: 'Available today', value: inventory.reduce((s, i) => s + freeOf(i), 0), hint: 'units free' },
+            { label: 'Low availability', value: lowStock.length, hint: 'two units or fewer' },
             { label: 'Sold or booked', value: inventory.reduce((s, i) => s + Number(i.booked || 0), 0) },
-            { label: 'On hold', value: holds.reduce((s, h) => s + h.units, 0), hint: `${holds.length} reservations` },
-            { label: 'Categories', value: [...new Set(inventory.map((i) => i.category))].length, hint: `of ${categories.length}` },
+            { label: 'Blocked inventory', value: blocked, hint: 'held back' },
+            { label: 'Expiring inventory', value: expiringSoon, hint: 'contracts and rates' },
+            { label: 'Inventory value', value: shortInr(stockValue), hint: 'at selling rate' },
+            { label: 'Pending vendor confirmation', value: waiting.length },
+            { label: 'Unmapped or missing rate', value: missingRate.length },
           ].map((g) => (
             <div key={g.label} className="px-5 py-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{g.label}</p>
@@ -361,35 +478,99 @@ export default function Inventory() {
 
     Availability: (
       <>
-        <Block title="Availability calendar" note="Day by day, what is left and what it costs" wide>
-          <Table
-            head={['Date', 'Item', 'Units left', 'Rate that day', 'Note']}
-            rows={availability.map((a, i) => ({
-              key: `${a.date}-${a.item}-${i}`,
-              cells: [
-                <span className="num">{a.date}</span>,
-                nameOf(a.item),
-                <span className={`num font-bold ${a.left === 0 ? 'text-rose-600' : a.left <= 2 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                  {a.left === 0 ? 'Sold out' : a.left}
-                </span>,
-                <span className="num">{inr(a.rate)}</span>,
-                a.note ? <Badge tone={a.note === 'Sold out' || a.note === 'Blackout' ? 'rose' : 'sky'}>{a.note}</Badge> : '—',
-              ],
-            }))}
-          />
-          <div className="mt-4 flex flex-wrap gap-2">
-            {['Increase inventory', 'Reduce inventory', 'Block dates', 'Open dates', 'Change rate', 'Add blackout', 'Override vendor availability'].map((a) => (
-              <button key={a} className="chip text-ink-600 hover:text-ink-900" onClick={() => toast(`${a} — pick a date first`)}>
+        <Block
+          title="Availability calendar"
+          note="Day by day, what is left and what it costs — click a day to work on it"
+          wide
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <select className="input h-9 w-auto py-0 text-sm" value={calItem} onChange={(e) => { setCalItem(e.target.value); setPicked(null); }}>
+                {inventory.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </select>
+              <button className="btn-line btn-sm" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
+                Previous
+              </button>
+              <span className="num min-w-[110px] text-center text-sm font-bold text-ink-900">
+                {month.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+              </span>
+              <button className="btn-line btn-sm" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
+                Next
+              </button>
+            </div>
+          }
+        >
+          <div className="grid grid-cols-7 gap-1.5">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+              <p key={d} className="pb-1 text-center text-[11px] font-bold uppercase tracking-wide text-ink-400">{d}</p>
+            ))}
+            {monthGrid.map((d) => {
+              const thisMonth = d.getMonth() === month.getMonth();
+              const row = dayRow(d);
+              const black = inBlackout(d);
+              const left = row ? Number(row.left) : thisMonth ? freeOf(calStock) : null;
+              const on = picked && key(picked) === key(d);
+              const tone = black || left === 0
+                ? 'border-rose-200 bg-rose-50'
+                : left != null && left <= 2
+                  ? 'border-amber-200 bg-amber-50'
+                  : row
+                    ? 'border-emerald-200 bg-emerald-50'
+                    : 'border-ink-900/[0.07]';
+              return (
+                <button
+                  key={d.toISOString()}
+                  onClick={() => setPicked(d)}
+                  className={`min-h-[74px] rounded-lg border p-2 text-left transition ${tone} ${
+                    thisMonth ? '' : 'opacity-40'
+                  } ${on ? 'ring-2 ring-brand-500' : 'hover:brightness-[0.98]'}`}
+                >
+                  <span className="num block text-[11px] font-bold text-ink-500">{d.getDate()}</span>
+                  {thisMonth && (
+                    <>
+                      <span className={`num block text-sm font-extrabold ${
+                        black || left === 0 ? 'text-rose-600' : left <= 2 ? 'text-amber-600' : 'text-emerald-700'
+                      }`}>
+                        {black ? 'Blackout' : left === 0 ? 'Sold out' : `${left} left`}
+                      </span>
+                      {row?.rate ? <span className="num block text-[10px] text-ink-500">{shortInr(row.rate)}</span> : null}
+                      {row?.note ? <span className="block truncate text-[10px] text-ink-400">{row.note}</span> : null}
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="eyebrow mt-5">
+            {picked ? `Working on ${key(picked)} · ${calStock?.name}` : 'Pick a day, then act on it'}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {Object.keys(dayActions).map((a) => (
+              <button
+                key={a}
+                className="chip text-ink-600 hover:text-ink-900 disabled:opacity-40"
+                disabled={!picked}
+                onClick={dayActions[a]}
+              >
                 <CalendarDays size={13} /> {a}
               </button>
             ))}
+            <input
+              className="input h-8 w-28 py-0 text-sm"
+              type="number"
+              placeholder="New rate"
+              value={newRate}
+              onChange={(e) => setNewRate(e.target.value)}
+            />
           </div>
         </Block>
 
         <Block title="Blackout dates" note="Nothing can be sold on these" wide>
           <Table
             head={['Item', 'From', 'To', 'Why']}
-            rows={blackouts.map((b, i) => ({
+            rows={blocks.map((b, i) => ({
               key: `${b.item}-${i}`,
               cells: [nameOf(b.item), <span className="num">{b.from}</span>, <span className="num">{b.to}</span>, b.reason],
             }))}
@@ -416,14 +597,49 @@ export default function Inventory() {
           </ul>
         </Block>
 
-        <Block title="Rate types" note="What the engine can hold against one item" wide>
-          <div className="flex flex-wrap gap-2">
-            {rateTypes.map((r) => (
-              <span key={r} className="chip text-ink-600">
-                {r}
-              </span>
-            ))}
-          </div>
+        <Block
+          title="Every rate type, worked out"
+          note="One vendor rate at the top, ten rates underneath it"
+          wide
+          action={
+            <select className="input h-9 w-auto py-0 text-sm" value={ratedItem} onChange={(e) => setRatedItem(e.target.value)}>
+              {inventory.map((i) => (
+                <option key={i.id} value={i.id}>{i.name}</option>
+              ))}
+            </select>
+          }
+        >
+          {(() => {
+            const item = inventory.find((i) => i.id === ratedItem) || inventory[0];
+            if (!item) return <p className="text-sm text-ink-500">Nothing to price yet.</p>;
+            const selling = sellingOf(item);
+            return (
+              <>
+                <div className="mb-4">
+                  <RateLine item={item} />
+                </div>
+                <Table
+                  head={['Rate type', 'Rule', 'Applies to', 'Rate', 'Against selling']}
+                  rows={rateRules.map((rule) => {
+                    const value = rateFor(item, rule);
+                    const diff = selling ? Math.round(((value - selling) / selling) * 100) : 0;
+                    return {
+                      key: rule.type,
+                      cells: [
+                        rule.type,
+                        <span className="text-ink-500">{rule.note}</span>,
+                        rule.on,
+                        <span className="num font-bold text-ink-900">{inr(value)}</span>,
+                        <span className={`num font-bold ${diff > 0 ? 'text-rose-600' : diff < 0 ? 'text-emerald-600' : 'text-ink-400'}`}>
+                          {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : 'base'}
+                        </span>,
+                      ],
+                    };
+                  })}
+                />
+              </>
+            );
+          })()}
           <p className="mt-4 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-600">
             A rate works like this: vendor charges ₹4,000, the agency adds ₹800, so it sells at ₹4,800 — and a member
             takes ₹500 off, paying ₹4,300.
@@ -438,70 +654,118 @@ export default function Inventory() {
         note="Reserving by membership and channel stops one of them taking everything"
         wide
       >
+        <p className="eyebrow mb-2">Kept for each membership</p>
         <Table
-          head={['Item', 'Units', ...Object.keys(inventory[0]?.allocation || { Membership: 0 }), 'Unallocated']}
+          head={['Item', 'Units', ...membershipTiers, 'Members total']}
           rows={inventory.map((i) => {
-            const alloc = i.allocation || {};
-            const used = Object.values(alloc).reduce((s, n) => s + Number(n || 0), 0);
+            const tiers = i.allocation?.tiers || {};
             return {
               key: i.id,
               cells: [
                 i.name,
                 <span className="num">{i.units}</span>,
-                ...Object.keys(inventory[0]?.allocation || {}).map((k) => (
-                  <span key={k} className="num">
-                    {alloc[k] ?? 0}
-                  </span>
+                ...membershipTiers.map((t) => (
+                  <span key={t} className={`num ${tiers[t] ? '' : 'text-ink-300'}`}>{tiers[t] ?? 0}</span>
                 )),
-                <span className={`num font-bold ${i.units - used > 0 ? 'text-emerald-600' : 'text-ink-400'}`}>
-                  {Math.max(0, i.units - used)}
-                </span>,
+                <span className="num font-bold text-brand-700">{tierTotal(i)}</span>,
               ],
             };
           })}
         />
-        <p className="eyebrow mt-5">Sales channels</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {salesChannels.map((c) => (
-            <span key={c} className="chip text-ink-500">
-              {c}
-            </span>
-          ))}
-        </div>
+
+        <p className="eyebrow mb-2 mt-6">Kept for each channel</p>
+        <Table
+          head={['Item', 'Units', ...salesChannels, 'Buffer', 'Unallocated']}
+          rows={inventory.map((i) => {
+            const ch = i.allocation?.channels || {};
+            const left = Math.max(0, Number(i.units || 0) - allocatedOf(i));
+            return {
+              key: i.id,
+              cells: [
+                i.name,
+                <span className="num">{i.units}</span>,
+                ...salesChannels.map((c) => (
+                  <span key={c} className={`num ${ch[c] ? '' : 'text-ink-300'}`}>{ch[c] ?? 0}</span>
+                )),
+                <span className="num">{i.allocation?.buffer ?? 0}</span>,
+                <span className={`num font-bold ${left > 0 ? 'text-emerald-600' : 'text-ink-400'}`}>{left}</span>,
+              ],
+            };
+          })}
+        />
+        <p className="mt-4 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-600">
+          Reserving by tier and by channel is what stops one of them consuming everything — an emergency buffer is
+          held back on top.
+        </p>
       </Block>
     ),
 
     Vendors: (
-      <Block title="Vendor inventory" note="Every item belongs to somebody, and they are scored on it" wide>
-        <Table
-          head={['Vendor', 'Items supplied', 'Units', 'Booked', 'Available', 'Stock value', 'Confirmation', 'Contract ends']}
-          rows={vendors.map((v) => {
-            const mine = inventory.filter((i) => i.vendor === v);
-            const waitingHere = mine.filter((i) => i.confirmation !== 'Confirmed').length;
-            return {
-              key: v,
-              cells: [
-                v,
-                <span className="num">{mine.length}</span>,
-                <span className="num">{mine.reduce((s, i) => s + Number(i.units || 0), 0)}</span>,
-                <span className="num">{mine.reduce((s, i) => s + Number(i.booked || 0), 0)}</span>,
-                <span className="num font-bold text-emerald-600">{mine.reduce((s, i) => s + freeOf(i), 0)}</span>,
-                <span className="num font-bold text-brand-700">{shortInr(mine.reduce((s, i) => s + valueOf(i), 0))}</span>,
-                waitingHere ? (
-                  <Badge tone="amber" dot>
-                    {waitingHere} waiting
-                  </Badge>
-                ) : (
-                  <Badge tone="green" dot>
-                    All confirmed
-                  </Badge>
-                ),
-                <span className="num">{mine[0]?.contractEnds || '—'}</span>,
-              ],
-            };
-          })}
-        />
-      </Block>
+      <>
+        <Block title="Vendor dashboard" note="Every item belongs to somebody, and this is what they owe and are owed" wide>
+          <Table
+            head={['Vendor', 'Items supplied', 'Active contracts', 'Units', 'Available', 'Bookings', 'Cancellations', 'Stock value', 'Vendor payable', 'Pending confirmation']}
+            rows={vendors.map((v) => {
+              const mine = inventory.filter((i) => i.vendor === v);
+              const score = vendorScores[v] || {};
+              const waitingHere = mine.filter((i) => i.confirmation !== 'Confirmed').length;
+              return {
+                key: v,
+                cells: [
+                  v,
+                  <span className="num">{mine.length}</span>,
+                  <span className="num">{score.activeContracts ?? '—'}</span>,
+                  <span className="num">{mine.reduce((s, i) => s + Number(i.units || 0), 0)}</span>,
+                  <span className="num font-bold text-emerald-600">{mine.reduce((s, i) => s + freeOf(i), 0)}</span>,
+                  <span className="num">{mine.reduce((s, i) => s + Number(i.booked || 0), 0)}</span>,
+                  <span className={`num ${score.cancellations ? 'text-rose-600' : 'text-ink-400'}`}>{score.cancellations ?? 0}</span>,
+                  <span className="num font-bold text-brand-700">{shortInr(mine.reduce((s, i) => s + valueOf(i), 0))}</span>,
+                  <span className="num">{score.payable ? inr(score.payable) : '—'}</span>,
+                  waitingHere ? (
+                    <Badge tone="amber" dot>{waitingHere} waiting</Badge>
+                  ) : (
+                    <Badge tone="green" dot>All confirmed</Badge>
+                  ),
+                ],
+              };
+            })}
+          />
+        </Block>
+
+        <Block title="Vendor performance" note="The five things the sheet scores a supplier on" wide>
+          <Table
+            head={['Vendor', 'Confirmation rate', 'Response time', 'Cancellation rate', 'Price competitiveness', 'Booking success', 'Contract ends']}
+            rows={vendors.map((v) => {
+              const score = vendorScores[v] || {};
+              const mine = inventory.filter((i) => i.vendor === v);
+              return {
+                key: v,
+                cells: [
+                  v,
+                  <span className={`num font-bold ${(score.confirmationRate ?? 0) >= 90 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {score.confirmationRate != null ? `${score.confirmationRate}%` : '—'}
+                  </span>,
+                  <span className={`num ${(score.responseMins ?? 0) > 30 ? 'font-bold text-rose-600' : 'text-ink-700'}`}>
+                    {score.responseMins != null ? `${score.responseMins} min` : '—'}
+                  </span>,
+                  <span className={`num ${(score.cancellationRate ?? 0) > 5 ? 'font-bold text-rose-600' : 'text-ink-700'}`}>
+                    {score.cancellationRate != null ? `${score.cancellationRate}%` : '—'}
+                  </span>,
+                  score.priceIndex == null ? '—' : (
+                    <span className={`num font-bold ${score.priceIndex <= 100 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {score.priceIndex <= 100 ? `${100 - score.priceIndex}% under market` : `${score.priceIndex - 100}% over market`}
+                    </span>
+                  ),
+                  <span className="num font-bold text-ink-900">
+                    {score.bookingSuccess != null ? `${score.bookingSuccess}%` : '—'}
+                  </span>,
+                  <span className="num">{mine[0]?.contractEnds || '—'}</span>,
+                ],
+              };
+            })}
+          />
+        </Block>
+      </>
     ),
 
     Reservations: (
@@ -571,6 +835,159 @@ export default function Inventory() {
           ))}
         </div>
       </Block>
+    ),
+
+    Alerts: (
+      <Block title="What needs somebody now" note="Raised the moment the panel notices it" wide>
+        <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+          {alerts.map((a) => (
+            <li key={a.key} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <span
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${
+                  a.level === 'critical' ? 'bg-rose-100 text-rose-700' : a.level === 'info' ? 'bg-sky-100 text-sky-700' : 'bg-amber-100 text-amber-700'
+                }`}
+              >
+                <AlertTriangle size={15} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-ink-900">{a.kind}</span>
+                <span className="block text-xs text-ink-500">{a.item} · {a.note}</span>
+              </span>
+              <Badge tone={a.level === 'critical' ? 'rose' : a.level === 'info' ? 'sky' : 'amber'}>{a.level}</Badge>
+            </li>
+          ))}
+          {alerts.length === 0 && <li className="px-4 py-6 text-center text-sm text-ink-500">Nothing needs attention.</li>}
+        </ul>
+        <p className="eyebrow mt-4">What the panel watches for</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {inventoryAlertKinds.map((k) => <span key={k} className="chip text-ink-500">{k}</span>)}
+        </div>
+      </Block>
+    ),
+
+    Analytics: (
+      <>
+        <Block title="How hard the stock is working" note="Every category, and how much of it is sold" wide>
+          <Table
+            head={['Category', 'Items', 'Units', 'Booked', 'Blocked', 'Available', 'Utilisation', 'Stock value']}
+            rows={categories.map((c) => {
+              const mine = inventory.filter((i) => i.category === c.key);
+              const units = mine.reduce((s, i) => s + Number(i.units || 0), 0);
+              const booked = mine.reduce((s, i) => s + Number(i.booked || 0), 0);
+              return {
+                key: c.key,
+                cells: [
+                  `${c.icon} ${c.key}`,
+                  <span className="num">{mine.length}</span>,
+                  <span className="num">{units}</span>,
+                  <span className="num">{booked}</span>,
+                  <span className="num">{mine.reduce((s, i) => s + Number(i.blocked || 0), 0)}</span>,
+                  <span className="num font-bold text-emerald-600">{mine.reduce((s, i) => s + freeOf(i), 0)}</span>,
+                  <span className="num font-bold text-ink-900">{units ? `${Math.round((booked / units) * 100)}%` : '—'}</span>,
+                  <span className="num font-bold text-brand-700">{shortInr(mine.reduce((s, i) => s + valueOf(i), 0))}</span>,
+                ],
+              };
+            })}
+          />
+        </Block>
+
+        <Block title="By destination" note="Where the stock actually sits">
+          <Table
+            head={['Destination', 'Items', 'Available', 'Value']}
+            rows={[...new Set(inventory.map((i) => i.destination))].map((d) => {
+              const mine = inventory.filter((i) => i.destination === d);
+              return {
+                key: d,
+                cells: [
+                  d,
+                  <span className="num">{mine.length}</span>,
+                  <span className="num font-bold text-emerald-600">{mine.reduce((s, i) => s + freeOf(i), 0)}</span>,
+                  <span className="num font-bold text-brand-700">{shortInr(mine.reduce((s, i) => s + valueOf(i), 0))}</span>,
+                ],
+              };
+            })}
+          />
+        </Block>
+
+        <Block title="Margin by item" note="What is kept on every unit sold">
+          <Table
+            head={['Item', 'Vendor rate', 'Selling', 'Margin', 'Margin %']}
+            rows={[...inventory]
+              .sort((a, b) => Number(b.markup || 0) - Number(a.markup || 0))
+              .map((i) => ({
+                key: i.id,
+                cells: [
+                  i.name,
+                  <span className="num">{inr(i.baseRate)}</span>,
+                  <span className="num font-bold text-ink-900">{inr(sellingOf(i))}</span>,
+                  <span className="num font-bold text-emerald-600">{inr(Number(i.markup || 0))}</span>,
+                  <span className="num">{sellingOf(i) ? `${Math.round((Number(i.markup || 0) / sellingOf(i)) * 100)}%` : '—'}</span>,
+                ],
+              }))}
+          />
+        </Block>
+      </>
+    ),
+
+    'Import and API': (
+      <>
+        <Block title="Import and export" note="Bring stock in as a sheet, take it out the same way" wide>
+          <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+            {categories.map((c) => {
+              const mine = inventory.filter((i) => i.category === c.key);
+              return (
+                <li key={c.key} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-ink-900">{c.icon} {c.key}</span>
+                    <span className="num block text-xs text-ink-500">{mine.length} items · {mine.reduce((s, i) => s + Number(i.units || 0), 0)} units</span>
+                  </span>
+                  <button className="btn-line btn-sm" onClick={() => toast(`Upload the ${c.key.toLowerCase()} sheet`, 'info')}>
+                    <Upload size={13} /> Import
+                  </button>
+                  <button
+                    className="btn-line btn-sm"
+                    onClick={() => {
+                      downloadCsv(`smira-club-${c.key.toLowerCase().replace(/ /g, '-')}`, mine, [
+                        { key: 'id', header: 'Item' },
+                        { key: 'name', header: 'Name' },
+                        { key: 'destination', header: 'Destination' },
+                        { key: 'units', header: 'Units' },
+                        { key: 'booked', header: 'Booked' },
+                        { key: 'baseRate', header: 'Vendor rate' },
+                        { key: 'markup', header: 'Markup' },
+                        { key: 'vendor', header: 'Vendor' },
+                        { key: 'status', header: 'Status' },
+                      ]);
+                      toast(`${c.key} exported`);
+                    }}
+                  >
+                    <Download size={13} /> Export
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </Block>
+
+        <Block title="Feeds the panel pulls from" note="Where availability and rates come in from" wide>
+          <Table
+            head={['Integration', 'What it carries', 'Status', 'Last sync', 'Credentials expire', '']}
+            rows={integrations.map((x) => ({
+              key: x.name,
+              cells: [
+                x.name,
+                x.kind,
+                <Badge tone={x.status === 'Connected' ? 'green' : x.status === 'Needs attention' ? 'amber' : 'slate'} dot>
+                  {x.status}
+                </Badge>,
+                <span className="num text-ink-500">{x.lastSync}</span>,
+                <span className="num">{x.expires}</span>,
+                <button className="btn-line btn-sm" onClick={() => toast(`${x.name} sync started`)}>Sync now</button>,
+              ],
+            }))}
+          />
+        </Block>
+      </>
     ),
 
     Permissions: (
@@ -676,7 +1093,7 @@ export default function Inventory() {
                   <h3 className="font-display text-base font-extrabold text-ink-900">Room inventory</h3>
                   <div className="mt-4">
                     <Table
-                      head={['Room type', 'Rooms', 'Occupancy', 'Extra bed', 'Child policy', 'Meal plan', 'Rack', 'B2B', 'Smira', 'Member']}
+                      head={['Room type', 'Rooms', 'Occupancy', 'Extra bed', 'Child policy', 'Meal plan', 'Rack', 'B2B', 'Smira', 'Member', 'Weekend', 'Seasonal', 'Blackout']}
                       rows={viewing.rooms.map((r) => ({
                         key: r.type,
                         cells: [
@@ -690,6 +1107,9 @@ export default function Inventory() {
                           <span className="num">{inr(r.b2b)}</span>,
                           <span className="num font-bold text-ink-900">{inr(r.smira)}</span>,
                           <span className="num text-brand-700">{inr(r.member)}</span>,
+                          <span className="num">{r.weekend ? inr(r.weekend) : '—'}</span>,
+                          <span className="num">{r.seasonal ? inr(r.seasonal) : '—'}</span>,
+                          <span className="num text-ink-500">{r.blackout || '—'}</span>,
                         ],
                       }))}
                     />
@@ -699,10 +1119,23 @@ export default function Inventory() {
 
               <section className="card p-5">
                 <h3 className="font-display text-base font-extrabold text-ink-900">Kept for</h3>
-                <div className="mt-4 grid gap-3 sm:grid-cols-5">
-                  {Object.entries(viewing.allocation || {}).map(([k, n]) => (
-                    <Stat key={k} label={k} value={n} />
+                <p className="eyebrow mt-4">By membership</p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-5">
+                  {membershipTiers.map((t) => (
+                    <Stat key={t} label={t} value={viewing.allocation?.tiers?.[t] ?? 0} />
                   ))}
+                </div>
+                <p className="eyebrow mt-4">By channel</p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-4">
+                  {salesChannels.map((c) => (
+                    <Stat key={c} label={c} value={viewing.allocation?.channels?.[c] ?? 0} />
+                  ))}
+                  <Stat label="Emergency buffer" value={viewing.allocation?.buffer ?? 0} />
+                  <Stat
+                    label="Unallocated"
+                    value={Math.max(0, Number(viewing.units || 0) - allocatedOf(viewing))}
+                    tone="text-emerald-600"
+                  />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button className="btn-line btn-sm" onClick={() => { update('inventory', viewing.id, { units: Number(viewing.units) + 1 }); toast('One unit added'); }}>

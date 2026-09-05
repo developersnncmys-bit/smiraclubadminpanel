@@ -35,12 +35,14 @@ export const paymentLinks = [
 
 /** The gateways money arrives through. */
 export const gateways = [
-  { name: 'Razorpay', successful: 18, pending: 2, failed: 1, fee: 2.1, settlement: 'T+2', settled: 386000, status: 'Reconciled' },
-  { name: 'Cashfree', successful: 6, pending: 0, failed: 0, fee: 1.9, settlement: 'T+2', settled: 122000, status: 'Reconciled' },
-  { name: 'PhonePe', successful: 4, pending: 1, failed: 0, fee: 1.8, settlement: 'T+1', settled: 64000, status: 'Awaiting' },
-  { name: 'UPI', successful: 11, pending: 0, failed: 1, fee: 0, settlement: 'Instant', settled: 185000, status: 'Reconciled' },
-  { name: 'Bank transfer', successful: 3, pending: 1, failed: 0, fee: 0, settlement: 'Manual', settled: 150000, status: 'Awaiting' },
-  { name: 'Cash', successful: 2, pending: 0, failed: 0, fee: 0, settlement: 'Same day', settled: 18000, status: 'Reconciled' },
+  { name: 'Razorpay', txnPrefix: 'RAZO', successful: 18, pending: 2, failed: 1, fee: 2.1, settlement: 'T+2', settled: 386000, status: 'Reconciled' },
+  { name: 'Cashfree', txnPrefix: 'CASH', successful: 6, pending: 0, failed: 0, fee: 1.9, settlement: 'T+2', settled: 122000, status: 'Reconciled' },
+  { name: 'PhonePe', txnPrefix: 'PHON', successful: 4, pending: 1, failed: 0, fee: 1.8, settlement: 'T+1', settled: 64000, status: 'Awaiting' },
+  { name: 'UPI', txnPrefix: 'UPI', successful: 11, pending: 0, failed: 1, fee: 0, settlement: 'Instant', settled: 185000, status: 'Reconciled' },
+  { name: 'Bank transfer', txnPrefix: 'BANK', successful: 3, pending: 1, failed: 0, fee: 0, settlement: 'Manual', settled: 150000, status: 'Awaiting' },
+  { name: 'Credit or debit card', txnPrefix: 'CRED', successful: 6, pending: 1, failed: 2, fee: 2.4, settlement: 'T+3', settled: 148000, status: 'Reconciled' },
+  { name: 'Cheque', txnPrefix: 'CHEQ', successful: 2, pending: 1, failed: 0, fee: 0, settlement: 'On clearing', settled: 62000, status: 'Waiting to clear' },
+  { name: 'Cash', txnPrefix: 'CASH', successful: 2, pending: 0, failed: 0, fee: 0, settlement: 'Same day', settled: 18000, status: 'Reconciled' },
 ];
 
 /** How overdue a pending payment is. */

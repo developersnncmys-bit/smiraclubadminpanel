@@ -21,6 +21,7 @@ import { expenses as expenseBudget, openingCash } from '../data/revenueData.js';
 import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
+import FormModal from '../components/ui/FormModal.jsx';
 import {
   paymentStatuses,
   statusTone,
@@ -43,6 +44,7 @@ import {
 const SECTIONS = [
   'Overview',
   'Transactions',
+  'Customers',
   'Collections',
   'Membership',
   'Bookings',
@@ -140,7 +142,8 @@ const yesNo = (v) =>
  */
 export default function Payment() {
   const {
-    invoices, payments, bookings, memberSignups, customers, team, range, toast,
+    invoices, payments, bookings, memberSignups, customers, team, range,
+    create, update, toast,
   } = useApp();
 
   const [section, setSection] = useState('Overview');
@@ -148,6 +151,8 @@ export default function Payment() {
   const [status, setStatus] = useState('All');
   const [mode, setMode] = useState('All');
   const [bucket, setBucket] = useState('All');
+  const [cut, setCut] = useState({ period: 'All', branch: 'All', employee: 'All', kind: 'All', min: '', max: '' });
+  const [collecting, setCollecting] = useState(null);
 
   // -- Money in ---------------------------------------------------------------
   const collected = invoices.reduce((s, i) => s + Number(i.paid || 0), 0);
@@ -190,6 +195,7 @@ export default function Payment() {
         id: p.id,
         customer: p.customer,
         product: bk ? `${bk.bookingType || 'Package'} · ${bk.hotel || bk.pkg}` : 'Booking',
+        kind: 'Booking',
         amount: Number(p.amount || 0),
         tax: Number(bk?.charges?.taxes || 0),
         discount: Number(bk?.charges?.membershipDiscount || 0) + Number(bk?.charges?.offerDiscount || 0),
@@ -209,6 +215,7 @@ export default function Payment() {
         id: m.id,
         customer: m.name,
         product: `${m.plan} membership`,
+        kind: 'Membership',
         amount: Number(m.paid || 0),
         tax: Math.round(Number(m.paid || 0) * 0.152),
         discount: 0,
@@ -222,9 +229,28 @@ export default function Payment() {
       })),
   ];
 
+  const txValues = (key) => [...new Set(transactions.map((t) => t[key]).filter((v) => v && v !== '—'))];
+  const daysAgo = (value) => {
+    const d = new Date(String(value || '').replace(/,.*$/, ''));
+    if (Number.isNaN(d.getTime())) return null;
+    const now = new Date();
+    d.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    return Math.round((now - d) / 86400000);
+  };
+
   const txRows = transactions.filter((t) => {
     if (status !== 'All' && t.status !== status) return false;
     if (mode !== 'All' && t.mode !== mode) return false;
+    if (cut.branch !== 'All' && t.branch !== cut.branch) return false;
+    if (cut.employee !== 'All' && t.employee !== cut.employee) return false;
+    if (cut.kind !== 'All' && t.kind !== cut.kind) return false;
+    if (cut.min && t.amount < Number(cut.min)) return false;
+    if (cut.max && t.amount > Number(cut.max)) return false;
+    if (cut.period !== 'All') {
+      const d = daysAgo(t.date);
+      if (d == null || d < 0 || d > Number(cut.period)) return false;
+    }
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return [t.id, t.customer, t.product, t.txn, t.employee].some((v) =>
@@ -233,6 +259,71 @@ export default function Payment() {
   });
 
   const dueRows = receivables.filter((r) => bucket === 'All' || r.bucket === bucket);
+
+  /** One customer's money, gathered from their memberships, bookings and invoices. */
+  const payerRows = [...new Set([
+    ...customers.map((c) => c.name),
+    ...memberSignups.map((m) => m.name),
+    ...invoices.map((i) => i.customer),
+  ])].map((name) => {
+    const plan = memberSignups.find((m) => m.name === name);
+    const theirInvoices = invoices.filter((i) => i.customer === name);
+    const theirBookings = bookings.filter((b) => b.customer === name);
+    const theirPayments = payments.filter((x) => x.customer === name);
+    const value = theirInvoices.reduce((s2, i) => s2 + Number(i.amount || 0), 0) + Number(plan?.amount || 0);
+    const paid = theirInvoices.reduce((s2, i) => s2 + Number(i.paid || 0), 0) + Number(plan?.paid || 0);
+    const discount = theirBookings.reduce(
+      (s2, b) => s2 + Number(b.charges?.membershipDiscount || 0) + Number(b.charges?.offerDiscount || 0),
+      0
+    );
+    const tax = theirBookings.reduce((s2, b) => s2 + Number(b.charges?.taxes || 0), 0);
+    const refunded = refundRequests
+      .filter((r) => r.customer === name && r.stage === 'Refund processed')
+      .reduce((s2, r) => s2 + Number(r.refund || 0), 0);
+    const open = theirInvoices.filter((i) => Number(i.paid || 0) < Number(i.amount || 0));
+    return {
+      key: name,
+      name,
+      plan: plan?.plan || '—',
+      value,
+      paid,
+      pending: Math.max(0, value - paid),
+      discount,
+      tax,
+      refunded,
+      nextDate: open[0]?.due || (plan && Number(plan.paid) < Number(plan.amount) ? plan.expiresOn : '—'),
+      payments: theirPayments,
+      openInvoices: open,
+      customer: customers.find((c) => c.name === name) || null,
+    };
+  }).filter((r) => r.value > 0 || r.payments.length);
+
+  /** Collecting really writes a receipt and moves the invoice on. */
+  const collect = (values) => {
+    const row = collecting;
+    const amount = Number(values.amount) || 0;
+    if (!row || amount <= 0) { setCollecting(null); return; }
+    const invoice = row.openInvoices[0];
+    create('payments', {
+      customer: row.name,
+      invoice: invoice?.id || '—',
+      date: 'just now',
+      mode: values.mode,
+      amount,
+      status: 'Success',
+    });
+    if (invoice) {
+      const nowPaid = Number(invoice.paid || 0) + amount;
+      update(
+        'invoices',
+        invoice.id,
+        { paid: nowPaid, status: nowPaid >= Number(invoice.amount || 0) ? 'Paid' : 'Partial' },
+        { silent: true }
+      );
+    }
+    setCollecting(null);
+    toast(`${inr(amount)} collected from ${row.name}`);
+  };
 
   const exportTransactions = () =>
     downloadCsv('smira-club-transactions', transactions, [
@@ -375,6 +466,39 @@ export default function Payment() {
                 <option key={m}>{m}</option>
               ))}
             </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={cut.period} onChange={(e) => setCut({ ...cut, period: e.target.value })}>
+              <option value="All">Any date</option>
+              <option value="0">Today</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+            </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={cut.branch} onChange={(e) => setCut({ ...cut, branch: e.target.value })}>
+              <option value="All">Every branch</option>
+              {txValues('branch').map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={cut.employee} onChange={(e) => setCut({ ...cut, employee: e.target.value })}>
+              <option value="All">Every salesperson</option>
+              {txValues('employee').map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select className="input h-9 w-auto py-0 text-sm" value={cut.kind} onChange={(e) => setCut({ ...cut, kind: e.target.value })}>
+              <option value="All">Membership and booking</option>
+              <option value="Membership">Membership only</option>
+              <option value="Booking">Booking only</option>
+            </select>
+            <input
+              className="input h-9 w-24 py-0 text-sm"
+              type="number"
+              placeholder="Min ₹"
+              value={cut.min}
+              onChange={(e) => setCut({ ...cut, min: e.target.value })}
+            />
+            <input
+              className="input h-9 w-24 py-0 text-sm"
+              type="number"
+              placeholder="Max ₹"
+              value={cut.max}
+              onChange={(e) => setCut({ ...cut, max: e.target.value })}
+            />
             <button className="btn-line btn-sm" onClick={exportTransactions}>
               <Download size={14} /> Export
             </button>
@@ -409,6 +533,101 @@ export default function Payment() {
           Statuses run {paymentStatuses.join(' → ')}.
         </p>
       </Block>
+    ),
+
+    Customers: (
+      <>
+        <Block title="What every customer owes and has paid" note="The summary the sheet wants inside a customer profile" wide>
+          <Table
+            head={['Customer', 'Membership', 'Total value', 'Paid', 'Pending', 'Discount', 'Tax', 'Refunded', 'Next payment', 'Open invoices', '']}
+            empty="Nobody has been billed yet."
+            rows={payerRows.map((r) => ({
+              key: r.key,
+              cells: [
+                <span className="flex items-center gap-2.5">
+                  <Avatar name={r.name} size="sm" /> {r.name}
+                </span>,
+                r.plan,
+                <span className="num font-bold text-ink-900">{inr(r.value)}</span>,
+                <span className="num text-emerald-600">{inr(r.paid)}</span>,
+                <span className={`num ${r.pending ? 'font-bold text-amber-600' : 'text-ink-400'}`}>
+                  {r.pending ? inr(r.pending) : 'Settled'}
+                </span>,
+                <span className="num text-emerald-600">{r.discount ? `− ${inr(r.discount)}` : '—'}</span>,
+                <span className="num">{r.tax ? inr(r.tax) : '—'}</span>,
+                <span className={`num ${r.refunded ? 'text-rose-600' : 'text-ink-400'}`}>
+                  {r.refunded ? inr(r.refunded) : '—'}
+                </span>,
+                <span className="num">{r.nextDate}</span>,
+                <span className={`num ${r.openInvoices.length ? 'font-bold text-amber-600' : 'text-ink-400'}`}>
+                  {r.openInvoices.length || '—'}
+                </span>,
+                <span className="flex flex-wrap gap-1.5">
+                  <button className="btn-action btn-sm" disabled={!r.pending} onClick={() => setCollecting(r)}>
+                    Collect payment
+                  </button>
+                  <button className="btn-line btn-sm" onClick={() => toast(`Payment link sent to ${r.name}`)}>
+                    Send payment link
+                  </button>
+                </span>,
+              ],
+            }))}
+            foot={[
+              'Total', '',
+              inr(payerRows.reduce((sum, r) => sum + r.value, 0)),
+              inr(payerRows.reduce((sum, r) => sum + r.paid, 0)),
+              inr(payerRows.reduce((sum, r) => sum + r.pending, 0)),
+              '', '', '', '', '', '',
+            ]}
+          />
+        </Block>
+
+        <Block title="Payment history" note="Every receipt against a customer, newest first" wide>
+          <Table
+            head={['Receipt', 'Customer', 'Invoice', 'Mode', 'Date', 'Amount', 'Status']}
+            empty="No payment has landed yet."
+            rows={payments.map((x) => ({
+              key: x.id,
+              cells: [
+                <span className="num text-brand-700">{x.id}</span>,
+                x.customer,
+                <span className="num">{x.invoice}</span>,
+                x.mode,
+                <span className="num">{x.date}</span>,
+                <span className="num font-bold text-ink-900">{inr(x.amount)}</span>,
+                <Badge tone={x.status === 'Success' ? 'green' : 'amber'} dot>{x.status}</Badge>,
+              ],
+            }))}
+          />
+        </Block>
+
+        <Block title="Outstanding invoices" note="What is still open against each name" wide>
+          <Table
+            head={['Invoice', 'Customer', 'Raised', 'Due', 'Billed', 'Paid', 'Balance', '']}
+            empty="Nothing is outstanding."
+            rows={invoices
+              .filter((i) => Number(i.paid || 0) < Number(i.amount || 0))
+              .map((i) => ({
+                key: i.id,
+                cells: [
+                  <span className="num text-brand-700">{i.id}</span>,
+                  i.customer,
+                  <span className="num">{i.issued}</span>,
+                  <span className="num">{i.due}</span>,
+                  <span className="num">{inr(i.amount)}</span>,
+                  <span className="num text-emerald-600">{inr(i.paid)}</span>,
+                  <span className="num font-bold text-amber-600">{inr(Number(i.amount) - Number(i.paid))}</span>,
+                  <button
+                    className="btn-line btn-sm"
+                    onClick={() => setCollecting(payerRows.find((r) => r.name === i.customer))}
+                  >
+                    Collect
+                  </button>,
+                ],
+              }))}
+          />
+        </Block>
+      </>
     ),
 
     Collections: (
@@ -474,7 +693,7 @@ export default function Payment() {
     Membership: (
       <Block title="Membership payments" note="Price, discount and tax, then what is actually in" wide>
         <Table
-          head={['Member', 'Plan', 'Price', 'Tax', 'Final amount', 'Paid', 'Pending', 'Method', 'Salesperson', 'Branch', 'Status']}
+          head={['Member', 'Plan', 'Price', 'Discount', 'Tax', 'Final amount', 'Paid', 'Pending', 'Payment plan', 'Payment dates', 'Method', 'Salesperson', 'Branch', 'Commission', 'Incentive', 'Status']}
           rows={memberSignups.map((m) => {
             const pending = Math.max(0, Number(m.amount || 0) - Number(m.paid || 0));
             return {
@@ -483,13 +702,18 @@ export default function Payment() {
                 m.name,
                 m.plan,
                 <span className="num">{inr(Math.round(Number(m.amount || 0) / 1.18))}</span>,
+                <span className="num text-emerald-600">{m.discountGiven ? `− ${inr(m.discountGiven)}` : '—'}</span>,
                 <span className="num">{inr(Number(m.amount || 0) - Math.round(Number(m.amount || 0) / 1.18))}</span>,
                 <span className="num font-bold text-ink-900">{inr(m.amount || 0)}</span>,
                 <span className="num text-emerald-600">{inr(m.paid || 0)}</span>,
                 <span className={`num ${pending ? 'font-bold text-amber-600' : ''}`}>{pending ? inr(pending) : '—'}</span>,
+                pending ? 'Part payment' : Number(m.paid) ? 'Paid in full' : 'Not started',
+                <span className="num text-ink-500">{m.startedOn || m.received || '—'}</span>,
                 Number(m.paid) ? 'UPI' : '—',
                 m.expert || '—',
                 m.branch || '—',
+                <span className="num">{inr(Math.round(Number(m.paid || 0) * 0.02))}</span>,
+                <span className="num">{Number(m.paid) ? inr(commissionRules.perClosing) : '—'}</span>,
                 <Badge tone={pending === 0 && m.paid ? 'green' : m.paid ? 'amber' : 'sky'} dot>
                   {pending === 0 && m.paid ? 'Paid' : m.paid ? 'Partially paid' : 'Pending'}
                 </Badge>,
@@ -497,11 +721,13 @@ export default function Payment() {
             };
           })}
           foot={[
-            'Total', '', '', '',
+            'Total', '', '', '', '',
             inr(memberSignups.reduce((s, m) => s + Number(m.amount || 0), 0)),
             inr(membershipPaid),
             inr(membershipPending),
-            '', '', '', '',
+            '', '', '', '', '',
+            inr(Math.round(membershipPaid * 0.02)),
+            '', '',
           ]}
         />
         <p className="mt-3 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-600">
@@ -545,11 +771,12 @@ export default function Payment() {
     Gateways: (
       <Block title="Gateways" note="Where money arrives, what it costs and whether it has settled" wide>
         <Table
-          head={['Gateway', 'Successful', 'Pending', 'Failed', 'Fee', 'Settlement', 'Settled amount', 'Reconciliation']}
+          head={['Gateway', 'Transaction reference', 'Successful', 'Pending', 'Failed', 'Gateway fee', 'Settlement date', 'Settled amount', 'Reconciliation']}
           rows={gateways.map((g) => ({
             key: g.name,
             cells: [
               g.name,
+              <span className="num text-ink-500">{g.txnPrefix ? `${g.txnPrefix}-••••` : '—'}</span>,
               <span className="num font-bold text-emerald-600">{g.successful}</span>,
               <span className="num text-amber-600">{g.pending}</span>,
               <span className="num text-rose-600">{g.failed}</span>,
@@ -563,6 +790,7 @@ export default function Payment() {
           }))}
           foot={[
             'Total',
+            '',
             gateways.reduce((s, g) => s + g.successful, 0),
             gateways.reduce((s, g) => s + g.pending, 0),
             gateways.reduce((s, g) => s + g.failed, 0),
@@ -581,7 +809,7 @@ export default function Payment() {
         wide
       >
         <Table
-          head={['Invoice', 'Customer', 'For', 'Base amount', 'Discount', 'Tax', 'Total', 'Paid', 'Balance', 'Status', '']}
+          head={['Invoice', 'Customer', 'GST', 'For', 'Base amount', 'Discount', 'Tax', 'Total', 'Paid', 'Balance', 'Status', '']}
           rows={invoices.map((i) => {
             const b = bookings.find((x) => x.id === i.booking);
             const balance = Number(i.amount) - Number(i.paid);
@@ -590,6 +818,7 @@ export default function Payment() {
               cells: [
                 <span className="num text-brand-700">{i.id}</span>,
                 i.customer,
+                <span className="num text-ink-500">{customers.find((c) => c.name === i.customer)?.gst || '27AAECS0000A1Z5'}</span>,
                 b ? `${b.bookingType || 'Package'} · ${b.hotel || b.pkg}` : 'Booking',
                 <span className="num">{inr(Number(b?.charges?.base || i.amount))}</span>,
                 <span className="num text-emerald-600">
@@ -621,7 +850,7 @@ export default function Payment() {
       <>
         <Block title="Refunds and cancellations" note="Money only goes back out with two approvals" wide>
           <Table
-            head={['Request', 'Customer', 'Original payment', 'Paid', 'Cancellation charge', 'Refund', 'Reason', 'Stage', 'Approved by', '']}
+            head={['Request', 'Customer', 'Original payment', 'Paid', 'Cancellation charges', 'Refund', 'Reason', 'Stage', 'Approved by', 'Processed by', 'Refund transaction', 'Refund date', '']}
             empty="No refund requests."
             rows={refundRequests.map((r) => ({
               key: r.id,
@@ -637,6 +866,11 @@ export default function Payment() {
                   {r.stage}
                 </Badge>,
                 r.approvedBy,
+                <span className={r.processedBy && r.processedBy !== '—' ? 'text-ink-700' : 'text-ink-400'}>
+                  {r.processedBy || '—'}
+                </span>,
+                <span className="num text-ink-500">{r.txnId || '—'}</span>,
+                <span className="num">{r.on || '—'}</span>,
                 <button className="btn-line btn-sm" onClick={() => toast(`${r.id} approved`)}>
                   Approve
                 </button>,
@@ -840,6 +1074,21 @@ export default function Payment() {
       />
 
       <div className="grid gap-5 xl:grid-cols-2">{body[section]}</div>
+
+      <FormModal
+        open={!!collecting}
+        onClose={() => setCollecting(null)}
+        onSubmit={collect}
+        title={collecting ? `Collect from ${collecting.name}` : 'Collect payment'}
+        subtitle={collecting ? `${inr(collecting.pending)} still owing` : ''}
+        fields={[
+          { name: 'amount', label: 'Amount', type: 'number', required: true },
+          { name: 'mode', label: 'Payment mode', type: 'select', options: paymentModes },
+          { name: 'reference', label: 'Transaction reference', type: 'text', full: true },
+        ]}
+        initial={{ amount: collecting?.pending || 0, mode: paymentModes[0] }}
+        submitLabel="Record payment"
+      />
     </>
   );
 }

@@ -109,6 +109,8 @@ export const segments = [
   'Silver',
   'Gold',
   'Platinum',
+  'Diamond',
+  'Crown',
   'Non-members',
   'Expiring members',
   'Inactive members',
@@ -122,9 +124,9 @@ export const segments = [
 ];
 
 export const campaigns = [
-  { id: 'CMP-01', name: 'Monsoon Bali offer', segment: 'Hot leads', sent: 120, delivered: 118, read: 96, replied: 31, leads: 12, sales: 3, on: '18 Aug 2026' },
-  { id: 'CMP-02', name: 'Gold renewal reminder', segment: 'Expiring members', sent: 42, delivered: 42, read: 38, replied: 14, leads: 6, sales: 2, on: '20 Aug 2026' },
-  { id: 'CMP-03', name: 'Platinum free-stay nudge', segment: 'Inactive members', sent: 64, delivered: 61, read: 40, replied: 9, leads: 4, sales: 1, on: '22 Aug 2026' },
+  { id: 'CMP-01', name: 'Monsoon Bali offer', segment: 'Hot leads', sent: 120, delivered: 118, read: 96, replied: 31, leads: 12, sales: 3, revenue: 70794, cost: 4200, on: '18 Aug 2026' },
+  { id: 'CMP-02', name: 'Gold renewal reminder', segment: 'Expiring members', sent: 42, delivered: 42, read: 38, replied: 14, leads: 6, sales: 2, revenue: 47196, cost: 4200, on: '20 Aug 2026' },
+  { id: 'CMP-03', name: 'Platinum free-stay nudge', segment: 'Inactive members', sent: 64, delivered: 61, read: 40, replied: 9, leads: 4, sales: 1, revenue: 23598, cost: 4200, on: '22 Aug 2026' },
 ];
 
 /** Approved templates, grouped the way the sheet groups them. */
@@ -339,3 +341,72 @@ export const inboxStats = {
   failed: 2,
   satisfaction: 4.6,
 };
+
+/** What a step in a chatbot journey can be. */
+export const stepKinds = [
+  { key: 'message', label: 'Message', hint: 'The bot says something' },
+  { key: 'question', label: 'Question', hint: 'The bot asks and waits' },
+  { key: 'buttons', label: 'Buttons', hint: 'Tappable choices' },
+  { key: 'condition', label: 'Condition', hint: 'Branch on what they answered' },
+  { key: 'qualify', label: 'Lead qualification', hint: 'Score them and create the lead' },
+  { key: 'handover', label: 'Human handover', hint: 'Pass the chat to the desk' },
+  { key: 'faq', label: 'Knowledge or FAQ', hint: 'Answer from the knowledge base' },
+];
+
+/** The journeys already built in the flow builder. */
+export const botFlows = [
+  {
+    id: 'FLW-01',
+    name: 'Welcome',
+    trigger: 'Any first message',
+    status: 'Live',
+    sessions: 412,
+    steps: [
+      { kind: 'message', text: 'Welcome to Smira Club 👋' },
+      { kind: 'question', text: 'How can we help you today?' },
+      { kind: 'buttons', text: 'Pick one', buttons: ['Explore membership', 'Hotel booking', 'Travel packages', 'Talk to an expert'] },
+      { kind: 'condition', text: 'If they tap Explore membership' },
+      { kind: 'qualify', text: 'Score the lead and create it in the CRM' },
+    ],
+  },
+  {
+    id: 'FLW-02',
+    name: 'Explore membership',
+    trigger: 'Tapped “Explore membership”',
+    status: 'Live',
+    sessions: 168,
+    steps: [
+      { kind: 'buttons', text: 'What would you like to see?', buttons: ['Membership plans', 'Benefits', 'Free hotel stay', 'Offers', 'Testimonials'] },
+      { kind: 'message', text: 'Silver, Gold and Platinum — each with free nights and member pricing.' },
+      { kind: 'question', text: 'Would you like a presentation from a travel expert?' },
+      { kind: 'qualify', text: 'Asked for a presentation — mark them Hot' },
+      { kind: 'handover', text: 'Pass to the travel expert on duty' },
+    ],
+  },
+  {
+    id: 'FLW-03',
+    name: 'Hotel booking',
+    trigger: 'Tapped “Hotel booking”',
+    status: 'Live',
+    sessions: 96,
+    steps: [
+      { kind: 'question', text: 'Where are you travelling, and when?' },
+      { kind: 'faq', text: 'Answer availability and rate questions from the inventory' },
+      { kind: 'condition', text: 'If a date and destination were given' },
+      { kind: 'qualify', text: 'Create the booking enquiry against the customer' },
+      { kind: 'handover', text: 'Pass to the booking desk' },
+    ],
+  },
+  {
+    id: 'FLW-04',
+    name: 'Support',
+    trigger: 'Tapped “Support” or said a complaint word',
+    status: 'Draft',
+    sessions: 0,
+    steps: [
+      { kind: 'question', text: 'What has gone wrong?' },
+      { kind: 'faq', text: 'Try the knowledge base first' },
+      { kind: 'handover', text: 'Raise a ticket and pass it to support' },
+    ],
+  },
+];

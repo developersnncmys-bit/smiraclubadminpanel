@@ -12,6 +12,8 @@ import {
   Sparkles,
   Zap,
   Megaphone,
+  Plus,
+  Pencil,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -22,7 +24,6 @@ import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
-  conversations,
   conversationCategories,
   categoryTone,
   leadScoring,
@@ -43,7 +44,12 @@ import {
   controlCentre,
   staffPerformance,
   inboxStats,
+  campaigns as seedCampaigns,
+  automationRules as seedRules,
+  stepKinds,
 } from '../data/whatsappData.js';
+import FlowBuilder from '../components/whatsapp/FlowBuilder.jsx';
+import FormModal from '../components/ui/FormModal.jsx';
 
 const SECTIONS = [
   'Dashboard',
@@ -116,12 +122,21 @@ function Flow({ steps, tone = 'bg-surface-soft text-ink-700' }) {
  * fire on their own, and where all of it lands in the CRM.
  */
 export default function Whatsapp() {
-  const { toast } = useApp();
+  const {
+    conversations, botFlows, bookings, invoices, customers, team,
+    create, update, remove, toast,
+  } = useApp();
   const [section, setSection] = useState('Dashboard');
   const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');
-  const [open, setOpen] = useState(null);
+  const [openId, setOpenId] = useState(null);
   const [draft, setDraft] = useState('');
+  const [rules, setRules] = useState(seedRules);
+  const [campaigns, setCampaigns] = useState(seedCampaigns);
+  const [building, setBuilding] = useState(null);
+  const [composing, setComposing] = useState(false);
+
+  const open = conversations.find((c) => c.id === openId) || null;
 
   const rows = conversations.filter((c) => {
     if (category !== 'All' && c.category !== category) return false;
@@ -139,10 +154,101 @@ export default function Whatsapp() {
   const handoverRate = botSessions.total ? Math.round((botSessions.transferred / botSessions.total) * 100) : 0;
   const botConversion = botSessions.total ? Math.round((botSessions.leadsCreated / botSessions.total) * 100) : 0;
 
+  /** What the sheet says every conversation should carry beside the chat. */
+  const contextOf = (c) => {
+    if (!c) return {};
+    const member = customers.find((x) => x.name === c.name);
+    const theirBookings = bookings.filter((b) => b.customer === c.name);
+    const theirInvoices = invoices.filter((i) => i.customer === c.name);
+    const billed = theirInvoices.reduce((s2, i) => s2 + Number(i.amount || 0), 0);
+    const paid = theirInvoices.reduce((s2, i) => s2 + Number(i.paid || 0), 0);
+    return {
+      member,
+      bookings: theirBookings,
+      payment: !theirInvoices.length
+        ? 'Nothing billed'
+        : paid >= billed ? 'Paid in full'
+          : paid ? `${inr(billed - paid)} still owing`
+            : `${inr(billed)} unpaid`,
+      travel: theirBookings.length
+        ? theirBookings.map((b) => `${b.destination || b.hotel} · ${b.checkIn}`).join(' · ')
+        : member?.lastBooking
+          ? `Last travelled ${member.lastBooking}`
+          : 'No trips yet',
+    };
+  };
+
+  const logMessage = (c, entry) =>
+    update('conversations', c.id, { messages: [...(c.messages || []), entry], lastAt: 'just now' }, { silent: true });
+
   const send = () => {
-    if (!draft.trim()) return;
+    if (!draft.trim() || !open) return;
+    logMessage(open, { from: 'me', text: draft.trim(), at: 'just now' });
     toast(`Sent to ${open.name}`);
     setDraft('');
+  };
+
+  /** What the six chat actions actually do. */
+  const chatAction = (label) => {
+    if (!open) return;
+    if (label === 'Create lead') {
+      const id = create('enquiries', {
+        name: open.name,
+        phone: open.phone,
+        email: '—',
+        destination: 'From WhatsApp',
+        pax: 2,
+        travelDate: '—',
+        budget: 0,
+        status: 'New',
+        source: 'WhatsApp',
+        owner: open.owner,
+        label: open.score,
+        created: 'just now',
+        lastContact: 'just now',
+        nextFollowUp: open.followUp || 'today',
+        priority: open.score === 'Hot' ? 'High' : 'Medium',
+      });
+      logMessage(open, { from: 'me', text: `Lead ${id} created from this chat`, at: 'just now' });
+      return;
+    }
+    if (label === 'Assign') {
+      const next = team[(team.findIndex((m) => m.name.split(' ')[0] === open.owner) + 1) % team.length];
+      const to = next.name.split(' ')[0];
+      update('conversations', open.id, { owner: to }, { message: `${open.name} moved to ${to}` });
+      return;
+    }
+    if (label === 'Create task') {
+      create('tasks', {
+        title: `Follow up with ${open.name} on WhatsApp`,
+        customer: open.name,
+        type: 'WhatsApp',
+        due: open.followUp || 'today',
+        created: 'just now',
+        owner: open.owner,
+        createdBy: 'WhatsApp',
+        bucket: 'today',
+        priority: open.score === 'Hot' ? 'High' : 'Medium',
+        status: 'Pending',
+        lastAction: 'Chat open on WhatsApp',
+        nextAction: 'Reply and book the presentation',
+        note: open.note || '',
+      });
+      return;
+    }
+    logMessage(open, { from: 'me', text: `${label} sent`, at: 'just now' });
+    toast(`${label} — ${open.name}`);
+  };
+
+  const toggleRule = (r) => {
+    setRules((list) => list.map((x) => (x.id === r.id ? { ...x, status: x.status === 'On' ? 'Off' : 'On' } : x)));
+    toast(`${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`);
+  };
+
+  const saveFlow = (flow) => {
+    if (flow.id) update('botFlows', flow.id, flow, { message: `${flow.name} saved` });
+    else create('botFlows', flow);
+    setBuilding(null);
   };
 
   const body = {
@@ -280,7 +386,7 @@ export default function Whatsapp() {
         <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
           {rows.map((c) => (
             <li key={c.id}>
-              <button onClick={() => setOpen(c)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-soft">
+              <button onClick={() => setOpenId(c.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-soft">
                 <Avatar name={c.name} size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
@@ -349,13 +455,61 @@ export default function Whatsapp() {
           </div>
         </Block>
 
-        <Block title="Journeys the bot can run" note="Each one is built in the flow builder">
-          <div className="flex flex-wrap gap-2">
-            {botJourneys.map((j) => (
-              <button key={j} className="chip text-ink-600 hover:text-ink-900" onClick={() => toast(`${j} flow opened`)}>
-                <Bot size={13} /> {j}
-              </button>
+        <Block
+          title="Flow builder"
+          note="Every journey the bot can run, and what it says at each step"
+          wide
+          action={
+            <button className="btn-action btn-sm" onClick={() => setBuilding({})}>
+              <Plus size={14} /> Build a journey
+            </button>
+          }
+        >
+          <ul className="space-y-3">
+            {(botFlows || []).map((f) => (
+              <li key={f.id} className="rounded-xl border border-ink-900/[0.07] p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Bot size={15} className="text-emerald-600" />
+                  <p className="font-bold text-ink-900">{f.name}</p>
+                  <Badge tone={f.status === 'Live' ? 'green' : f.status === 'Paused' ? 'amber' : 'slate'} dot>
+                    {f.status}
+                  </Badge>
+                  <span className="text-xs text-ink-500">{f.trigger}</span>
+                  <span className="num ml-auto text-xs text-ink-400">{f.sessions} sessions</span>
+                  <button className="btn-line btn-sm" onClick={() => setBuilding(f)}>
+                    <Pencil size={12} /> Edit
+                  </button>
+                </div>
+                <ol className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2">
+                  {(f.steps || []).map((step, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      {i > 0 && <span className="text-ink-300">→</span>}
+                      <span className="rounded-lg bg-surface-soft px-2.5 py-1.5 text-[13px] text-ink-700">
+                        <span className="mr-1.5 text-[10px] font-bold uppercase tracking-wide text-ink-400">
+                          {stepKinds.find((k) => k.key === step.kind)?.label || step.kind}
+                        </span>
+                        {step.text}
+                        {step.buttons?.length ? ` · ${step.buttons.join(', ')}` : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </li>
             ))}
+            {(botFlows || []).length === 0 && (
+              <li className="py-6 text-center text-sm text-ink-500">No journey has been built yet.</li>
+            )}
+          </ul>
+          <p className="eyebrow mt-5">Journeys the sheet asks for</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {botJourneys.map((j) => {
+              const built = (botFlows || []).some((f) => f.name.toLowerCase() === j.toLowerCase());
+              return (
+                <span key={j} className={`chip ${built ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-ink-400'}`}>
+                  {j}
+                </span>
+              );
+            })}
           </div>
         </Block>
 
@@ -399,7 +553,7 @@ export default function Whatsapp() {
       <Block title="Rules that run on their own" note="When this happens, send that" wide>
         <Table
           head={['Rule', 'When', 'Then', 'Times run', 'Status', '']}
-          rows={automationRules.map((r) => ({
+          rows={rules.map((r) => ({
             key: r.id,
             cells: [
               r.name,
@@ -409,7 +563,7 @@ export default function Whatsapp() {
               <Badge tone={r.status === 'On' ? 'green' : 'slate'} dot>
                 {r.status}
               </Badge>,
-              <button className="btn-line btn-sm" onClick={() => toast(`${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`)}>
+              <button className="btn-line btn-sm" onClick={() => toggleRule(r)}>
                 {r.status === 'On' ? 'Turn off' : 'Turn on'}
               </button>,
             ],
@@ -425,13 +579,13 @@ export default function Whatsapp() {
           note="Sent → delivered → read → replied → leads → sales"
           wide
           action={
-            <button className="btn-line btn-sm" onClick={() => toast('Pick a segment to start a campaign')}>
+            <button className="btn-action btn-sm" onClick={() => setComposing(true)}>
               <Megaphone size={14} /> New campaign
             </button>
           }
         >
           <Table
-            head={['Campaign', 'Segment', 'Sent', 'Delivered', 'Read', 'Replied', 'Leads', 'Sales', 'Sent on']}
+            head={['Campaign', 'Segment', 'Sent', 'Delivered', 'Read', 'Replied', 'Leads', 'Sales', 'Revenue', 'Spend', 'ROI', 'Sent on']}
             rows={campaigns.map((c) => ({
               key: c.id,
               cells: [
@@ -443,6 +597,11 @@ export default function Whatsapp() {
                 <span className="num">{c.replied}</span>,
                 <span className="num font-bold text-brand-700">{c.leads}</span>,
                 <span className="num font-bold text-emerald-600">{c.sales}</span>,
+                <span className="num font-bold text-brand-700">{c.revenue ? inr(c.revenue) : '—'}</span>,
+                <span className="num text-rose-600">{c.cost ? inr(c.cost) : '—'}</span>,
+                <span className={`num font-bold ${(c.revenue || 0) >= (c.cost || 0) ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {c.cost ? `${Math.round(((Number(c.revenue || 0) - c.cost) / c.cost) * 100)}%` : '—'}
+                </span>,
                 <span className="num">{c.on}</span>,
               ],
             }))}
@@ -591,17 +750,68 @@ export default function Whatsapp() {
 
       <div className="grid gap-5 xl:grid-cols-2">{body[section]}</div>
 
+      {building && (
+        <FlowBuilder
+          flow={building.id ? building : null}
+          onClose={() => setBuilding(null)}
+          onSave={saveFlow}
+        />
+      )}
+
+      <FormModal
+        open={composing}
+        onClose={() => setComposing(false)}
+        onSubmit={(values) => {
+          const sent = Number(values.audience) || 0;
+          setCampaigns((list) => [
+            {
+              id: `CMP-0${list.length + 1}`,
+              name: values.name,
+              segment: values.segment,
+              sent,
+              delivered: Math.round(sent * 0.97),
+              read: Math.round(sent * 0.78),
+              replied: Math.round(sent * 0.24),
+              leads: Math.round(sent * 0.09),
+              sales: 0,
+              revenue: 0,
+              cost: Math.round(sent * 35),
+              on: 'just now',
+            },
+            ...list,
+          ]);
+          setComposing(false);
+          toast(`${values.name} sent to ${sent} people`);
+        }}
+        title="New campaign"
+        subtitle="Pick who it goes to, and what they get"
+        fields={[
+          { name: 'name', label: 'Campaign name', type: 'text', required: true },
+          { name: 'segment', label: 'Segment', type: 'select', options: segments },
+          { name: 'audience', label: 'How many it goes to', type: 'number', required: true },
+          {
+            name: 'template',
+            label: 'Template',
+            type: 'select',
+            options: Object.values(templates).flat(),
+          },
+          { name: 'message', label: 'Message', type: 'textarea', full: true },
+        ]}
+        initial={{ segment: segments[0], audience: 120, template: Object.values(templates).flat()[0] }}
+        submitLabel="Send campaign"
+      />
+
       {/* One conversation, with who they are beside it */}
       {open && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="flex-1 bg-ink-900/40 backdrop-blur-sm" onClick={() => setOpen(null)} />
+          <div className="flex-1 bg-ink-900/40 backdrop-blur-sm" onClick={() => setOpenId(null)} />
           <aside className="flex h-full w-full max-w-[960px] flex-col bg-surface-base shadow-lift">
             <header className="flex flex-wrap items-center gap-2.5 border-b border-ink-900/[0.07] bg-white px-5 py-3.5">
               <Avatar name={open.name} size="sm" />
               <h2 className="font-display text-lg font-extrabold text-ink-900">{open.name}</h2>
               <Badge tone={categoryTone[open.category] || 'slate'}>{open.category}</Badge>
               <Badge tone={scoreTone[open.score]}>{open.score}</Badge>
-              <button onClick={() => setOpen(null)} className="icon-btn ml-auto h-8 w-8">
+              <button onClick={() => setOpenId(null)} className="icon-btn ml-auto h-8 w-8">
                 <X size={15} />
               </button>
             </header>
@@ -649,7 +859,7 @@ export default function Whatsapp() {
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {['Send template', 'Send brochure', 'Share offer', 'Create lead', 'Assign', 'Create task'].map((a) => (
-                      <button key={a} className="chip text-ink-600 hover:text-ink-900" onClick={() => toast(`${a} — ${open.name}`)}>
+                      <button key={a} className="chip text-ink-600 hover:text-ink-900" onClick={() => chatAction(a)}>
                         {a}
                       </button>
                     ))}
@@ -683,9 +893,13 @@ export default function Whatsapp() {
 
                 {[
                   ['Lead source', open.source],
-                  ['Membership', open.membership || 'Not a member'],
+                  ['Membership status', open.membership || 'Not a member'],
+                  ['Membership plan', open.plan || '—'],
                   ['Assigned to', open.owner],
                   ['Handled by', open.handledBy],
+                  ['Previous bookings', `${contextOf(open).bookings.length} booking(s)`],
+                  ['Payment status', contextOf(open).payment],
+                  ['Travel history', contextOf(open).travel],
                   ['Last interaction', open.lastAt],
                   ['Follow-up', open.followUp],
                   ['Notes', open.note],

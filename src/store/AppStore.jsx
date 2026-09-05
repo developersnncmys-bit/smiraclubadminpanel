@@ -4,6 +4,7 @@ import * as extra from '../data/modulesData.js';
 import * as support from '../data/supportData.js';
 import * as partnerSeed from '../data/partnersData.js';
 import * as usersSeed from '../data/usersData.js';
+import * as waSeed from '../data/whatsappData.js';
 import * as inventorySeed from '../data/inventoryData.js';
 
 /**
@@ -16,7 +17,7 @@ import * as inventorySeed from '../data/inventoryData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v32';
+const KEY = 'smira-club-admin:v33';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -51,6 +52,8 @@ const PREFIX = {
   apiKeys: 'API',
   activities: 'ACT',
   approvals: 'APR',
+  conversations: 'CHT',
+  botFlows: 'FLW',
 };
 
 export const SINGULAR = {
@@ -84,6 +87,8 @@ export const SINGULAR = {
   apiKeys: 'API key',
   activities: 'Activity',
   approvals: 'Approval request',
+  conversations: 'Conversation',
+  botFlows: 'Chatbot journey',
 };
 
 const seedState = () => ({
@@ -110,6 +115,8 @@ const seedState = () => ({
   offers: extra.offers,
   roles: usersSeed.roles,
   approvals: usersSeed.pendingApprovals,
+  conversations: waSeed.conversations,
+  botFlows: waSeed.botFlows,
   referrals: extra.referrals,
   forms: extra.forms,
   blogs: extra.blogs,

@@ -18,6 +18,7 @@ import Automation from './pages/Automation.jsx';
 import Rewards from './pages/Rewards.jsx';
 import Offers from './pages/Offers.jsx';
 import Support from './pages/Support.jsx';
+import Users from './pages/Users.jsx';
 
 /**
  * The panel holds the sections the client has specified — Team Status,
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="rewards" element={<Rewards />} />
         <Route path="offers" element={<Offers />} />
         <Route path="support" element={<Support />} />
+        <Route path="users" element={<Users />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

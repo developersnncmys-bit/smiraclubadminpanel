@@ -14,6 +14,7 @@ import {
   Zap,
   Gift,
   Megaphone,
+  ShieldCheck,
 } from 'lucide-react';
 
 /**
@@ -39,6 +40,7 @@ export const navGroups = [
       { to: '/automation', label: 'Automation', icon: Zap },
       { to: '/rewards', label: 'Rewards, Refer & Earn', icon: Gift },
       { to: '/offers', label: 'Offers & Promotions', icon: Megaphone },
+      { to: '/users', label: 'Users & Roles', icon: ShieldCheck },
     ],
   },
 ];

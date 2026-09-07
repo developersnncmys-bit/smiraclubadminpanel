@@ -61,6 +61,10 @@ export const ADAPTERS = {
   // -- People --------------------------------------------------------------
   team: {
     path: '/users',
+    // Read by every screen that assigns work, so when the Users module is
+    // closed to this role we still ask for the directory rather than show an
+    // empty desk.
+    fallbackPath: '/users/directory',
     from: (u) => ({
       ...base(u),
       name: u.name,
@@ -686,4 +690,9 @@ export function toApi(collection, patch) {
 
 export function pathFor(collection) {
   return ADAPTERS[collection]?.path;
+}
+
+/** Where to look when the main path is closed to this role. */
+export function fallbackPathFor(collection) {
+  return ADAPTERS[collection]?.fallbackPath;
 }

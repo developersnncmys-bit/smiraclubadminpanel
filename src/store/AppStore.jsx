@@ -8,7 +8,7 @@ import * as waSeed from '../data/whatsappData.js';
 import * as autoSeed from '../data/automationData.js';
 import * as inventorySeed from '../data/inventoryData.js';
 import { api, isLive, getToken, setToken } from '../lib/api.js';
-import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor } from '../lib/adapters.js';
+import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor, fallbackPathFor } from '../lib/adapters.js';
 
 /**
  * Single client-side store for the whole panel.
@@ -224,7 +224,15 @@ export function AppProvider({ children }) {
 
     const results = await Promise.allSettled(
       wanted.map(async (name) => {
-        const res = await api.list(pathFor(name));
+        let res;
+        try {
+          res = await api.list(pathFor(name));
+        } catch (err) {
+          // Closed to this role, but there may be a lesser view of it.
+          const fallback = fallbackPathFor(name);
+          if (err.status === 403 && fallback) res = await api.list(fallback);
+          else throw err;
+        }
         const rows = res.rows || res.data || [];
         return [name, rows.map((doc) => fromApi(name, doc))];
       })

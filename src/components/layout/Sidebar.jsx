@@ -1,16 +1,16 @@
 import { NavLink } from 'react-router-dom';
 import { X, LifeBuoy } from 'lucide-react';
-import { visibleNavGroups } from '../../data/nav.js';
+import { navFor } from '../../data/nav.js';
 import { useApp } from '../../store/AppStore.jsx';
 
 /**
  * Section rail: the five sections with their pages listed underneath. Nothing
  * collapses or expands — everything the desk can open is visible at once.
  */
-function NavList({ counts, onNavigate }) {
+function NavList({ counts, onNavigate, groups }) {
   return (
     <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-4">
-      {visibleNavGroups.map((group, i) => (
+      {groups.map((group, i) => (
         <div key={group.section || i} className={i === 0 ? '' : 'mt-5'}>
           {/* A flat list has no section label */}
           {group.section && <p className="eyebrow mb-1.5 px-3">{group.section}</p>}
@@ -97,7 +97,7 @@ function SupportButton({ onDone }) {
 }
 
 export default function Sidebar({ mobileOpen, onCloseMobile }) {
-  const { enquiries, tasks, memberSignups } = useApp();
+  const { enquiries, tasks, memberSignups, auth } = useApp();
 
   const counts = {
     enquiries: enquiries.filter((e) => ['New', 'Contacted'].includes(e.status)).length,
@@ -109,7 +109,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
     <>
       {/* Desktop rail */}
       <aside className="hidden w-[236px] shrink-0 flex-col border-r border-ink-900/[0.07] bg-white lg:flex">
-        <NavList counts={counts} />
+        <NavList counts={counts} groups={navFor(auth)} />
         <SupportButton />
       </aside>
 
@@ -132,7 +132,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
               <X size={17} />
             </button>
           </div>
-          <NavList counts={counts} onNavigate={onCloseMobile} />
+          <NavList counts={counts} groups={navFor(auth)} onNavigate={onCloseMobile} />
           <SupportButton onDone={onCloseMobile} />
         </aside>
       </div>

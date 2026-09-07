@@ -420,7 +420,7 @@ export default function Header({ onOpenMobile }) {
                   {auth?.name || 'Signed in'}
                 </span>
                 <span className="num block truncate text-[11px] leading-tight text-ink-500">
-                  +91 {auth?.phone || '—'}
+                  {auth?.phone || '—'}
                 </span>
               </span>
               <ChevronDown size={15} className={`shrink-0 text-ink-500 transition ${menuOpen ? 'rotate-180' : ''}`} />

@@ -77,6 +77,8 @@ export const api = {
   del: (path) => request(path, { method: 'DELETE' }),
 
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
+  requestOtp: (phone) => request('/auth/otp/request', { method: 'POST', body: { phone } }),
+  verifyOtp: (phone, code) => request('/auth/otp/verify', { method: 'POST', body: { phone, code } }),
   me: () => request('/auth/me'),
   logout: () => request('/auth/logout', { method: 'POST' }).catch(() => null),
 };

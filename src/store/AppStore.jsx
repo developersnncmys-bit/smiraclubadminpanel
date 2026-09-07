@@ -233,12 +233,16 @@ export function AppProvider({ children }) {
     const next = {};
     const failed = [];
     results.forEach((r, i) => {
+      const name = wanted[i];
       if (r.status === 'fulfilled') {
-        const [name, rows] = r.value;
-        next[name] = rows;
-      } else {
-        failed.push(wanted[i]);
+        next[name] = r.value[1];
+        return;
       }
+      // Forbidden is an answer, not a failure: this role cannot open that
+      // module, so the screen shows nothing rather than seed rows pretending
+      // to be real.
+      if (r.reason?.status === 403) next[name] = [];
+      else failed.push(name);
     });
 
     if (Object.keys(next).length) setDb((prev) => ({ ...prev, ...next }));
@@ -441,6 +445,41 @@ export function AppProvider({ children }) {
    * member we adopt that profile, otherwise the session falls back to the
    * agency owner so the demo is usable with any valid number.
    */
+/** Turns the API's user into the session the panel carries. */
+  const sessionFrom = (u) => ({
+    id: u.id,
+    name: u.name,
+    role: u.role?.name || u.designation || 'User',
+    email: u.email,
+    phone: u.phone,
+    branch: u.branch,
+    department: u.department,
+    scope: u.role?.scope,
+    modules: u.role?.modules || [],
+    permissions: u.role?.permissions || [],
+    superAdmin: Boolean(u.role?.superAdmin),
+    initials: (u.name || 'SC')
+      .split(' ')
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase(),
+    since: new Date().toISOString(),
+  });
+
+  /** Asks the API to text a code to a registered number. */
+  const requestOtp = useCallback((phone) => api.requestOtp(phone), []);
+
+  /** Checks the code, and signs in on the strength of it. */
+  const signInWithOtp = useCallback(async (phone, code) => {
+    const res = await api.verifyOtp(phone, code);
+    setToken(res.token);
+    const session = sessionFrom(res.data);
+    setAuth(session);
+    setLive(true);
+    return session;
+  }, []);
+
   /** Email and password, against the real API. */
   const signInWithPassword = useCallback(
     async (email, password) => {
@@ -710,6 +749,8 @@ export function AppProvider({ children }) {
       auth,
       signIn,
       signInWithPassword,
+      requestOtp,
+      signInWithOtp,
       signOut,
       live,
       loading,
@@ -740,6 +781,8 @@ export function AppProvider({ children }) {
       auth,
       signIn,
       signInWithPassword,
+      requestOtp,
+      signInWithOtp,
       signOut,
       live,
       loading,

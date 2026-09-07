@@ -27,14 +27,14 @@ const highlights = [
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { auth, signIn, signInWithPassword, toast, team, settings } = useApp();
+  const { auth, signIn, requestOtp, signInWithOtp, toast, team, settings } = useApp();
 
   // With a server configured the desk signs in properly; without one the
   // panel keeps its one-tap demo so it still opens on a laptop with nothing
   // running behind it.
-  const [step, setStep] = useState(isLive ? 'password' : 'phone'); // 'password' | 'phone' | 'otp'
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [step, setStep] = useState('phone'); // 'phone' | 'otp'
+  /** Shown on screen only while no SMS provider is wired. */
+  const [devCode, setDevCode] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [sentCode, setSentCode] = useState('');
@@ -67,7 +67,7 @@ export default function Login() {
 
   if (auth) return <Navigate to={redirectTo} replace />;
 
-  const sendOtp = (e) => {
+  const sendOtp = async (e) => {
     e?.preventDefault();
     if (!validPhone) {
       setError('Enter a valid 10-digit Indian mobile number');
@@ -75,10 +75,32 @@ export default function Login() {
     }
     setError('');
     setBusy(true);
-    // Demo OTP: generated client-side and shown on screen instead of an SMS.
+
+    // With a server the code is issued there; without one the panel keeps its
+    // demo code so it still opens with nothing running behind it.
+    if (isLive) {
+      try {
+        const res = await requestOtp(phone);
+        setSentCode('');
+        // Only present while no SMS provider is wired.
+        setDevCode(res.data?.devCode || '');
+        setOtp(Array(OTP_LENGTH).fill(''));
+        setStep('otp');
+        setSeconds(RESEND_SECONDS);
+        toast(res.data?.devCode ? 'Code generated — no SMS provider yet' : `Code sent to +91 ${phone}`, 'info');
+        setTimeout(() => boxRefs.current[0]?.focus(), 60);
+      } catch (err) {
+        setError(err.message || 'That number could not be verified.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     const generated = String(Math.floor(100000 + Math.random() * 900000));
     setTimeout(() => {
       setSentCode(generated);
+      setDevCode(generated);
       setOtp(Array(OTP_LENGTH).fill(''));
       setStep('otp');
       setSeconds(RESEND_SECONDS);
@@ -88,12 +110,31 @@ export default function Login() {
     }, 700);
   };
 
-  const verify = (e) => {
+  const verify = async (e) => {
     e?.preventDefault();
     if (code.length !== OTP_LENGTH) {
       setError(`Enter the ${OTP_LENGTH}-digit OTP`);
       return;
     }
+
+    // Live: the server is the judge of whether the code is right.
+    if (isLive) {
+      setError('');
+      setBusy(true);
+      try {
+        const session = await signInWithOtp(phone, code);
+        toast(`Welcome back, ${session.name.split(' ')[0]}`);
+        navigate(redirectTo, { replace: true });
+      } catch (err) {
+        setError(err.message || 'That code did not work.');
+        setOtp(Array(OTP_LENGTH).fill(''));
+        boxRefs.current[0]?.focus();
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     if (code !== sentCode) {
       setError('That OTP does not match. Please check and try again.');
       setOtp(Array(OTP_LENGTH).fill(''));
@@ -108,27 +149,6 @@ export default function Login() {
       toast(`Welcome back, ${session.name.split(' ')[0]}`);
       navigate(redirectTo, { replace: true });
     }, 550);
-  };
-
-  /** Email and password, straight at the API. */
-  const submitPassword = async (e) => {
-    e.preventDefault();
-    if (!email.trim() || !password) {
-      setError('Enter your email and password.');
-      return;
-    }
-    setError('');
-    setBusy(true);
-    try {
-      const session = await signInWithPassword(email.trim(), password);
-      toast(`Welcome back, ${session.name.split(' ')[0]}`);
-      navigate(redirectTo, { replace: true });
-    } catch (err) {
-      setError(err.message || 'That email and password did not match.');
-      setPassword('');
-    } finally {
-      setBusy(false);
-    }
   };
 
   const setDigit = (index, value) => {
@@ -204,58 +224,10 @@ export default function Login() {
 
           <div className="card mx-auto w-full max-w-[440px] p-7 sm:p-9">
             <span className="chip bg-brand-50 text-brand-700">
-              <ShieldCheck size={13} /> {isLive ? 'Secure sign-in' : 'Mobile OTP sign-in'}
+              <ShieldCheck size={13} /> Mobile OTP sign-in
             </span>
 
-            {step === 'password' ? (
-              <form onSubmit={submitPassword} noValidate>
-                <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
-                  Sign in to your panel
-                </h2>
-                <p className="mt-1.5 text-sm text-ink-500">
-                  Use the email and password the desk gave you.
-                </p>
-
-                <label className="label mt-6 block" htmlFor="email">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="username"
-                  className="input"
-                  placeholder="you@smiraclub.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoFocus
-                />
-
-                <label className="label mt-4 block" htmlFor="password">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  className="input"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-
-                {error && (
-                  <p className="mt-3 rounded-lg bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">{error}</p>
-                )}
-
-                <button type="submit" className="btn-action mt-6 w-full py-3.5" disabled={busy}>
-                  {busy ? 'Signing in…' : 'Sign in'}
-                </button>
-
-                <p className="mt-4 text-center text-xs text-ink-400">
-                  Trouble signing in? Ask an administrator to reset your password.
-                </p>
-              </form>
-            ) : step === 'phone' ? (
+            {step === 'phone' ? (
               <form onSubmit={sendOtp} noValidate>
                 <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
                   Sign in to your panel
@@ -371,10 +343,15 @@ export default function Login() {
                 {error && <p className="mt-2 text-xs font-semibold text-rose-600">{error}</p>}
 
                 <div className="mt-4 flex items-center justify-between text-xs">
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-ink-500">
-                    <KeyRound size={13} className="text-brand-600" /> Demo OTP:{' '}
-                    <span className="font-extrabold tracking-widest text-brand-700">{sentCode}</span>
-                  </span>
+                  {devCode ? (
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-ink-500">
+                      <KeyRound size={13} className="text-brand-600" />
+                      {isLive ? 'No SMS yet — code:' : 'Demo OTP:'}{' '}
+                      <span className="font-extrabold tracking-widest text-brand-700">{devCode}</span>
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-ink-400">Sent to +91 {phone}</span>
+                  )}
                   {seconds > 0 ? (
                     <span className="font-semibold text-ink-400">Resend in {seconds}s</span>
                   ) : (

@@ -7,6 +7,8 @@ import * as usersSeed from '../data/usersData.js';
 import * as waSeed from '../data/whatsappData.js';
 import * as autoSeed from '../data/automationData.js';
 import * as inventorySeed from '../data/inventoryData.js';
+import { api, isLive, getToken, setToken } from '../lib/api.js';
+import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor } from '../lib/adapters.js';
 
 /**
  * Single client-side store for the whole panel.
@@ -186,6 +188,10 @@ export function AppProvider({ children }) {
   const [owner, setOwner] = useState('All team members');
   const [range, setRange] = useState('Last 7 days');
   const [auth, setAuth] = useState(loadAuth);
+  /** Live once a server is configured and somebody is signed in to it. */
+  const [live, setLive] = useState(() => isLive && Boolean(getToken()));
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
   const issued = useRef(new Set());
 
   useEffect(() => {
@@ -204,6 +210,57 @@ export function AppProvider({ children }) {
       /* storage blocked — session simply lasts until refresh */
     }
   }, [auth]);
+
+  /**
+   * Fills the store from the API. Each collection is adapted into the shape
+   * the screens already read, so nothing downstream has to know where the
+   * data came from. A collection that fails keeps its seed rows rather than
+   * emptying a page.
+   */
+  const pull = useCallback(async (only) => {
+    if (!isLive || !getToken()) return;
+    const wanted = only ? [only] : LIVE_COLLECTIONS;
+    if (!only) setLoading(true);
+
+    const results = await Promise.allSettled(
+      wanted.map(async (name) => {
+        const res = await api.list(pathFor(name));
+        const rows = res.rows || res.data || [];
+        return [name, rows.map((doc) => fromApi(name, doc))];
+      })
+    );
+
+    const next = {};
+    const failed = [];
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        const [name, rows] = r.value;
+        next[name] = rows;
+      } else {
+        failed.push(wanted[i]);
+      }
+    });
+
+    if (Object.keys(next).length) setDb((prev) => ({ ...prev, ...next }));
+    if (!only) setLoading(false);
+    setApiError(failed.length ? `Could not load: ${failed.join(', ')}` : null);
+    return next;
+  }, []);
+
+  // Sign in, refresh, or arrive with a token already in hand.
+  useEffect(() => {
+    if (live) pull();
+  }, [live, pull]);
+
+  // The API says the token is no longer good.
+  useEffect(() => {
+    const dropped = () => {
+      setLive(false);
+      setAuth(null);
+    };
+    window.addEventListener('smira:signed-out', dropped);
+    return () => window.removeEventListener('smira:signed-out', dropped);
+  }, []);
 
   const toast = useCallback((message, tone = 'success') => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -236,39 +293,111 @@ export function AppProvider({ children }) {
   const create = useCallback(
     (collection, item, { silent = false } = {}) => {
       const id = item.id || nextId(collection);
+
+      // Show it straight away, then let the server confirm the real record.
       setDb((d) => ({ ...d, [collection]: [{ ...item, id }, ...d[collection]] }));
       if (!silent) toast(`${SINGULAR[collection]} ${id} created`);
+
+      if (live && ADAPTERS[collection]) {
+        api
+          .post(pathFor(collection), toApi(collection, item))
+          .then((res) => {
+            const saved = fromApi(collection, res.data);
+            setDb((d) => ({
+              ...d,
+              [collection]: d[collection].map((r) => (r.id === id ? saved : r)),
+            }));
+          })
+          .catch((err) => {
+            // Put the optimistic row back where it came from.
+            setDb((d) => ({ ...d, [collection]: d[collection].filter((r) => r.id !== id) }));
+            toast(err.message || 'That could not be saved', 'danger');
+          });
+      }
+
       return id;
     },
-    [nextId, toast]
+    [nextId, toast, live]
   );
 
   const update = useCallback(
     (collection, id, patch, { silent = false, message } = {}) => {
-      setDb((d) => ({
-        ...d,
-        [collection]: d[collection].map((r) => (r.id === id ? { ...r, ...patch } : r)),
-      }));
+      let before = null;
+      setDb((d) => {
+        before = d[collection].find((r) => r.id === id) || null;
+        return {
+          ...d,
+          [collection]: d[collection].map((r) => (r.id === id ? { ...r, ...patch } : r)),
+        };
+      });
       if (!silent) toast(message || `${SINGULAR[collection]} ${id} updated`);
+
+      if (live && ADAPTERS[collection] && before?._id) {
+        const body = toApi(collection, patch);
+        if (Object.keys(body).length) {
+          api.patch(`${pathFor(collection)}/${before._id}`, body).catch((err) => {
+            setDb((d) => ({
+              ...d,
+              [collection]: d[collection].map((r) => (r.id === id ? before : r)),
+            }));
+            toast(err.message || 'That change did not save', 'danger');
+          });
+        }
+      }
     },
-    [toast]
+    [toast, live]
   );
 
   const updateMany = useCallback(
     (collection, ids, patch, message) => {
-      setDb((d) => ({
-        ...d,
-        [collection]: d[collection].map((r) => (ids.includes(r.id) ? { ...r, ...patch } : r)),
-      }));
+      let targets = [];
+      setDb((d) => {
+        targets = d[collection].filter((r) => ids.includes(r.id));
+        return {
+          ...d,
+          [collection]: d[collection].map((r) => (ids.includes(r.id) ? { ...r, ...patch } : r)),
+        };
+      });
       toast(message || `${ids.length} ${ids.length === 1 ? 'record' : 'records'} updated`);
+
+      if (live && ADAPTERS[collection]) {
+        const body = toApi(collection, patch);
+        if (Object.keys(body).length) {
+          Promise.allSettled(
+            targets.filter((t) => t._id).map((t) => api.patch(`${pathFor(collection)}/${t._id}`, body))
+          ).then((rs) => {
+            const failed = rs.filter((r) => r.status === 'rejected').length;
+            if (failed) {
+              toast(`${failed} of ${targets.length} did not save`, 'danger');
+              pull(collection);
+            }
+          });
+        }
+      }
     },
-    [toast]
+    [toast, live, pull]
   );
 
   const remove = useCallback(
     (collection, ids) => {
       const list = Array.isArray(ids) ? ids : [ids];
-      setDb((d) => ({ ...d, [collection]: d[collection].filter((r) => !list.includes(r.id)) }));
+      let gone = [];
+      setDb((d) => {
+        gone = d[collection].filter((r) => list.includes(r.id));
+        return { ...d, [collection]: d[collection].filter((r) => !list.includes(r.id)) };
+      });
+
+      if (live && ADAPTERS[collection]) {
+        Promise.allSettled(
+          gone.filter((g) => g._id).map((g) => api.del(`${pathFor(collection)}/${g._id}`))
+        ).then((rs) => {
+          const failed = rs.filter((r) => r.status === 'rejected');
+          if (failed.length) {
+            toast(failed[0].reason?.message || 'That could not be deleted', 'danger');
+            pull(collection);
+          }
+        });
+      }
       toast(
         list.length === 1
           ? `${SINGULAR[collection]} ${list[0]} deleted`
@@ -312,6 +441,41 @@ export function AppProvider({ children }) {
    * member we adopt that profile, otherwise the session falls back to the
    * agency owner so the demo is usable with any valid number.
    */
+  /** Email and password, against the real API. */
+  const signInWithPassword = useCallback(
+    async (email, password) => {
+      const res = await api.login(email, password);
+      setToken(res.token);
+
+      const u = res.data;
+      const session = {
+        id: u.id,
+        name: u.name,
+        role: u.role?.name || u.designation || 'User',
+        email: u.email,
+        phone: u.phone,
+        branch: u.branch,
+        department: u.department,
+        scope: u.role?.scope,
+        modules: u.role?.modules || [],
+        permissions: u.role?.permissions || [],
+        superAdmin: Boolean(u.role?.superAdmin),
+        initials: (u.name || 'SC')
+          .split(' ')
+          .map((w) => w[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase(),
+        since: new Date().toISOString(),
+      };
+
+      setAuth(session);
+      setLive(true);
+      return session;
+    },
+    []
+  );
+
   const signIn = useCallback(
     (phone) => {
       const digits = phoneDigits(phone);
@@ -497,8 +661,11 @@ export function AppProvider({ children }) {
   );
 
   const signOut = useCallback(() => {
+    if (isLive) api.logout();
+    setToken(null);
+    setLive(false);
     setAuth(null);
-    toast('Signed out — verify your mobile number to continue', 'info');
+    toast(isLive ? 'Signed out' : 'Signed out — verify your mobile number to continue', 'info');
   }, [toast]);
 
   /** Records the payment and pushes the amount onto the invoice + booking. */
@@ -542,7 +709,12 @@ export function AppProvider({ children }) {
       setRange,
       auth,
       signIn,
+      signInWithPassword,
       signOut,
+      live,
+      loading,
+      apiError,
+      pull,
       generateMembershipQuote,
       receiveMemberSignup,
       toggleGift,
@@ -567,7 +739,12 @@ export function AppProvider({ children }) {
       range,
       auth,
       signIn,
+      signInWithPassword,
       signOut,
+      live,
+      loading,
+      apiError,
+      pull,
       generateMembershipQuote,
       receiveMemberSignup,
       toggleGift,

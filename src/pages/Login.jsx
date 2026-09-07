@@ -13,6 +13,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useApp } from '../store/AppStore.jsx';
+import { isLive } from '../lib/api.js';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -26,9 +27,14 @@ const highlights = [
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { auth, signIn, toast, team, settings } = useApp();
+  const { auth, signIn, signInWithPassword, toast, team, settings } = useApp();
 
-  const [step, setStep] = useState('phone'); // 'phone' | 'otp'
+  // With a server configured the desk signs in properly; without one the
+  // panel keeps its one-tap demo so it still opens on a laptop with nothing
+  // running behind it.
+  const [step, setStep] = useState(isLive ? 'password' : 'phone'); // 'password' | 'phone' | 'otp'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [sentCode, setSentCode] = useState('');
@@ -104,6 +110,27 @@ export default function Login() {
     }, 550);
   };
 
+  /** Email and password, straight at the API. */
+  const submitPassword = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || !password) {
+      setError('Enter your email and password.');
+      return;
+    }
+    setError('');
+    setBusy(true);
+    try {
+      const session = await signInWithPassword(email.trim(), password);
+      toast(`Welcome back, ${session.name.split(' ')[0]}`);
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      setError(err.message || 'That email and password did not match.');
+      setPassword('');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const setDigit = (index, value) => {
     const digits = value.replace(/\D/g, '');
     if (!digits) {
@@ -177,10 +204,58 @@ export default function Login() {
 
           <div className="card mx-auto w-full max-w-[440px] p-7 sm:p-9">
             <span className="chip bg-brand-50 text-brand-700">
-              <ShieldCheck size={13} /> Mobile OTP sign-in
+              <ShieldCheck size={13} /> {isLive ? 'Secure sign-in' : 'Mobile OTP sign-in'}
             </span>
 
-            {step === 'phone' ? (
+            {step === 'password' ? (
+              <form onSubmit={submitPassword} noValidate>
+                <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
+                  Sign in to your panel
+                </h2>
+                <p className="mt-1.5 text-sm text-ink-500">
+                  Use the email and password the desk gave you.
+                </p>
+
+                <label className="label mt-6 block" htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="username"
+                  className="input"
+                  placeholder="you@smiraclub.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoFocus
+                />
+
+                <label className="label mt-4 block" htmlFor="password">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  className="input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+
+                {error && (
+                  <p className="mt-3 rounded-lg bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">{error}</p>
+                )}
+
+                <button type="submit" className="btn-action mt-6 w-full py-3.5" disabled={busy}>
+                  {busy ? 'Signing in…' : 'Sign in'}
+                </button>
+
+                <p className="mt-4 text-center text-xs text-ink-400">
+                  Trouble signing in? Ask an administrator to reset your password.
+                </p>
+              </form>
+            ) : step === 'phone' ? (
               <form onSubmit={sendOtp} noValidate>
                 <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
                   Sign in to your panel

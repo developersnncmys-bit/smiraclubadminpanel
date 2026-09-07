@@ -55,10 +55,21 @@ export const visibleNavGroups = navGroups
 export const nav = navGroups.flatMap((g) => g.items);
 
 /**
- * The rail for one signed-in person. Demo mode has no role, so it shows
- * everything; a real session shows only what the role may open.
+ * The rail for one signed-in person.
+ *
+ * Every page is on show by default — the panel is demonstrated to clients who
+ * want to see the whole system, and a rail that changes shape with whoever
+ * signed in makes that impossible. The API still enforces what each role can
+ * actually reach, so this is presentation, not permission.
+ *
+ * Set VITE_STRICT_NAV=true to hide what a role cannot open.
  */
+const ENV = (typeof import.meta !== 'undefined' && import.meta.env) || {};
+const STRICT = String(ENV.VITE_STRICT_NAV || '') === 'true';
+
 export function navFor(auth) {
+  if (!STRICT) return visibleNavGroups;
+
   const modules = auth?.modules;
   if (!auth || auth.superAdmin || !modules?.length) return visibleNavGroups;
 

@@ -9,9 +9,22 @@ supplier coordination.
 
 ```bash
 npm install
-npm run dev      # http://localhost:5175
+npm run dev      # the panel
 npm run build    # production bundle in dist/
 ```
+
+## The API
+
+The panel talks to the Smira API, set in `.env`:
+
+```
+VITE_API_URL=https://smiraclubbackend.vercel.app/api
+```
+
+Sign in with a mobile number and the six-digit code.
+
+Leave `VITE_API_URL` unset and the panel runs on its own seed data instead, so
+it still opens with nothing running behind it.
 
 ## Stack
 

@@ -1,9 +1,15 @@
 /**
  * The panel's line to the Smira API.
  *
- * Live mode only switches on when VITE_API_URL is set. Without it the panel
- * runs exactly as it always has, on seed data in localStorage — so the demo
- * never depends on a server being up.
+ * The deployed API is the default, because it has to be. Vite bakes
+ * import.meta.env into the bundle at build time, so a hosted panel built
+ * without VITE_API_URL set has no address to call and quietly falls back to
+ * seed data — which looks exactly like a working panel until somebody notices
+ * nothing they save is really saved, and the Network tab is empty.
+ *
+ * Set VITE_API_URL to point somewhere else — a local server while developing.
+ * Set it to `off` to run on seed data deliberately, which is how the demo runs
+ * with nothing behind it.
  */
 
 /**
@@ -11,7 +17,24 @@
  * scripts import this file too, so read it defensively rather than assume it.
  */
 const ENV = (typeof import.meta !== 'undefined' && import.meta.env) || {};
-const BASE = (ENV.VITE_API_URL || '').replace(/\/$/, '');
+
+/** Where the API lives when nothing says otherwise. */
+const DEFAULT_API = 'https://smiraclubbackend.vercel.app/api';
+
+const configured = String(ENV.VITE_API_URL ?? '').trim();
+
+/**
+ * Only a browser gets the default. The smoke harness renders these pages under
+ * node with no server to answer, and it should carry on rendering seed data
+ * rather than wait on fetches that cannot land.
+ */
+const inBrowser = typeof window !== 'undefined';
+
+const BASE =
+  configured.toLowerCase() === 'off'
+    ? ''
+    : (configured || (inBrowser ? DEFAULT_API : '')).replace(/\/$/, '');
+
 const TOKEN_KEY = 'smira-club-admin:token';
 
 /** Whether the panel should be talking to a server at all. */

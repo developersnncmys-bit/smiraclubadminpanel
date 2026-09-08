@@ -27,7 +27,7 @@ const MARKERS = {
   '/revenue': 'Total revenue',
   '/reports': 'The headline numbers',
   '/support': 'Search tickets',
-  '/users': 'Who is on right now',
+  '/users': 'Everyone who can sign in',
 };
 
 const entry = `

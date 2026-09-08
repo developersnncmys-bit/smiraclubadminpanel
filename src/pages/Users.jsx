@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
-  UserPlus, ShieldCheck, Users as UsersIcon, UserCheck, Wifi, Plane,
-  UserX, Sparkles, Search, Zap, KeyRound, Check, X, ChevronRight, Download,
+  UserPlus, ShieldCheck, Users as UsersIcon, UserCheck, Sparkles, Search,
+  Zap, KeyRound, Check, X, ChevronRight, Download,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -23,20 +23,18 @@ import {
   roleDashboards, auditLog, userFilters, userQuickActions, modulePurpose,
 } from '../data/usersData.js';
 
-const SECTIONS = [
-  'Overview',
-  'Users',
-  'Teams',
-  'Roles',
-  'Permission matrix',
-  'Reporting hierarchy',
-  'Access control',
-  'Performance',
-  'Attendance and activity',
-  'Approvals',
-  'Login and security',
-  'Audit logs',
-];
+/**
+ * Four tabs, not twelve.
+ *
+ * The module answers four questions and nothing else: who works here, what
+ * may they reach, who signs their work off, and how do they get in. Twelve
+ * tabs made somebody read a menu to find out which one they wanted, and two
+ * of them ("Overview", "Access control") did not name a question at all.
+ *
+ * Nothing was removed in the regrouping. Every block that existed still
+ * renders, under whichever of the four questions it answers.
+ */
+const SECTIONS = ['People', 'Roles and access', 'Reporting and approvals', 'Security'];
 
 /** The table every section here builds with, so they all read the same. */
 function Table({ head, rows, empty = 'Nothing to show yet.', onRow }) {
@@ -95,7 +93,7 @@ export default function Users() {
   const store = useApp();
   const { team, roles, approvals, enquiries, bookings, memberSignups, create, update, toast } = store;
 
-  const [section, setSection] = useState('Overview');
+  const [section, setSection] = useState('People');
   const [viewing, setViewing] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
@@ -131,22 +129,33 @@ export default function Users() {
     );
   });
 
-  // -- The six figures the sheet opens the module with ----------------------
-  const online = users.filter((u) => u.live === 'Online').length;
-  const onLeave = users.filter((u) => u.attendance === 'On leave' || u.live === 'On leave').length;
+  // -- What the module opens with -------------------------------------------
   const inactive = users.filter((u) => u.status !== 'Active').length;
-  const activeToday = users.filter((u) => u.attendance && u.attendance !== 'On leave' && u.status === 'Active').length;
   const newJoiners = users.filter((u) => {
     const d = new Date(String(u.account.joined || '').replace(/,.*$/, ''));
     return !Number.isNaN(d.getTime()) && (Date.now() - d.getTime()) / 86400000 <= 90;
   }).length;
 
+  /**
+   * Four figures, about accounts rather than presence.
+   *
+   * There were six, and two of them argued with each other: "Online now 6"
+   * beside "Inactive 8" on a desk of eight people reads as a contradiction
+   * until you know one counts sessions and the other counts account status.
+   * Who is at their desk right now is Team Status's question and it is asked
+   * properly there; this page is about who exists and what they may reach.
+   */
+  const waiting = approvals.filter((a) => a.status === 'Waiting' || a.status === 'Pending').length;
+
   const kpis = [
-    { icon: UsersIcon, label: 'Total users', value: users.length },
-    { icon: UserCheck, label: 'Active today', value: activeToday, tone: 'text-emerald-600', progress: users.length ? (activeToday / users.length) * 100 : 0 },
-    { icon: Wifi, label: 'Online now', value: online, tone: online ? 'text-emerald-600' : undefined },
-    { icon: Plane, label: 'On leave', value: onLeave, tone: onLeave ? 'text-amber-600' : undefined },
-    { icon: UserX, label: 'Inactive', value: inactive, tone: inactive ? 'text-rose-600' : undefined },
+    { icon: UsersIcon, label: 'Users', value: users.length, hint: `${users.length - inactive} active` },
+    { icon: ShieldCheck, label: 'Roles', value: roles.length, hint: 'sets of permissions' },
+    {
+      icon: UserCheck,
+      label: 'Waiting on approval',
+      value: waiting,
+      tone: waiting ? 'text-amber-600' : undefined,
+    },
     { icon: Sparkles, label: 'New joiners', value: newJoiners, hint: 'in 90 days' },
   ];
 
@@ -276,69 +285,9 @@ export default function Users() {
   const decide = (row, status) =>
     update('approvals', row.id, { status, decidedAt: 'just now' }, { message: `${row.id} ${status.toLowerCase()}` });
 
-  const body = {
-    Overview: (
+  const parts = {
+    Reference: (
       <>
-        <Block title="Who is on right now" note="The seven states the desk reports itself in" wide>
-          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-            {liveStates.map((s) => {
-              const mine = users.filter((u) => u.live === s.key);
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => { setCut({ ...cut, live: s.key }); setSection('Users'); }}
-                  className="flex items-center gap-3 rounded-xl border border-ink-900/[0.07] px-3.5 py-2.5 text-left transition hover:bg-surface-soft"
-                >
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${s.dot}`} />
-                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink-700">{s.key}</span>
-                  <span className="num shrink-0 font-display text-lg font-extrabold text-ink-900">{mine.length}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['User', 'Current activity', 'Last active', 'Current lead or customer', 'Call duration', "Today's tasks", "Today's appointments"].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {users.map((u) => {
-                  const state = liveStates.find((s) => s.key === u.live);
-                  return (
-                    <tr key={u.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(u)}>
-                      <td className="py-2.5">
-                        <span className="flex items-center gap-2.5">
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${state?.dot || 'bg-ink-300'}`} />
-                          <Avatar name={u.name} size="sm" />
-                          <span className="min-w-0">
-                            <span className="block truncate font-bold text-ink-900">{u.name}</span>
-                            <span className="block truncate text-xs text-ink-400">{u.roleName}</span>
-                          </span>
-                        </span>
-                      </td>
-                      <td className="py-2.5 text-ink-700">{u.activity || '—'}</td>
-                      <td className="py-2.5 text-ink-500">{u.lastActive || '—'}</td>
-                      <td className="py-2.5 text-ink-700">{u.current?.customer || '—'}</td>
-                      <td className="num py-2.5 text-ink-700">
-                        {u.callDetail?.talkTime || u.callDetail?.avgDuration || '—'}
-                      </td>
-                      <td className="num py-2.5 text-ink-700">
-                        {u.tasksTotal ? `${u.tasksDone || 0} of ${u.tasksTotal}` : '—'}
-                      </td>
-                      <td className="num py-2.5 text-ink-700">{u.visitDetail?.planned ?? u.visits ?? 0}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Block>
-
         <Block title="What this module controls" note="The sheet's own list, and where each one lives">
           <ul className="grid gap-x-6 sm:grid-cols-2">
             {modulePurpose.map((p) => (
@@ -878,9 +827,47 @@ export default function Users() {
     ),
   };
 
+  /**
+   * The four questions, each built from the blocks that answer it.
+   *
+   * The blocks themselves are unchanged — this only decides which question
+   * each one sits under, so nobody has to guess whether "who reports to whom"
+   * lives under Teams, Hierarchy or Access control.
+   */
+  const body = {
+    People: (
+      <>
+        {parts.Users}
+        {parts.Teams}
+        {parts.Performance}
+        {parts['Attendance and activity']}
+      </>
+    ),
+    'Roles and access': (
+      <>
+        {parts.Roles}
+        {parts['Permission matrix']}
+        {parts['Access control']}
+        {parts.Reference}
+      </>
+    ),
+    'Reporting and approvals': (
+      <>
+        {parts['Reporting hierarchy']}
+        {parts.Approvals}
+      </>
+    ),
+    Security: (
+      <>
+        {parts['Login and security']}
+        {parts['Audit logs']}
+      </>
+    ),
+  };
+
   return (
     <>
-      <PageHeader title="Users and roles" subtitle="Who can sign in, what they may reach, and who signs it off">
+      <PageHeader title="Users and roles" subtitle="Who works here, what they may open, who signs their work off, and how they get in">
         <button className="btn-line" onClick={() => setRoleOpen(true)}>
           <ShieldCheck size={16} /> Create role
         </button>
@@ -894,7 +881,7 @@ export default function Users() {
         <h2 className="font-display text-base font-extrabold text-ink-900">The desk</h2>
 
         <MenuButton
-          label={`${section} · ${SECTIONS.length} views`}
+          label={section}
           icon={KeyRound}
           variant="dark"
           value={section}
@@ -912,14 +899,13 @@ export default function Users() {
           onSelect={(key) => act(key, viewing || shown[0])}
         />
 
-        <p className="num ml-auto text-sm text-ink-500">
-          {online} online · {users.length} users · {roles.length} roles ·{' '}
-          {(approvals || []).filter((a) => a.status === 'Waiting').length} waiting
+        <p className="ml-auto text-sm text-ink-500">
+          Live presence is on <a href="/team" className="font-semibold text-brand-700 hover:underline">Team Status</a>
         </p>
       </section>
 
       <div className="mt-4">
-        <KpiRow items={kpis} cols={6} />
+        <KpiRow items={kpis} cols={4} />
       </div>
 
       <SectionTabs className="mt-6" items={SECTIONS} value={section} onChange={setSection} />

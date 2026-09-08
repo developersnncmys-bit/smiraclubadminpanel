@@ -9,12 +9,12 @@ import {
   UsersRound,
   X,
   CheckCheck,
-  Plane,
   Clock3,
   ChevronDown,
   LogOut,
   RotateCcw,
 } from 'lucide-react';
+import Brand from '../ui/Brand.jsx';
 import { useApp } from '../../store/AppStore.jsx';
 
 const seedNotifications = [
@@ -177,13 +177,8 @@ export default function Header({ onOpenMobile }) {
           <Menu size={18} />
         </button>
 
-        <NavLink to="/" className="my-2.5 flex shrink-0 items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-brand-600 to-ocean text-white">
-            <Plane size={17} strokeWidth={2.4} className="-rotate-45" />
-          </span>
-          <span className="hidden font-display text-[1.05rem] font-extrabold leading-none tracking-tight text-ink-900 sm:block">
-            Smira<span className="text-brand-600"> Club</span>
-          </span>
+        <NavLink to="/" className="my-2.5 flex shrink-0 items-center" aria-label="Smira Club — dashboard">
+          <Brand className="h-8" />
         </NavLink>
 
         <div className="ml-auto flex items-center gap-2 py-2">

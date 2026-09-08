@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import {
-  Plane,
   Smartphone,
   ShieldCheck,
   ArrowRight,
@@ -12,6 +11,7 @@ import {
   CalendarCheck,
   Wallet,
 } from 'lucide-react';
+import Brand from '../components/ui/Brand.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { isLive } from '../lib/api.js';
 
@@ -182,14 +182,7 @@ export default function Login() {
       <div className="mx-auto grid min-h-screen max-w-[1180px] items-center gap-10 px-5 py-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
         {/* Brand panel */}
         <section className="hidden lg:block">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-ocean text-white shadow-glow">
-              <Plane size={21} strokeWidth={2.4} className="-rotate-45" />
-            </span>
-            <span className="font-display text-2xl font-extrabold tracking-tight text-ink-900">
-              Smira<span className="text-brand-600"> Club</span>
-            </span>
-          </div>
+          <Brand className="h-12" />
 
           <h1 className="mt-9 max-w-lg text-4xl font-extrabold leading-tight tracking-tight text-ink-900">
             Run every trip, quote and payment from one travel desk.
@@ -213,13 +206,8 @@ export default function Login() {
 
         {/* Auth card */}
         <section className="w-full">
-          <div className="mb-7 flex items-center gap-2.5 lg:hidden">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-ocean text-white shadow-glow">
-              <Plane size={19} strokeWidth={2.4} className="-rotate-45" />
-            </span>
-            <span className="font-display text-xl font-extrabold tracking-tight text-ink-900">
-              Smira<span className="text-brand-600"> Club</span>
-            </span>
+          <div className="mb-7 lg:hidden">
+            <Brand className="h-10" />
           </div>
 
           <div className="card mx-auto w-full max-w-[440px] p-7 sm:p-9">

@@ -8,6 +8,7 @@ import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import PartnerProfile from '../components/partners/PartnerProfile.jsx';
+import BookingRequest from '../components/partners/BookingRequest.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
@@ -73,6 +74,9 @@ export default function Partners() {
   const [editing, setEditing] = useState(null);
   const [view, setView] = useState('Partners');
   const [viewing, setViewing] = useState(null);
+  /** The booking a row was clicked on — the sheet wants seventeen fields per
+   * booking and a table row holds about twelve. */
+  const [request, setRequest] = useState(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [status, setStatus] = useState('All');
@@ -379,7 +383,7 @@ export default function Partners() {
           <p className="mt-3 text-xs text-ink-400">It can also end as: {pipelineExits.join(' · ')}</p>
         </Block>
 
-        <Block title="Requests with partners" note="Everything each booking carries" wide>
+        <Block title="Requests with partners" note="Open one for everything it carries" wide>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] text-sm">
               <thead>
@@ -393,7 +397,11 @@ export default function Partners() {
               </thead>
               <tbody className="divide-y divide-ink-900/[0.07]">
                 {partnerRequests.map((r) => (
-                  <tr key={r.id} className="hover:bg-surface-soft">
+                  <tr
+                    key={r.id}
+                    className="cursor-pointer hover:bg-surface-soft"
+                    onClick={() => setRequest(r)}
+                  >
                     <td className="num py-2.5 font-bold text-brand-700">{r.booking}</td>
                     <td className="py-2.5 text-ink-800">{r.customer}</td>
                     <td className="num py-2.5 text-ink-600">{r.membership}</td>
@@ -679,6 +687,13 @@ export default function Partners() {
         fields={partnerFields}
         initial={editing || { category: partnerCategories[0], commission: 10 }}
         submitLabel={editing ? 'Save changes' : 'Add partner'}
+      />
+
+      <BookingRequest
+        request={request}
+        open={!!request}
+        onClose={() => setRequest(null)}
+        onMessage={(r, kind) => toast(`${kind} sent to ${r.partner} about ${r.booking}`)}
       />
 
       {viewing && (

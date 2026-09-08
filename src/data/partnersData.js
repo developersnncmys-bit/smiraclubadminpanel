@@ -22,7 +22,21 @@ export const approvalStates = [
   'Suspended',
 ];
 
-export const partnerCategories = ['Hotel', 'Villa', 'Package', 'Lifestyle', 'Transport', 'Restaurant'];
+/**
+ * The eight a partner can be filed under. The website's Become a Partner form
+ * offers the same eight, so an owner cannot apply as something the desk has no
+ * filter for.
+ */
+export const partnerCategories = [
+  'Hotel',
+  'Villa',
+  'Package',
+  'Lifestyle',
+  'Transport',
+  'Restaurant',
+  'Activity',
+  'Spa',
+];
 
 /** The pipeline a booking walks with a partner. */
 export const partnerPipeline = [
@@ -292,6 +306,13 @@ export const partnerRequests = [
     payout: 214000,
     stage: 'Sent to partner',
     sentAt: '04 Aug 2026',
+    payment: 'Paid in full',
+    partnerConfirmed: 'Waiting on the hotel',
+    trail: [
+      { at: '04 Aug 2026, 10:12 am', text: 'Booking request sent to the partner over WhatsApp' },
+      { at: '04 Aug 2026, 11:40 am', text: 'Partner opened the request' },
+      { at: '05 Aug 2026, 09:05 am', text: 'Reminder sent — no confirmation yet' },
+    ],
   },
   {
     id: 'PRQ-02',
@@ -311,6 +332,14 @@ export const partnerRequests = [
     payout: 121000,
     stage: 'Completed',
     sentAt: '29 Jul 2026',
+    payment: 'Paid in full',
+    partnerConfirmed: 'Confirmed 30 Jul 2026',
+    trail: [
+      { at: '29 Jul 2026, 02:15 pm', text: 'Booking request sent to the partner' },
+      { at: '30 Jul 2026, 10:02 am', text: 'Partner confirmed the ocean view suite' },
+      { at: '30 Jul 2026, 10:04 am', text: 'Confirmation sent to Rohan Bhatt' },
+      { at: '08 Aug 2026, 06:30 pm', text: 'Stay completed — settlement queued' },
+    ],
   },
 ];
 

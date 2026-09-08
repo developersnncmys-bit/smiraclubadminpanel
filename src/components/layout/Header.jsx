@@ -178,7 +178,7 @@ export default function Header({ onOpenMobile }) {
         </button>
 
         <NavLink to="/" className="my-2.5 flex shrink-0 items-center" aria-label="Smira Club — dashboard">
-          <Brand className="h-8" />
+          <Brand className="h-10 sm:h-11" />
         </NavLink>
 
         <div className="ml-auto flex items-center gap-2 py-2">

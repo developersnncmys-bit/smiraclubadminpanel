@@ -6,7 +6,7 @@
  * file is served from public/ rather than inlined because it is the same
  * bytes on every page and the browser should cache it once.
  */
-export default function Brand({ className = 'h-8', dark = false, alt = 'Smira Club' }) {
+export default function Brand({ className = 'h-10', dark = false, alt = 'Smira Club' }) {
   return (
     <img
       src={dark ? '/smira-logo-dark.svg' : '/smira-logo.svg'}

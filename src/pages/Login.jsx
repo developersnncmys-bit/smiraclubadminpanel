@@ -182,7 +182,7 @@ export default function Login() {
       <div className="mx-auto grid min-h-screen max-w-[1180px] items-center gap-10 px-5 py-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
         {/* Brand panel */}
         <section className="hidden lg:block">
-          <Brand className="h-12" />
+          <Brand className="h-16" />
 
           <h1 className="mt-9 max-w-lg text-4xl font-extrabold leading-tight tracking-tight text-ink-900">
             Run every trip, quote and payment from one travel desk.
@@ -207,7 +207,7 @@ export default function Login() {
         {/* Auth card */}
         <section className="w-full">
           <div className="mb-7 lg:hidden">
-            <Brand className="h-10" />
+            <Brand className="h-14" />
           </div>
 
           <div className="card mx-auto w-full max-w-[440px] p-7 sm:p-9">

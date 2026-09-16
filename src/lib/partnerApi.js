@@ -31,9 +31,10 @@ export function setPartnerToken(token) {
 }
 
 export class PartnerApiError extends Error {
-  constructor(status, message) {
+  constructor(status, message, details) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -58,15 +59,18 @@ async function request(path, { method = 'GET', body } = {}) {
   const json = await res.json().catch(() => ({}));
 
   // An expired or refused token: drop it so the portal sends them to sign in.
-  if (res.status === 401 || (res.status === 403 && path === '/dashboard')) setPartnerToken(null);
+  if (res.status === 401) setPartnerToken(null);
 
-  if (!res.ok) throw new PartnerApiError(res.status, json.message || 'That did not work');
+  if (!res.ok) throw new PartnerApiError(res.status, json.message || 'That did not work', json.details);
   return json;
 }
 
 export const partnerApi = {
   requestOtp: (phone) => request('/otp/request', { method: 'POST', body: { phone } }),
   verifyOtp: (phone, code) => request('/otp/verify', { method: 'POST', body: { phone, code } }),
+  getListing: () => request('/listing'),
+  saveListing: (body) => request('/listing', { method: 'PUT', body }),
+  submitListing: () => request('/listing/submit', { method: 'POST' }),
   dashboard: () => request('/dashboard'),
   accept: (id) => request(`/bookings/${id}/accept`, { method: 'POST' }),
   decline: (id) => request(`/bookings/${id}/decline`, { method: 'POST' }),

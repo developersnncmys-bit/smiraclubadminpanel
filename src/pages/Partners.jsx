@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import {
-  Plus, Search, ShieldCheck, FileText, Ban, Send,
+  Plus, Search, Ban, Send,
   Star, Download, Handshake, Clock, CalendarCheck, IndianRupee,
-  Wallet, CheckCircle2, Headphones, BadgeCheck, XCircle,
+  Wallet, CheckCircle2, Headphones,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import PartnerProfile from '../components/partners/PartnerProfile.jsx';
 import BookingRequest from '../components/partners/BookingRequest.jsx';
+import ReviewQueue from '../components/partners/ReviewQueue.jsx';
+import { api, isLive } from '../lib/api.js';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
@@ -18,8 +20,6 @@ import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
 import {
-  onboardingFlow,
-  approvalStates,
   partnerCategories,
   partnerPipeline,
   pipelineExits,
@@ -32,15 +32,6 @@ import {
 } from '../data/partnersData.js';
 
 const VIEWS = ['Partners', 'Onboarding', 'Bookings', 'Support', 'Performance', 'Finance', 'Communication'];
-
-const approvalTone = {
-  Approved: 'green',
-  'Pending review': 'amber',
-  'Documents required': 'amber',
-  'Verification pending': 'sky',
-  Rejected: 'rose',
-  Suspended: 'rose',
-};
 
 /**
  * A partner's score out of a hundred, from the six things the client's sheet
@@ -69,7 +60,7 @@ function scoreOf(p) {
  * how they score, what they are owed and what the panel sends them.
  */
 export default function Partners() {
-  const { partners, update, create, toast } = useApp();
+  const { partners, update, create, toast, pull } = useApp();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [view, setView] = useState('Partners');
@@ -178,6 +169,25 @@ export default function Partners() {
       { key: 'responseMins', header: 'Response (min)' },
     ]);
 
+  /**
+   * A review decision, sent to the endpoint that owns it so the server checks
+   * the partner is at the right stage. Offline there is no server, so the demo
+   * moves the record locally.
+   */
+  const decide = async (p, path, body, local, message) => {
+    try {
+      if (isLive) {
+        await api.patch(`/partners/${p._id || p.id}/${path}`, body);
+        await pull('partners');
+      } else {
+        update('partners', p.id, local);
+      }
+      toast(message);
+    } catch (err) {
+      toast(err.message, 'danger');
+    }
+  };
+
   const actions = {
     verify: (p) =>
       update(
@@ -191,14 +201,13 @@ export default function Partners() {
         },
         { message: `${p.name} verified — ready for approval` }
       ),
-    approve: (p) => update('partners', p.id, { approval: 'Approved', status: 'Active', stage: 'Active' }, { message: `${p.name} approved` }),
-    reject: (p) =>
-      update(
-        'partners',
-        p.id,
-        { approval: 'Rejected', status: 'Rejected', stage: 'Admin review' },
-        { message: `${p.name} rejected` }
-      ),
+    approve: (p) =>
+      decide(p, 'approve', undefined, { approval: 'Approved', verification: 'Verified', stage: 'Contract' }, `${p.name} approved — contract next`),
+    reject: (p) => {
+      const reason = window.prompt(`Why is ${p.name} being rejected?`);
+      if (!reason) return;
+      decide(p, 'reject', { reason }, { approval: 'Rejected', status: 'Paused', stage: 'Rejected' }, `${p.name} rejected`);
+    },
     suspend: (p) => update('partners', p.id, { approval: 'Suspended', status: 'Suspended' }, { message: `${p.name} suspended` }),
     requestDocs: (p, doc) => toast(`${doc} requested from ${p.name}`),
     message: (p, kind) => toast(`${kind} sent to ${p.name}`),
@@ -309,63 +318,7 @@ export default function Partners() {
       </Block>
     ),
 
-    Onboarding: (
-      <>
-        <Block title="Onboarding" note="Registration through to active" wide>
-          <ul className="grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
-            {onboardingFlow.map((s) => (
-              <li key={s} className="rounded-xl bg-surface-soft px-4 py-3">
-                <p className="text-sm font-bold text-ink-800">{s}</p>
-                <p className="num mt-1 font-display text-xl font-extrabold text-ink-900">
-                  {partners.filter((p) => p.stage === s).length}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Block>
-
-        <Block title="Waiting on the desk" note="Approve, ask for papers, reject or suspend" wide>
-          <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-            {partners.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <Avatar name={p.name} size="sm" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-ink-900">{p.name}</span>
-                  <span className="block truncate text-xs text-ink-500">
-                    submitted {p.submitted} · {(p.documents || []).filter((d) => d.status === 'Verified').length} of{' '}
-                    {(p.documents || []).length} documents verified
-                  </span>
-                </span>
-                <Badge tone={approvalTone[p.approval] || 'slate'} dot>
-                  {p.approval}
-                </Badge>
-                <span className="flex gap-1.5">
-                  <button className="btn-line btn-sm" onClick={() => setViewing(p)}>
-                    <FileText size={13} /> Documents
-                  </button>
-                  <button className="btn-line btn-sm" onClick={() => actions.requestDocs(p, 'Documents')}>
-                    <FileText size={13} /> Request papers
-                  </button>
-                  <button className="btn-line btn-sm" onClick={() => actions.verify(p)}>
-                    <BadgeCheck size={13} /> Verify
-                  </button>
-                  <button className="btn-action btn-sm" onClick={() => actions.approve(p)}>
-                    <ShieldCheck size={13} /> Approve
-                  </button>
-                  <button className="btn-line-danger btn-sm" onClick={() => actions.reject(p)}>
-                    <XCircle size={13} /> Reject
-                  </button>
-                  <button className="btn-line-danger btn-sm" onClick={() => actions.suspend(p)}>
-                    <Ban size={13} /> Suspend
-                  </button>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-xs text-ink-400">Approval states: {approvalStates.join(' · ')}</p>
-        </Block>
-      </>
-    ),
+    Onboarding: <ReviewQueue partners={partners} onOpen={setViewing} />,
 
     Bookings: (
       <>

@@ -28,7 +28,7 @@ const MARKERS = {
   '/reports': 'The headline numbers',
   '/support': 'Search tickets',
   '/users': 'Everyone who can sign in',
-  '/partner/login': 'Sign in as a partner',
+  '/partner/login': 'Sign in or register',
 };
 
 const entry = `

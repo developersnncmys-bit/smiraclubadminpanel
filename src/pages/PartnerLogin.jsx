@@ -30,6 +30,8 @@ export default function PartnerLogin() {
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [devCode, setDevCode] = useState('');
   const [name, setName] = useState('');
+  /** A number we have never seen is registering, not signing in. */
+  const [isNew, setIsNew] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -50,7 +52,7 @@ export default function PartnerLogin() {
   const send = async (e) => {
     e?.preventDefault();
     if (!validPhone) {
-      setError('Enter the 10-digit mobile number registered with Smira');
+      setError('Enter a 10-digit mobile number');
       return;
     }
     setError('');
@@ -58,6 +60,7 @@ export default function PartnerLogin() {
     try {
       const res = await partnerApi.requestOtp(phone);
       setName(res.data?.name || '');
+      setIsNew(Boolean(res.data?.isNew));
       setDevCode(res.data?.devCode || '');
       setOtp(Array(OTP_LENGTH).fill(''));
       setStep('otp');
@@ -122,11 +125,11 @@ export default function PartnerLogin() {
           {step === 'phone' ? (
             <form onSubmit={send} noValidate>
               <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
-                Sign in as a partner
+                Sign in or register
               </h1>
               <p className="mt-1.5 text-sm text-ink-500">
-                Use the mobile number your property is registered with. We will send you a
-                one-time code.
+                Already a partner? Use the mobile number your property is registered with. New to
+                Smira? Enter your mobile and we will set up your partner account.
               </p>
 
               <label className="mt-6 block">
@@ -182,7 +185,7 @@ export default function PartnerLogin() {
           ) : (
             <form onSubmit={verify} noValidate>
               <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
-                {name ? `Welcome, ${name}` : 'Enter your code'}
+                {isNew ? 'Create your partner account' : name ? `Welcome back, ${name}` : 'Enter your code'}
               </h1>
               <p className="mt-1.5 text-sm text-ink-500">
                 Sent to <span className="font-bold text-ink-800">+91 {phone}</span>.{' '}
@@ -240,7 +243,7 @@ export default function PartnerLogin() {
 
               <button type="submit" disabled={busy} className="btn-action mt-5 w-full py-3">
                 {busy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                {busy ? 'Checking…' : 'Sign in'}
+                {busy ? 'Checking…' : isNew ? 'Verify and continue' : 'Sign in'}
               </button>
             </form>
           )}

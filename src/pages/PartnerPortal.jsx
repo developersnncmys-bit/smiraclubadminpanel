@@ -3,9 +3,11 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, BedDouble, Tags, CalendarDays, CalendarCheck, Users,
   Wallet, BarChart3, Star, FileText, Headphones, UserRound, LogOut, Check, X,
-  Pencil, Loader2, RefreshCw, Clock3, AlertTriangle,
+  Pencil, Loader2, RefreshCw, Clock3, Hourglass, FileSignature, XCircle,
 } from 'lucide-react';
 import Brand from '../components/ui/Brand.jsx';
+import FlowTracker from '../components/partners/FlowTracker.jsx';
+import ListingWizard from '../components/partners/ListingWizard.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import { inr } from '../data/mockData.js';
 import { partnerApi, getPartnerToken, setPartnerToken } from '../lib/partnerApi.js';
@@ -157,6 +159,8 @@ function BookingCard({ b, busy, onAccept, onDecline }) {
 export default function PartnerPortal() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  /** The partner and their five-step listing — loaded before anything else. */
+  const [listing, setListing] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [section, setSection] = useState('dashboard');
@@ -167,8 +171,15 @@ export default function PartnerPortal() {
     setLoading(true);
     setError('');
     try {
-      const res = await partnerApi.dashboard();
-      setData(res.data);
+      // Where they are in the flow decides what they see, so ask that first.
+      const mine = await partnerApi.getListing();
+      setListing(mine.data);
+      if (mine.data.partner.live) {
+        const res = await partnerApi.dashboard();
+        setData(res.data);
+      } else {
+        setData(null);
+      }
     } catch (err) {
       if (!getPartnerToken()) {
         navigate('/partner/login', { replace: true });
@@ -220,7 +231,6 @@ export default function PartnerPortal() {
   const o = data?.overview || {};
   const bookings = data?.bookings || [];
   const waiting = bookings.filter((b) => !/confirmed|declined/i.test(b.confirmation) && b.status !== 'Cancelled');
-  const approved = p?.approval === 'Approved';
 
   const body = {
     dashboard: (
@@ -501,6 +511,72 @@ export default function PartnerPortal() {
     ),
   };
 
+  const me = listing?.partner;
+
+  /** Everything before live: the form, or where the form has got to. */
+  const journey = me && !me.live && (
+    <div className="mx-auto w-full max-w-4xl space-y-4 p-4 sm:p-6">
+      <div className="card p-5">
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-brand-600">Your listing</p>
+        <h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-ink-900">
+          {me.name === 'New partner' ? 'List your property with Smira Club' : me.name}
+        </h1>
+        <FlowTracker stage={me.stage} live={me.live} className="mt-4" />
+      </div>
+
+      {me.editable ? (
+        <ListingWizard
+          initial={listing.listing}
+          partner={me}
+          onSubmitted={(d) => {
+            setListing(d);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      ) : me.stage === 'Admin review' ? (
+        <div className="card p-6 text-center sm:p-10">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-50 text-brand-600">
+            <Hourglass size={26} />
+          </span>
+          <h2 className="mt-4 font-display text-xl font-extrabold text-ink-900">Submitted — the Smira desk is reviewing it</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-500">
+            We check the property, the rates and your papers, and verify the address. If anything needs
+            changing we will tell you here, and you can edit and send it back.
+          </p>
+          {me.submittedOn && (
+            <p className="mt-4 text-xs font-semibold text-ink-400">
+              Submitted {new Date(me.submittedOn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </p>
+          )}
+        </div>
+      ) : me.stage === 'Contract' ? (
+        <div className="card p-6 text-center sm:p-10">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+            <FileSignature size={26} />
+          </span>
+          <h2 className="mt-4 font-display text-xl font-extrabold text-ink-900">Approved — your contract is next</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-500">
+            Our partnerships desk will send the agreement to sign. Once it is signed your listing goes
+            live and your dashboard opens here.
+          </p>
+          <a href={DESK_TEL} className="btn-line mt-5 inline-flex">
+            <Headphones size={15} /> Call {DESK_PHONE}
+          </a>
+        </div>
+      ) : (
+        <div className="card p-6 text-center sm:p-10">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-rose-50 text-rose-600">
+            <XCircle size={26} />
+          </span>
+          <h2 className="mt-4 font-display text-xl font-extrabold text-ink-900">We could not list this property</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-500">
+            Call the partnerships desk on {DESK_PHONE} if you would like to talk it through.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-surface-soft">
       {/* -- Top bar ------------------------------------------------------- */}
@@ -510,8 +586,8 @@ export default function PartnerPortal() {
           <span className="chip hidden bg-brand-50 text-brand-700 sm:inline-flex">Partner portal</span>
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden text-right sm:block">
-              <span className="block text-sm font-bold text-ink-900">{p?.name || '…'}</span>
-              <span className="block text-xs text-ink-500">{p?.code}</span>
+              <span className="block text-sm font-bold text-ink-900">{(p || me)?.name || '…'}</span>
+              <span className="block text-xs text-ink-500">{(p || me)?.code}</span>
             </span>
             <button type="button" onClick={load} className="icon-btn h-9 w-9" title="Refresh">
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -523,6 +599,7 @@ export default function PartnerPortal() {
         </div>
 
         {/* The sections, as a scroller on a phone. */}
+        {me?.live && (
         <nav className="no-scrollbar flex gap-1 overflow-x-auto border-t border-ink-900/[0.05] px-3 py-2 lg:hidden">
           {SECTIONS.map(({ key, label }) => (
             <button
@@ -537,7 +614,25 @@ export default function PartnerPortal() {
             </button>
           ))}
         </nav>
+        )}
       </header>
+
+      {error && !me ? (
+        <div className="mx-auto max-w-md p-6">
+          <div className="card p-6 text-center">
+            <p className="text-sm font-semibold text-rose-600">{error}</p>
+            <button type="button" onClick={load} className="btn-line mt-4">
+              <RefreshCw size={15} /> Try again
+            </button>
+          </div>
+        </div>
+      ) : !me ? (
+        <div className="flex items-center justify-center gap-2 p-16 text-sm text-ink-500">
+          <Loader2 size={16} className="animate-spin" /> Loading…
+        </div>
+      ) : !me.live ? (
+        journey
+      ) : (
 
       <div className="flex">
         {/* -- The twelve sections, and the dashboard ---------------------- */}
@@ -573,14 +668,6 @@ export default function PartnerPortal() {
             )}
           </div>
 
-          {p && !approved && (
-            <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-              Your listing is at <strong className="mx-1">{p.stage || p.approval}</strong> — you will start
-              receiving bookings once Smira approves it.
-            </p>
-          )}
-
           {note && (
             <p className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-800">
               {note}
@@ -603,6 +690,7 @@ export default function PartnerPortal() {
           )}
         </main>
       </div>
+      )}
     </div>
   );
 }

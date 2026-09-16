@@ -19,6 +19,8 @@ import Rewards from './pages/Rewards.jsx';
 import Offers from './pages/Offers.jsx';
 import Support from './pages/Support.jsx';
 import Users from './pages/Users.jsx';
+import PartnerLogin from './pages/PartnerLogin.jsx';
+import PartnerPortal from './pages/PartnerPortal.jsx';
 
 /**
  * The panel holds the sections the client has specified — Team Status,
@@ -29,6 +31,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+
+      {/* Partners sign in here and see only their own dashboard. These sit
+          outside RequireAuth and the staff layout on purpose. */}
+      <Route path="/partner/login" element={<PartnerLogin />} />
+      <Route path="/partner" element={<PartnerPortal />} />
 
       <Route
         element={

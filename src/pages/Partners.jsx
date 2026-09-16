@@ -8,7 +8,6 @@ import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import PartnerProfile from '../components/partners/PartnerProfile.jsx';
-import PartnerDashboard from '../components/partners/PartnerDashboard.jsx';
 import BookingRequest from '../components/partners/BookingRequest.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
@@ -32,21 +31,7 @@ import {
   settlements as seedSettlements,
 } from '../data/partnersData.js';
 
-/**
- * "Their dashboard" is the partner's own screen rather than the desk's. It
- * sits here because a hotelier on the phone describes what is in front of
- * them, and whoever picks up should be looking at the same thing.
- */
-const VIEWS = [
-  'Partners',
-  'Onboarding',
-  'Their dashboard',
-  'Bookings',
-  'Support',
-  'Performance',
-  'Finance',
-  'Communication',
-];
+const VIEWS = ['Partners', 'Onboarding', 'Bookings', 'Support', 'Performance', 'Finance', 'Communication'];
 
 const approvalTone = {
   Approved: 'green',
@@ -89,8 +74,6 @@ export default function Partners() {
   const [editing, setEditing] = useState(null);
   const [view, setView] = useState('Partners');
   const [viewing, setViewing] = useState(null);
-  /** Whose dashboard the "Their dashboard" view is showing. */
-  const [asPartner, setAsPartner] = useState(null);
   /** The booking a row was clicked on — the sheet wants seventeen fields per
    * booking and a table row holds about twelve. */
   const [request, setRequest] = useState(null);
@@ -382,15 +365,6 @@ export default function Partners() {
           <p className="mt-3 text-xs text-ink-400">Approval states: {approvalStates.join(' · ')}</p>
         </Block>
       </>
-    ),
-
-    'Their dashboard': (
-      <PartnerDashboard
-        partner={asPartner || viewing || rows[0] || partners[0]}
-        list={rows.length ? rows : partners}
-        requests={partnerRequests}
-        onPick={setAsPartner}
-      />
     ),
 
     Bookings: (

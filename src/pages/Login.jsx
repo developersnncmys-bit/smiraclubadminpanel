@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
 import {
   Smartphone,
   ShieldCheck,
@@ -402,6 +402,11 @@ export default function Login() {
           </div>
 
           <p className="mx-auto mt-5 max-w-[440px] text-center text-xs leading-relaxed text-ink-400">
+            Hotel or partner?{' '}
+            <Link to="/partner/login" className="font-semibold text-brand-700 hover:underline">
+              Sign in to the partner portal
+            </Link>
+            <br />
             By continuing you agree to the {settings.agency.name} internal usage policy. Trouble
             signing in? Call {settings.agency.phone}.
           </p>

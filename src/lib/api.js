@@ -40,6 +40,9 @@ const TOKEN_KEY = 'smira-club-admin:token';
 /** Whether the panel should be talking to a server at all. */
 export const isLive = Boolean(BASE);
 
+/** The same address, for the partner portal's own client. */
+export const apiBase = BASE;
+
 export function getToken() {
   try {
     return localStorage.getItem(TOKEN_KEY);

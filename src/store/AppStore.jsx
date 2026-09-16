@@ -20,7 +20,7 @@ import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor, fallbackPathFor } 
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v34';
+const KEY = 'smira-club-admin:v35';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -132,7 +132,7 @@ const seedState = () => ({
     agency: {
       name: 'Smira Club Pvt. Ltd.',
       email: 'hello@smiraclub.com',
-      phone: '+91 98200 11223',
+      phone: '+91 98337 33477',
       gstin: '27AABCV1234M1ZQ',
       licence: 'IATA-14-3-9981',
       currency: 'INR — Indian Rupee',

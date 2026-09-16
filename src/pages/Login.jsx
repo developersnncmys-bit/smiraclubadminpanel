@@ -15,6 +15,14 @@ import Brand from '../components/ui/Brand.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { isLive } from '../lib/api.js';
 
+/** The seeded staff the live API knows, owner first. */
+const DEMO_ACCOUNTS = [
+  { id: 'owner', phone: '+91 98190 55127', label: 'Owner — every screen' },
+  { id: 'branch', phone: '+91 98211 44556', label: 'Branch manager' },
+  { id: 'expert', phone: '+91 90045 22119', label: 'Travel expert' },
+  { id: 'finance', phone: '+91 99872 40556', label: 'Finance' },
+];
+
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
@@ -49,8 +57,19 @@ export default function Login() {
   const validPhone = /^[6-9]\d{9}$/.test(phone);
   const code = otp.join('');
 
+  /**
+   * Numbers that will actually get somebody in.
+   *
+   * These came from `team`, which is empty on this screen when the panel is
+   * talking to the API — nothing is fetched until somebody has signed in — so
+   * the box rendered with no numbers at all, and the only number left on the
+   * page was the support line in the footer. People typed that.
+   *
+   * Against the API the list is the seeded staff, owner first because that is
+   * the account that opens every screen. Offline it is still the local team.
+   */
   const knownNumbers = useMemo(
-    () => team.filter((t) => t.status === 'Active').slice(0, 3),
+    () => (isLive ? DEMO_ACCOUNTS : team.filter((t) => t.status === 'Active').slice(0, 3)),
     [team]
   );
 
@@ -246,7 +265,7 @@ export default function Login() {
                     type="tel"
                     inputMode="numeric"
                     autoComplete="tel-national"
-                    placeholder="98200 11223"
+                    placeholder="10-digit mobile number"
                     className="w-full bg-transparent px-3.5 py-3 text-sm font-semibold tracking-wide text-ink-900 outline-none placeholder:font-normal placeholder:text-ink-400"
                   />
                 </div>
@@ -271,14 +290,19 @@ export default function Login() {
                           setPhone(t.phone.replace(/\D/g, '').slice(-10));
                           setError('');
                         }}
-                        className="rounded-lg bg-white px-2.5 py-1.5 text-xs font-semibold text-ink-700 shadow-card transition hover:text-brand-700"
+                        className="rounded-lg bg-white px-2.5 py-1.5 text-left text-xs font-semibold text-ink-700 shadow-card transition hover:text-brand-700"
                       >
-                        {t.phone}
+                        <span className="num block">{t.phone}</span>
+                        {t.label && (
+                          <span className="block text-[10px] font-medium text-ink-400">{t.label}</span>
+                        )}
                       </button>
                     ))}
                   </div>
                   <p className="mt-2 text-[11px] text-ink-500">
-                    Any valid 10-digit number works in this demo.
+                    {isLive
+                      ? 'Only registered staff numbers can sign in. The owner account opens every screen.'
+                      : 'Any valid 10-digit number works in this demo.'}
                   </p>
                 </div>
               </form>

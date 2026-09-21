@@ -111,16 +111,6 @@ export const scheduledReports = [
     format: 'Excel',
     status: 'On',
   },
-  {
-    id: 'SCH-03',
-    name: 'Business performance',
-    every: 'Monthly',
-    at: '1st, 10:00 am',
-    module: 'Revenue',
-    recipients: ['Admin', 'Business manager', 'Finance'],
-    format: 'PDF',
-    status: 'On',
-  },
 ];
 
 export const reportRecipients = [

@@ -418,22 +418,6 @@ export const pendingApprovals = [
     id: 'APR-07', area: 'Membership', what: 'Platinum Elite for Ananya Deshmukh',
     raisedBy: 'Sneha', approver: 'Priya Nair', raised: '04 Sep 2026, 04:15 pm', value: 35396, status: 'Waiting',
   },
-  {
-    id: 'APR-06', area: 'Refund', what: 'Refund on BKG-8821 after the room downgrade',
-    raisedBy: 'Kabir', approver: 'Neha Pillai', raised: '04 Sep 2026, 11:20 am', value: 18000, status: 'Waiting',
-  },
-  {
-    id: 'APR-05', area: 'Booking', what: 'BKG-8824 needs an operations confirmation',
-    raisedBy: 'Kabir', approver: 'Divya Rao', raised: '03 Sep 2026, 06:05 pm', value: 186000, status: 'Approved',
-  },
-  {
-    id: 'APR-04', area: 'Inventory', what: 'Ayana Resort 2027 contract rates',
-    raisedBy: 'Divya', approver: 'Vikram Joshi', raised: '02 Sep 2026, 02:30 pm', value: 0, status: 'Approved',
-  },
-  {
-    id: 'APR-03', area: 'Reward', what: 'Anniversary gift for Rohan Bhatt outside the plan',
-    raisedBy: 'Sneha', approver: 'Priya Nair', raised: '01 Sep 2026, 12:10 pm', value: 4500, status: 'Rejected',
-  },
 ];
 
 /** The dashboard each role opens on — nobody gets the same one. */
@@ -469,15 +453,6 @@ export const roleDashboards = [
 export const auditLog = [
   { id: 'LOG-31', at: '05 Sep 2026, 09:42 am', who: 'Priya Nair', kind: 'Approval', what: 'Requested a 12% discount on the Kapoor package' },
   { id: 'LOG-30', at: '05 Sep 2026, 09:22 am', who: 'Kabir Menon', kind: 'Login', what: 'Signed in from 103.21.58.19' },
-  { id: 'LOG-29', at: '05 Sep 2026, 09:04 am', who: 'Sneha Kulkarni', kind: 'Login', what: 'Signed in from 103.21.58.14' },
-  { id: 'LOG-28', at: '04 Sep 2026, 07:05 pm', who: 'Neha Pillai', kind: 'Finance', what: 'Marked INV-2041 as paid' },
-  { id: 'LOG-27', at: '04 Sep 2026, 06:44 pm', who: 'Amit Verma', kind: 'Security', what: 'Three failed sign-in attempts' },
-  { id: 'LOG-26', at: '04 Sep 2026, 04:15 pm', who: 'Sneha Kulkarni', kind: 'Membership', what: 'Created a Platinum Elite membership for Ananya Deshmukh' },
-  { id: 'LOG-25', at: '04 Sep 2026, 11:20 am', who: 'Kabir Menon', kind: 'Refund', what: 'Raised a refund request on BKG-8821' },
-  { id: 'LOG-24', at: '03 Sep 2026, 06:05 pm', who: 'Divya Rao', kind: 'Booking', what: 'Confirmed BKG-8824 with the hotel' },
-  { id: 'LOG-23', at: '03 Sep 2026, 10:30 am', who: 'Vikram Joshi', kind: 'Role', what: 'Gave the Assistant branch manager role export rights' },
-  { id: 'LOG-22', at: '02 Sep 2026, 02:30 pm', who: 'Vikram Joshi', kind: 'Approval', what: 'Approved the Ayana Resort 2027 contract rates' },
-  { id: 'LOG-21', at: '02 Sep 2026, 09:15 am', who: 'Vikram Joshi', kind: 'User', what: 'Added Farhan Qureshi as a Travel Consultant' },
 ];
 
 /** What the user list can be cut by. */

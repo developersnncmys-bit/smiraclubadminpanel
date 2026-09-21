@@ -25,6 +25,7 @@ import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, stageProbability, inr, shortInr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
+import { when } from '../lib/adapters.js';
 import { findMembership, membershipStanding } from '../lib/membership.js';
 
 const SOURCES = ['Instagram', 'Website', 'Google Ads', 'Referral', 'Walk-in', 'WhatsApp'];
@@ -826,6 +827,12 @@ export default function Enquiries() {
               className="btn-action"
               disabled={!draft.trim()}
               onClick={() => {
+                // A date the server cannot store would only be kept on this
+                // screen, so say so rather than pretend it saved.
+                if (!when(draft.trim())) {
+                  toast('Use a date like "Tomorrow 11:00 am", "In 3 days" or "18 Sep 2026"', 'danger');
+                  return;
+                }
                 updateMany('enquiries', followUpFor, { nextFollowUp: draft.trim() }, `Follow-up set for ${followUpFor.length} lead(s)`);
                 setFollowUpFor(null);
                 setSelected([]);

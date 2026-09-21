@@ -20,7 +20,7 @@ import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor, fallbackPathFor } 
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v35';
+const KEY = 'smira-club-admin:v36';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -184,6 +184,22 @@ const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
   const [db, setDb] = useState(load);
+
+  /**
+   * The latest data, readable synchronously. A write reads the record it is
+   * about to change from here rather than from inside a state updater, which
+   * React may run later than the line that needs the answer.
+   */
+  const dbRef = useRef(db);
+  dbRef.current = db;
+
+  /** What the adapters need to turn a name on screen into an id on the server. */
+  const lookups = () => ({
+    team: dbRef.current.team || [],
+    customers: dbRef.current.customers || [],
+    memberships: dbRef.current.memberships || [],
+    enquiries: dbRef.current.enquiries || [],
+  });
   const [toasts, setToasts] = useState([]);
   const [owner, setOwner] = useState('All team members');
   const [range, setRange] = useState('Last 7 days');
@@ -312,7 +328,7 @@ export function AppProvider({ children }) {
 
       if (live && ADAPTERS[collection]) {
         api
-          .post(pathFor(collection), toApi(collection, item))
+          .post(pathFor(collection), toApi(collection, item, lookups()))
           .then((res) => {
             const saved = fromApi(collection, res.data);
             setDb((d) => ({
@@ -334,18 +350,15 @@ export function AppProvider({ children }) {
 
   const update = useCallback(
     (collection, id, patch, { silent = false, message } = {}) => {
-      let before = null;
-      setDb((d) => {
-        before = d[collection].find((r) => r.id === id) || null;
-        return {
-          ...d,
-          [collection]: d[collection].map((r) => (r.id === id ? { ...r, ...patch } : r)),
-        };
-      });
+      const before = (dbRef.current[collection] || []).find((r) => r.id === id) || null;
+      setDb((d) => ({
+        ...d,
+        [collection]: d[collection].map((r) => (r.id === id ? { ...r, ...patch } : r)),
+      }));
       if (!silent) toast(message || `${SINGULAR[collection]} ${id} updated`);
 
       if (live && ADAPTERS[collection] && before?._id) {
-        const body = toApi(collection, patch);
+        const body = toApi(collection, patch, lookups());
         if (Object.keys(body).length) {
           api.patch(`${pathFor(collection)}/${before._id}`, body).catch((err) => {
             setDb((d) => ({
@@ -362,18 +375,15 @@ export function AppProvider({ children }) {
 
   const updateMany = useCallback(
     (collection, ids, patch, message) => {
-      let targets = [];
-      setDb((d) => {
-        targets = d[collection].filter((r) => ids.includes(r.id));
-        return {
-          ...d,
-          [collection]: d[collection].map((r) => (ids.includes(r.id) ? { ...r, ...patch } : r)),
-        };
-      });
+      const targets = (dbRef.current[collection] || []).filter((r) => ids.includes(r.id));
+      setDb((d) => ({
+        ...d,
+        [collection]: d[collection].map((r) => (ids.includes(r.id) ? { ...r, ...patch } : r)),
+      }));
       toast(message || `${ids.length} ${ids.length === 1 ? 'record' : 'records'} updated`);
 
       if (live && ADAPTERS[collection]) {
-        const body = toApi(collection, patch);
+        const body = toApi(collection, patch, lookups());
         if (Object.keys(body).length) {
           Promise.allSettled(
             targets.filter((t) => t._id).map((t) => api.patch(`${pathFor(collection)}/${t._id}`, body))
@@ -393,11 +403,8 @@ export function AppProvider({ children }) {
   const remove = useCallback(
     (collection, ids) => {
       const list = Array.isArray(ids) ? ids : [ids];
-      let gone = [];
-      setDb((d) => {
-        gone = d[collection].filter((r) => list.includes(r.id));
-        return { ...d, [collection]: d[collection].filter((r) => !list.includes(r.id)) };
-      });
+      const gone = (dbRef.current[collection] || []).filter((r) => list.includes(r.id));
+      setDb((d) => ({ ...d, [collection]: d[collection].filter((r) => !list.includes(r.id)) }));
 
       if (live && ADAPTERS[collection]) {
         Promise.allSettled(
@@ -417,7 +424,7 @@ export function AppProvider({ children }) {
         'danger'
       );
     },
-    [toast]
+    [toast, live, pull]
   );
 
   const duplicate = useCallback(
@@ -612,6 +619,51 @@ export function AppProvider({ children }) {
     (payload) => {
       const id = nextId('memberSignups');
       const signup = { ...payload, id, status: 'New', quote: '' };
+
+      /**
+       * Against the server a membership has to belong to a customer, so the
+       * customer comes first — found by their number, or created — and the
+       * membership is made against them. Doing both at once, as the offline
+       * demo does, sent a membership with nobody attached and it was refused.
+       */
+      if (live) {
+        (async () => {
+          try {
+            let customer = (dbRef.current.customers || []).find(
+              (c) => c._id && phoneDigits(c.phone) === phoneDigits(signup.phone)
+            );
+            if (!customer) {
+              const made = await api.post(
+                '/customers',
+                toApi(
+                  'customers',
+                  { name: signup.name, phone: signup.phone, email: signup.email, city: signup.city || '', source: 'Website', tier: 'Silver' },
+                  lookups()
+                )
+              );
+              customer = fromApi('customers', made.data);
+              setDb((d) => ({ ...d, customers: [customer, ...d.customers] }));
+            }
+
+            const sold = await api.post(
+              '/memberships',
+              toApi(
+                'memberSignups',
+                { customerId: customer._id, planId: signup.planId || signup.plan, source: 'Website', members: signup.members },
+                lookups()
+              )
+            );
+            const saved = fromApi('memberSignups', sold.data);
+            setDb((d) => ({ ...d, memberSignups: [saved, ...d.memberSignups] }));
+            toast(`${saved.name} selected ${saved.plan} on the website`, 'info');
+            if (dbRef.current.settings?.membership?.autoQuote) generateMembershipQuote(saved);
+          } catch (err) {
+            toast(err.message || 'That sign-up could not be saved', 'danger');
+          }
+        })();
+        return signup;
+      }
+
       create('memberSignups', signup, { silent: true });
 
       // Anyone who signs up on the website becomes a traveller record too, so
@@ -644,7 +696,7 @@ export function AppProvider({ children }) {
       if (db.settings.membership?.autoQuote) generateMembershipQuote(signup);
       return signup;
     },
-    [nextId, create, toast, db.settings, db.customers, generateMembershipQuote]
+    [nextId, create, toast, db.settings, db.customers, generateMembershipQuote, live]
   );
 
   /**
@@ -685,6 +737,48 @@ export function AppProvider({ children }) {
   const logActivity = useCallback(
     (leadId, text, kind = 'note', meta) => {
       const now = new Date();
+      const lead = (dbRef.current.enquiries || []).find((e) => e.id === leadId);
+
+      // Against the server the trail lives on the lead itself.
+      if (live && lead?._id) {
+        // The server's kinds: an assignment is recorded as a status change.
+        const serverKind = ['note', 'call', 'whatsapp', 'email', 'meeting', 'status', 'visit'].includes(kind)
+          ? kind
+          : 'status';
+        const entry = {
+          kind: serverKind,
+          text,
+          byName: auth?.name || 'You',
+          at: now.toISOString(),
+          pending: true,
+        };
+        setDb((d) => ({
+          ...d,
+          enquiries: d.enquiries.map((e) =>
+            e.id === leadId ? { ...e, activities: [...(e.activities || []), entry], lastContact: 'just now' } : e
+          ),
+        }));
+        api
+          .post(`/leads/${lead._id}/activity`, { kind: serverKind, text })
+          .then((res) => {
+            const saved = fromApi('enquiries', res.data);
+            setDb((d) => ({
+              ...d,
+              enquiries: d.enquiries.map((e) => (e.id === leadId ? saved : e)),
+            }));
+          })
+          .catch((err) => {
+            setDb((d) => ({
+              ...d,
+              enquiries: d.enquiries.map((e) =>
+                e.id === leadId ? { ...e, activities: (e.activities || []).filter((a) => a !== entry) } : e
+              ),
+            }));
+            toast(err.message || 'That note did not save', 'danger');
+          });
+        return;
+      }
+
       create(
         'activities',
         {
@@ -704,7 +798,7 @@ export function AppProvider({ children }) {
         { silent: true }
       );
     },
-    [create, auth]
+    [create, auth, live, toast]
   );
 
   const signOut = useCallback(() => {

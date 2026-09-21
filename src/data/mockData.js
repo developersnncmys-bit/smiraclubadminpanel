@@ -227,10 +227,6 @@ export const statusTone = {
 export const enquiries = [
   { id: 'ENQ-2041', name: 'Siddhesh Rane', phone: '+91 98201 44521', email: 'siddhesh.r@gmail.com', destination: 'Bali', pax: 2, travelDate: '18 Sep 2026', budget: 185000, status: 'Interested', source: 'Instagram', owner: 'Kabir', label: 'Honeymoon', created: '04 Aug 2026', lastContact: 'Yesterday', nextFollowUp: 'Today 4:00 pm', priority: 'High' },
   { id: 'ENQ-2039', name: 'Rohan Bhatt', phone: '+91 99201 55420', email: 'rohan.bhatt@outlook.com', destination: 'Bali', pax: 2, travelDate: '02 Sep 2026', budget: 185000, status: 'Won', source: 'Referral', owner: 'Sneha', label: 'Honeymoon', created: '22 Jul 2026', lastContact: '28 Jul 2026', nextFollowUp: 'Departure call 30 Aug', priority: 'High' },
-  { id: 'ENQ-2038', name: 'Ananya Deshmukh', phone: '+91 98330 21145', email: 'ananya.d@gmail.com', destination: 'Maldives', pax: 2, travelDate: '15 Sep 2026', budget: 336000, status: 'Won', source: 'Website', owner: 'Kabir', label: 'Luxury', created: '20 Jul 2026', lastContact: '01 Aug 2026', nextFollowUp: 'Balance payment 28 Aug', priority: 'High' },
-  { id: 'ENQ-2037', name: 'Farhan Qureshi', phone: '+91 98203 71190', email: 'farhan.q@gmail.com', destination: 'Turkey', pax: 2, travelDate: '12 Oct 2026', budget: 264000, status: 'Lost', source: 'Instagram', owner: 'Sneha', label: 'Couple', created: '19 Jul 2026', lastContact: '29 Jul 2026', nextFollowUp: '—', priority: 'Low', lostReason: 'Price too high' },
-  { id: 'ENQ-2036', name: 'Pooja Salvi', phone: '+91 90040 66218', email: 'pooja.salvi@gmail.com', destination: 'Goa', pax: 5, travelDate: '18 Aug 2026', budget: 74000, status: 'Lost', source: 'Google Ads', owner: 'Kabir', label: 'Family', created: '18 Jul 2026', lastContact: '26 Jul 2026', nextFollowUp: '—', priority: 'Low', lostReason: 'No response' },
-  { id: 'ENQ-2040', name: 'Jayashree Patil', phone: '+91 90045 88120', email: 'jaya.patil@outlook.com', destination: 'Kerala', pax: 4, travelDate: '02 Oct 2026', budget: 96000, status: 'New', source: 'Website', owner: 'Unassigned', label: 'Family', created: '04 Aug 2026', lastContact: 'Not yet', nextFollowUp: 'Today 6:00 pm', priority: 'Medium' },
 ];
 
 /** Brand colour per enquiry source; the counts come from the live list. */
@@ -395,16 +391,6 @@ export const rewardGrants = [
     eligibility: 'Birthday 24 Jan', assigned: '—', due: '24 Jan 2027',
     officer: 'Ritik', stage: 'Eligible', proof: '—', notes: 'Queue with the January batch',
   },
-  {
-    id: 'RWD-03', member: 'Ananya Deshmukh', kind: 'Membership gift', gift: 'Platinum luggage set',
-    eligibility: 'On activating Platinum Elite', assigned: '—', due: '11 Aug 2026',
-    officer: 'Ritik', stage: 'Pending', proof: '—', notes: 'Waiting on the membership payment',
-  },
-  {
-    id: 'RWD-04', member: 'Rohan Bhatt', kind: 'Referral reward', gift: '₹5,000 travel credit',
-    eligibility: '1 referral converted', assigned: '02 Aug 2026', due: '20 Aug 2026',
-    officer: 'Sneha', stage: 'Approved', proof: '—', notes: 'Credit to be applied on the next booking',
-  },
 ];
 
 /** How engaged a member is, and how the desk should read it. */
@@ -430,20 +416,6 @@ export const reminderKinds = [
 export const tasks = [
   { id: 'TSK-311', title: 'Share revised Bali itinerary', customer: 'Siddhesh Rane', type: 'Send itinerary', due: '04 Aug 2026, 11:45 am', owner: 'Kabir', bucket: 'today', priority: 'High', note: 'Client wants a pool villa option and a private candlelight dinner added.' },
   { id: 'TSK-310', title: 'Collect passport copies', customer: 'Rohan Bhatt', type: 'Documents', due: '04 Aug 2026, 04:30 pm', owner: 'Sneha', bucket: 'today', priority: 'High', note: '2 of 6 passports still pending. Visa filing deadline is 08 Aug.' },
-  { id: 'TSK-325', title: 'Call Meera Iyer on the Andaman quote', customer: 'Meera Iyer', lead: 'LEAD-2291', type: 'Call', due: '31 Aug 2026, 04:30 pm', created: '31 Aug 2026, 09:40 am', owner: 'Rahul', createdBy: 'Vikram', bucket: 'today', priority: 'High', status: 'In progress', lastAction: 'Called at 3:12 pm — connected', nextAction: 'Share the 4N5D quote', note: 'Wants a beachfront resort and a private ferry transfer.' },
-  { id: 'TSK-324', title: 'Day 3 follow-up — Nikhil Sethi', customer: 'Nikhil Sethi', lead: 'LEAD-2284', type: 'Follow-up', due: '31 Aug 2026, 02:00 pm', created: '28 Aug 2026, 11:10 am', owner: 'Rahul', createdBy: 'Rahul', bucket: 'overdue', priority: 'High', status: 'Overdue', lastAction: 'Presentation completed on 29 Aug', nextAction: 'Call and re-pitch Gold Voyager', note: 'Presentation done, decision pending since Friday.' },
-  { id: 'TSK-323', title: 'Send Kerala package on WhatsApp', customer: 'Farhan Qureshi', lead: 'LEAD-2288', type: 'WhatsApp', due: '31 Aug 2026, 05:00 pm', created: '31 Aug 2026, 10:05 am', owner: 'Rahul', createdBy: 'Rahul', bucket: 'today', priority: 'Medium', status: 'Pending', lastAction: 'Quote drafted', nextAction: 'Send the PDF and confirm receipt', note: '' },
-  { id: 'TSK-322', title: 'Platinum walkthrough — Sanjana Kapoor', customer: 'Sanjana Kapoor', lead: 'LEAD-2279', type: 'Presentation', due: '31 Aug 2026, 03:00 pm', created: '29 Aug 2026, 04:20 pm', owner: 'Priya', createdBy: 'Priya', bucket: 'today', priority: 'High', status: 'In progress', lastAction: 'Walkthrough started at 3:00 pm', nextAction: 'Send inclusions and the payment link', note: 'Family of four, Europe in December.' },
-  { id: 'TSK-321', title: 'Home visit — Powai', customer: 'Sanjana Kapoor', lead: 'LEAD-2279', type: 'Customer Visit', due: '31 Aug 2026, 02:15 pm', created: '30 Aug 2026, 06:00 pm', owner: 'Imran', createdBy: 'Priya', bucket: 'today', priority: 'High', status: 'In progress', lastAction: 'Checked in at 2:15 pm', nextAction: 'Check out and log the outcome', note: 'Field officer assigned by Priya.' },
-  { id: 'TSK-320', title: 'Collect ₹1,86,000 balance on BKG-8824', customer: 'Ananya Deshmukh', lead: 'LEAD-2266', type: 'Payment Follow-up', due: '30 Aug 2026, 06:00 pm', created: '26 Aug 2026, 12:30 pm', owner: 'Neha', createdBy: 'Vikram', bucket: 'overdue', priority: 'High', status: 'Overdue', lastAction: 'Reminder sent on 28 Aug', nextAction: 'Send a payment link and call', note: 'Balance due before the 28th — now overdue.' },
-  { id: 'TSK-319', title: 'Membership activation — Rohan Bhatt', customer: 'Rohan Bhatt', lead: 'LEAD-2271', type: 'Membership Activation', due: '31 Aug 2026, 06:00 pm', created: '30 Aug 2026, 10:00 am', owner: 'Divya', createdBy: 'Sneha', bucket: 'today', priority: 'Medium', status: 'In progress', lastAction: 'Payment confirmed', nextAction: 'Issue the membership card', note: 'Gold Voyager, paid in full.' },
-  { id: 'TSK-318', title: 'File Schengen visa — Kapoor party', customer: 'Sanjana Kapoor', lead: 'LEAD-2279', type: 'Documentation', due: '31 Aug 2026, 06:00 pm', created: '29 Aug 2026, 09:15 am', owner: 'Divya', createdBy: 'Divya', bucket: 'today', priority: 'High', status: 'In progress', lastAction: 'Passports collected', nextAction: 'Submit at the VFS centre', note: '' },
-  { id: 'TSK-317', title: 'Retry call — Ritu Malhotra', customer: 'Ritu Malhotra', lead: 'LEAD-2290', type: 'Call', due: '31 Aug 2026, 04:30 pm', created: '31 Aug 2026, 11:00 am', owner: 'Amit', createdBy: 'Vikram', bucket: 'today', priority: 'Medium', status: 'Pending', lastAction: 'Two attempts — not answered', nextAction: 'Third attempt before end of day', note: 'Two attempts, not answered.' },
-  { id: 'TSK-316', title: 'Final follow-up — Dhruv Malhotra', customer: 'Dhruv Malhotra', lead: 'LEAD-2277', type: 'Follow-up', due: '30 Aug 2026, 05:00 pm', created: '24 Aug 2026, 03:40 pm', owner: 'Amit', createdBy: 'Amit', bucket: 'overdue', priority: 'High', status: 'Overdue', lastAction: 'Fifth follow-up on 27 Aug', nextAction: 'Close or mark lost', note: 'Sixth touch. No response since the 27th.' },
-  { id: 'TSK-315', title: 'Booking follow-up — BKG-8821', customer: 'Siddhesh Rane', lead: 'LEAD-2263', type: 'Booking Follow-up', due: '31 Aug 2026, 01:00 pm', created: '30 Aug 2026, 02:00 pm', owner: 'Kabir', createdBy: 'Vikram', bucket: 'done', priority: 'Medium', status: 'Completed', lastAction: 'Hotel voucher shared', nextAction: '—', note: 'Hotel confirmation shared with the customer.' },
-  { id: 'TSK-314', title: 'Day 1 follow-up — Aarti Menon', customer: 'Aarti Menon', lead: 'LEAD-2293', type: 'Follow-up', due: '31 Aug 2026, 11:30 am', created: '30 Aug 2026, 05:30 pm', owner: 'Priya', createdBy: 'Priya', bucket: 'done', priority: 'Medium', status: 'Completed', lastAction: 'Called at 11:20 am', nextAction: 'Day 3 on 02 Sep', note: '' },
-  { id: 'TSK-313', title: 'Schedule the Vashi visit', customer: 'Karan Shetty', lead: 'LEAD-2286', type: 'Customer Visit', due: '31 Aug 2026, 12:00 pm', created: '29 Aug 2026, 06:15 pm', owner: 'Imran', createdBy: 'Vikram', bucket: 'done', priority: 'Medium', status: 'Completed', lastAction: 'Visit completed at 12:10 pm', nextAction: 'Send the meeting notes', note: 'Membership discussed, closing likely.' },
-  { id: 'TSK-312', title: 'Reconcile yesterday’s UPI collections', customer: '—', lead: '—', type: 'Documentation', due: '31 Aug 2026, 10:00 am', created: '30 Aug 2026, 07:00 pm', owner: 'Neha', createdBy: 'Vikram', bucket: 'overdue', priority: 'Medium', status: 'Overdue', lastAction: 'Statement downloaded', nextAction: 'Match the gateway settlement file', note: 'Blocked — employee has not logged in today.' },
 ];
 
 // -- Quotations, invoices, payments -----------------------------------------
@@ -572,32 +544,6 @@ export const memberships = [
 
 // Signups captured on the website pricing page and pushed into the panel.
 export const memberSignups = [
-  {
-    id: 'MSU-09', name: 'Siddhesh Rane', email: 'siddhesh.r@gmail.com', phone: '+91 98201 44521', city: 'Mumbai',
-    address: '12 Carter Road, Bandra West, Mumbai 400050', family: 2, branch: 'Mumbai',
-    planId: 'MEM-01', plan: 'Silver Explorer', members: 2, movement: 'New', source: 'Instagram', received: '04 Oct 2025',
-    status: 'Active', quote: '', startedOn: '04 Oct 2025', expiresOn: '03 Oct 2026',
-    amount: 5899, paid: 5899, expert: 'Kabir', fieldOfficer: 'Ritik',
-    activation: { stage: 'Activated', date: '05 Oct 2025', deadline: '11 Oct 2025', contacted: true, explained: true, documents: true, gift: 'Given' },
-    renewal: { stage: 'Renewal contacted', contactedOn: '14 Aug 2026', note: 'Asked for a Gold upgrade quote' },
-    benefits: [
-      { name: 'Free hotel stays', allocated: 1, used: 0 },
-      { name: 'Luxury hotel discounts', allocated: 4, used: 1 },
-      { name: 'Travel packages', allocated: 2, used: 1 },
-      { name: 'Transport benefits', allocated: 2, used: 0 },
-      { name: 'Restaurant benefits', allocated: 4, used: 2 },
-    ],
-    saving: 18400,
-    timeline: [
-      { step: 'Lead created', at: '28 Sep 2025', note: 'Came in from Instagram' },
-      { step: 'Membership sold', at: '04 Oct 2025', note: 'Silver Explorer, 2 members' },
-      { step: 'Payment', at: '04 Oct 2025', note: '₹5,899 by UPI' },
-      { step: 'Activation', at: '05 Oct 2025', note: 'Welcome kit handed over' },
-      { step: 'Expert call', at: '06 Oct 2025', note: 'Kabir explained the benefits' },
-      { step: 'Benefit used', at: '18 Feb 2026', note: 'Restaurant benefit — Goa' },
-      { step: 'Follow-up', at: '14 Aug 2026', note: 'Renewal conversation started' },
-    ],
-  },
   {
     id: 'MSU-04', name: 'Ananya Deshmukh', email: 'ananya.d@gmail.com', phone: '+91 98330 21145', city: 'Pune',
     address: '31 Koregaon Park Annexe, Pune 411001', family: 4, branch: 'Pune',
@@ -1165,13 +1111,6 @@ export const salesTrend = [
 export const salesActivity = [
   { id: 'ACT-S1', at: '10:05 am', who: 'Kabir', kind: 'Calls', text: 'Called Siddhesh Rane about the Bali itinerary' },
   { id: 'ACT-S2', at: '10:22 am', who: 'Sneha', kind: 'Presentations', text: 'Sent the Maldives itinerary to Ananya Deshmukh' },
-  { id: 'ACT-S3', at: '10:48 am', who: 'Kabir', kind: 'Visits', text: 'Completed the customer visit in Bandra' },
-  { id: 'ACT-S4', at: '11:15 am', who: 'Sneha', kind: 'Follow-ups', text: 'Moved Siddhesh Rane to Interested' },
-  { id: 'ACT-S5', at: '11:42 am', who: 'Sneha', kind: 'Closings', text: 'Closed Bali Honeymoon Escape — ₹1,85,000' },
-  { id: 'ACT-S6', at: '12:05 pm', who: 'System', kind: 'Follow-ups', text: '1 follow-up is now overdue' },
-  { id: 'ACT-S7', at: '12:40 pm', who: 'Kabir', kind: 'WhatsApp', text: 'WhatsApped the Goa quote to Jayashree Patil' },
-  { id: 'ACT-S8', at: '01:20 pm', who: 'System', kind: 'Payments', text: 'Received ₹1,50,000 against INV-4411' },
-  { id: 'ACT-S9', at: '02:35 pm', who: 'Kabir', kind: 'Tasks', text: 'Created a task — collect passport copies' },
 ];
 
 export const activityKinds = ['All', 'Calls', 'Follow-ups', 'Presentations', 'Visits', 'Closings', 'Payments', 'WhatsApp', 'Tasks'];

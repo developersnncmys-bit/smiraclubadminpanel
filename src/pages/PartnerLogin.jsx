@@ -19,8 +19,6 @@ const RESEND_SECONDS = 45;
 /** The partners the live API knows, so a demo has somewhere to start. */
 const DEMO_PARTNERS = [
   { phone: '+91 98450 11201', label: 'Ayana Resort & Spa' },
-  { phone: '+91 98450 11202', label: 'Atlantis The Palm' },
-  { phone: '+91 98450 11203', label: 'Skyline Transfers' },
 ];
 
 export default function PartnerLogin() {

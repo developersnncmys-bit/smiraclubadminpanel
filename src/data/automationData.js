@@ -246,13 +246,8 @@ export const customFields = [
 
 /** Every automated action, logged. */
 export const history = [
-  { at: '10:00 am', lead: 'ENQ-2040', text: 'Lead created', rule: 'AUT-01', status: 'Done' },
-  { at: '10:01 am', lead: 'ENQ-2040', text: 'Assigned to Kabir', rule: 'AUT-01', status: 'Done' },
-  { at: '10:02 am', lead: 'ENQ-2040', text: 'WhatsApp welcome sent', rule: 'AUT-01', status: 'Done' },
-  { at: '12:00 pm', lead: 'ENQ-2040', text: 'Call task created', rule: 'AUT-01', status: 'Done' },
-  { at: '11:05 am', lead: 'ENQ-2041', text: 'Follow-up reminder sent', rule: 'AUT-02', status: 'Done' },
-  { at: 'Yesterday', lead: 'ENQ-2041', text: 'Manager escalation', rule: 'AUT-02', status: 'Done' },
-  { at: 'Yesterday', lead: 'MSU-04', text: 'Payment link resend failed — number not on WhatsApp', rule: 'AUT-03', status: 'Failed' },
+  { at: '10:00 am', lead: 'ENQ-2041', text: 'Lead created', rule: 'AUT-01', status: 'Done' },
+  { at: '10:01 am', lead: 'ENQ-2041', text: 'Assigned to Kabir', rule: 'AUT-01', status: 'Done' },
 ];
 
 /** What the admin panel holds under automation. */
@@ -315,10 +310,6 @@ export const failedJobs = [
   {
     id: 'JOB-117', rule: 'Website lead to the Mumbai desk', ran: '04 Sep 2026, 06:40 pm',
     target: 'LEAD-2293 · Aarti Menon', reason: 'No Mumbai executive was online', attempts: 2, stage: 'Retrying',
-  },
-  {
-    id: 'JOB-114', rule: 'Renewal campaign 45 days out', ran: '03 Sep 2026, 08:00 am',
-    target: 'MSU-03 · Rohan Bhatt', reason: 'Mobile number failed validation', attempts: 5, stage: 'Given up',
   },
 ];
 

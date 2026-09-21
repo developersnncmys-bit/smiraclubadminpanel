@@ -144,64 +144,6 @@ export const offers = [
     stage: 'Approved',
     status: 'Live',
   },
-  {
-    id: 'OFR-03',
-    name: 'Birthday hotel upgrade',
-    code: 'BDAYUP',
-    category: 'Membership',
-    sub: 'Birthday offer',
-    benefit: 'Free upgrade',
-    headline: 'Birthday special — enjoy an exclusive hotel upgrade',
-    tiers: ['Platinum'],
-    from: '01 Jan 2026',
-    to: '31 Dec 2026',
-    travelFrom: '01 Jan 2026',
-    travelTo: '31 Dec 2026',
-    blackout: '—',
-    totalLimit: 0,
-    perCustomer: 1,
-    minBooking: 0,
-    used: 18,
-    views: 640,
-    clicks: 288,
-    enquiries: 61,
-    bookings: 18,
-    revenue: 402000,
-    discountCost: 54000,
-    vendorCost: 286000,
-    where: ['WhatsApp campaign', 'Member dashboard'],
-    stage: 'Approved',
-    status: 'Live',
-  },
-  {
-    id: 'OFR-04',
-    name: 'Monsoon spa treat',
-    code: 'SPA20',
-    category: 'Lifestyle',
-    sub: 'Spa',
-    benefit: 'Percentage discount',
-    headline: '20% off at Serene Spa, Mumbai',
-    tiers: ['All members'],
-    from: '01 Jul 2026',
-    to: '31 Aug 2026',
-    travelFrom: '01 Jul 2026',
-    travelTo: '31 Aug 2026',
-    blackout: '—',
-    totalLimit: 300,
-    perCustomer: 3,
-    minBooking: 0,
-    used: 62,
-    views: 1560,
-    clicks: 402,
-    enquiries: 44,
-    bookings: 62,
-    revenue: 96000,
-    discountCost: 19200,
-    vendorCost: 64000,
-    where: ['Offers page', 'Offers section'],
-    stage: 'Manager review',
-    status: 'Scheduled',
-  },
 ];
 
 /** Lifestyle offers come from vendors, and redeem differently. */
@@ -250,7 +192,6 @@ export const redemptionStates = ['Reserved', 'Applied', 'Redeemed', 'Cancelled',
 export const redemptions = [
   { id: 'RDM-01', customer: 'Rohan Bhatt', offer: 'Weekend villa escape', booking: 'BKG-8821', discount: 2000, date: 'Today', status: 'Redeemed' },
   { id: 'RDM-02', customer: 'Ananya Deshmukh', offer: 'Monsoon spa treat', booking: 'BKG-8820', discount: 500, date: 'Today', status: 'Applied' },
-  { id: 'RDM-03', customer: 'Siddhesh Rane', offer: 'Gold member Goa exclusive', booking: '—', discount: 1200, date: 'Yesterday', status: 'Cancelled' },
 ];
 
 /** How an offer gets published. */
@@ -259,7 +200,6 @@ export const approvalFlow = ['Draft', 'Submitted', 'Manager review', 'Approved',
 export const approvalHistory = [
   { offer: 'Monsoon spa treat', by: 'Sneha', action: 'Submitted for review', at: '22 Aug 2026, 11:04 am' },
   { offer: 'Weekend villa escape', by: 'Sneha', action: 'Created', at: '18 Aug 2026, 09:40 am' },
-  { offer: 'Weekend villa escape', by: 'Kabir', action: 'Approved — margin is healthy', at: '18 Aug 2026, 04:12 pm' },
 ];
 
 /** What the smart engine reads before deciding what to show. */
@@ -295,7 +235,6 @@ export const offerAutomation = [
 export const notifications = [
   { channel: 'Push', text: 'Weekend deal! Get 25% off on selected villas.' },
   { channel: 'WhatsApp', text: 'Hi Rahul, your Gold membership has unlocked an exclusive offer.' },
-  { channel: 'CRM task', text: 'Follow-up task created for the sales desk on a high-value offer.' },
 ];
 
 /** Stopping the same coupon being used twice. */

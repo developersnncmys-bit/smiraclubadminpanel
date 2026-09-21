@@ -39,7 +39,30 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
   if (!lead) return null;
 
   const index = list.findIndex((l) => l.id === lead.id);
-  const trail = activities.filter((a) => a.lead === lead.id);
+  /**
+   * The lead's own trail from the server, then anything logged in this
+   * browser while there was no server to send it to.
+   */
+  const stamp = (at) => {
+    const d = new Date(at);
+    if (Number.isNaN(d.getTime())) return at || '';
+    return `${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, ${d
+      .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+      .toLowerCase()}`;
+  };
+  const serverTrail = (lead.activities || []).map((a, i) => ({
+    id: `${lead.id}-srv-${i}`,
+    lead: lead.id,
+    kind: a.kind === 'status' ? 'status' : a.kind,
+    text: a.text,
+    who: String(a.byName || '').split(' ')[0] || '—',
+    at: stamp(a.at),
+    when: new Date(a.at).getTime() || 0,
+  }));
+  const trail = [
+    ...serverTrail.sort((a, b) => a.when - b.when),
+    ...activities.filter((a) => a.lead === lead.id),
+  ];
   const ordered = newest ? [...trail].reverse() : trail;
   const leadTasks = tasks.filter((t) => t.customer === lead.name);
   const notes = trail.filter((a) => a.kind === 'note');

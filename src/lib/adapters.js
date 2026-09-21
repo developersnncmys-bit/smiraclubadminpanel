@@ -55,6 +55,128 @@ const ref = (value) => {
 /** What every adapted record carries, whatever collection it came from. */
 const base = (doc) => ({ ...doc, _id: doc._id, id: doc.code || doc._id });
 
+// -- Going the other way: screen values into server values -------------------
+
+const has = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
+
+/** A number, or nothing — never an empty string the server cannot cast. */
+const num = (v) => {
+  if (v === '' || v === null || v === undefined) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+/**
+ * A date the way the desk writes it, as the server stores it.
+ *
+ * Takes what the screens actually produce: "18 Sep 2026", "04 Aug 2026, 09:12
+ * am", "Tomorrow 11am", "Today 4:00 pm", "just now", and the yyyy-mm-dd a date
+ * picker gives. Anything it cannot read comes back undefined, so a half-typed
+ * date is left alone rather than saved as nonsense.
+ */
+export function when(value, now = new Date()) {
+  if (value === null || value === undefined) return undefined;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? undefined : value.toISOString();
+
+  const text = String(value).trim();
+  if (!text || text === '—' || text === '-') return undefined;
+  const lower = text.toLowerCase();
+  if (lower === 'just now' || lower === 'now') return now.toISOString();
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+    // A bare date is that day, not midnight UTC the day before in India.
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(text) ? new Date(`${text}T09:00:00`) : new Date(text);
+    return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+  }
+
+  let at;
+  let rest = '';
+  const relative = lower.match(/^(today|tomorrow|yesterday)\b[\s,]*(.*)$/);
+  // "In 3 days", "in 2 weeks", "next week", "next month" — the quick picks.
+  const ahead = lower.match(/^in\s+(\d{1,3})\s+(day|days|week|weeks)\b[\s,]*(.*)$/);
+  const next = lower.match(/^next\s+(week|month)\b[\s,]*(.*)$/);
+  if (ahead || next) {
+    at = new Date(now);
+    at.setHours(9, 0, 0, 0);
+    if (ahead) at.setDate(at.getDate() + Number(ahead[1]) * (ahead[2].startsWith('week') ? 7 : 1));
+    else if (next[1] === 'week') at.setDate(at.getDate() + 7);
+    else at.setMonth(at.getMonth() + 1);
+    rest = ahead ? ahead[3] : next[2];
+  } else if (relative) {
+    at = new Date(now);
+    at.setHours(9, 0, 0, 0);
+    at.setDate(at.getDate() + { today: 0, tomorrow: 1, yesterday: -1 }[relative[1]]);
+    rest = relative[2];
+  } else {
+    const m = text.match(/^(\d{1,2})\s+([A-Za-z]{3,9})\.?\s+(\d{4})[\s,]*(.*)$/);
+    if (!m) return undefined;
+    const month = MONTHS.indexOf(m[2].slice(0, 3).toLowerCase());
+    if (month < 0) return undefined;
+    at = new Date(Number(m[3]), month, Number(m[1]), 9, 0, 0, 0);
+    if (at.getDate() !== Number(m[1])) return undefined; // 31 Feb
+    rest = m[4];
+  }
+
+  const t = rest.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (t) {
+    let hour = Number(t[1]);
+    const minute = Number(t[2] || 0);
+    const half = (t[3] || '').toLowerCase();
+    if (half === 'pm' && hour < 12) hour += 12;
+    if (half === 'am' && hour === 12) hour = 0;
+    if (hour <= 23 && minute <= 59) at.setHours(hour, minute, 0, 0);
+  }
+  return at.toISOString();
+}
+
+const isObjectId = (v) => /^[a-f0-9]{24}$/i.test(String(v || ''));
+const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+
+/** "Sneha" or "Sneha Kulkarni" → her id. Anyone we cannot place is left out. */
+export function userId(value, ctx = {}) {
+  if (!value || value === 'Unassigned' || value === '—') return undefined;
+  if (isObjectId(value)) return value;
+  const member = (ctx.team || []).find(
+    (t) => t._id && (same(t.name, value) || same(String(t.name || '').split(' ')[0], value))
+  );
+  return member?._id;
+}
+
+/**
+ * "Rohan Bhatt" → his customer id. Also reads the "Name · 1234" label the
+ * booking form uses to tell two customers with the same name apart.
+ */
+export function customerId(value, ctx = {}) {
+  if (!value) return undefined;
+  if (isObjectId(value)) return value;
+  const text = String(value);
+  const labelled = text.match(/^(.*?)\s+·\s+(\d{4})$/);
+  const list = (ctx.customers || []).filter((c) => c._id);
+  const found = labelled
+    ? list.find((c) => same(c.name, labelled[1]) && String(c.phone || '').replace(/\D/g, '').endsWith(labelled[2]))
+    : list.find((c) => same(c.name, text));
+  return found?._id;
+}
+
+/** "Gold Voyager" → the plan's id. */
+const planId = (value, ctx = {}) => {
+  if (!value) return undefined;
+  if (isObjectId(value)) return value;
+  return (ctx.memberships || []).find((p) => p._id && (p.id === value || same(p.name, value)))?._id;
+};
+
+/** "12 months" → 12. */
+const months = (v) => {
+  if (v === null || v === undefined || v === '') return undefined;
+  const n = parseInt(String(v), 10);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+/** An invoice status as the server names it. Overdue is worked out from the due date. */
+const INVOICE_STATUS = { Partial: 'Partially paid', Overdue: 'Pending' };
+
 // -- One entry per collection the panel shares with the API -----------------
 
 export const ADAPTERS = {
@@ -141,20 +263,26 @@ export const ADAPTERS = {
       lostReason: l.lostReason,
       activities: l.activities || [],
     }),
-    to: (p) => ({
+    to: (p, ctx) => ({
       name: p.name,
       phone: p.phone,
       email: p.email,
       destination: p.destination,
-      pax: p.pax,
-      budget: p.budget,
+      pax: num(p.pax),
+      budget: num(p.budget),
       status: p.status,
       source: p.source,
       label: p.label,
       priority: p.priority,
+      score: p.score,
       branch: p.branch,
       lostReason: p.lostReason,
-      ...(p.ownerId ? { owner: p.ownerId } : {}),
+      notes: p.notes,
+      tags: p.tags,
+      travelDate: has(p, 'travelDate') ? when(p.travelDate) : undefined,
+      nextFollowUpAt: has(p, 'nextFollowUp') ? when(p.nextFollowUp) : undefined,
+      lastContactAt: has(p, 'lastContact') ? when(p.lastContact) : undefined,
+      owner: has(p, 'ownerId') ? p.ownerId || undefined : has(p, 'owner') ? userId(p.owner, ctx) : undefined,
     }),
   },
 
@@ -206,7 +334,11 @@ export const ADAPTERS = {
       engagement: c.engagement,
       satisfaction: c.satisfaction,
       dob: d(c.dob),
-      special: d(c.anniversary),
+      special: d(c.anniversary || c.childBirthday),
+      specialLabel: c.specialLabel || (c.childBirthday && !c.anniversary ? 'Child birthday' : c.anniversary ? 'Anniversary' : ''),
+      source: c.source,
+      last: d(c.lastBookingOn),
+      notes: c.notes,
       lastBooking: d(c.lastBookingOn),
       lastInteraction: d(c.lastInteractionOn),
       referral: c.referral || {},
@@ -214,17 +346,35 @@ export const ADAPTERS = {
       family: c.family || [],
       branch: c.branch,
     }),
-    to: (p) => ({
-      name: p.name,
-      phone: p.phone,
-      email: p.email,
-      city: p.city,
-      address: p.address,
-      tier: p.tier,
-      engagement: p.engagement,
-      branch: p.branch,
-      ...(p.expertId ? { expert: p.expertId } : {}),
-    }),
+    to: (p, ctx) => {
+      // The form files one special date under whatever it is.
+      const child = p.specialLabel === 'Child birthday';
+      return {
+        name: p.name,
+        phone: p.phone,
+        email: p.email,
+        city: p.city,
+        address: p.address,
+        tier: p.tier,
+        engagement: p.engagement,
+        branch: p.branch,
+        source: p.source,
+        notes: p.notes,
+        trips: num(p.trips),
+        spend: num(p.spend),
+        satisfaction: num(p.satisfaction),
+        preferences: p.preferences,
+        dob: has(p, 'dob') ? when(p.dob) : undefined,
+        // One special date at a time: setting one clears the other, or the
+        // old date would keep showing after the label was changed.
+        specialLabel: has(p, 'specialLabel') ? p.specialLabel : undefined,
+        anniversary: has(p, 'special') ? (child ? null : when(p.special) ?? null) : undefined,
+        childBirthday: has(p, 'special') ? (child ? when(p.special) ?? null : null) : undefined,
+        lastBookingOn: has(p, 'last') ? when(p.last) : undefined,
+        lastInteractionOn: has(p, 'lastInteraction') ? when(p.lastInteraction) : undefined,
+        expert: has(p, 'expertId') ? p.expertId || undefined : has(p, 'expert') ? userId(p.expert, ctx) : undefined,
+      };
+    },
   },
 
   // -- Membership ----------------------------------------------------------
@@ -237,10 +387,14 @@ export const ADAPTERS = {
       price: p.price,
       billing: p.billing,
       discount: p.discount ?? 0,
-      duration: p.durationMonths,
+      duration: p.durationMonths ? `${p.durationMonths} months` : '',
       persons: p.persons,
       rooms: p.rooms,
-      freeStay: p.freeStay || { nights: 0 },
+      freeStay: {
+        nights: p.freeStay?.nights ?? 0,
+        rooms: p.rooms ?? 1,
+        validity: p.freeStay?.note || `${p.freeStay?.validityMonths ?? 12} months from joining`,
+      },
       services: p.services || [],
       gifts: p.gifts || [],
       features: p.features || [],
@@ -251,17 +405,24 @@ export const ADAPTERS = {
     to: (p) => ({
       name: p.name,
       tagline: p.tagline,
-      price: p.price,
+      price: num(p.price),
       billing: p.billing,
-      discount: p.discount,
-      durationMonths: p.duration,
-      persons: p.persons,
-      rooms: p.rooms,
-      freeStay: p.freeStay,
+      discount: num(p.discount),
+      durationMonths: has(p, 'duration') ? months(p.duration) : undefined,
+      persons: num(p.persons),
+      rooms: num(p.rooms),
+      freeStay: p.freeStay
+        ? {
+            nights: num(p.freeStay.nights) ?? 0,
+            validityMonths: months(p.freeStay.validity) ?? 12,
+            note: p.freeStay.validity,
+          }
+        : undefined,
       services: p.services,
       gifts: p.gifts,
       features: p.features,
       published: p.published,
+      popular: p.popular,
     }),
   },
 
@@ -294,16 +455,19 @@ export const ADAPTERS = {
       saving: m.saving ?? 0,
       timeline: m.timeline || [],
     }),
-    to: (p) => ({
-      status: p.status,
-      amount: p.amount,
-      paid: p.paid,
+    to: (p, ctx) => ({
+      customer: has(p, 'customerId') ? p.customerId || undefined : undefined,
+      plan: has(p, 'planId') ? planId(p.planId, ctx) : has(p, 'plan') ? planId(p.plan, ctx) : undefined,
+      source: p.source,
       branch: p.branch,
+      members: num(p.members),
       movement: p.movement,
+      status: p.status,
+      amount: num(p.amount),
+      paid: num(p.paid),
       activation: p.activation,
       renewal: p.renewal,
-      ...(p.expertId ? { expert: p.expertId } : {}),
-      ...(p.planId ? { plan: p.planId } : {}),
+      expert: has(p, 'expertId') ? p.expertId || undefined : has(p, 'expert') ? userId(p.expert, ctx) : undefined,
     }),
   },
 
@@ -347,18 +511,34 @@ export const ADAPTERS = {
       occasion: b.occasion,
       freeStay: b.freeStay,
     }),
-    to: (p) => ({
+    to: (p, ctx) => ({
+      customer: has(p, 'customerId')
+        ? p.customerId || undefined
+        : has(p, 'customer')
+          ? customerId(p.customer, ctx)
+          : undefined,
       bookingType: p.bookingType,
       hotel: p.hotel,
       destination: p.destination,
-      rooms: p.rooms,
-      pax: p.pax,
+      packageName: has(p, 'pkg') ? p.pkg : undefined,
+      departureOn: has(p, 'departure') ? when(p.departure) : undefined,
+      checkIn: has(p, 'checkIn') ? when(p.checkIn) : undefined,
+      checkOut: has(p, 'checkOut') ? when(p.checkOut) : undefined,
+      nights: num(p.nights),
+      rooms: num(p.rooms),
+      roomType: p.roomType,
+      mealPlan: p.mealPlan,
+      pax: num(p.pax),
+      adults: num(p.adults),
+      children: num(p.children),
+      amount: num(p.amount),
+      paid: num(p.paid),
+      refund: num(p.refund),
       status: p.status,
       charges: p.charges,
-      paid: p.paid,
-      refund: p.refund,
-      ...(p.customerId ? { customer: p.customerId } : {}),
-      ...(p.ownerId ? { owner: p.ownerId } : {}),
+      occasion: p.occasion,
+      source: p.source,
+      owner: has(p, 'ownerId') ? p.ownerId || undefined : has(p, 'owner') ? userId(p.owner, ctx) : undefined,
     }),
   },
 
@@ -515,14 +695,28 @@ export const ADAPTERS = {
       ...base(i),
       customer: i.customerName || fullName(i.customer),
       customerId: ref(i.customer),
-      booking: i.booking ? '—' : '—',
+      booking: i.bookingCode || (i.booking ? '—' : '—'),
+      bookingId: ref(i.booking),
       issued: d(i.issuedOn),
       due: d(i.dueOn),
       amount: i.amount ?? 0,
       paid: i.paid ?? 0,
-      status: i.status,
+      status: i.status === 'Partially paid' ? 'Partial' : i.status,
     }),
-    to: (p) => ({ amount: p.amount, paid: p.paid, status: p.status }),
+    to: (p, ctx) => ({
+      customer: has(p, 'customerId')
+        ? p.customerId || undefined
+        : has(p, 'customer')
+          ? customerId(p.customer, ctx)
+          : undefined,
+      booking: has(p, 'bookingId') ? p.bookingId || undefined : undefined,
+      forWhat: p.forWhat,
+      issuedOn: has(p, 'issued') ? when(p.issued) : undefined,
+      dueOn: has(p, 'due') ? when(p.due) : undefined,
+      amount: num(p.amount),
+      paid: num(p.paid),
+      status: has(p, 'status') ? INVOICE_STATUS[p.status] || p.status : undefined,
+    }),
   },
 
   payments: {
@@ -679,10 +873,10 @@ export function fromApi(collection, doc) {
   return adapter ? adapter.from(doc) : doc;
 }
 
-export function toApi(collection, patch) {
+export function toApi(collection, patch, ctx = {}) {
   const adapter = ADAPTERS[collection];
   if (!adapter) return patch;
-  const body = adapter.to(patch);
+  const body = adapter.to(patch, ctx);
   // Never send a key the caller did not actually set.
   Object.keys(body).forEach((k) => body[k] === undefined && delete body[k]);
   return body;

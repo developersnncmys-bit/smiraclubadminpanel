@@ -132,8 +132,27 @@ export default function Bookings() {
     { label: 'Export', icon: Download, run: exportBookings },
   ];
 
+  /**
+   * A booking belongs to a customer the server knows, so the form picks one
+   * rather than taking a typed name that may match nobody — or two people.
+   * Two customers sharing a name are told apart by the end of their number.
+   */
+  const shared = new Set(
+    customers.map((c) => c.name).filter((n, i, all) => all.indexOf(n) !== i)
+  );
+  const labelOf = (c) =>
+    shared.has(c.name) ? `${c.name} · ${String(c.phone || '').replace(/\D/g, '').slice(-4)}` : c.name;
+  const customerOptions = customers.map(labelOf);
+
   const fields = [
-    { name: 'customer', label: 'Customer', type: 'text', required: true },
+    {
+      name: 'customer',
+      label: 'Customer',
+      type: 'select',
+      options: customerOptions,
+      required: true,
+      help: 'Not listed? Add them on the Members page first.',
+    },
     { name: 'pkg', label: 'Package', type: 'select', options: packages.map((p) => p.name) },
     { name: 'destination', label: 'Destination', type: 'text', required: true },
     { name: 'departure', label: 'Departure', type: 'date', required: true },
@@ -146,19 +165,31 @@ export default function Bookings() {
   ];
 
   const save = (values) => {
-    if (editing) update('bookings', editing.id, values);
-    else create('bookings', values);
+    // Carry the chosen customer's id, and keep the name the table shows.
+    const chosen = customers.find((c) => labelOf(c) === values.customer);
+    const withCustomer = chosen
+      ? { ...values, customer: chosen.name, customerId: chosen._id || undefined }
+      : values;
+    if (editing) update('bookings', editing.id, withCustomer);
+    else create('bookings', withCustomer);
   };
 
   const raiseInvoice = (r) => {
+    // Issued today, due in a fortnight, against this booking's customer.
+    const today = new Date();
+    const due = new Date(today.getTime() + 14 * 86400000);
+    const fmt = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const id = create('invoices', {
       customer: r.customer,
+      customerId: r.customerId,
       booking: r.id,
-      issued: '04 Aug 2026',
-      due: '18 Aug 2026',
+      bookingId: r._id,
+      forWhat: `Booking ${r.id}`,
+      issued: fmt(today),
+      due: fmt(due),
       amount: r.amount,
       paid: r.paid,
-      status: r.paid >= r.amount ? 'Paid' : r.paid > 0 ? 'Partial' : 'Overdue',
+      status: r.paid >= r.amount ? 'Paid' : r.paid > 0 ? 'Partial' : 'Pending',
     });
     toast(`Invoice ${id} raised for ${r.customer}`);
   };
@@ -537,7 +568,17 @@ export default function Bookings() {
         title={editing ? `Edit ${editing.id}` : 'New booking'}
         subtitle={editing ? editing.customer : 'Confirm a trip for a customer'}
         fields={fields}
-        initial={editing || { status: 'Pending', paid: 0 }}
+        initial={
+          editing
+            ? {
+                ...editing,
+                customer: (() => {
+                  const c = customers.find((x) => x._id && x._id === editing.customerId);
+                  return c ? labelOf(c) : editing.customer;
+                })(),
+              }
+            : { status: 'Pending', paid: 0 }
+        }
         submitLabel={editing ? 'Save changes' : 'Create booking'}
       />
 

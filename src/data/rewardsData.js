@@ -167,32 +167,6 @@ export const customerRewards = [
     expires: '03 Nov 2026',
     progress: { label: 'Package bookings', done: 1, needed: 1 },
   },
-  {
-    id: 'CRW-03',
-    customer: 'Ananya Deshmukh',
-    membership: 'Platinum Elite',
-    reward: '₹1,000 booking voucher',
-    reason: 'Five hotel bookings',
-    value: 1000,
-    cost: 1000,
-    stage: 'Earned',
-    earnedOn: '20 Aug 2026',
-    expires: '18 Dec 2026',
-    progress: { label: 'Hotel bookings', done: 3, needed: 5 },
-  },
-  {
-    id: 'CRW-04',
-    customer: 'Siddhesh Rane',
-    membership: 'Silver Explorer',
-    reward: 'Welcome travel kit',
-    reason: 'Joined Silver Explorer',
-    value: 1200,
-    cost: 480,
-    stage: 'Redeemed',
-    earnedOn: '05 Oct 2025',
-    expires: '03 Jan 2026',
-    progress: { label: 'Membership', done: 1, needed: 1 },
-  },
 ];
 
 /** Physical gifts on their way to somebody. */
@@ -286,18 +260,6 @@ export const referrals = [
     rewardValue: 0,
     verified: false,
   },
-  {
-    id: 'RFR-03',
-    referrer: 'Ananya Deshmukh',
-    referred: 'Farhan Qureshi',
-    sharedOn: '18 Aug 2026',
-    stage: 'Contacted',
-    membership: '—',
-    value: 0,
-    reward: 'Pending',
-    rewardValue: 0,
-    verified: false,
-  },
 ];
 
 /** What the panel does the moment a referral converts. */
@@ -340,20 +302,6 @@ export const campaigns = [
     limit: '1 per customer',
     cities: 'All',
     status: 'Scheduled',
-  },
-  {
-    id: 'RCM-03',
-    name: 'Refer and travel',
-    rule: 'Refer 2 successful members → ₹2,000 booking benefit',
-    from: '01 Aug 2026',
-    to: '31 Dec 2026',
-    audience: 'All members',
-    level: 'Any',
-    budget: 150000,
-    used: 22000,
-    limit: '3 per customer',
-    cities: 'All',
-    status: 'Live',
   },
 ];
 

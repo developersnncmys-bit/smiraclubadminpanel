@@ -126,7 +126,6 @@ export const segments = [
 export const campaigns = [
   { id: 'CMP-01', name: 'Monsoon Bali offer', segment: 'Hot leads', sent: 120, delivered: 118, read: 96, replied: 31, leads: 12, sales: 3, revenue: 70794, cost: 4200, on: '18 Aug 2026' },
   { id: 'CMP-02', name: 'Gold renewal reminder', segment: 'Expiring members', sent: 42, delivered: 42, read: 38, replied: 14, leads: 6, sales: 2, revenue: 47196, cost: 4200, on: '20 Aug 2026' },
-  { id: 'CMP-03', name: 'Platinum free-stay nudge', segment: 'Inactive members', sent: 64, delivered: 61, read: 40, replied: 9, leads: 4, sales: 1, revenue: 23598, cost: 4200, on: '22 Aug 2026' },
 ];
 
 /** Approved templates, grouped the way the sheet groups them. */
@@ -272,49 +271,6 @@ export const conversations = [
       { at: '09:14 am', from: 'bot', text: 'Sorry about that — I have raised it with the team, they will call you.' },
       { at: '09:24 am', from: 'us', text: 'Sneha here. I have sent a fresh link, could you try once more?' },
       { at: '01:20 pm', from: 'them', text: 'Paid ₹1,50,000 now' },
-    ],
-  },
-  {
-    id: 'WAC-03',
-    name: 'Jayashree Patil',
-    phone: '+91 90045 88120',
-    category: 'New lead',
-    source: 'Website',
-    membership: '',
-    plan: '',
-    owner: 'Unassigned',
-    score: 'Warm',
-    unread: 0,
-    handledBy: 'Bot',
-    lastAt: '12:40 pm',
-    followUp: 'Today 6:00 pm',
-    tags: ['Kerala', 'Family'],
-    note: 'Downloaded the Kerala brochure, has not replied since.',
-    messages: [
-      { at: '12:31 pm', from: 'them', text: 'Kerala package for 4 people?' },
-      { at: '12:31 pm', from: 'bot', text: 'Here is the Kerala Backwaters brochure 📄 — shall I have an expert call you?' },
-      { at: '12:40 pm', from: 'bot', text: 'No reply yet — a follow-up is queued for 6:00 pm.' },
-    ],
-  },
-  {
-    id: 'WAC-04',
-    name: 'Rohan Bhatt',
-    phone: '+91 99201 55420',
-    category: 'VIP member',
-    source: 'Referral',
-    membership: 'Gold Voyager',
-    plan: 'Gold Voyager',
-    owner: 'Sneha',
-    score: 'Hot',
-    unread: 0,
-    handledBy: 'Sneha',
-    lastAt: 'Yesterday',
-    followUp: 'Renewal call 01 Sep',
-    tags: ['Bali', 'Renewal'],
-    note: 'Renewal conversation started — interested after the Bali trip.',
-    messages: [
-      { at: 'Yesterday', from: 'us', text: 'Your Gold membership runs out on 09 Sep — shall I hold this year\'s rate?' },
-      { at: 'Yesterday', from: 'them', text: 'Yes, after we are back from Bali' },
     ],
   },
 ];

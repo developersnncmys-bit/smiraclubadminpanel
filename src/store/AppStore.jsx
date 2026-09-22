@@ -235,7 +235,8 @@ export function AppProvider({ children }) {
    */
   const pull = useCallback(async (only) => {
     if (!isLive || !getToken()) return;
-    const wanted = only ? [only] : LIVE_COLLECTIONS;
+    // One collection, a few (a quiet background refresh), or all of them.
+    const wanted = Array.isArray(only) ? only : only ? [only] : LIVE_COLLECTIONS;
     if (!only) setLoading(true);
 
     const results = await Promise.allSettled(
@@ -278,6 +279,31 @@ export function AppProvider({ children }) {
   // Sign in, refresh, or arrive with a token already in hand.
   useEffect(() => {
     if (live) pull();
+  }, [live, pull]);
+
+  /**
+   * Keep up with what happens elsewhere — a booking made on the website, a
+   * partner accepting, a colleague changing a status — without a reload.
+   * The busy lists refresh quietly every few seconds while the tab is open,
+   * and everything refreshes when the tab comes back into view.
+   */
+  useEffect(() => {
+    if (!live) return undefined;
+    const BUSY = ['bookings', 'enquiries', 'memberSignups', 'customers', 'partners', 'tickets'];
+    const tick = () => {
+      if (document.visibilityState === 'visible') pull(BUSY);
+    };
+    const back = () => {
+      if (document.visibilityState === 'visible') pull(LIVE_COLLECTIONS);
+    };
+    const timer = setInterval(tick, 15000);
+    document.addEventListener('visibilitychange', back);
+    window.addEventListener('focus', back);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', back);
+      window.removeEventListener('focus', back);
+    };
   }, [live, pull]);
 
   // The API says the token is no longer good.

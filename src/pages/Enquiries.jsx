@@ -28,7 +28,7 @@ import { downloadCsv } from '../lib/csv.js';
 import { when } from '../lib/adapters.js';
 import { findMembership, membershipStanding } from '../lib/membership.js';
 
-const SOURCES = ['Instagram', 'Website', 'Google Ads', 'Referral', 'Walk-in', 'WhatsApp'];
+const SOURCES = ['Campaign', 'WhatsApp', 'Website', 'Facebook Ads', 'Instagram', 'Google Ads', 'Referral', 'Walk-in', 'Calling data', 'Partner', 'Existing member', 'Other'];
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 const SECTIONS = ['Leads', 'Pipeline', 'Performance', 'Team & sources', 'Today'];
 const PERIODS = ['All', 'Today', 'Yesterday', 'This week', 'This month'];
@@ -287,6 +287,7 @@ export default function Enquiries() {
     { name: 'budget', label: 'Budget (₹)', type: 'number' },
     { name: 'status', label: 'Status', type: 'select', options: enquiryStatuses },
     { name: 'source', label: 'Source', type: 'select', options: SOURCES },
+    { name: 'campaign', label: 'Campaign (if it came from one)', placeholder: 'e.g. Diwali Goa offer' },
     { name: 'label', label: 'Label', type: 'select', options: LABELS },
     { name: 'owner', label: 'Assign to', type: 'select', options: owners },
   ];
@@ -455,6 +456,50 @@ export default function Enquiries() {
           </div>
         )}
       </div>
+
+      {/* Where the leads come from — campaigns and WhatsApp first, then the rest */}
+      {(() => {
+        const pool = all.filter(
+          (e) => inPeriod(e.created, period) && (who === 'All' || e.owner === who) && (priority === 'All' || e.priority === priority)
+        );
+        const seen = [...new Set(pool.map((e) => e.source).filter(Boolean))];
+        const order = ['Campaign', 'WhatsApp', ...seen.filter((s) => s !== 'Campaign' && s !== 'WhatsApp')];
+        return (
+          <section className="card mb-4 px-5 py-4">
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="font-display text-base font-extrabold text-ink-900">Where leads come from</h2>
+              <p className="text-xs text-ink-500">Leads and sales by source · tap one to see only those</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+              {order.map((s) => {
+                const list = pool.filter((e) => e.source === s);
+                const won = list.filter((e) => e.status === 'Won');
+                const on = source === s;
+                const campaigns = [...new Set(list.map((e) => e.campaign).filter(Boolean))];
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSource(on ? 'All' : s)}
+                    className={`rounded-xl border px-3.5 py-3 text-left transition ${on ? 'border-brand-500 bg-brand-50' : 'border-ink-900/[0.08] bg-white hover:border-brand-300'}`}
+                  >
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">{s}</p>
+                    <p className="num mt-1 font-display text-xl font-extrabold text-ink-900">
+                      {list.length} <span className="text-xs font-semibold text-ink-500">lead{list.length === 1 ? '' : 's'}</span>
+                    </p>
+                    <p className="num text-xs font-semibold text-emerald-600">
+                      {won.length} sale{won.length === 1 ? '' : 's'}{value(won) ? ` · ${shortInr(value(won))}` : ''}
+                    </p>
+                    {campaigns.length > 0 && (
+                      <p className="mt-1 truncate text-[11px] text-ink-500" title={campaigns.join(', ')}>{campaigns.join(', ')}</p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Pick a stage, or start something */}
       <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">

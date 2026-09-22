@@ -67,7 +67,7 @@ function Ring({ value, size = 44 }) {
 
 export default function Bookings() {
   const {
-    bookings, packages, team, customers, memberSignups, memberships, invoices,
+    bookings, packages, team, customers, memberSignups, memberships, invoices, partners,
     owner, create, update, updateMany, remove, toast,
   } = useApp();
   const navigate = useNavigate();
@@ -75,6 +75,7 @@ export default function Bookings() {
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [statusFor, setStatusFor] = useState(null);
+  const [sendTo, setSendTo] = useState('');
   const [viewing, setViewing] = useState(null); // the booking panel
   const [view, setView] = useState('list'); // 'list' | 'overview'
   const [status, setStatus] = useState('All');
@@ -144,6 +145,11 @@ export default function Bookings() {
     shared.has(c.name) ? `${c.name} · ${String(c.phone || '').replace(/\D/g, '').slice(-4)}` : c.name;
   const customerOptions = customers.map(labelOf);
 
+  /** Partners the server knows, for sending a confirmed booking to their portal. */
+  const partnerOptions = (partners || [])
+    .filter((p) => p._id)
+    .map((p) => ({ id: p._id, label: p.name }));
+
   const fields = [
     {
       name: 'customer',
@@ -161,15 +167,24 @@ export default function Bookings() {
     { name: 'amount', label: 'Total value (₹)', type: 'number', required: true },
     { name: 'paid', label: 'Amount paid (₹)', type: 'number' },
     { name: 'status', label: 'Status', type: 'select', options: STATUSES },
+    {
+      name: 'partner',
+      label: 'Partner',
+      type: 'select',
+      options: ['', ...partnerOptions.map((p) => p.label)],
+      help: 'Who runs the hotel. A confirmed booking goes to their portal.',
+    },
     { name: 'owner', label: 'Team member', type: 'select', options: consultants },
   ];
 
-  const save = (values) => {
+  const save = ({ partner, ...values }) => {
     // Carry the chosen customer's id, and keep the name the table shows.
     const chosen = customers.find((c) => labelOf(c) === values.customer);
-    const withCustomer = chosen
-      ? { ...values, customer: chosen.name, customerId: chosen._id || undefined }
-      : values;
+    const picked = partnerOptions.find((p) => p.label === partner);
+    const withCustomer = {
+      ...(chosen ? { ...values, customer: chosen.name, customerId: chosen._id || undefined } : values),
+      ...(partner !== undefined ? { vendorId: picked?.id || null } : {}),
+    };
     if (editing) update('bookings', editing.id, withCustomer);
     else create('bookings', withCustomer);
   };
@@ -576,6 +591,7 @@ export default function Bookings() {
                   const c = customers.find((x) => x._id && x._id === editing.customerId);
                   return c ? labelOf(c) : editing.customer;
                 })(),
+                partner: partnerOptions.find((p) => p.id === editing.vendorId)?.label || '',
               }
             : { status: 'Pending', paid: 0 }
         }
@@ -596,13 +612,32 @@ export default function Bookings() {
         title="Change booking status"
         size="sm"
       >
+        {/* Confirmed sends the booking to its partner's portal to accept. */}
+        <label className="mb-4 block">
+          <span className="text-sm font-semibold text-ink-700">Send to partner when confirmed</span>
+          <select
+            className="input mt-1.5 w-full"
+            value={sendTo}
+            onChange={(e) => setSendTo(e.target.value)}
+          >
+            <option value="">Match by hotel name</option>
+            {partnerOptions.map((p) => (
+              <option key={p.id} value={p.id}>{p.label}</option>
+            ))}
+          </select>
+          <span className="mt-1 block text-xs text-ink-500">
+            Confirmed bookings appear on the partner&rsquo;s portal for them to accept.
+          </span>
+        </label>
         <div className="space-y-2">
           {STATUSES.map((s) => (
             <button
               key={s}
               onClick={() => {
-                updateMany('bookings', statusFor, { status: s }, `Status set to ${s}`);
+                const patch = s === 'Confirmed' && sendTo ? { status: s, vendorId: sendTo } : { status: s };
+                updateMany('bookings', statusFor, patch, s === 'Confirmed' ? 'Confirmed and sent to the partner' : `Status set to ${s}`);
                 setStatusFor(null);
+                setSendTo('');
               }}
               className="flex w-full items-center gap-3 rounded-xl border border-ink-900/10 px-4 py-3 text-left transition hover:border-brand-400 hover:bg-brand-50"
             >

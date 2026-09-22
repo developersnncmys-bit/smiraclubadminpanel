@@ -486,6 +486,8 @@ export const ADAPTERS = {
       bookingType: b.bookingType,
       hotel: b.hotel,
       vendor: b.vendorName || fullName(b.vendor),
+      vendorId: ref(b.vendor),
+      partnerStatus: b.confirmation?.status || '',
       destination: b.destination,
       pkg: b.packageName,
       checkIn: d(b.checkIn),
@@ -543,6 +545,8 @@ export const ADAPTERS = {
       occasion: p.occasion,
       source: p.source,
       owner: has(p, 'ownerId') ? p.ownerId || undefined : has(p, 'owner') ? userId(p.owner, ctx) : undefined,
+      // The partner it goes to once confirmed; null unlinks it.
+      vendor: has(p, 'vendorId') ? p.vendorId || null : undefined,
     }),
   },
 

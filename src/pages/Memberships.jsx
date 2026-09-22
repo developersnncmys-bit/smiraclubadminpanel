@@ -21,7 +21,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr, membershipAmount } from '../data/mockData.js';
 
-const BILLING = ['Yearly', 'Half-yearly', 'Monthly', 'Lifetime'];
+const BILLING = ['One time', 'Yearly', 'Half-yearly', 'Monthly', 'Lifetime'];
 
 // Colour handed to the public website when a plan is created; the panel's own
 // look comes from VARIANTS below.
@@ -144,6 +144,7 @@ export default function Memberships({ embedded = false }) {
     { name: 'discount', label: 'Package discount (%)', type: 'number', help: 'Members get this off every package' },
     { name: 'persons', label: 'Persons covered', type: 'number' },
     { name: 'rooms', label: 'Rooms per free stay', type: 'number' },
+    { name: 'privileges', label: 'Preferred services a member can choose', type: 'number' },
     { name: 'freeNights', label: 'Free stay nights', type: 'number' },
     { name: 'freeValidity', label: 'Free stay validity', type: 'text', placeholder: '12 months from joining' },
     { name: 'tagline', label: 'Tagline shown on the website', type: 'text', full: true },
@@ -368,6 +369,15 @@ export default function Memberships({ embedded = false }) {
                   </span>
                   <span className={`chip ${variant.pill}`}>{plan.members} members</span>
                 </div>
+
+                {/* What the website shows for this plan */}
+                <div className={`mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold ${variant.note}`}>
+                  <span>{plan.freeStay?.nights ?? 0} days free stay</span>·
+                  <span>{plan.duration || '—'}</span>·
+                  <span>{plan.persons ?? 0} persons</span>·
+                  <span>{plan.rooms ?? 0} rooms</span>·
+                  <span>{plan.privileges ?? 1} preferred services</span>
+                </div>
               </div>
 
               <div className="flex flex-1 flex-col border-t border-ink-900/[0.07] px-5 pb-5 pt-4">
@@ -534,7 +544,7 @@ export default function Memberships({ embedded = false }) {
                 freeNights: editing.freeStay?.nights ?? 0,
                 freeValidity: editing.freeStay?.validity || '',
               }
-            : { billing: 'Yearly', duration: '12 months', discount: 5, persons: 2, rooms: 1, freeNights: 1 }
+            : { billing: 'Yearly', duration: '12 months', discount: 5, persons: 2, rooms: 1, privileges: 1, freeNights: 1 }
         }
         submitLabel={editing ? 'Save changes' : 'Create plan'}
       />

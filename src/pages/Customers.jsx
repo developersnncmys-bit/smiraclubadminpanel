@@ -12,13 +12,11 @@ import {
   Check,
   FileText,
   UserRound,
-  Rows3,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Memberships from './Memberships.jsx';
 import MembershipDesk from '../components/membership/MembershipDesk.jsx';
-import MembersDesk from '../components/membership/MembersDesk.jsx';
 import MemberProfile from '../components/membership/MemberProfile.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -111,7 +109,7 @@ export default function Customers() {
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
   const [confirm, setConfirm] = useState(null);
-  const [view, setView] = useState('people'); // 'people' | 'memberships' | 'plans'
+  const [view, setView] = useState('table'); // 'table' | 'memberships' | 'plans'
   const [memberOpen, setMemberOpen] = useState(null); // the membership being read
 
   /** The website membership a traveller signed up for, if any. */
@@ -271,7 +269,7 @@ export default function Customers() {
       <PageHeader
         title="Members"
         subtitle={
-          view === 'people'
+          view === 'table'
             ? 'Repeat travellers, key dates and the plan each one holds'
             : 'The three plans on your website and who signed up'
         }
@@ -294,8 +292,7 @@ export default function Customers() {
       <SectionTabs
         className="mb-5"
         items={[
-          { key: 'people', label: 'Members', icon: UserRound, count: customers.length },
-          { key: 'table', label: 'Member list', icon: Rows3, count: customers.length },
+          { key: 'table', label: 'Members', icon: UserRound, count: customers.length },
           { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
           { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
         ]}
@@ -311,8 +308,7 @@ export default function Customers() {
           switcher={
             <SectionTabs
               items={[
-                { key: 'people', label: 'Members', icon: UserRound, count: customers.length },
-                { key: 'table', label: 'Member list', icon: Rows3, count: customers.length },
+                { key: 'table', label: 'Members', icon: UserRound, count: customers.length },
                 { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
                 { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
               ]}
@@ -347,21 +343,6 @@ export default function Customers() {
       )}
 
       {view === 'plans' && <Memberships embedded />}
-
-      {view === 'people' && (
-        <MembersDesk
-          members={customers}
-          signups={memberSignups}
-          rewards={rewardGrants}
-          bookings={bookings}
-          onOpen={(c) => setViewing(c)}
-          onOpenMembership={(m) => { setView('memberships'); setMemberOpen(m); }}
-          actions={{
-            addMember: () => { setEditing(null); setFormOpen(true); },
-            note: (message) => toast(message),
-          }}
-        />
-      )}
 
       {view === 'table' && (
       <DataTable

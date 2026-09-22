@@ -392,6 +392,7 @@ export const ADAPTERS = {
       duration: p.durationMonths ? `${p.durationMonths} months` : '',
       persons: p.persons,
       rooms: p.rooms,
+      privileges: p.privileges ?? 1,
       freeStay: {
         nights: p.freeStay?.nights ?? 0,
         rooms: p.rooms ?? 1,
@@ -413,6 +414,7 @@ export const ADAPTERS = {
       durationMonths: has(p, 'duration') ? months(p.duration) : undefined,
       persons: num(p.persons),
       rooms: num(p.rooms),
+      privileges: num(p.privileges),
       freeStay: p.freeStay
         ? {
             nights: num(p.freeStay.nights) ?? 0,

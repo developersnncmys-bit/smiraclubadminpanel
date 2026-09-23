@@ -123,10 +123,7 @@ export const segments = [
   'By lead source',
 ];
 
-export const campaigns = [
-  { id: 'CMP-01', name: 'Monsoon Bali offer', segment: 'Hot leads', sent: 120, delivered: 118, read: 96, replied: 31, leads: 12, sales: 3, revenue: 70794, cost: 4200, on: '18 Aug 2026' },
-  { id: 'CMP-02', name: 'Gold renewal reminder', segment: 'Expiring members', sent: 42, delivered: 42, read: 38, replied: 14, leads: 6, sales: 2, revenue: 47196, cost: 4200, on: '20 Aug 2026' },
-];
+export const campaigns = [];
 
 /** Approved templates, grouped the way the sheet groups them. */
 export const templates = {
@@ -223,57 +220,7 @@ export const controlCentre = {
 };
 
 /** The inbox itself. */
-export const conversations = [
-  {
-    id: 'WAC-01',
-    name: 'Siddhesh Rane',
-    phone: '+91 98201 44521',
-    category: 'Hot lead',
-    source: 'Instagram',
-    membership: 'Silver Explorer',
-    plan: 'Silver Explorer',
-    owner: 'Kabir',
-    score: 'Hot',
-    unread: 2,
-    handledBy: 'Bot then Kabir',
-    lastAt: '11:42 am',
-    followUp: 'Today 4:00 pm',
-    tags: ['Bali', 'Honeymoon'],
-    note: 'Asked for the member price on the Bali package.',
-    messages: [
-      { at: '10:58 am', from: 'them', text: 'Hi' },
-      { at: '10:58 am', from: 'bot', text: 'Welcome to Smira Club 👋 How can we help you today?' },
-      { at: '11:01 am', from: 'them', text: 'Explore membership' },
-      { at: '11:01 am', from: 'bot', text: 'Silver, Gold and Platinum — which one shall I open?' },
-      { at: '11:20 am', from: 'them', text: 'What does Gold cost for two people?' },
-      { at: '11:24 am', from: 'us', text: 'Gold Voyager is ₹23,598 for two, and it takes 10% off every trip.' },
-      { at: '11:42 am', from: 'them', text: 'Send me the Bali itinerary too' },
-    ],
-  },
-  {
-    id: 'WAC-02',
-    name: 'Ananya Deshmukh',
-    phone: '+91 98330 21145',
-    category: 'Payment',
-    source: 'Website',
-    membership: 'Platinum Elite',
-    plan: 'Platinum Elite',
-    owner: 'Sneha',
-    score: 'Hot',
-    unread: 1,
-    handledBy: 'Sneha',
-    lastAt: '01:20 pm',
-    followUp: 'Today 6:00 pm',
-    tags: ['Maldives', 'Payment'],
-    note: 'Payment link did not open — support ticket TCK-1043 raised.',
-    messages: [
-      { at: '09:12 am', from: 'them', text: 'The payment link is not opening' },
-      { at: '09:14 am', from: 'bot', text: 'Sorry about that — I have raised it with the team, they will call you.' },
-      { at: '09:24 am', from: 'us', text: 'Sneha here. I have sent a fresh link, could you try once more?' },
-      { at: '01:20 pm', from: 'them', text: 'Paid ₹1,50,000 now' },
-    ],
-  },
-];
+export const conversations = [];
 
 /** How each desk is doing on WhatsApp. */
 export const staffPerformance = [
@@ -310,59 +257,4 @@ export const stepKinds = [
 ];
 
 /** The journeys already built in the flow builder. */
-export const botFlows = [
-  {
-    id: 'FLW-01',
-    name: 'Welcome',
-    trigger: 'Any first message',
-    status: 'Live',
-    sessions: 412,
-    steps: [
-      { kind: 'message', text: 'Welcome to Smira Club 👋' },
-      { kind: 'question', text: 'How can we help you today?' },
-      { kind: 'buttons', text: 'Pick one', buttons: ['Explore membership', 'Hotel booking', 'Travel packages', 'Talk to an expert'] },
-      { kind: 'condition', text: 'If they tap Explore membership' },
-      { kind: 'qualify', text: 'Score the lead and create it in the CRM' },
-    ],
-  },
-  {
-    id: 'FLW-02',
-    name: 'Explore membership',
-    trigger: 'Tapped “Explore membership”',
-    status: 'Live',
-    sessions: 168,
-    steps: [
-      { kind: 'buttons', text: 'What would you like to see?', buttons: ['Membership plans', 'Benefits', 'Free hotel stay', 'Offers', 'Testimonials'] },
-      { kind: 'message', text: 'Silver, Gold and Platinum — each with free nights and member pricing.' },
-      { kind: 'question', text: 'Would you like a presentation from a travel expert?' },
-      { kind: 'qualify', text: 'Asked for a presentation — mark them Hot' },
-      { kind: 'handover', text: 'Pass to the travel expert on duty' },
-    ],
-  },
-  {
-    id: 'FLW-03',
-    name: 'Hotel booking',
-    trigger: 'Tapped “Hotel booking”',
-    status: 'Live',
-    sessions: 96,
-    steps: [
-      { kind: 'question', text: 'Where are you travelling, and when?' },
-      { kind: 'faq', text: 'Answer availability and rate questions from the inventory' },
-      { kind: 'condition', text: 'If a date and destination were given' },
-      { kind: 'qualify', text: 'Create the booking enquiry against the customer' },
-      { kind: 'handover', text: 'Pass to the booking desk' },
-    ],
-  },
-  {
-    id: 'FLW-04',
-    name: 'Support',
-    trigger: 'Tapped “Support” or said a complaint word',
-    status: 'Draft',
-    sessions: 0,
-    steps: [
-      { kind: 'question', text: 'What has gone wrong?' },
-      { kind: 'faq', text: 'Try the knowledge base first' },
-      { kind: 'handover', text: 'Raise a ticket and pass it to support' },
-    ],
-  },
-];
+export const botFlows = [];

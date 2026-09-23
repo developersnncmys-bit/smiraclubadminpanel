@@ -435,7 +435,8 @@ export default function Bookings() {
           </div>
 
           {layout === 'cards' && (
-            <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+            // Narrow columns, so a card stands taller than it is wide.
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {listRows.map((b) => {
                 const paidPct = b.amount ? Math.round((b.paid / b.amount) * 100) : 0;
                 const due = Math.max(0, Number(b.amount || 0) - Number(b.paid || 0));
@@ -443,7 +444,7 @@ export default function Bookings() {
                   <article
                     key={b.id}
                     onClick={() => setViewing(b)}
-                    className={`card rail ${STATUS[b.status]?.rail || 'before:bg-ink-400'} cursor-pointer p-4 pl-5 transition hover:shadow-raised`}
+                    className={`card rail ${STATUS[b.status]?.rail || 'before:bg-ink-400'} flex h-full min-h-[23rem] cursor-pointer flex-col p-4 pl-5 transition hover:shadow-raised`}
                   >
                     {/* Who is travelling, and how the booking stands */}
                     <div className="flex items-start justify-between gap-2">
@@ -498,7 +499,7 @@ export default function Bookings() {
                     </div>
 
                     {/* Three actions; the rest live in the booking panel */}
-                    <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-auto flex flex-wrap gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
                       <button className="btn-line btn-sm" onClick={() => raiseInvoice(b)}>
                         <Receipt size={13} /> Invoice
                       </button>

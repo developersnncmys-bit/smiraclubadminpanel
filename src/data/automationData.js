@@ -81,72 +81,7 @@ export const builderShape = [
 ];
 
 /** The rules already running. */
-export const rules = [
-  {
-    id: 'AUT-01',
-    name: 'Website lead to the Mumbai desk',
-    when: 'New lead',
-    conditions: [{ field: 'Lead source', op: 'is', value: 'Website' }, { field: 'Branch', op: 'is', value: 'Mumbai' }],
-    steps: [
-      { wait: 'Immediately', action: 'Assign to the Mumbai team' },
-      { wait: 'Immediately', action: 'Send the WhatsApp welcome message' },
-      { wait: 'After 10 minutes', action: 'Create a first-call task' },
-    ],
-    runs: 148,
-    completed: 141,
-    errors: 2,
-    status: 'On',
-    lastRun: 'Today, 12:31 pm',
-  },
-  {
-    id: 'AUT-02',
-    name: 'No answer sequence',
-    when: 'No answer',
-    conditions: [{ field: 'Lead quality', op: 'is not', value: 'Cold' }],
-    steps: [
-      { wait: 'After 2 hours', action: 'Create a call task' },
-      { wait: 'After 3 days', action: 'Send a WhatsApp follow-up' },
-      { wait: 'After 6 days', action: 'Send the presentation invitation' },
-      { wait: 'After 7 days', action: 'Escalate to the manager' },
-    ],
-    runs: 96,
-    completed: 88,
-    errors: 1,
-    status: 'On',
-    lastRun: 'Today, 11:05 am',
-  },
-  {
-    id: 'AUT-03',
-    name: 'Refund over ten thousand',
-    when: 'Payment received',
-    conditions: [{ field: 'Amount', op: 'is more than', value: '₹10,000' }],
-    steps: [
-      { wait: 'Immediately', action: 'Ask the manager for approval' },
-      { wait: 'After 24 hours', action: 'Escalate to finance' },
-    ],
-    runs: 12,
-    completed: 11,
-    errors: 0,
-    status: 'On',
-    lastRun: 'Yesterday, 4:40 pm',
-  },
-  {
-    id: 'AUT-04',
-    name: 'Membership expiring',
-    when: 'Membership expiring',
-    conditions: [{ field: 'Membership', op: 'is not', value: 'Cancelled' }],
-    steps: [
-      { wait: '45 days before', action: 'Start the renewal campaign' },
-      { wait: '15 days before', action: 'Create a renewal call task' },
-      { wait: '7 days before', action: 'Notify the manager' },
-    ],
-    runs: 9,
-    completed: 9,
-    errors: 0,
-    status: 'Off',
-    lastRun: '22 Aug 2026',
-  },
-];
+export const rules = [];
 
 /** The stages a lead walks, which the admin owns. */
 export const leadStages = [
@@ -245,10 +180,7 @@ export const customFields = [
 ];
 
 /** Every automated action, logged. */
-export const history = [
-  { at: '10:00 am', lead: 'ENQ-2041', text: 'Lead created', rule: 'AUT-01', status: 'Done' },
-  { at: '10:01 am', lead: 'ENQ-2041', text: 'Assigned to Kabir', rule: 'AUT-01', status: 'Done' },
-];
+export const history = [];
 
 /** What the admin panel holds under automation. */
 export const structure = [
@@ -302,25 +234,10 @@ export const recipients = [
 ];
 
 /** Runs that did not finish, and why. */
-export const failedJobs = [
-  {
-    id: 'JOB-118', rule: 'Payment reminder on an overdue invoice', ran: '05 Sep 2026, 09:12 am',
-    target: 'INV-2044 · Ananya Deshmukh', reason: 'WhatsApp template not approved', attempts: 3, stage: 'Failed',
-  },
-  {
-    id: 'JOB-117', rule: 'Website lead to the Mumbai desk', ran: '04 Sep 2026, 06:40 pm',
-    target: 'LEAD-2293 · Aarti Menon', reason: 'No Mumbai executive was online', attempts: 2, stage: 'Retrying',
-  },
-];
+export const failedJobs = [];
 
 /** Where the panel pushes and pulls automation events. */
-export const webhooks = [
-  { name: 'Website lead form', direction: 'Incoming', url: 'https://smiraclub.com/api/hooks/lead', event: 'New lead', status: 'Live', lastFired: '05 Sep 2026, 09:41 am' },
-  { name: 'WhatsApp delivery receipts', direction: 'Incoming', url: 'https://smiraclub.com/api/hooks/wa', event: 'Message delivered or read', status: 'Live', lastFired: '05 Sep 2026, 09:44 am' },
-  { name: 'Payment gateway callback', direction: 'Incoming', url: 'https://smiraclub.com/api/hooks/pay', event: 'Payment received or failed', status: 'Live', lastFired: '05 Sep 2026, 08:20 am' },
-  { name: 'Accounting export', direction: 'Outgoing', url: 'https://books.smiraclub.com/api/entries', event: 'Payment received', status: 'Paused', lastFired: '02 Sep 2026, 07:00 pm' },
-  { name: 'Booking confirmation to the vendor', direction: 'Outgoing', url: 'https://partners.smiraclub.com/confirm', event: 'Booking confirmed', status: 'Live', lastFired: '04 Sep 2026, 06:05 pm' },
-];
+export const webhooks = [];
 
 /** Who may touch the automations. */
 export const automationPermissions = [

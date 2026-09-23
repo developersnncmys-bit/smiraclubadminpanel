@@ -166,10 +166,7 @@ export const expenseCategories = [
 
 export const expenseFlow = ['Expense', 'Approval', 'Payment', 'Accounting'];
 
-export const expenseEntries = [
-  { id: 'EXP-01', category: 'Rent', detail: 'Andheri office — August', amount: 85000, raisedBy: 'Amit', stage: 'Paid', on: '02 Aug 2026' },
-  { id: 'EXP-02', category: 'Marketing', detail: 'Instagram campaign — Bali', amount: 96000, raisedBy: 'Sneha', stage: 'Approval', on: '18 Aug 2026' },
-];
+export const expenseEntries = [];
 
 /** Who is allowed to do what with money. */
 export const paymentPermissions = [

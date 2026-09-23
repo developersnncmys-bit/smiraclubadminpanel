@@ -10,20 +10,7 @@ export const partners = [
 ];
 
 // -- Travel inventory -------------------------------------------------------
-export const inventory = [
-  // Hotels — what the room is, what it costs a night, how many are free
-  { id: 'TIV-01', kind: 'Hotels', name: 'Ayana Resort & Spa', location: 'Jimbaran, Bali', stars: 5, roomType: 'Ocean view suite', mealPlan: 'Breakfast included', rooms: 20, booked: 12, price: 42000, supplier: 'Bali Sunrise DMC', status: 'Available' },
-  { id: 'TIV-02', kind: 'Hotels', name: 'Atlantis The Palm', location: 'Palm Jumeirah, Dubai', stars: 5, roomType: 'Deluxe king', mealPlan: 'Half board', rooms: 14, booked: 9, price: 36500, supplier: 'Gulf Stays LLC', status: 'Limited' },
-
-  // Packages — the trip itself: how long, what it costs a head, seats left
-  { id: 'TIV-05', kind: 'Packages', name: 'Bali Honeymoon Escape', location: 'Bali, Indonesia', days: 7, nights: 6, departure: '02 Sep 2026', seats: 25, booked: 18, price: 92500, supplier: 'Bali Sunrise DMC', status: 'Available' },
-  { id: 'TIV-06', kind: 'Packages', name: 'Kerala Backwaters Family', location: 'Kochi · Alleppey', days: 6, nights: 5, departure: '24 Aug 2026', seats: 30, booked: 22, price: 34500, supplier: 'Kerala Houseboat Collective', status: 'Limited' },
-
-  // Villas — bedrooms and how many people sleep there
-  { id: 'TIV-09', kind: 'Villas', name: 'Villa Seminyak — private pool', location: 'Seminyak, Bali', bedrooms: 3, guests: 6, price: 54000, nights: 1, supplier: 'Bali Sunrise DMC', status: 'Sold out', booked: 8, rooms: 8 },
-  { id: 'TIV-10', kind: 'Villas', name: 'Casa Alibaug — beachfront', location: 'Alibaug, Maharashtra', bedrooms: 4, guests: 10, price: 28000, nights: 1, supplier: 'Konkan Retreats', status: 'Available', booked: 2, rooms: 6 },
-
-];
+export const inventory = [];
 
 // -- Lifestyle add-ons ------------------------------------------------------
 export const lifestyle = [
@@ -66,10 +53,7 @@ export const roles = [
 ];
 
 // -- Referrals --------------------------------------------------------------
-export const referrals = [
-  { id: 'REF-01', referrer: 'Ajay Panchmukh', referred: 'Siddhesh Rane', date: '28 Jul 2026', status: 'Booked', reward: 5000, rewardKind: 'Travel credit', paid: true },
-  { id: 'REF-02', referrer: 'Meera Iyer', referred: 'Divya Sharma', date: '01 Aug 2026', status: 'Enquiry', reward: 5000, rewardKind: 'Travel credit', paid: false },
-];
+export const referrals = [];
 
 // -- Website forms ----------------------------------------------------------
 export const forms = [

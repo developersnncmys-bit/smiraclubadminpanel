@@ -74,94 +74,19 @@ export const inventoryRoles = [
 ];
 
 /** The stock itself. Rates build up base → markup → selling → member. */
-export const inventory = [
-  {
-    id: 'INV-H01',
-    category: 'Hotels',
-    name: 'Ayana Resort & Spa',
-    code: 'AYA-BAL',
-    destination: 'Bali, Indonesia',
-    grade: '5★',
-    vendor: 'Ayana Resort & Spa',
-    units: 42,
-    booked: 24,
-    blocked: 2,
-    baseRate: 34000,
-    markup: 8000,
-    memberDiscount: 4200,
-    status: 'Active',
-    confirmation: 'Confirmed',
-    contractEnds: '31 Dec 2026',
-    rateEnds: '30 Sep 2026',
-    address: 'Jimbaran Bay, Badung, Bali 80364',
-    gps: '-8.7810, 115.1560',
-    checkIn: '2:00 pm',
-    checkOut: '12:00 noon',
-    contact: '+62 361 702222',
-    amenities: ['Private beach', 'Spa', 'Three pools', 'Airport transfer'],
-    description: 'Cliff-top resort over Jimbaran Bay, the agency\'s first choice for honeymoons.',
-    rooms: [
-      { type: 'Ocean view suite', count: 20, occupancy: 2, extraBed: true, child: 'Under 6 free', meal: 'Breakfast', rack: 46000, b2b: 34000, smira: 42000, member: 37800, weekend: 48300, seasonal: 52500, blackout: '—' },
-      { type: 'Garden villa', count: 22, occupancy: 4, extraBed: true, child: 'Under 6 free', meal: 'Half board', rack: 58000, b2b: 44000, smira: 52000, member: 46800, weekend: 59800, seasonal: 65000, blackout: '—' },
-    ],
-    allocation: { tiers: {"Silver":4,"Gold":5,"Platinum":5,"Diamond":3,"Crown":1}, channels: {"Website":5,"App":2,"CRM":5,"WhatsApp":1,"Travel expert":3,"Branch":2,"Corporate or B2B":4}, buffer: 2 },
-  },
-  {
-    id: 'INV-H02',
-    category: 'Hotels',
-    name: 'Atlantis The Palm',
-    code: 'ATL-MLE',
-    destination: 'Malé, Maldives',
-    grade: '5★',
-    vendor: 'Atlantis The Palm',
-    units: 28,
-    booked: 21,
-    blocked: 0,
-    baseRate: 52000,
-    markup: 15200,
-    memberDiscount: 6700,
-    status: 'Limited',
-    confirmation: 'Waiting',
-    contractEnds: '18 Sep 2026',
-    rateEnds: '31 Aug 2026',
-    address: 'Crescent Road, The Palm, Malé',
-    gps: '4.1755, 73.5093',
-    checkIn: '3:00 pm',
-    checkOut: '11:00 am',
-    contact: '+960 664 0011',
-    amenities: ['Overwater villas', 'House reef', 'Speedboat transfer', 'Kids club'],
-    description: 'Overwater villas with a house reef, sold mostly to Platinum members.',
-    rooms: [
-      { type: 'Overwater villa', count: 16, occupancy: 2, extraBed: false, child: 'Not permitted', meal: 'Half board', rack: 74000, b2b: 52000, smira: 67200, member: 60500, weekend: 77280, seasonal: 84000, blackout: '—' },
-      { type: 'Beach villa', count: 12, occupancy: 3, extraBed: true, child: 'Under 12 half', meal: 'Full board', rack: 62000, b2b: 46000, smira: 56000, member: 50400, weekend: 64400, seasonal: 70000, blackout: '—' },
-    ],
-    allocation: { tiers: {"Silver":2,"Gold":3,"Platinum":4,"Diamond":2,"Crown":1}, channels: {"Website":4,"App":2,"CRM":2,"WhatsApp":1,"Travel expert":2,"Branch":1,"Corporate or B2B":2}, buffer: 2 },
-  },
-];
+export const inventory = [];
 
 /** Day by day availability, for the calendar. */
-export const availability = [
-  { date: '26 Aug 2026', item: 'INV-H01', left: 18, rate: 42000, note: '' },
-  { date: '27 Aug 2026', item: 'INV-H01', left: 14, rate: 42000, note: '' },
-];
+export const availability = [];
 
 /** Stock held for a booking that has not been paid for yet. */
-export const holds = [
-  { id: 'HLD-01', item: 'INV-H02', units: 2, customer: 'Ananya Deshmukh', channel: 'CRM', heldFor: 30, minutesLeft: 12, stage: 'Awaiting payment' },
-  { id: 'HLD-02', item: 'INV-H01', units: 1, customer: 'Website enquiry', channel: 'Website', heldFor: 30, minutesLeft: 3, stage: 'Awaiting payment' },
-];
+export const holds = [];
 
 /** Dates nothing can be sold on. */
-export const blackouts = [
-  { item: 'INV-H02', from: '29 Aug 2026', to: '31 Aug 2026', reason: 'Resort maintenance' },
-  { item: 'INV-H01', from: '24 Dec 2026', to: '02 Jan 2027', reason: 'Owner stay' },
-];
+export const blackouts = [];
 
 /** What is about to run out. */
-export const contractAlerts = [
-  { kind: 'Vendor contract expiry', item: 'INV-H02', on: '18 Sep 2026' },
-  { kind: 'Rate expiry', item: 'INV-H02', on: '31 Aug 2026' },
-];
+export const contractAlerts = [];
 
 /** The five tiers stock can be reserved for. */
 export const membershipTiers = ['Silver', 'Gold', 'Platinum', 'Diamond', 'Crown'];
@@ -170,18 +95,7 @@ export const membershipTiers = ['Silver', 'Gold', 'Platinum', 'Diamond', 'Crown'
  * How each rate type is worked out from the vendor rate. `on` says what the
  * adjustment applies to, `pct` how much it moves the selling rate by.
  */
-export const rateRules = [
-  { type: 'Standard rate', on: 'Selling rate', pct: 0, note: 'Vendor rate plus the markup' },
-  { type: 'B2B rate', on: 'Selling rate', pct: -12, note: 'Agents and corporate desks' },
-  { type: 'Member rate', on: 'Selling rate', pct: -10, note: 'Anyone on a plan' },
-  { type: 'Weekend rate', on: 'Selling rate', pct: 15, note: 'Friday to Sunday' },
-  { type: 'Seasonal rate', on: 'Selling rate', pct: 25, note: 'Peak months' },
-  { type: 'Festival rate', on: 'Selling rate', pct: 35, note: 'Diwali, Christmas, New Year' },
-  { type: 'Corporate rate', on: 'Selling rate', pct: -8, note: 'Contracted companies' },
-  { type: 'Promotional rate', on: 'Selling rate', pct: -18, note: 'Campaign windows only' },
-  { type: 'Package rate', on: 'Selling rate', pct: -15, note: 'When sold inside a package' },
-  { type: 'Last-minute rate', on: 'Selling rate', pct: -22, note: 'Inside seven days of travel' },
-];
+export const rateRules = [];
 
 /** How every vendor is actually performing on the stock they supply. */
 export const vendorScores = {

@@ -140,34 +140,7 @@ export const milestones = {
 };
 
 /** What each customer has earned, and where it has got to. */
-export const customerRewards = [
-  {
-    id: 'CRW-01',
-    customer: 'Rohan Bhatt',
-    membership: 'Gold Voyager',
-    reward: 'Dinner coupon',
-    reason: 'Two villa bookings',
-    value: 1000,
-    cost: 350,
-    stage: 'Available',
-    earnedOn: '02 Aug 2026',
-    expires: '01 Oct 2026',
-    progress: { label: 'Villa bookings', done: 2, needed: 2 },
-  },
-  {
-    id: 'CRW-02',
-    customer: 'Rohan Bhatt',
-    membership: 'Gold Voyager',
-    reward: 'Travel bag',
-    reason: 'Package booking',
-    value: 1500,
-    cost: 600,
-    stage: 'Pending',
-    earnedOn: '05 Aug 2026',
-    expires: '03 Nov 2026',
-    progress: { label: 'Package bookings', done: 1, needed: 1 },
-  },
-];
+export const customerRewards = [];
 
 /** Physical gifts on their way to somebody. */
 export const dispatches = [
@@ -235,32 +208,7 @@ export const referralRule = {
 };
 
 /** Referrals in flight. */
-export const referrals = [
-  {
-    id: 'RFR-01',
-    referrer: 'Rohan Bhatt',
-    referred: 'Amit Shah',
-    sharedOn: '02 Aug 2026',
-    stage: 'Reward unlocked',
-    membership: 'Gold Voyager',
-    value: 25000,
-    reward: '10% off the next booking',
-    rewardValue: 2500,
-    verified: true,
-  },
-  {
-    id: 'RFR-02',
-    referrer: 'Rohan Bhatt',
-    referred: 'Neha Kulkarni',
-    sharedOn: '14 Aug 2026',
-    stage: 'Presentation done',
-    membership: '—',
-    value: 0,
-    reward: 'Pending',
-    rewardValue: 0,
-    verified: false,
-  },
-];
+export const referrals = [];
 
 /** What the panel does the moment a referral converts. */
 export const referralAutomation = [
@@ -274,36 +222,7 @@ export const referralAutomation = [
 ];
 
 /** Temporary campaigns. */
-export const campaigns = [
-  {
-    id: 'RCM-01',
-    name: 'Monsoon travel reward',
-    rule: '1 villa booking → 10% restaurant voucher',
-    from: '01 Jul 2026',
-    to: '31 Aug 2026',
-    audience: 'All members',
-    level: 'Any',
-    budget: 120000,
-    used: 46000,
-    limit: '1 per customer',
-    cities: 'Mumbai, Pune',
-    status: 'Live',
-  },
-  {
-    id: 'RCM-02',
-    name: 'Diwali campaign',
-    rule: 'Package booking above ₹75,000 → premium travel kit',
-    from: '10 Oct 2026',
-    to: '15 Nov 2026',
-    audience: 'Gold and Platinum',
-    level: 'Gold+',
-    budget: 200000,
-    used: 0,
-    limit: '1 per customer',
-    cities: 'All',
-    status: 'Scheduled',
-  },
-];
+export const campaigns = [];
 
 export const campaignControls = [
   'Start date',
@@ -319,24 +238,7 @@ export const campaignControls = [
 ];
 
 /** The messages a reward sets off. */
-export const whatsappMessages = [
-  {
-    when: 'Reward unlocked',
-    text: "Congratulations Raj! You've completed 2 villa bookings with Smira Club. You've unlocked a dinner coupon worth ₹1,000!",
-  },
-  {
-    when: 'Referral successful',
-    text: "Your referral was successful! Amit has joined Smira Club. You've earned 10% off your next eligible booking.",
-  },
-  {
-    when: 'Reward expiring',
-    text: "Your ₹1,000 reward expires in 3 days. Don't let it go unused!",
-  },
-  {
-    when: 'Gift dispatched',
-    text: 'Your Smira travel bag has been dispatched!',
-  },
-];
+export const whatsappMessages = [];
 
 /** Coupon codes given to staff, so a sale can be traced back to them. */
 export const staffCoupons = [

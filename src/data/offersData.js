@@ -85,84 +85,12 @@ export const tierAccess = [
 ];
 
 /** The offers themselves. */
-export const offers = [
-  {
-    id: 'OFR-01',
-    name: 'Weekend villa escape',
-    code: 'WEEKEND25',
-    category: 'Holiday and travel',
-    sub: 'Villa offer',
-    benefit: 'Percentage discount',
-    headline: 'Get 25% off on weekend villas',
-    tiers: ['Gold', 'Platinum'],
-    from: '01 Sep 2026',
-    to: '30 Sep 2026',
-    travelFrom: '01 Sep 2026',
-    travelTo: '31 Oct 2026',
-    blackout: 'Diwali, Christmas, New Year',
-    totalLimit: 500,
-    perCustomer: 1,
-    minBooking: 10000,
-    used: 128,
-    views: 4820,
-    clicks: 946,
-    enquiries: 212,
-    bookings: 74,
-    revenue: 1480000,
-    discountCost: 296000,
-    vendorCost: 940000,
-    where: ['Homepage', 'Offers page', 'WhatsApp campaign'],
-    stage: 'Approved',
-    status: 'Live',
-  },
-  {
-    id: 'OFR-02',
-    name: 'Gold member Goa exclusive',
-    code: 'GOAGOLD3K',
-    category: 'Holiday and travel',
-    sub: 'Hotel discount',
-    benefit: 'Flat ₹ discount',
-    headline: 'Gold member exclusive — ₹3,000 off Goa villa bookings',
-    tiers: ['Gold'],
-    from: '15 Aug 2026',
-    to: '31 Oct 2026',
-    travelFrom: '15 Aug 2026',
-    travelTo: '30 Nov 2026',
-    blackout: 'New Year',
-    totalLimit: 200,
-    perCustomer: 2,
-    minBooking: 25000,
-    used: 46,
-    views: 2140,
-    clicks: 512,
-    enquiries: 98,
-    bookings: 31,
-    revenue: 868000,
-    discountCost: 93000,
-    vendorCost: 610000,
-    where: ['Member dashboard', 'Customer profile', 'Push notification'],
-    stage: 'Approved',
-    status: 'Live',
-  },
-];
+export const offers = [];
 
 /** Lifestyle offers come from vendors, and redeem differently. */
 export const lifestyleCategories = ['Restaurants', 'Spa', 'Salon', 'Movies', 'Theme parks', 'Water parks', 'Gaming', 'Adventure', 'Shopping', 'Events'];
 
-export const lifestyleOffers = [
-  {
-    id: 'LSO-01', vendor: 'Serene Spa & Wellness', category: 'Spa', location: 'Mumbai',
-    offer: '20% off any treatment', original: 2500, member: 2000, discount: 20,
-    validity: '31 Aug 2026', days: 'Mon–Thu', redemption: 'QR at the counter',
-    bookingRequired: true, channel: 'Direct booking', code: 'SPA20', redemptions: 62, revenue: 96000, settlement: 18400,
-  },
-  {
-    id: 'LSO-02', vendor: 'Bay Leaf Restaurant', category: 'Restaurants', location: 'Pune',
-    offer: 'Buy 1 get 1 on mains', original: 1800, member: 900, discount: 50,
-    validity: '30 Sep 2026', days: 'All days', redemption: 'Coupon code',
-    bookingRequired: false, channel: 'External booking', code: 'BAYB1G1', redemptions: 34, revenue: 30600, settlement: 6100,
-  },
-];
+export const lifestyleOffers = [];
 
 /** Campaigns bundle offers together. */
 export const campaigns = [
@@ -189,18 +117,12 @@ export const campaigns = [
 /** Where a redemption stands. */
 export const redemptionStates = ['Reserved', 'Applied', 'Redeemed', 'Cancelled', 'Expired', 'Refunded', 'Fraud or blocked'];
 
-export const redemptions = [
-  { id: 'RDM-01', customer: 'Rohan Bhatt', offer: 'Weekend villa escape', booking: 'BKG-8821', discount: 2000, date: 'Today', status: 'Redeemed' },
-  { id: 'RDM-02', customer: 'Ananya Deshmukh', offer: 'Monsoon spa treat', booking: 'BKG-8820', discount: 500, date: 'Today', status: 'Applied' },
-];
+export const redemptions = [];
 
 /** How an offer gets published. */
 export const approvalFlow = ['Draft', 'Submitted', 'Manager review', 'Approved', 'Live'];
 
-export const approvalHistory = [
-  { offer: 'Monsoon spa treat', by: 'Sneha', action: 'Submitted for review', at: '22 Aug 2026, 11:04 am' },
-  { offer: 'Weekend villa escape', by: 'Sneha', action: 'Created', at: '18 Aug 2026, 09:40 am' },
-];
+export const approvalHistory = [];
 
 /** What the smart engine reads before deciding what to show. */
 export const personalisationSignals = [
@@ -232,10 +154,7 @@ export const offerAutomation = [
 ];
 
 /** What an offer can send. */
-export const notifications = [
-  { channel: 'Push', text: 'Weekend deal! Get 25% off on selected villas.' },
-  { channel: 'WhatsApp', text: 'Hi Rahul, your Gold membership has unlocked an exclusive offer.' },
-];
+export const notifications = [];
 
 /** Stopping the same coupon being used twice. */
 export const fraudControls = [

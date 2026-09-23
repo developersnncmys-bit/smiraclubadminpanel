@@ -90,28 +90,7 @@ export const messagingStats = {
 };
 
 /** Reports that go out without anyone asking. */
-export const scheduledReports = [
-  {
-    id: 'SCH-01',
-    name: 'Sales report',
-    every: 'Daily',
-    at: '8:00 pm',
-    module: 'Sales',
-    recipients: ['Admin', 'Sales manager'],
-    format: 'PDF',
-    status: 'On',
-  },
-  {
-    id: 'SCH-02',
-    name: 'Team performance',
-    every: 'Weekly',
-    at: 'Monday, 9:00 am',
-    module: 'Team',
-    recipients: ['Admin', 'Branch manager'],
-    format: 'Excel',
-    status: 'On',
-  },
-];
+export const scheduledReports = [];
 
 export const reportRecipients = [
   'Admin',

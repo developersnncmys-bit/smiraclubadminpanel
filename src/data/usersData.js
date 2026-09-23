@@ -409,16 +409,7 @@ export const approvalFlows = [
 ];
 
 /** What is actually waiting on someone right now. */
-export const pendingApprovals = [
-  {
-    id: 'APR-08', area: 'Discount', what: '12% off the Bali package for the Kapoor party',
-    raisedBy: 'Priya', approver: 'Vikram Joshi', raised: '05 Sep 2026, 09:40 am', value: 21600, status: 'Waiting',
-  },
-  {
-    id: 'APR-07', area: 'Membership', what: 'Platinum Elite for Ananya Deshmukh',
-    raisedBy: 'Sneha', approver: 'Priya Nair', raised: '04 Sep 2026, 04:15 pm', value: 35396, status: 'Waiting',
-  },
-];
+export const pendingApprovals = [];
 
 /** The dashboard each role opens on — nobody gets the same one. */
 export const roleDashboards = [
@@ -450,10 +441,7 @@ export const roleDashboards = [
 ];
 
 /** Every change the panel has recorded, newest first. */
-export const auditLog = [
-  { id: 'LOG-31', at: '05 Sep 2026, 09:42 am', who: 'Priya Nair', kind: 'Approval', what: 'Requested a 12% discount on the Kapoor package' },
-  { id: 'LOG-30', at: '05 Sep 2026, 09:22 am', who: 'Kabir Menon', kind: 'Login', what: 'Signed in from 103.21.58.19' },
-];
+export const auditLog = [];
 
 /** What the user list can be cut by. */
 export const userFilters = [

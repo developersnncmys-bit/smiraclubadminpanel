@@ -685,10 +685,16 @@ export const ADAPTERS = {
       rooms: (i.rooms || []).map((r) => ({ ...r, child: r.childPolicy, meal: r.mealPlan })),
       allocation: i.allocation || { tiers: {}, channels: {}, buffer: 0 },
     }),
-    to: (p) => ({
+    to: (p, ctx) => ({
       name: p.name,
       category: p.category,
       destination: p.destination,
+      grade: p.grade,
+      // The supplier behind the stock, by name and by record.
+      vendorName: p.vendor || undefined,
+      partner: has(p, 'vendor') ? (ctx?.partners || []).find((x) => x.name === p.vendor)?._id || null : undefined,
+      contractEndsOn: has(p, 'contractEnds') ? when(p.contractEnds) : undefined,
+      rateEndsOn: has(p, 'rateEnds') ? when(p.rateEnds) : undefined,
       units: p.units,
       booked: p.booked,
       blocked: p.blocked,

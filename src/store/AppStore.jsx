@@ -199,6 +199,7 @@ export function AppProvider({ children }) {
     customers: dbRef.current.customers || [],
     memberships: dbRef.current.memberships || [],
     enquiries: dbRef.current.enquiries || [],
+    partners: dbRef.current.partners || [],
   });
   const [toasts, setToasts] = useState([]);
   const [owner, setOwner] = useState('All team members');

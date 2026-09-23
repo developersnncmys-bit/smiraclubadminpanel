@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Plus,
   Search,
@@ -13,11 +13,13 @@ import {
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import { useApp } from '../store/AppStore.jsx';
+import { api } from '../lib/api.js';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
 import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
+import FormModal from '../components/ui/FormModal.jsx';
 import {
   categories,
   rateTypes,
@@ -25,13 +27,7 @@ import {
   integrationFlow,
   automation,
   inventoryRoles,
-  availability,
-  holds,
-  blackouts,
-  contractAlerts,
   membershipTiers,
-  rateRules,
-  vendorScores,
   inventoryAlertKinds,
   integrations,
 } from '../data/inventoryData.js';
@@ -51,6 +47,8 @@ const SECTIONS = [
   'Import and API',
   'Permissions',
 ];
+
+const CATEGORY_KEYS = ['Hotels', 'Villas', 'Flights', 'Transport', 'Packages', 'Activities', 'Restaurants', 'Spa and salon', 'Attractions', 'Experiences'];
 
 const statusTone = { Active: 'green', Limited: 'amber', Low: 'amber', 'Sold out': 'rose', Blocked: 'slate' };
 
@@ -126,18 +124,101 @@ function RateLine({ item }) {
  * sell out or expire.
  */
 export default function Inventory() {
-  const { inventory, update, toast } = useApp();
+  const { inventory, partners, live, create, update, pull, toast } = useApp();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [section, setSection] = useState('Dashboard');
   const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');
   const [viewing, setViewing] = useState(null);
-  const [ratedItem, setRatedItem] = useState('INV-H01');
-  const [calItem, setCalItem] = useState('INV-H01');
-  const [month, setMonth] = useState(new Date(2026, 7, 1));
-  const [days, setDays] = useState(availability);
-  const [blocks, setBlocks] = useState(blackouts);
+  const first = inventory[0]?.id || '';
+  const [ratedItem, setRatedItem] = useState(first);
+  const [calItem, setCalItem] = useState(first);
+  const [month, setMonth] = useState(() => new Date());
+  const [days, setDays] = useState([]);
+  const [blocks, setBlocks] = useState([]);
   const [picked, setPicked] = useState(null);
   const [newRate, setNewRate] = useState('');
+
+  /**
+   * Everything the server keeps for stock: the day-by-day calendar, what is
+   * on hold, the rate card behind an item and what needs attention. The page
+   * holds no stock of its own — every action below writes to the API and
+   * reads the answer back.
+   */
+  const [holdRows, setHoldRows] = useState([]);
+  const [alertRows, setAlertRows] = useState([]);
+  const [rateRows, setRateRows] = useState([]);
+
+  const idOf = (code) => inventory.find((i) => i.id === code)?._id;
+
+  // Nothing is chosen until the stock has loaded.
+  useEffect(() => {
+    if (!calItem && first) setCalItem(first);
+    if (!ratedItem && first) setRatedItem(first);
+  }, [first, calItem, ratedItem]);
+
+  /** What is on hold, and what needs attention — both across the whole shelf. */
+  const loadDesk = useCallback(async () => {
+    if (!live) return;
+    const [held, said] = await Promise.all([
+      api.list('/inventory/holds').catch(() => ({ data: [] })),
+      api.get('/inventory/alerts').catch(() => ({ data: [] })),
+    ]);
+    const rows = held.rows || held.data || [];
+    setHoldRows(
+      rows.map((h) => ({
+        id: h._id,
+        item: h.inventoryName || h.inventory,
+        units: h.units,
+        customer: h.customerName || '—',
+        channel: h.channel,
+        heldFor: h.heldForMinutes,
+        minutesLeft: Math.max(0, Math.round((new Date(h.expiresAt) - Date.now()) / 60000)),
+        stage: h.stage,
+      })),
+    );
+    setAlertRows(said.data || []);
+  }, [live]);
+
+  useEffect(() => { loadDesk(); }, [loadDesk]);
+
+  /** The chosen item's calendar and blackouts, a month at a time. */
+  const loadCalendar = useCallback(async () => {
+    const id = idOf(calItem);
+    if (!live || !id) { setDays([]); setBlocks([]); return; }
+    const from = new Date(month.getFullYear(), month.getMonth(), 1);
+    const [cal, item] = await Promise.all([
+      api.get(`/inventory/${id}/availability?from=${from.toISOString().slice(0, 10)}&days=42`).catch(() => ({ data: { days: [] } })),
+      api.get(`/inventory/${id}`).catch(() => ({ data: {} })),
+    ]);
+    setDays((cal.data?.days || []).map((d) => ({
+      item: calItem,
+      date: key(new Date(d.date)),
+      left: d.left,
+      rate: d.rate,
+      note: d.note,
+    })));
+    setBlocks((item.data?.blackouts || []).map((b) => ({
+      item: calItem,
+      from: key(new Date(b.from)),
+      to: key(new Date(b.to || b.from)),
+      reason: b.reason || '',
+    })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, calItem, month, inventory.length]);
+
+  useEffect(() => { loadCalendar(); }, [loadCalendar]);
+
+  /** The rate engine's answer for the chosen item: every rate type it sells at. */
+  useEffect(() => {
+    const id = idOf(ratedItem);
+    if (!live || !id) { setRateRows([]); return; }
+    api.get(`/inventory/${id}/rates`)
+      .then((res) => setRateRows(res.data?.rates || []))
+      .catch(() => setRateRows([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, ratedItem, inventory.length]);
 
   const nameOf = (id) => inventory.find((x) => x.id === id)?.name || id;
   const freeOf = (i) => Math.max(0, Number(i?.units || 0) - Number(i?.booked || 0) - Number(i?.blocked || 0));
@@ -160,9 +241,33 @@ export default function Inventory() {
   const waiting = inventory.filter((i) => i.confirmation !== 'Confirmed');
   const missingRate = inventory.filter((i) => !i.baseRate || !i.markup);
   const stockValue = inventory.reduce((s, i) => s + valueOf(i), 0);
-  const expiringSoon = contractAlerts.length;
+  /** What the server says is expiring — contracts, rates, agreements. */
+  const expiring = alertRows.filter((a) => /expir/i.test(a.kind));
+  const expiringSoon = expiring.length;
 
-  const vendors = [...new Set(inventory.map((i) => i.vendor))];
+  const vendors = [...new Set(inventory.map((i) => i.vendor).filter(Boolean))];
+
+  /**
+   * How a supplier is doing, from the partner record behind the stock plus
+   * the stock itself — confirmation, response, cancellations and what they
+   * are owed, the five the sheet scores a vendor on.
+   */
+  const scoreOf = (name) => {
+    const p = (partners || []).find((x) => x.name === name) || {};
+    const mine = inventory.filter((i) => i.vendor === name);
+    const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
+    return {
+      activeContracts: mine.filter((i) => i.status !== 'Blocked').length,
+      confirmationRate: pct(p.confirmed, p.bookings),
+      responseMins: p.responseMins || null,
+      cancellationRate: pct(p.cancelled, p.bookings),
+      bookingSuccess: pct((p.bookings || 0) - (p.failed || 0), p.bookings),
+      cancellations: p.cancelled || 0,
+      payable: p.payable || 0,
+      contractEnds: p.contractEnds || mine.find((i) => i.contractEnds)?.contractEnds || '',
+      priceIndex: null,
+    };
+  };
 
   /** How much of an item is already spoken for, tiers plus channels plus buffer. */
   const tierTotal = (i) => Object.values(i.allocation?.tiers || {}).reduce((s, n) => s + Number(n || 0), 0);
@@ -192,17 +297,21 @@ export default function Inventory() {
     return Array.from({ length: 42 }, (_, n) => new Date(start.getTime() + n * DAY_MS));
   })();
 
-  /** Writes a day back, creating the row when the calendar has never held one. */
-  const setDay = (patch) => {
+  /**
+   * Writes a day back to the server, then reads the month again — the
+   * calendar is the server's answer, never the screen's own copy.
+   */
+  const setDay = async (patch) => {
     if (!picked) { toast('Pick a day on the calendar first', 'info'); return; }
-    const date = key(picked);
-    setDays((list) => {
-      const at = list.findIndex((a) => a.item === calItem && a.date === date);
-      if (at === -1) {
-        return [...list, { date, item: calItem, left: freeOf(calStock), rate: sellingOf(calStock), ...patch }];
-      }
-      return list.map((a, i) => (i === at ? { ...a, ...patch } : a));
-    });
+    const id = idOf(calItem);
+    if (!id) { toast('Nothing to change yet — add an inventory item first', 'info'); return; }
+    try {
+      await api.patch(`/inventory/${id}/availability`, { date: picked.toISOString(), ...patch });
+      await loadCalendar();
+      await pull('inventory');
+    } catch (err) {
+      toast(err.message || 'That did not save', 'danger');
+    }
   };
   const dayActions = {
     'Increase inventory': () => {
@@ -223,12 +332,21 @@ export default function Inventory() {
       setNewRate('');
       toast('Rate changed for that day');
     },
-    'Add blackout': () => {
+    'Add blackout': async () => {
       if (!picked) { toast('Pick a day first', 'info'); return; }
-      const date = key(picked);
-      setBlocks((list) => [...list, { item: calItem, from: date, to: date, reason: 'Added from the calendar' }]);
-      setDay({ left: 0, note: 'Blackout' });
-      toast('Blackout added');
+      const id = idOf(calItem);
+      if (!id) { toast('Nothing to block yet', 'info'); return; }
+      try {
+        await api.post(`/inventory/${id}/blackout`, {
+          from: picked.toISOString(),
+          to: picked.toISOString(),
+          reason: 'Added from the calendar',
+        });
+        await loadCalendar();
+        toast('Blackout added');
+      } catch (err) {
+        toast(err.message || 'That did not save', 'danger');
+      }
     },
     'Override vendor availability': () => {
       setDay({ left: Number(calStock?.units || 0), note: 'Overridden' });
@@ -236,24 +354,86 @@ export default function Inventory() {
     },
   };
 
-  // -- What needs somebody's attention right now ----------------------------
+  /**
+   * What needs somebody's attention right now: the server's own list — sold
+   * out, running low, no rate, waiting on a vendor, expiring — with the two
+   * the panel can see for itself, an allocation with nothing spare and a hold
+   * about to time out.
+   */
   const alerts = [
-    ...soldOut.map((i) => ({ key: `so-${i.id}`, kind: 'Sold out', item: i.name, level: 'critical', note: 'Nothing left to sell' })),
-    ...lowStock.map((i) => ({ key: `lo-${i.id}`, kind: 'Low availability', item: i.name, level: 'warning', note: `${freeOf(i)} left` })),
-    ...missingRate.map((i) => ({ key: `mr-${i.id}`, kind: 'Missing rate', item: i.name, level: 'critical', note: 'Cannot be sold without a rate' })),
-    ...waiting.map((i) => ({ key: `wv-${i.id}`, kind: 'Waiting on the vendor', item: i.name, level: 'warning', note: i.confirmation })),
-    ...contractAlerts.map((c, n) => ({
-      key: `ca-${n}`, kind: c.kind, item: c.item === '—' ? 'Across the panel' : nameOf(c.item),
-      level: 'warning', note: `due ${c.on}`,
+    ...alertRows.map((a, n) => ({
+      key: `sv-${n}`,
+      kind: a.kind,
+      item: a.item,
+      level: a.level || 'warning',
+      note: a.note ? (/^\d{4}-/.test(String(a.note)) ? `due ${new Date(a.note).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : a.note) : '',
     })),
     ...inventory
-      .filter((i) => allocatedOf(i) >= Number(i.units || 0))
+      .filter((i) => Number(i.units || 0) > 0 && allocatedOf(i) >= Number(i.units || 0))
       .map((i) => ({ key: `al-${i.id}`, kind: 'Allocation used up', item: i.name, level: 'warning', note: 'Every unit is spoken for' })),
     ...blocks.map((b, n) => ({ key: `bl-${n}`, kind: 'Blackout', item: nameOf(b.item), level: 'info', note: `${b.from} to ${b.to}` })),
-    ...holds
-      .filter((h) => h.minutesLeft <= 5)
-      .map((h) => ({ key: `hd-${h.id}`, kind: 'Hold about to time out', item: nameOf(h.item), level: 'critical', note: `${h.minutesLeft} min left` })),
+    ...holdRows
+      .filter((h) => h.stage === 'Awaiting payment' && h.minutesLeft <= 5)
+      .map((h) => ({ key: `hd-${h.id}`, kind: 'Hold about to time out', item: h.item, level: 'critical', note: `${h.minutesLeft} min left` })),
   ];
+
+  /** What the desk fills in to put stock on the shelf. */
+  const itemFields = [
+    { name: 'name', label: 'What it is', type: 'text', required: true, placeholder: 'Ayana Resort & Spa' },
+    { name: 'category', label: 'Category', type: 'select', options: CATEGORY_KEYS, required: true },
+    { name: 'destination', label: 'Destination', type: 'text', placeholder: 'Bali, Indonesia' },
+    { name: 'vendor', label: 'Vendor', type: 'select', options: ['', ...(partners || []).map((p) => p.name)] },
+    { name: 'units', label: 'Units held', type: 'number', required: true },
+    { name: 'baseRate', label: 'Vendor rate (₹)', type: 'number', required: true },
+    { name: 'markup', label: 'Markup (₹)', type: 'number' },
+    { name: 'memberDiscount', label: 'Member discount (₹)', type: 'number' },
+    { name: 'contractEnds', label: 'Contract ends', type: 'date' },
+    { name: 'status', label: 'Status', type: 'select', options: ['Active', 'Limited', 'Low', 'Sold out', 'Blocked'] },
+    { name: 'confirmation', label: 'Vendor confirmation', type: 'select', options: ['Waiting', 'Confirmed'] },
+  ];
+
+  const saveItem = (values) => {
+    const body = { ...values, units: Number(values.units || 0) };
+    if (editing) update('inventory', editing.id, body);
+    else create('inventory', { ...body, booked: 0, blocked: 0 });
+    setFormOpen(false);
+    setEditing(null);
+  };
+
+  /** Holding stock for somebody, the way a booking does before payment. */
+  const holdUnits = async (item, units = 1) => {
+    const id = item._id || idOf(item.id);
+    if (!id) { toast('That item is not on the server yet', 'info'); return; }
+    try {
+      await api.post(`/inventory/${id}/hold`, { units, channel: 'CRM', minutes: 30 });
+      await Promise.all([loadDesk(), pull('inventory')]);
+      toast(`${units} unit${units === 1 ? '' : 's'} held for 30 minutes`);
+    } catch (err) {
+      toast(err.message || 'That could not be held', 'danger');
+    }
+  };
+
+  /** Letting a hold go, and letting go of every one whose timer has run out. */
+  const releaseHold = async (h) => {
+    try {
+      await api.patch(`/inventory/holds/${h.id}/release`);
+      await Promise.all([loadDesk(), pull('inventory')]);
+      toast(`${h.units} unit${h.units === 1 ? '' : 's'} back on sale`);
+    } catch (err) {
+      toast(err.message || 'That hold could not be released', 'danger');
+    }
+  };
+
+  const sweepHolds = async () => {
+    try {
+      const res = await api.post('/inventory/holds/sweep');
+      await Promise.all([loadDesk(), pull('inventory')]);
+      const n = res.data?.released ?? 0;
+      toast(n ? `${n} hold${n === 1 ? '' : 's'} released` : 'Nothing had timed out');
+    } catch (err) {
+      toast(err.message || 'That did not run', 'danger');
+    }
+  };
 
   const exportInventory = () =>
     downloadCsv(
@@ -618,18 +798,18 @@ export default function Inventory() {
                 <div className="mb-4">
                   <RateLine item={item} />
                 </div>
+                {/* The rate engine's own answer for this item, every type it sells at. */}
                 <Table
-                  head={['Rate type', 'Rule', 'Applies to', 'Rate', 'Against selling']}
-                  rows={rateRules.map((rule) => {
-                    const value = rateFor(item, rule);
-                    const diff = selling ? Math.round(((value - selling) / selling) * 100) : 0;
+                  head={['Rate type', 'Rule', 'Rate', 'Against selling']}
+                  empty="The rate engine has nothing for this item yet."
+                  rows={rateRows.map((rule) => {
+                    const diff = selling ? Math.round(((rule.rate - selling) / selling) * 100) : 0;
                     return {
                       key: rule.type,
                       cells: [
                         rule.type,
-                        <span className="text-ink-500">{rule.note}</span>,
-                        rule.on,
-                        <span className="num font-bold text-ink-900">{inr(value)}</span>,
+                        <span className="text-ink-500">{rule.adjustment}</span>,
+                        <span className="num font-bold text-ink-900">{inr(rule.rate)}</span>,
                         <span className={`num font-bold ${diff > 0 ? 'text-rose-600' : diff < 0 ? 'text-emerald-600' : 'text-ink-400'}`}>
                           {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : 'base'}
                         </span>,
@@ -707,7 +887,7 @@ export default function Inventory() {
             head={['Vendor', 'Items supplied', 'Active contracts', 'Units', 'Available', 'Bookings', 'Cancellations', 'Stock value', 'Vendor payable', 'Pending confirmation']}
             rows={vendors.map((v) => {
               const mine = inventory.filter((i) => i.vendor === v);
-              const score = vendorScores[v] || {};
+              const score = scoreOf(v);
               const waitingHere = mine.filter((i) => i.confirmation !== 'Confirmed').length;
               return {
                 key: v,
@@ -736,7 +916,7 @@ export default function Inventory() {
           <Table
             head={['Vendor', 'Confirmation rate', 'Response time', 'Cancellation rate', 'Price competitiveness', 'Booking success', 'Contract ends']}
             rows={vendors.map((v) => {
-              const score = vendorScores[v] || {};
+              const score = scoreOf(v);
               const mine = inventory.filter((i) => i.vendor === v);
               return {
                 key: v,
@@ -769,25 +949,40 @@ export default function Inventory() {
     ),
 
     Reservations: (
-      <Block title="Held, not sold" note="Stock is only deducted once the payment lands" wide>
+      <Block
+        title="Held, not sold"
+        note="Stock is only deducted once the payment lands"
+        wide
+        action={
+          <button className="btn-line btn-sm" onClick={sweepHolds}>
+            <Timer size={13} /> Release what has timed out
+          </button>
+        }
+      >
         <Table
-          head={['Hold', 'Item', 'Units', 'For', 'Channel', 'Held for', 'Time left', 'Stage']}
+          head={['Item', 'Units', 'For', 'Channel', 'Held for', 'Time left', 'Stage', '']}
           empty="Nothing is on hold."
-          rows={holds.map((h) => ({
+          rows={holdRows.map((h) => ({
             key: h.id,
             cells: [
-              <span className="num">{h.id}</span>,
-              nameOf(h.item),
+              h.item,
               <span className="num">{h.units}</span>,
               h.customer,
               h.channel,
               <span className="num">{h.heldFor} min</span>,
               <span className={`num font-bold ${h.minutesLeft <= 5 ? 'text-rose-600' : 'text-amber-600'}`}>
-                {h.minutesLeft} min
+                {h.stage === 'Awaiting payment' ? `${h.minutesLeft} min` : '—'}
               </span>,
-              <Badge tone="amber" dot>
+              <Badge tone={h.stage === 'Awaiting payment' ? 'amber' : h.stage === 'Converted' ? 'green' : 'slate'} dot>
                 {h.stage}
               </Badge>,
+              h.stage === 'Awaiting payment' ? (
+                <button className="btn-line btn-sm" onClick={() => releaseHold(h)}>
+                  <X size={13} /> Release
+                </button>
+              ) : (
+                ''
+              ),
             ],
           }))}
         />
@@ -801,19 +996,24 @@ export default function Inventory() {
     Contracts: (
       <Block title="What is about to expire" note="Contracts, rates and credentials that need renewing" wide>
         <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-          {contractAlerts.map((c, i) => (
+          {expiring.map((c, i) => (
             <li key={`${c.kind}-${i}`} className="flex flex-wrap items-center gap-3 px-4 py-3">
               <AlertTriangle size={15} className="shrink-0 text-amber-500" />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-bold text-ink-900">{c.kind}</span>
-                <span className="block text-xs text-ink-500">{c.item === '—' ? 'Across the panel' : nameOf(c.item)}</span>
+                <span className="block text-xs text-ink-500">{c.item}</span>
               </span>
-              <span className="num text-sm font-semibold text-ink-700">{c.on}</span>
+              <span className="num text-sm font-semibold text-ink-700">
+                {c.note ? new Date(c.note).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
+              </span>
               <button className="btn-line btn-sm" onClick={() => toast(`Renewal started for ${c.kind.toLowerCase()}`)}>
                 Renew
               </button>
             </li>
           ))}
+          {expiring.length === 0 && (
+            <li className="px-4 py-6 text-center text-sm text-ink-500">Nothing is expiring in the next thirty days.</li>
+          )}
         </ul>
       </Block>
     ),
@@ -1017,7 +1217,7 @@ export default function Inventory() {
         <button className="btn-line" onClick={exportInventory}>
           <Download size={16} /> Export
         </button>
-        <button className="btn-action" onClick={() => toast('Pick a category to add stock to')}>
+        <button className="btn-action" onClick={() => { setEditing(null); setFormOpen(true); }}>
           <Plus size={16} /> Add inventory
         </button>
       </PageHeader>
@@ -1147,8 +1347,17 @@ export default function Inventory() {
                   >
                     Block a unit
                   </button>
-                  <button className="btn-line btn-sm" onClick={() => toast('Vendor asked to confirm')}>
-                    Ask the vendor to confirm
+                  <button className="btn-line btn-sm" onClick={() => holdUnits(viewing, 1)}>
+                    <Timer size={13} /> Hold a unit for 30 min
+                  </button>
+                  <button
+                    className="btn-line btn-sm"
+                    onClick={() => { update('inventory', viewing.id, { confirmation: 'Confirmed' }); toast('Marked as confirmed by the vendor'); }}
+                  >
+                    Vendor has confirmed
+                  </button>
+                  <button className="btn-line btn-sm" onClick={() => { setEditing(viewing); setFormOpen(true); }}>
+                    Edit this item
                   </button>
                 </div>
               </section>
@@ -1156,6 +1365,18 @@ export default function Inventory() {
           </aside>
         </div>
       )}
+
+      {/* Putting stock on the shelf, or correcting what is on it. */}
+      <FormModal
+        open={formOpen}
+        onClose={() => { setFormOpen(false); setEditing(null); }}
+        title={editing ? `Edit ${editing.name}` : 'Add inventory'}
+        subtitle={editing ? editing.id : 'Rooms, villas, seats, tickets — whatever the agency holds'}
+        fields={itemFields}
+        initial={editing || { category: 'Hotels', status: 'Active', confirmation: 'Waiting', units: 1, markup: 0, memberDiscount: 0 }}
+        onSubmit={saveItem}
+        submitLabel={editing ? 'Save changes' : 'Add to inventory'}
+      />
     </>
   );
 }

@@ -508,6 +508,8 @@ export const ADAPTERS = {
       ownerId: ref(b.owner),
       source: b.source,
       created: d(b.createdAt),
+      updated: b.updatedAt ? dt(b.updatedAt) : '',
+      activities: b.activities || [],
       charges: b.charges || {},
       confirmation: b.confirmation || {},
       vendorContact: { payable: b.vendorCost ?? 0, paid: b.vendorPaid ?? 0 },
@@ -545,6 +547,8 @@ export const ADAPTERS = {
       occasion: p.occasion,
       source: p.source,
       owner: has(p, 'ownerId') ? p.ownerId || undefined : has(p, 'owner') ? userId(p.owner, ctx) : undefined,
+      // The partner's own answer, when they give it to the desk by phone.
+      ...(has(p, 'partnerStatus') ? { 'confirmation.status': p.partnerStatus } : {}),
       // The partner it goes to once confirmed; null unlinks it.
       vendor: has(p, 'vendorId') ? p.vendorId || null : undefined,
     }),

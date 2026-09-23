@@ -81,6 +81,13 @@ export default function Partners() {
       request: b.roomType || b.mealPlan || '—',
       checkIn: b.checkIn || b.departure || '—',
       checkOut: b.checkOut || '—',
+      sentAt: b.updated || b.created || '—',
+      payment: Number(b.paid || 0) >= Number(b.amount || 0) ? 'Paid in full' : Number(b.paid || 0) > 0 ? 'Part paid' : 'Not recorded',
+      partnerConfirmed: b.partnerStatus || '',
+      trail: (b.activities || []).slice(-8).map((a) => ({
+        at: a.at ? new Date(a.at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '',
+        text: a.text,
+      })),
       guests: b.pax || 0,
       rooms: b.rooms || 1,
       amount: Number(b.amount || 0),
@@ -680,6 +687,12 @@ export default function Partners() {
         open={!!request}
         onClose={() => setRequest(null)}
         onMessage={(r, kind) => toast(`${kind} sent to ${r.partner} about ${r.booking}`)}
+        onRecord={(r, answer) => {
+          update('bookings', r.booking, {
+            partnerStatus: answer === 'accepted' ? 'Confirmed by partner' : 'Declined by partner',
+          }, { message: `${r.partner} ${answer} ${r.booking}` });
+          setRequest(null);
+        }}
       />
 
       {viewing && (

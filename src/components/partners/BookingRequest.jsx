@@ -1,4 +1,4 @@
-import { Send, MessageSquare } from 'lucide-react';
+import { Check, Send, MessageSquare, X } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import Badge from '../ui/Badge.jsx';
 import Stat from '../ui/Stat.jsx';
@@ -43,11 +43,12 @@ function Line({ label, value, wide }) {
   );
 }
 
-export default function BookingRequest({ request: r, open, onClose, onMessage }) {
+export default function BookingRequest({ request: r, open, onClose, onMessage, onRecord }) {
   if (!r) return null;
 
   const reached = partnerPipeline.indexOf(r.stage);
   const ended = pipelineExits.includes(r.stage);
+  const answered = r.stage === 'Partner accepted' || r.stage === 'Partner declined' || r.stage === 'Completed';
 
   return (
     <Modal
@@ -61,9 +62,23 @@ export default function BookingRequest({ request: r, open, onClose, onMessage })
           <span className="text-xs text-ink-500">
             {ended ? 'This booking left the pipeline.' : `Stage ${reached + 1} of ${partnerPipeline.length}`}
           </span>
-          <button className="btn-line btn-sm" onClick={() => onMessage?.(r, 'Reminder')}>
-            <Send size={13} /> Send a reminder
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* The partner answers in their own portal; these are for when
+                they answer on the phone instead. */}
+            {!answered && (
+              <>
+                <button className="btn-action btn-sm" onClick={() => onRecord?.(r, 'accepted')}>
+                  <Check size={13} /> Partner accepted
+                </button>
+                <button className="btn-line btn-sm" onClick={() => onRecord?.(r, 'declined')}>
+                  <X size={13} /> Partner declined
+                </button>
+              </>
+            )}
+            <button className="btn-line btn-sm" onClick={() => onMessage?.(r, 'Reminder')}>
+              <Send size={13} /> Send a reminder
+            </button>
+          </div>
         </div>
       }
     >

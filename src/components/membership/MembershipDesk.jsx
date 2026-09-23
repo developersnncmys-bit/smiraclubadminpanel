@@ -281,7 +281,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="border-b border-ink-900/[0.07] text-left">
-                {['Member', 'Membership', 'Status', 'Start date', 'Expiry', 'Rooms', 'Benefits used', 'Amount', 'Expert', ''].map((h) => (
+                {['Member', 'Membership', 'Status', 'Start date', 'Expiry', 'Benefits used', 'Amount', 'Payment', 'Expert', ''].map((h) => (
                   <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
                     {h}
                   </th>
@@ -323,7 +323,6 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
                         </span>
                       )}
                     </td>
-                    <td className="num py-2.5 text-ink-700">{p?.rooms ?? '—'}</td>
                     <td className="num py-2.5 text-ink-700">
                       {usedOf(m)} of {allocatedOf(m)}
                     </td>
@@ -334,6 +333,19 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
                           {inr(Number(m.amount || 0) - Number(m.paid || 0))} due
                         </span>
                       )}
+                    </td>
+                    {/* Paid in full, part paid or nothing yet — what the desk chases by. */}
+                    <td className="py-2.5">
+                      {(() => {
+                        const amount = Number(m.amount || 0);
+                        const paid = Number(m.paid || 0);
+                        const state = paid >= amount && amount > 0 ? 'Paid' : paid > 0 ? 'Part paid' : 'Unpaid';
+                        return (
+                          <Badge tone={state === 'Paid' ? 'green' : state === 'Part paid' ? 'amber' : 'rose'} dot>
+                            {state}
+                          </Badge>
+                        );
+                      })()}
                     </td>
                     <td className="py-2.5 text-ink-700">{m.expert || '—'}</td>
                     <td className="py-2.5 text-right">

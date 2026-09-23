@@ -6,7 +6,7 @@ import {
   Search, Download, UserPlus, ArrowRightLeft, CalendarClock, Presentation,
   Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal,
   X, Filter, Zap, Users, Layers, Trophy,
-  IndianRupee, Eye, Mail, Check, ChevronDown, ChevronUp,
+  IndianRupee, Eye, Mail, Check,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -135,8 +135,6 @@ export default function Enquiries() {
   const [period, setPeriod] = useState('All');
   const [who, setWho] = useState('All');
   const [source, setSource] = useState('All');
-  /** The source strip stays folded until the desk asks for it. */
-  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [priority, setPriority] = useState('All');
   const [action, setAction] = useState(null);
   const act = (kind, context = {}) => setAction({ kind, context });
@@ -458,64 +456,6 @@ export default function Enquiries() {
           </div>
         )}
       </div>
-
-      {/* Where the leads come from — campaigns and WhatsApp first, then the rest */}
-      {(() => {
-        const pool = all.filter(
-          (e) => inPeriod(e.created, period) && (who === 'All' || e.owner === who) && (priority === 'All' || e.priority === priority)
-        );
-        const seen = [...new Set(pool.map((e) => e.source).filter(Boolean))];
-        const order = ['Campaign', 'WhatsApp', ...seen.filter((s) => s !== 'Campaign' && s !== 'WhatsApp')];
-        return (
-          <section className="card mb-4 px-5 py-4">
-            {/* Folded away by default — the desk opens it when it wants to
-                read the sources, rather than losing the pipeline below it. */}
-            <button
-              type="button"
-              onClick={() => setSourcesOpen((v) => !v)}
-              aria-expanded={sourcesOpen}
-              className="flex w-full flex-wrap items-baseline justify-between gap-2 text-left"
-            >
-              <h2 className="inline-flex items-center gap-2 font-display text-base font-extrabold text-ink-900">
-                {sourcesOpen ? <ChevronUp size={16} className="text-ink-400" /> : <ChevronDown size={16} className="text-ink-400" />}
-                Where leads come from
-              </h2>
-              <p className="text-xs text-ink-500">
-                {source !== 'All' ? `Showing ${source} only` : 'Leads and sales by source · tap one to see only those'}
-              </p>
-            </button>
-            {sourcesOpen && (
-            <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-              {order.map((s) => {
-                const list = pool.filter((e) => e.source === s);
-                const won = list.filter((e) => e.status === 'Won');
-                const on = source === s;
-                const campaigns = [...new Set(list.map((e) => e.campaign).filter(Boolean))];
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setSource(on ? 'All' : s)}
-                    className={`rounded-xl border px-3.5 py-3 text-left transition ${on ? 'border-brand-500 bg-brand-50' : 'border-ink-900/[0.08] bg-white hover:border-brand-300'}`}
-                  >
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">{s}</p>
-                    <p className="num mt-1 font-display text-xl font-extrabold text-ink-900">
-                      {list.length} <span className="text-xs font-semibold text-ink-500">lead{list.length === 1 ? '' : 's'}</span>
-                    </p>
-                    <p className="num text-xs font-semibold text-emerald-600">
-                      {won.length} sale{won.length === 1 ? '' : 's'}{value(won) ? ` · ${shortInr(value(won))}` : ''}
-                    </p>
-                    {campaigns.length > 0 && (
-                      <p className="mt-1 truncate text-[11px] text-ink-500" title={campaigns.join(', ')}>{campaigns.join(', ')}</p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            )}
-          </section>
-        );
-      })()}
 
       {/* Pick a stage, or start something */}
       <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">

@@ -140,8 +140,8 @@ export default function Inventory() {
   const [newRate, setNewRate] = useState('');
 
   const nameOf = (id) => inventory.find((x) => x.id === id)?.name || id;
-  const freeOf = (i) => Math.max(0, Number(i.units || 0) - Number(i.booked || 0) - Number(i.blocked || 0));
-  const sellingOf = (i) => Number(i.baseRate || 0) + Number(i.markup || 0);
+  const freeOf = (i) => Math.max(0, Number(i?.units || 0) - Number(i?.booked || 0) - Number(i?.blocked || 0));
+  const sellingOf = (i) => Number(i?.baseRate || 0) + Number(i?.markup || 0);
   const valueOf = (i) => freeOf(i) * sellingOf(i);
 
   const rows = inventory.filter((i) => {

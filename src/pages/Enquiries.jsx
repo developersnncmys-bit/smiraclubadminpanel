@@ -6,7 +6,7 @@ import {
   Search, Download, UserPlus, ArrowRightLeft, CalendarClock, Presentation,
   Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal,
   X, Filter, Zap, Users, Layers, Trophy,
-  IndianRupee, Eye, Mail, Check,
+  IndianRupee, Eye, Mail, Check, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -135,6 +135,8 @@ export default function Enquiries() {
   const [period, setPeriod] = useState('All');
   const [who, setWho] = useState('All');
   const [source, setSource] = useState('All');
+  /** The source strip stays folded until the desk asks for it. */
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [priority, setPriority] = useState('All');
   const [action, setAction] = useState(null);
   const act = (kind, context = {}) => setAction({ kind, context });
@@ -466,11 +468,24 @@ export default function Enquiries() {
         const order = ['Campaign', 'WhatsApp', ...seen.filter((s) => s !== 'Campaign' && s !== 'WhatsApp')];
         return (
           <section className="card mb-4 px-5 py-4">
-            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="font-display text-base font-extrabold text-ink-900">Where leads come from</h2>
-              <p className="text-xs text-ink-500">Leads and sales by source · tap one to see only those</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+            {/* Folded away by default — the desk opens it when it wants to
+                read the sources, rather than losing the pipeline below it. */}
+            <button
+              type="button"
+              onClick={() => setSourcesOpen((v) => !v)}
+              aria-expanded={sourcesOpen}
+              className="flex w-full flex-wrap items-baseline justify-between gap-2 text-left"
+            >
+              <h2 className="inline-flex items-center gap-2 font-display text-base font-extrabold text-ink-900">
+                {sourcesOpen ? <ChevronUp size={16} className="text-ink-400" /> : <ChevronDown size={16} className="text-ink-400" />}
+                Where leads come from
+              </h2>
+              <p className="text-xs text-ink-500">
+                {source !== 'All' ? `Showing ${source} only` : 'Leads and sales by source · tap one to see only those'}
+              </p>
+            </button>
+            {sourcesOpen && (
+            <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
               {order.map((s) => {
                 const list = pool.filter((e) => e.source === s);
                 const won = list.filter((e) => e.status === 'Won');
@@ -497,6 +512,7 @@ export default function Enquiries() {
                 );
               })}
             </div>
+            )}
           </section>
         );
       })()}

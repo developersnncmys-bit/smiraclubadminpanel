@@ -90,9 +90,21 @@ export default function Bookings() {
   const pax = rows.reduce((s, b) => s + b.pax, 0);
   const outstanding = rows.reduce((s, b) => s + Math.max(0, Number(b.amount || 0) - Number(b.paid || 0)), 0);
 
+  /** The plan this customer holds, so a card can say who is a member. */
+  const digitsOf = (v) => String(v || '').replace(/\D/g, '').slice(-10);
+  const planFor = (b) => {
+    if (b.membership) return b.membership;
+    const phone = digitsOf(b.phone || customers.find((c) => c.name === b.customer)?.phone);
+    const signup = memberSignups.find(
+      (m) => (phone && digitsOf(m.phone) === phone) || m.name === b.customer,
+    );
+    return signup?.plan || '';
+  };
+
   /** The two the sheet filters by that the record only implies. */
   const withDerived = (b) => ({
     ...b,
+    membership: planFor(b),
     phone: b.phone || customers.find((c) => c.name === b.customer)?.phone || '',
     paymentStatus:
       Number(b.paid || 0) >= Number(b.amount || 0) ? 'Paid' : Number(b.paid || 0) > 0 ? 'Partial' : 'Pending',
@@ -444,7 +456,7 @@ export default function Bookings() {
                   <article
                     key={b.id}
                     onClick={() => setViewing(b)}
-                    className={`card rail ${STATUS[b.status]?.rail || 'before:bg-ink-400'} flex h-full min-h-[23rem] cursor-pointer flex-col p-4 pl-5 transition hover:shadow-raised`}
+                    className={`card rail ${STATUS[b.status]?.rail || 'before:bg-ink-400'} flex h-full cursor-pointer flex-col p-4 pl-5 transition hover:shadow-raised`}
                   >
                     {/* Who is travelling, and how the booking stands */}
                     <div className="flex items-start justify-between gap-2">
@@ -455,7 +467,6 @@ export default function Bookings() {
                         <p className="num truncate text-xs text-ink-500">{b.id} · {b.pkg || b.hotel}</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        {b.membership && <Badge tone="amber"><Crown size={11} /> {b.membership}</Badge>}
                         <RowMenu
                           items={[
                             { label: 'Edit booking', icon: Pencil, onClick: () => { setEditing(b); setFormOpen(true); } },
@@ -471,6 +482,10 @@ export default function Bookings() {
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <Badge tone={bookingStatusTone[b.status]} dot>{b.status}</Badge>
                       <Badge tone="sky">{b.bookingType || 'Package'}</Badge>
+                      {/* Whether the guest holds a plan — the desk prices by it. */}
+                      <Badge tone={b.membership ? 'amber' : 'slate'}>
+                        <Crown size={11} /> {b.membership ? `${b.membership} member` : 'Not a member'}
+                      </Badge>
                       {b.freeStay && <Badge tone="green">Free stay</Badge>}
                     </div>
 

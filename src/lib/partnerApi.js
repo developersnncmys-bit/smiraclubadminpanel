@@ -74,4 +74,8 @@ export const partnerApi = {
   dashboard: () => request('/dashboard'),
   accept: (id) => request(`/bookings/${id}/accept`, { method: 'POST' }),
   decline: (id) => request(`/bookings/${id}/decline`, { method: 'POST' }),
+  setAccepting: (open) => request('/accepting', { method: 'PATCH', body: { open } }),
+  performance: () => request('/performance'),
+  availability: (from, days = 42) => request(`/availability?from=${from}&days=${days}`),
+  setAvailability: (body) => request('/availability', { method: 'PATCH', body }),
 };

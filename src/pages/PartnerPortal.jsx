@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, BedDouble, Tags, CalendarDays, CalendarCheck, Users,
   Wallet, BarChart3, Star, FileText, Headphones, UserRound, LogOut, Check, X,
-  Pencil, Loader2, RefreshCw, Clock3, Hourglass, FileSignature, XCircle,
+  Pencil, Loader2, RefreshCw, Clock3, Hourglass, FileSignature, XCircle, TrendingUp,
 } from 'lucide-react';
 import Brand from '../components/ui/Brand.jsx';
 import FlowTracker from '../components/partners/FlowTracker.jsx';
@@ -35,6 +35,7 @@ const SECTIONS = [
   { key: 'customers', label: 'Customers', icon: Users },
   { key: 'payments', label: 'Payments', icon: Wallet },
   { key: 'reports', label: 'Reports', icon: BarChart3 },
+  { key: 'performance', label: 'Performance', icon: TrendingUp },
   { key: 'reviews', label: 'Reviews', icon: Star },
   { key: 'documents', label: 'Documents', icon: FileText },
   { key: 'support', label: 'Support', icon: Headphones },
@@ -167,6 +168,14 @@ export default function PartnerPortal() {
   const [busy, setBusy] = useState({});
   const [note, setNote] = useState('');
 
+  /** Their switch, their score, and the month they are looking at. */
+  const [accepting, setAccepting] = useState(true);
+  const [score, setScore] = useState(null);
+  const [calendar, setCalendar] = useState(null);
+  const [month, setMonth] = useState(() => new Date());
+  const [picked, setPicked] = useState(null);
+  const [roomsOpen, setRoomsOpen] = useState({});
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -174,11 +183,17 @@ export default function PartnerPortal() {
       // Where they are in the flow decides what they see, so ask that first.
       const mine = await partnerApi.getListing();
       setListing(mine.data);
+      setAccepting(mine.data.partner.acceptingBookings !== false);
       if (mine.data.partner.live) {
-        const res = await partnerApi.dashboard();
+        const [res, how] = await Promise.all([
+          partnerApi.dashboard(),
+          partnerApi.performance().catch(() => ({ data: null })),
+        ]);
         setData(res.data);
+        setScore(how.data);
       } else {
         setData(null);
+        setScore(null);
       }
     } catch (err) {
       if (!getPartnerToken()) {
@@ -211,6 +226,64 @@ export default function PartnerPortal() {
       window.removeEventListener('focus', again);
     };
   }, [load]);
+
+  /** The month the calendar is showing, read from the server. */
+  const loadCalendar = useCallback(async () => {
+    if (!listing?.partner?.live) return;
+    const from = new Date(month.getFullYear(), month.getMonth(), 1);
+    try {
+      const res = await partnerApi.availability(from.toISOString().slice(0, 10), 42);
+      setCalendar(res.data);
+    } catch {
+      setCalendar(null);
+    }
+  }, [listing?.partner?.live, month]);
+
+  useEffect(() => { loadCalendar(); }, [loadCalendar]);
+
+  const DAY_MS = 86400000;
+  const monthGrid = (() => {
+    const first = new Date(month.getFullYear(), month.getMonth(), 1);
+    const start = new Date(first);
+    start.setDate(1 - ((first.getDay() + 6) % 7));
+    return Array.from({ length: 42 }, (_, n) => new Date(start.getTime() + n * DAY_MS));
+  })();
+  const shiftMonth = (by) => {
+    setMonth((m) => new Date(m.getFullYear(), m.getMonth() + by, 1));
+    setPicked(null);
+  };
+  const calDay = (d) =>
+    (calendar?.days || []).find((x) => new Date(x.date).toDateString() === d.toDateString());
+
+  /** Opening or closing the property to new requests. */
+  const toggleAccepting = async () => {
+    const next = !accepting;
+    setBusy((b) => ({ ...b, accepting: true }));
+    try {
+      await partnerApi.setAccepting(next);
+      setAccepting(next);
+      setNote(next ? 'You are open for bookings' : 'Closed — no new requests will be sent');
+    } catch (err) {
+      setNote(err.message || 'That did not save');
+    }
+    setBusy((b) => ({ ...b, accepting: false }));
+  };
+
+  /** How many rooms of one property are open on the chosen day. */
+  const saveDay = async (item) => {
+    if (!picked) return;
+    try {
+      await partnerApi.setAvailability({
+        item: item.id,
+        date: picked.toISOString(),
+        left: Number(roomsOpen[item.id] ?? item.units),
+      });
+      await loadCalendar();
+      setNote('Availability saved');
+    } catch (err) {
+      setNote(err.message || 'That did not save');
+    }
+  };
 
   const answer = async (b, accepted) => {
     setBusy((x) => ({ ...x, [b.id]: accepted ? 'accept' : 'decline' }));
@@ -252,6 +325,39 @@ export default function PartnerPortal() {
   const body = {
     dashboard: (
       <>
+        {/* The partner's own switch, above everything: taking bookings, or not. */}
+        <section className="card flex flex-wrap items-center justify-between gap-4 p-5">
+          <div className="min-w-0">
+            <p className="font-display text-base font-extrabold text-ink-900">
+              {accepting ? 'Open for bookings' : 'Closed for bookings'}
+            </p>
+            <p className="mt-0.5 text-sm text-ink-500">
+              {accepting
+                ? 'Smira may send you new booking requests.'
+                : 'No new requests will be sent. Bookings you have already accepted stand.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={accepting}
+            aria-label="Taking bookings"
+            disabled={busy.accepting}
+            onClick={toggleAccepting}
+            className={`relative h-8 w-14 shrink-0 rounded-full transition disabled:opacity-60 ${
+              accepting ? 'bg-emerald-500' : 'bg-ink-900/20'
+            }`}
+          >
+            <span
+              className={`absolute top-1 grid h-6 w-6 place-items-center rounded-full bg-white shadow transition-all ${
+                accepting ? 'left-7' : 'left-1'
+              }`}
+            >
+              {busy.accepting ? <Loader2 size={13} className="animate-spin text-ink-500" /> : null}
+            </span>
+          </button>
+        </section>
+
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
           <Figure label="Total bookings" value={o.bookings ?? 0} />
           <Figure label="Upcoming check-ins" value={o.upcoming ?? 0} hint="next 7 days" />
@@ -352,20 +458,139 @@ export default function PartnerPortal() {
     ),
 
     calendar: (
-      <Panel title="Availability calendar" note="Rooms open to members tonight">
-        {data?.inventory?.length ? (
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {data.inventory.map((i) => (
-              <li key={i.id} className="flex items-center justify-between rounded-xl border border-ink-900/[0.07] px-4 py-3">
-                <span className="text-sm font-semibold text-ink-800">{i.name}</span>
-                <span className="num text-sm font-bold text-brand-700">{i.available} open</span>
-              </li>
+      <>
+        <Panel
+          title="Availability calendar"
+          note="What is open each day, and who is staying"
+          action={
+            <span className="flex items-center gap-2">
+              <button type="button" className="btn-line btn-sm" onClick={() => shiftMonth(-1)}>Previous</button>
+              <span className="min-w-[8.5rem] text-center text-sm font-bold text-ink-900">
+                {month.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+              </span>
+              <button type="button" className="btn-line btn-sm" onClick={() => shiftMonth(1)}>Next</button>
+            </span>
+          }
+        >
+          <div className="grid grid-cols-7 gap-1.5 text-center">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+              <span key={d} className="pb-1 text-[11px] font-bold uppercase tracking-wide text-ink-400">{d}</span>
             ))}
-          </ul>
-        ) : (
-          <Empty>No inventory to show yet.</Empty>
-        )}
-      </Panel>
+            {monthGrid.map((d) => {
+              const row = calDay(d);
+              const thisMonth = d.getMonth() === month.getMonth();
+              const on = picked && d.toDateString() === picked.toDateString();
+              return (
+                <button
+                  key={d.toISOString()}
+                  type="button"
+                  onClick={() => setPicked(d)}
+                  className={`rounded-xl border px-1 py-2 text-left transition ${
+                    on ? 'border-brand-500 bg-brand-50' : 'border-ink-900/[0.07] hover:border-brand-300'
+                  } ${thisMonth ? '' : 'opacity-40'}`}
+                >
+                  <span className="num block text-center text-xs font-bold text-ink-900">{d.getDate()}</span>
+                  {row && (
+                    <>
+                      <span className={`num block text-center text-[11px] font-bold ${row.blackout ? 'text-rose-600' : row.open ? 'text-emerald-600' : 'text-ink-400'}`}>
+                        {row.blackout ? 'closed' : `${row.open} open`}
+                      </span>
+                      {row.staying > 0 && (
+                        <span className="block text-center text-[10px] text-ink-500">{row.staying} staying</span>
+                      )}
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </Panel>
+
+        <Panel
+          title={picked ? `${picked.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : 'Pick a day'}
+          note={picked ? 'Set how many rooms are open that day' : 'Choose a day above to change it'}
+        >
+          {picked ? (
+            <div className="space-y-3">
+              {(calendar?.items || []).map((i) => (
+                <div key={i.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-900/[0.07] px-4 py-3">
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-ink-800">{i.name}</span>
+                    <span className="block text-xs text-ink-500">{i.units} rooms in total</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max={i.units}
+                      key={`${i.id}-${picked.toDateString()}`}
+                      defaultValue={i.units}
+                      onChange={(e) => setRoomsOpen((v) => ({ ...v, [i.id]: e.target.value }))}
+                      className="input h-9 w-24 py-0 text-sm"
+                    />
+                    <button type="button" className="btn-action btn-sm" onClick={() => saveDay(i)}>
+                      Save
+                    </button>
+                  </span>
+                </div>
+              ))}
+              {!(calendar?.items || []).length && <Empty>No rooms are listed against you yet.</Empty>}
+              {calDay(picked)?.guests?.length > 0 && (
+                <p className="text-sm text-ink-600">
+                  Staying that night: {calDay(picked).guests.join(', ')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <Empty>Pick a day on the calendar.</Empty>
+          )}
+        </Panel>
+      </>
+    ),
+
+    performance: (
+      <>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Figure label="Bookings sent to you" value={score?.bookings ?? 0} />
+          <Figure label="Answered" value={score?.answered ?? 0} hint={`${score?.waiting ?? 0} waiting`} />
+          <Figure
+            label="Acceptance rate"
+            value={score?.acceptanceRate != null ? `${score.acceptanceRate}%` : '—'}
+            tone={(score?.acceptanceRate ?? 100) >= 80 ? 'text-emerald-600' : 'text-amber-600'}
+          />
+          <Figure
+            label="Answered in"
+            value={score?.responseHours != null ? `${score.responseHours} h` : '—'}
+            hint="on average"
+          />
+          <Figure label="Completed stays" value={score?.completed ?? 0} />
+          <Figure
+            label="Cancellation rate"
+            value={score?.cancellationRate != null ? `${score.cancellationRate}%` : '—'}
+            tone={(score?.cancellationRate ?? 0) > 10 ? 'text-rose-600' : 'text-ink-900'}
+          />
+          <Figure label="Earned" value={inr(score?.earned || 0)} tone="text-brand-700" />
+          <Figure
+            label="Still owed to you"
+            value={inr(Math.max(0, (score?.earned || 0) - (score?.paidOut || 0)))}
+            tone={(score?.earned || 0) - (score?.paidOut || 0) > 0 ? 'text-amber-600' : 'text-ink-900'}
+          />
+        </div>
+
+        <Panel title="How Smira scores you" note="The same figures the desk sees on your record">
+          <Facts
+            rows={[
+              ['Rating from members', score?.rating ? `${score.rating} / 5` : 'Not rated yet'],
+              ['Booking requests answered', `${score?.answered ?? 0} of ${score?.bookings ?? 0}`],
+              ['Declined', score?.declineRate != null ? `${score.declineRate}%` : '—'],
+              ['Average answer time', score?.responseHours != null ? `${score.responseHours} hours` : '—'],
+            ]}
+          />
+          <p className="mt-4 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-600">
+            Answering quickly and turning few requests away is what keeps you in front of members.
+          </p>
+        </Panel>
+      </>
     ),
 
     bookings: (

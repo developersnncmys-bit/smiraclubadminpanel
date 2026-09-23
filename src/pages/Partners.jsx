@@ -60,7 +60,40 @@ function scoreOf(p) {
  * how they score, what they are owed and what the panel sends them.
  */
 export default function Partners() {
-  const { partners, update, create, toast, pull } = useApp();
+  const { partners, bookings, update, create, toast, pull } = useApp();
+
+  /**
+   * The bookings the desk has sent to a partner — the real ones, in the
+   * columns this page already reads. A booking reaches a partner by being
+   * confirmed against them, so where it has got to is its own answer:
+   * sent, accepted, declined, or finished.
+   */
+  const sentToPartners = (bookings || [])
+    .filter((b) => b.vendorId || b.vendor)
+    .map((b) => ({
+      id: b.id,
+      booking: b.id,
+      customer: b.customer,
+      membership: b.membership || '—',
+      partner: b.vendor || '—',
+      service: b.hotel || b.pkg || b.bookingType || '—',
+      occasion: b.occasion || b.bookingType || '—',
+      request: b.roomType || b.mealPlan || '—',
+      checkIn: b.checkIn || b.departure || '—',
+      checkOut: b.checkOut || '—',
+      guests: b.pax || 0,
+      rooms: b.rooms || 1,
+      amount: Number(b.amount || 0),
+      commission: 0,
+      payout: Number(b.vendorContact?.payable || 0),
+      stage: /Declined by partner/i.test(b.partnerStatus || '')
+        ? 'Partner declined'
+        : /Confirmed by partner/i.test(b.partnerStatus || '')
+          ? 'Partner accepted'
+          : b.status === 'Completed'
+            ? 'Completed'
+            : 'Sent to partner',
+    }));
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [view, setView] = useState('Partners');
@@ -328,7 +361,7 @@ export default function Partners() {
               <li key={s} className="rounded-xl bg-surface-soft px-4 py-3">
                 <p className="text-xs font-bold text-ink-700">{s}</p>
                 <p className="num mt-1 font-display text-lg font-extrabold text-ink-900">
-                  {partnerRequests.filter((r) => r.stage === s).length}
+                  {sentToPartners.filter((r) => r.stage === s).length}
                 </p>
               </li>
             ))}
@@ -349,7 +382,7 @@ export default function Partners() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-900/[0.07]">
-                {partnerRequests.map((r) => (
+                {sentToPartners.map((r) => (
                   <tr
                     key={r.id}
                     className="cursor-pointer hover:bg-surface-soft"
@@ -653,7 +686,7 @@ export default function Partners() {
         <PartnerProfile
           partner={partners.find((p) => p.id === viewing.id) || viewing}
           list={rows}
-          requests={partnerRequests}
+          requests={sentToPartners}
           tickets={partnerTickets}
           settlements={seedSettlements}
           score={scoreOf(viewing)}

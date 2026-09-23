@@ -195,6 +195,23 @@ export default function PartnerPortal() {
     if (getPartnerToken()) load();
   }, [load]);
 
+  // A booking can arrive while this is open, so the portal looks again every
+  // half minute and whenever the partner comes back to the tab.
+  useEffect(() => {
+    if (!getPartnerToken()) return undefined;
+    const again = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    const timer = setInterval(again, 30000);
+    document.addEventListener('visibilitychange', again);
+    window.addEventListener('focus', again);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', again);
+      window.removeEventListener('focus', again);
+    };
+  }, [load]);
+
   const answer = async (b, accepted) => {
     setBusy((x) => ({ ...x, [b.id]: accepted ? 'accept' : 'decline' }));
     setNote('');

@@ -50,6 +50,7 @@ export const partnerPipeline = [
 ];
 
 export const pipelineExits = [
+  'Partner declined',
   'Partner rejected',
   'Customer cancelled',
   'Partner cancelled',

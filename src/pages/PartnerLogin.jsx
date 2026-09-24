@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { ArrowRight, KeyRound, Loader2, Smartphone, Handshake, ShieldCheck } from 'lucide-react';
+import { ArrowRight, KeyRound, Loader2, Smartphone, Handshake, ShieldCheck, UserPlus } from 'lucide-react';
 import Brand from '../components/ui/Brand.jsx';
 import { partnerApi, getPartnerToken, setPartnerToken, partnerLive } from '../lib/partnerApi.js';
 
@@ -24,16 +24,20 @@ const DEMO_PARTNERS = [
 export default function PartnerLogin() {
   const navigate = useNavigate();
   const [step, setStep] = useState('phone');
+  /** Signing in and registering are asked for separately, never guessed. */
+  const [mode, setMode] = useState('login');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [devCode, setDevCode] = useState('');
   const [name, setName] = useState('');
-  /** A number we have never seen is registering, not signing in. */
-  const [isNew, setIsNew] = useState(false);
   const [error, setError] = useState('');
+  /** Set when the number is simply not one of ours, so we can offer the way on. */
+  const [unknown, setUnknown] = useState(false);
   const [busy, setBusy] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const boxes = useRef([]);
+
+  const registering = mode === 'register';
 
   const validPhone = /^[6-9]\d{9}$/.test(phone);
   const code = otp.join('');
@@ -54,11 +58,11 @@ export default function PartnerLogin() {
       return;
     }
     setError('');
+    setUnknown(false);
     setBusy(true);
     try {
-      const res = await partnerApi.requestOtp(phone);
+      const res = await partnerApi.requestOtp(phone, mode);
       setName(res.data?.name || '');
-      setIsNew(Boolean(res.data?.isNew));
       setDevCode(res.data?.devCode || '');
       setOtp(Array(OTP_LENGTH).fill(''));
       setStep('otp');
@@ -66,9 +70,20 @@ export default function PartnerLogin() {
       setTimeout(() => boxes.current[0]?.focus(), 60);
     } catch (err) {
       setError(err.message);
+      // Not one of ours: say so, and put Register right under it.
+      setUnknown(!registering && err.status === 404);
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Switching doors keeps the number they already typed. */
+  const swap = (to) => {
+    setMode(to);
+    setStep('phone');
+    setError('');
+    setUnknown(false);
+    setDevCode('');
   };
 
   const verify = async (e) => {
@@ -80,7 +95,7 @@ export default function PartnerLogin() {
     setError('');
     setBusy(true);
     try {
-      const res = await partnerApi.verifyOtp(phone, code);
+      const res = await partnerApi.verifyOtp(phone, code, mode);
       setPartnerToken(res.token);
       navigate('/partner', { replace: true });
     } catch (err) {
@@ -123,11 +138,12 @@ export default function PartnerLogin() {
           {step === 'phone' ? (
             <form onSubmit={send} noValidate>
               <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
-                Sign in or register
+                {registering ? 'Register your property' : 'Partner sign in'}
               </h1>
               <p className="mt-1.5 text-sm text-ink-500">
-                Already a partner? Use the mobile number your property is registered with. New to
-                Smira? Enter your mobile and we will set up your partner account.
+                {registering
+                  ? 'Give us a mobile number to reach you on. Once it is verified you will fill in your property over five short steps.'
+                  : 'Use the mobile number your property is registered with.'}
               </p>
 
               <label className="mt-6 block">
@@ -141,6 +157,7 @@ export default function PartnerLogin() {
                     onChange={(e) => {
                       setPhone(e.target.value.replace(/\D/g, '').slice(0, 10));
                       setError('');
+                      setUnknown(false);
                     }}
                     inputMode="numeric"
                     autoComplete="tel-national"
@@ -153,10 +170,38 @@ export default function PartnerLogin() {
 
               {error && <p className="mt-2 text-xs font-semibold text-rose-600">{error}</p>}
 
+              {/* Turned away at the sign-in door: the way on, right here. */}
+              {unknown && (
+                <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50 p-3.5">
+                  <p className="text-xs font-semibold text-ink-700">
+                    New to Smira? Register your property and we will take you through it in five
+                    short steps.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => swap('register')}
+                    className="btn-action btn-sm mt-2.5"
+                  >
+                    <UserPlus size={14} /> Register
+                  </button>
+                </div>
+              )}
+
               <button type="submit" disabled={busy || !partnerLive} className="btn-action mt-5 w-full py-3">
                 {busy ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                {busy ? 'Sending code…' : 'Send code'}
+                {busy ? 'Sending code…' : registering ? 'Send code to register' : 'Send code'}
               </button>
+
+              <p className="mt-4 text-center text-xs text-ink-500">
+                {registering ? 'Already a partner? ' : 'Not registered yet? '}
+                <button
+                  type="button"
+                  onClick={() => swap(registering ? 'login' : 'register')}
+                  className="font-semibold text-brand-700 hover:underline"
+                >
+                  {registering ? 'Sign in' : 'Register your property'}
+                </button>
+              </p>
 
               <div className="mt-6 rounded-xl bg-surface-soft p-3.5">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">
@@ -183,7 +228,7 @@ export default function PartnerLogin() {
           ) : (
             <form onSubmit={verify} noValidate>
               <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
-                {isNew ? 'Create your partner account' : name ? `Welcome back, ${name}` : 'Enter your code'}
+                {registering ? 'Create your partner account' : name ? `Welcome back, ${name}` : 'Enter your code'}
               </h1>
               <p className="mt-1.5 text-sm text-ink-500">
                 Sent to <span className="font-bold text-ink-800">+91 {phone}</span>.{' '}
@@ -241,7 +286,7 @@ export default function PartnerLogin() {
 
               <button type="submit" disabled={busy} className="btn-action mt-5 w-full py-3">
                 {busy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                {busy ? 'Checking…' : isNew ? 'Verify and continue' : 'Sign in'}
+                {busy ? 'Checking…' : registering ? 'Verify and start registering' : 'Sign in'}
               </button>
             </form>
           )}

@@ -66,8 +66,9 @@ async function request(path, { method = 'GET', body } = {}) {
 }
 
 export const partnerApi = {
-  requestOtp: (phone) => request('/otp/request', { method: 'POST', body: { phone } }),
-  verifyOtp: (phone, code) => request('/otp/verify', { method: 'POST', body: { phone, code } }),
+  /** 'login' only finds a partner we hold; 'register' only makes a new one. */
+  requestOtp: (phone, mode = 'login') => request('/otp/request', { method: 'POST', body: { phone, mode } }),
+  verifyOtp: (phone, code, mode = 'login') => request('/otp/verify', { method: 'POST', body: { phone, code, mode } }),
   getListing: () => request('/listing'),
   saveListing: (body) => request('/listing', { method: 'PUT', body }),
   submitListing: () => request('/listing/submit', { method: 'POST' }),

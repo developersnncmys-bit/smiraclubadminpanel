@@ -66,6 +66,28 @@ async function request(path, { method = 'GET', body } = {}) {
 }
 
 export const partnerApi = {
+  /**
+   * Registering: the property's own details, with nobody signed in. It is
+   * the same open route the website's Become a Partner form posts to, so a
+   * hotelier can start from either and the desk sees one application.
+   */
+  apply: async (form) => {
+    if (!apiBase) throw new PartnerApiError(0, 'The partner portal needs the Smira API');
+    let res;
+    try {
+      res = await fetch(`${apiBase}/partners/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+    } catch {
+      throw new PartnerApiError(0, 'Could not reach Smira just now — check your connection');
+    }
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new PartnerApiError(res.status, json.message || 'That did not work', json.details);
+    return json;
+  },
+
   /** 'login' only finds a partner we hold; 'register' only makes a new one. */
   requestOtp: (phone, mode = 'login') => request('/otp/request', { method: 'POST', body: { phone, mode } }),
   verifyOtp: (phone, code, mode = 'login') => request('/otp/verify', { method: 'POST', body: { phone, code, mode } }),

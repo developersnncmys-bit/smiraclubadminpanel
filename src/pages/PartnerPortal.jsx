@@ -6,7 +6,6 @@ import {
   Pencil, Loader2, RefreshCw, Clock3, Hourglass, FileSignature, XCircle, TrendingUp,
 } from 'lucide-react';
 import Brand from '../components/ui/Brand.jsx';
-import FlowTracker from '../components/partners/FlowTracker.jsx';
 import ListingWizard from '../components/partners/ListingWizard.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import { inr } from '../data/mockData.js';
@@ -763,7 +762,6 @@ export default function PartnerPortal() {
         <h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-ink-900">
           {me.name === 'New partner' ? 'List your property with Smira Club' : me.name}
         </h1>
-        <FlowTracker stage={me.stage} live={me.live} className="mt-4" />
       </div>
 
       {me.editable ? (

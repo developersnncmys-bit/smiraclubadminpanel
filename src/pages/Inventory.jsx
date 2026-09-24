@@ -48,7 +48,7 @@ const SECTIONS = [
   'Permissions',
 ];
 
-const CATEGORY_KEYS = ['Hotels', 'Villas', 'Flights', 'Transport', 'Packages', 'Activities', 'Restaurants', 'Spa and salon', 'Attractions', 'Experiences'];
+const CATEGORY_KEYS = ['Hotels', 'Villas', 'Flights', 'Transport', 'Packages', 'Activities', 'Restaurants', 'Spa and salon', 'Attractions', 'Experiences', 'Games'];
 
 const statusTone = { Active: 'green', Limited: 'amber', Low: 'amber', 'Sold out': 'rose', Blocked: 'slate' };
 

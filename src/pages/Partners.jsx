@@ -721,16 +721,22 @@ export default function Partners() {
         </section>
       )}
 
-      <KpiRow items={kpis} cols={4} />
+      {/* While the five steps are open they are the screen. The lists are
+          still there when it closes, and nothing is lost by hiding them. */}
+      {!formOpen && (
+        <>
+          <KpiRow items={kpis} cols={4} />
 
-      <SectionTabs
-        className="mb-5 mt-6"
-        items={VIEWS}
-        value={view}
-        onChange={setView}
-      />
+          <SectionTabs
+            className="mb-5 mt-6"
+            items={VIEWS}
+            value={view}
+            onChange={setView}
+          />
 
-      <div className="grid gap-5 xl:grid-cols-2">{body[view]}</div>
+          <div className="grid gap-5 xl:grid-cols-2">{body[view]}</div>
+        </>
+      )}
 
       <BookingRequest
         request={request}

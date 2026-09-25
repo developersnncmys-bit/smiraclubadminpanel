@@ -15,7 +15,7 @@ import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
 import Block from '../components/ui/Block.jsx';
-import FormModal from '../components/ui/FormModal.jsx';
+import InlineForm from '../components/ui/InlineForm.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
@@ -660,6 +660,20 @@ export default function Partners() {
         </button>
       </PageHeader>
 
+      {/* A partner record is too long for a dialog, so it opens across the
+          page instead — the sections stay side by side and nothing scrolls
+          inside a box. */}
+      <InlineForm
+        open={formOpen}
+        onClose={() => { setFormOpen(false); setEditing(null); }}
+        onSubmit={savePartner}
+        title={editing ? `Edit ${editing.name}` : 'Add partner'}
+        subtitle={editing ? editing.id : 'They land in onboarding, waiting on their documents'}
+        fields={partnerFields}
+        initial={editing || { category: partnerCategories[0], commission: 10 }}
+        submitLabel={editing ? 'Save changes' : 'Add partner'}
+      />
+
       <KpiRow items={kpis} cols={4} />
 
       <SectionTabs
@@ -670,17 +684,6 @@ export default function Partners() {
       />
 
       <div className="grid gap-5 xl:grid-cols-2">{body[view]}</div>
-
-      <FormModal
-        open={formOpen}
-        onClose={() => { setFormOpen(false); setEditing(null); }}
-        onSubmit={savePartner}
-        title={editing ? `Edit ${editing.name}` : 'Add partner'}
-        subtitle={editing ? editing.id : 'They land in onboarding, waiting on their documents'}
-        fields={partnerFields}
-        initial={editing || { category: partnerCategories[0], commission: 10 }}
-        submitLabel={editing ? 'Save changes' : 'Add partner'}
-      />
 
       <BookingRequest
         request={request}

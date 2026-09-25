@@ -12,7 +12,7 @@ import SectionTabs from '../components/ui/SectionTabs.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import RowMenu from '../components/ui/RowMenu.jsx';
-import FormModal from '../components/ui/FormModal.jsx';
+import InlineForm from '../components/ui/InlineForm.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import MemberDetails from '../components/team/MemberDetails.jsx';
 import TeamActions from '../components/team/TeamActions.jsx';
@@ -304,20 +304,70 @@ export default function Team() {
       ]
     );
 
+  /**
+   * The joining form, as the client's sheet lays it out.
+   *
+   * Inviting somebody used to ask for a name, an email and a number, which
+   * left the desk chasing everything else by message afterwards. This is the
+   * whole sheet — who they are, their family and emergency contact, where
+   * they live, what they have done, how they are paid and what they have
+   * agreed to — so a joiner is a record rather than a to-do.
+   */
   const fields = [
-    { name: 'name', label: 'Full name', type: 'text', required: true },
-    { name: 'empId', label: 'Employee ID', type: 'text', placeholder: 'EMP-111' },
-    { name: 'role', label: 'Designation', type: 'select', options: ROLES },
+    { name: 'name', label: 'Full name', type: 'text', required: true, section: 'Personal details' },
+    { name: 'photo', label: 'Profile photo (link)', type: 'text', placeholder: 'https://…' },
+    { name: 'dob', label: 'Date of birth', type: 'date' },
+    { name: 'gender', label: 'Gender', type: 'select', options: ['', 'Female', 'Male', 'Other', 'Prefer not to say'] },
+    { name: 'phone', label: 'Mobile number', type: 'tel', required: true },
+    { name: 'email', label: 'Personal email', type: 'email', required: true },
+    { name: 'altPhone', label: 'Alternate contact number', type: 'tel' },
+    { name: 'maritalStatus', label: 'Marital status', type: 'select', options: ['', 'Single', 'Married', 'Other'] },
+
+    { name: 'familyName', label: 'Family member name', type: 'text', section: 'Family and emergency' },
+    { name: 'familyRelationship', label: 'Relationship', type: 'text', required: true, placeholder: 'Father, spouse…' },
+    { name: 'emergencyName', label: 'Emergency contact name', type: 'text', required: true },
+    { name: 'emergencyPhone', label: 'Emergency contact number', type: 'tel' },
+
+    { name: 'addressLine1', label: 'Address line 1', type: 'text', required: true, section: 'Current address' },
+    { name: 'addressLine2', label: 'Address line 2', type: 'text' },
+    { name: 'locality', label: 'Area or locality', type: 'text', required: true },
+    { name: 'city', label: 'City', type: 'text', required: true },
+    { name: 'state', label: 'State', type: 'text', required: true },
+    { name: 'pincode', label: 'Pincode', type: 'text' },
+
+    { name: 'education', label: 'Education', type: 'text', section: 'Education and experience', placeholder: 'Highest qualification' },
+    { name: 'experience', label: 'Experience', type: 'textarea', full: true, placeholder: 'Where they have worked, and for how long' },
+
+    { name: 'role', label: 'Designation', type: 'select', options: ROLES, section: 'The job' },
     { name: 'department', label: 'Team', type: 'text', placeholder: 'Sales desk' },
-    { name: 'email', label: 'Email', type: 'email', required: true },
-    { name: 'phone', label: 'Phone', type: 'tel', required: true },
-    { name: 'status', label: 'Account', type: 'select', options: ACCOUNT },
-    { name: 'live', label: 'Live status', type: 'select', options: liveStatuses },
-    { name: 'attendance', label: 'Attendance', type: 'select', options: attendanceStates },
-    { name: 'activity', label: 'Current activity', type: 'text', full: true },
-    { name: 'lastActive', label: 'Last active', type: 'text', placeholder: '5 min ago' },
+    { name: 'empId', label: 'Employee ID', type: 'text', placeholder: 'EMP-111' },
+    { name: 'joinedOn', label: 'Joining date', type: 'date' },
     { name: 'target', label: 'Revenue target (₹)', type: 'number' },
-    { name: 'productivity', label: 'Productivity score', type: 'number' },
+    { name: 'status', label: 'Account', type: 'select', options: ACCOUNT },
+
+    { name: 'accountHolder', label: 'Account holder name', type: 'text', section: 'Bank and payroll' },
+    { name: 'bankName', label: 'Bank name', type: 'text' },
+    { name: 'accountNumber', label: 'Account number', type: 'text' },
+    { name: 'ifsc', label: 'IFSC code', type: 'text' },
+    { name: 'upi', label: 'UPI ID', type: 'text', help: 'Either the bank details above or a UPI ID' },
+
+    { name: 'idProof', label: 'Aadhaar or address proof (link)', type: 'text', full: true, section: 'Documents', placeholder: 'https://…' },
+
+    {
+      name: 'declaredTrue',
+      label: 'They confirm the information provided is correct.',
+      type: 'checkbox',
+      required: true,
+      full: true,
+      section: 'Declaration',
+    },
+    {
+      name: 'declaredPolicies',
+      label: 'They agree to follow Smira Club company policies and procedures.',
+      type: 'checkbox',
+      required: true,
+      full: true,
+    },
   ];
 
   const save = (values) => {
@@ -325,6 +375,10 @@ export default function Team() {
     else
       create('team', {
         ...values,
+        // A joining form that has been filled in is waiting on the desk to
+        // check it, not on the joiner to answer an email.
+        status: values.status || 'Invited',
+        joining: 'Form submitted',
         enquiries: 0, bookings: 0, revenue: 0, leads: 0, followUps: 0, calls: 0,
         presentations: 0, visits: 0, tasksDone: 0, tasksTotal: 0, alerts: 0,
         lastActive: 'never', notices: [], attendanceFlags: [], activityLog: [],
@@ -369,6 +423,23 @@ export default function Team() {
           <UserPlus size={16} /> Invite member
         </button>
       </PageHeader>
+
+      {/* The joining form is the client's whole sheet, so it opens across the
+          page rather than inside a dialog that would scroll within itself. */}
+      <InlineForm
+        open={formOpen}
+        onClose={() => { setFormOpen(false); setEditing(null); }}
+        onSubmit={save}
+        title={editing ? `Edit ${editing.name}` : 'Invite team member'}
+        subtitle={
+          editing
+            ? editing.empId || editing.id
+            : 'Their joining details, so the desk is not chasing them afterwards'
+        }
+        fields={fields}
+        initial={editing || { role: 'Travel Consultant', status: 'Invited', live: 'Not logged in', attendance: 'Present' }}
+        submitLabel={editing ? 'Save changes' : 'Send invite'}
+      />
 
       {/* -- The desk bar: pick a status, or start something (columns A, R) -- */}
       <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
@@ -1189,17 +1260,6 @@ export default function Team() {
           onEdit={openEdit}
         />
       )}
-
-      <FormModal
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSubmit={save}
-        title={editing ? `Edit ${editing.name}` : 'Invite team member'}
-        subtitle={editing ? editing.empId || editing.id : 'They receive an email invite to join the workspace'}
-        fields={fields}
-        initial={editing || { role: 'Travel Consultant', status: 'Invited', live: 'Not logged in', attendance: 'Present' }}
-        submitLabel={editing ? 'Save changes' : 'Send invite'}
-      />
 
       <ConfirmDialog
         open={Boolean(confirm)}

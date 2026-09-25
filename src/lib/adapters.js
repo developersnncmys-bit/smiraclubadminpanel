@@ -403,6 +403,7 @@ export const ADAPTERS = {
       features: p.features || [],
       published: p.published,
       popular: p.popular,
+      accent: p.accent || 'brand',
       members: p.members ?? 0,
     }),
     to: (p) => ({
@@ -427,6 +428,7 @@ export const ADAPTERS = {
       features: p.features,
       published: p.published,
       popular: p.popular,
+      accent: p.accent,
     }),
   },
 

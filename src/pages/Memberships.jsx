@@ -147,6 +147,13 @@ export default function Memberships({ embedded = false }) {
     { name: 'privileges', label: 'Preferred services a member can choose', type: 'number' },
     { name: 'freeNights', label: 'Free stay nights', type: 'number' },
     { name: 'freeValidity', label: 'Free stay validity', type: 'text', placeholder: '12 months from joining' },
+    {
+      name: 'accent',
+      label: 'Colour',
+      type: 'select',
+      options: ACCENT_KEYS,
+      help: 'The colour this plan wears here and on the website',
+    },
     { name: 'tagline', label: 'Tagline shown on the website', type: 'text', full: true },
   ];
 
@@ -162,7 +169,8 @@ export default function Memberships({ embedded = false }) {
     if (editing) {
       update('memberships', editing.id, withStay);
     } else {
-      const accent = ACCENT_KEYS[memberships.length % ACCENT_KEYS.length];
+      // Unless they picked one, the next plan takes the next colour along.
+      const accent = withStay.accent || ACCENT_KEYS[memberships.length % ACCENT_KEYS.length];
       create('memberships', {
         ...withStay,
         features: [],

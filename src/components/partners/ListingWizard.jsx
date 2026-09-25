@@ -102,7 +102,23 @@ function Checks({ options, value = [], onChange }) {
   );
 }
 
-export default function ListingWizard({ initial = {}, partner, onSubmitted }) {
+/**
+ * Who is filling it in.
+ *
+ * A partner saves each step to their own record with their own token. The
+ * desk fills the same five steps in on a partner's behalf — adding a hotel
+ * that phoned in — and saves through the staff API instead. The steps, the
+ * fields and the wording are the same either way, which is the point: the
+ * desk and the hotelier are looking at one form, not two that drift.
+ */
+export default function ListingWizard({
+  initial = {},
+  partner,
+  onSubmitted,
+  onSaveStep,
+  onFinish,
+  finishLabel,
+}) {
   const [step, setStep] = useState(Math.min(5, Math.max(1, initial.step || 1)));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -213,7 +229,9 @@ export default function ListingWizard({ initial = {}, partner, onSubmitted }) {
     setMissing([]);
     setBusy(true);
     try {
-      await partnerApi.saveListing({ ...bodyFor(s), step: s });
+      const body = { ...bodyFor(s), step: s };
+      if (onSaveStep) await onSaveStep(body, s);
+      else await partnerApi.saveListing(body);
       setSaved(`Step ${s} saved`);
       return true;
     } catch (err) {
@@ -235,8 +253,13 @@ export default function ListingWizard({ initial = {}, partner, onSubmitted }) {
     if (!(await save(5))) return;
     setBusy(true);
     try {
-      const res = await partnerApi.submitListing();
-      onSubmitted?.(res.data);
+      // The desk finishes by filing the partner; a hotelier finishes by
+      // sending it to the desk for review.
+      if (onFinish) await onFinish();
+      else {
+        const res = await partnerApi.submitListing();
+        onSubmitted?.(res.data);
+      }
     } catch (err) {
       setError(err.message);
       setMissing(err.details || []);
@@ -531,7 +554,7 @@ export default function ListingWizard({ initial = {}, partner, onSubmitted }) {
           ) : (
             <button type="button" onClick={submit} disabled={busy || !agreed} className="btn-action">
               {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-              {partner?.stage === 'Needs changes' ? 'Submit again' : 'Submit for review'}
+              {finishLabel || (partner?.stage === 'Needs changes' ? 'Submit again' : 'Submit for review')}
             </button>
           )}
         </div>

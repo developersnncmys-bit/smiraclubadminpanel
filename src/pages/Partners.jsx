@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Plus, Search, Ban, Send,
   Star, Download, Handshake, Clock, CalendarCheck, IndianRupee,
-  Wallet, CheckCircle2, Headphones,
+  Wallet, CheckCircle2, Headphones, X,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -15,7 +15,7 @@ import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
 import Block from '../components/ui/Block.jsx';
-import InlineForm from '../components/ui/InlineForm.jsx';
+import ListingWizard from '../components/partners/ListingWizard.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
@@ -103,6 +103,8 @@ export default function Partners() {
     }));
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  /** The five steps as they are filled in, written to a record at the end. */
+  const [draft, setDraft] = useState(null);
   const [view, setView] = useState('Partners');
   const [viewing, setViewing] = useState(null);
   /** The booking a row was clicked on — the sheet wants seventeen fields per
@@ -141,23 +143,34 @@ export default function Partners() {
   ];
 
   /** The details the desk needs before a partner can be reviewed. */
-  const partnerFields = [
-    { name: 'name', label: 'Partner name', type: 'text', required: true },
-    { name: 'category', label: 'Category', type: 'select', options: partnerCategories },
-    { name: 'businessType', label: 'Business type', type: 'text', placeholder: 'Resort, DMC, fleet…' },
-    { name: 'location', label: 'Location', type: 'text', placeholder: 'Jimbaran, Bali' },
-    { name: 'contact', label: 'Contact person', type: 'text', required: true },
-    { name: 'phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 ' },
-    { name: 'whatsapp', label: 'WhatsApp', type: 'tel', placeholder: 'same as phone if blank' },
-    { name: 'email', label: 'Email', type: 'email' },
-    { name: 'commission', label: 'Commission (%)', type: 'number' },
-    { name: 'ratePlan', label: 'Rate plan', type: 'text', full: true, placeholder: 'Contract 2026-A · ocean view suite ₹42,000' },
-    { name: 'registration', label: 'Registration number', type: 'text' },
-    { name: 'gst', label: 'GST', type: 'text' },
-    { name: 'pan', label: 'PAN', type: 'text' },
-    { name: 'upi', label: 'UPI', type: 'text' },
-    { name: 'bank', label: 'Bank account', type: 'text', full: true, placeholder: 'HDFC · ****4471' },
-  ];
+
+  /**
+   * The five steps, filed.
+   *
+   * The wizard hands over one step at a time; they are collected in `draft`
+   * and written once at the end, so an abandoned form leaves nothing behind.
+   * Where the listing already says something the record needs — the property
+   * name, who to ring — that is what the record gets.
+   */
+  const saveFromWizard = () => {
+    const listing = draft || {};
+    const prop = listing.property || {};
+    const acc = listing.account || {};
+    const values = {
+      name: prop.name || acc.fullName || 'New partner',
+      category: prop.type || partnerCategories[0],
+      location: [prop.city, prop.state].filter(Boolean).join(', ') || prop.addressLine1 || '',
+      contact: prop.contactName || acc.fullName || '',
+      phone: prop.mobile || acc.alternatePhone || '',
+      email: prop.email || acc.email || '',
+      gst: listing.ownership?.gst || '',
+      pan: listing.ownership?.pan || '',
+      commission: editing?.commission ?? 10,
+      listing,
+    };
+    savePartner(values);
+    setDraft(null);
+  };
 
   const savePartner = (values) => {
     const clean = { ...values, whatsapp: values.whatsapp || values.phone };
@@ -660,19 +673,53 @@ export default function Partners() {
         </button>
       </PageHeader>
 
-      {/* A partner record is too long for a dialog, so it opens across the
-          page instead — the sections stay side by side and nothing scrolls
-          inside a box. */}
-      <InlineForm
-        open={formOpen}
-        onClose={() => { setFormOpen(false); setEditing(null); }}
-        onSubmit={savePartner}
-        title={editing ? `Edit ${editing.name}` : 'Add partner'}
-        subtitle={editing ? editing.id : 'They land in onboarding, waiting on their documents'}
-        fields={partnerFields}
-        initial={editing || { category: partnerCategories[0], commission: 10 }}
-        submitLabel={editing ? 'Save changes' : 'Add partner'}
-      />
+      {/*
+        Adding a partner is the client's five steps, not a flat form.
+
+        It is the same wizard a hotelier fills in on the portal — account and
+        property, rooms, amenities, pricing and inventory, ownership and
+        legal — so a property phoned in to the desk and one registered by its
+        owner end up as the same record, with nothing asked of one and not
+        the other. The desk saves through the staff API rather than a
+        partner's token, which is the only difference.
+      */}
+      {formOpen && (
+        <section className="card mb-6 overflow-hidden">
+          <header className="flex items-start justify-between gap-4 border-b border-ink-900/[0.07] px-5 py-4 sm:px-6">
+            <div>
+              <h2 className="font-display text-lg font-extrabold text-ink-900">
+                {editing ? `Edit ${editing.name}` : 'Add partner'}
+              </h2>
+              <p className="mt-0.5 text-sm text-ink-500">
+                {editing ? editing.id : 'Five steps, the same ones a partner fills in on their portal'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setFormOpen(false); setEditing(null); setDraft(null); }}
+              aria-label="Close"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-ink-500 transition hover:bg-surface-soft"
+            >
+              <X size={18} />
+            </button>
+          </header>
+
+          <div className="p-4 sm:p-6">
+            <ListingWizard
+              key={editing?.id || 'new'}
+              initial={editing?.listing || {}}
+              partner={editing}
+              finishLabel={editing ? 'Save listing' : 'Add partner'}
+              onSaveStep={(body) => {
+                // Each step is held until the last, so a half-finished form
+                // never creates a partner the desk then has to chase.
+                setDraft((d) => ({ ...(d || {}), ...body }));
+              }}
+              onFinish={() => saveFromWizard()}
+            />
+          </div>
+        </section>
+      )}
 
       <KpiRow items={kpis} cols={4} />
 

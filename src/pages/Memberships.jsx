@@ -151,8 +151,8 @@ export default function Memberships({ embedded = false }) {
       name: 'accent',
       label: 'Colour',
       type: 'select',
-      options: ACCENT_KEYS,
-      help: 'The colour this plan wears here and on the website',
+      options: ['', ...ACCENT_KEYS],
+      help: 'The colour this plan wears here and on the website. Blank keeps the website’s own tier colour.',
     },
     { name: 'tagline', label: 'Tagline shown on the website', type: 'text', full: true },
   ];

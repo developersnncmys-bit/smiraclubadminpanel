@@ -403,7 +403,9 @@ export const ADAPTERS = {
       features: p.features || [],
       published: p.published,
       popular: p.popular,
-      accent: p.accent || 'brand',
+      // No invented default: a plan saved without touching the colour must
+      // not quietly pick one up and repaint itself on the website.
+      accent: p.accent || '',
       members: p.members ?? 0,
     }),
     to: (p) => ({
@@ -639,6 +641,7 @@ export const ADAPTERS = {
       paid: p.paid ?? 0,
       responseMins: p.responseMins ?? 0,
       rating: p.rating ?? 0,
+      listing: p.listing || {},
       documents: p.documents || [],
       activity: (p.activities || []).map((a) => ({ ...a, at: d(a.at) })),
       contractEnds: d(p.contractEndsOn),
@@ -654,6 +657,7 @@ export const ADAPTERS = {
       pan: p.pan,
       commission: p.commission,
       status: p.status,
+      listing: p.listing,
     }),
   },
 

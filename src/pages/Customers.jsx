@@ -37,6 +37,17 @@ import {
 } from '../data/mockData.js';
 
 const TIERS = ['Platinum', 'Gold', 'Silver'];
+/** The statuses a membership can be moved between, as the backend accepts them. */
+const MEMBERSHIP_STATUSES = [
+  'Quoted',
+  'New',
+  'Active',
+  'Pending activation',
+  'Expiring soon',
+  'Expired',
+  'Suspended',
+  'Cancelled',
+];
 const SPECIAL_LABELS = ['Anniversary', 'Spouse birthday', 'Child birthday', 'Other'];
 const SOURCES = ['Website', 'Instagram', 'Referral', 'Walk-in', 'Google Ads', 'WhatsApp'];
 const tierTone = { Platinum: 'violet', Gold: 'amber', Silver: 'slate' };
@@ -104,6 +115,7 @@ export default function Customers() {
     update,
     remove,
     toggleGift,
+    toast,
   } = useApp();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -111,6 +123,18 @@ export default function Customers() {
   const [confirm, setConfirm] = useState(null);
   const [view, setView] = useState('table'); // 'table' | 'memberships' | 'plans'
   const [memberOpen, setMemberOpen] = useState(null); // the membership being read
+  const [statusFor, setStatusFor] = useState(null); // the membership whose status is being moved
+
+  /**
+   * The Membership page is for memberships that have been paid for. A signup
+   * with no money against it is still a sale in the making, so it stays in
+   * Sales & Leads — the website raises a lead beside it — and only appears
+   * here once the payment lands. A complimentary membership costs nothing,
+   * so it counts as soon as the desk moves it past New.
+   */
+  const isPaid = (m) =>
+    (m.paid ?? 0) > 0 || (!((m.amount ?? 0) > 0) && !['Quoted', 'New'].includes(m.status));
+  const paidMemberships = memberSignups.filter(isPaid);
 
   /** The website membership a traveller signed up for, if any. */
   const membershipFor = (customer) => {
@@ -293,7 +317,7 @@ export default function Customers() {
         className="mb-5"
         items={[
           { key: 'table', label: 'Members', icon: UserRound, count: customers.length },
-          { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
+          { key: 'memberships', label: 'Memberships', icon: Crown, count: paidMemberships.length },
           { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
         ]}
         value={view}
@@ -303,13 +327,13 @@ export default function Customers() {
 
       {view === 'memberships' && (
         <MembershipDesk
-          rows={memberSignups}
+          rows={paidMemberships}
           plans={memberships}
           switcher={
             <SectionTabs
               items={[
                 { key: 'table', label: 'Members', icon: UserRound, count: customers.length },
-                { key: 'memberships', label: 'Memberships', icon: Crown, count: memberSignups.length },
+                { key: 'memberships', label: 'Memberships', icon: Crown, count: paidMemberships.length },
                 { key: 'plans', label: 'Plans', icon: Gift, count: memberships.length },
               ]}
               value={view}
@@ -317,6 +341,17 @@ export default function Customers() {
             />
           }
           onOpen={(m) => setMemberOpen(m)}
+          /* The card's "Full profile" leaves the membership and opens the
+             person who holds it — matched on phone, then on email. */
+          onProfile={(m) => {
+            const wanted = phoneDigits(m.phone);
+            const person = customers.find(
+              (c) => (wanted && phoneDigits(c.phone) === wanted) || (m.email && c.email === m.email),
+            );
+            if (person) setViewing(person);
+            else toast(`${m.name} has no customer record yet`, 'info');
+          }}
+          onStatus={(m) => setStatusFor(m)}
           actions={{
             addMember: () => { setEditing(null); setFormOpen(true); },
             createMembership: () => setView('plans'),
@@ -330,11 +365,11 @@ export default function Customers() {
       {memberOpen && (
         <MemberProfile
           member={memberOpen}
-          list={memberSignups}
+          list={paidMemberships}
           plan={memberships.find((p) => p.id === memberOpen.planId) || null}
           bookings={bookings}
           onClose={() => setMemberOpen(null)}
-          onJump={(i) => setMemberOpen(memberSignups[i])}
+          onJump={(i) => setMemberOpen(paidMemberships[i])}
           actions={{
             note: (message) => toast(message),
             recordPayment: () => toast('Payments arrive with that sheet'),
@@ -360,6 +395,34 @@ export default function Customers() {
         bulkActions={[{ label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) }]}
       />
       )}
+
+      {/* Moving a membership along, from the card */}
+      <Modal
+        open={Boolean(statusFor)}
+        onClose={() => setStatusFor(null)}
+        title="Change membership status"
+        subtitle={statusFor ? `${statusFor.id} · ${statusFor.name}` : ''}
+        footer={
+          <button className="btn-line" onClick={() => setStatusFor(null)}>
+            Cancel
+          </button>
+        }
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          {MEMBERSHIP_STATUSES.map((s) => (
+            <button
+              key={s}
+              className={`btn-line justify-start ${statusFor?.status === s ? 'border-brand-400 text-brand-700' : ''}`}
+              onClick={() => {
+                update('memberSignups', statusFor.id, { status: s });
+                setStatusFor(null);
+              }}
+            >
+              {statusFor?.status === s && <Check size={15} />} {s}
+            </button>
+          ))}
+        </div>
+      </Modal>
 
       {/* Traveller profile */}
       <Modal

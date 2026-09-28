@@ -97,3 +97,31 @@ export function membershipStanding(signup) {
     pct,
   };
 }
+
+/**
+ * The membership as a card shows it, in one chip.
+ *
+ * Every list the desk works from — leads, bookings, members — has to answer
+ * the same question at a glance: is this person a member, and does it still
+ * run? A plan name alone does not, because an expired Gold and a live Gold
+ * read identically. So the chip carries the standing with the name, and
+ * somebody with no membership at all is said to have none rather than shown
+ * nothing, which reads as missing data.
+ */
+export function membershipBadge(found) {
+  const signup = found?.signup || found;
+  if (!signup || !signup.plan) return { text: 'Non-member', tone: 'slate', member: false };
+
+  const name = signup.plan;
+  const left = daysUntil(signup.expiresOn);
+
+  if (signup.status === 'Cancelled') return { text: `${name} · cancelled`, tone: 'rose', member: false };
+  if (signup.status === 'Expired' || (left !== null && left < 0)) {
+    return { text: `${name} · expired`, tone: 'rose', member: false };
+  }
+  if (['New', 'Quoted'].includes(signup.status)) {
+    return { text: `${name} · payment pending`, tone: 'amber', member: false };
+  }
+  if (left !== null && left <= 30) return { text: `${name} · ${left}d left`, tone: 'amber', member: true };
+  return { text: name, tone: 'green', member: true };
+}

@@ -2,11 +2,12 @@ import { useState } from 'react';
 import {
   UserPlus, Crown, CheckCircle2, UserCheck, CalendarClock, ArrowUpRight,
   Gift, Wallet, Search, Users, Clock, IndianRupee,
-  Zap,
+  Zap, Phone, Mail, MessageCircle, Tag, UserRound,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import KpiRow from '../ui/KpiRow.jsx';
 import MenuButton from '../ui/MenuButton.jsx';
+import RowMenu from '../ui/RowMenu.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import {
   signupTone,
@@ -46,7 +47,7 @@ function List({ rows, empty = 'Nothing here yet.' }) {
  * with their filters, the activation run, the renewal ladder, what benefits
  * have actually been used, and where the membership money comes from.
  */
-export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions, switcher }) {
+export default function MembershipDesk({ rows, plans = allPlans, onOpen, onProfile, onStatus, actions, switcher }) {
   const [section, setSection] = useState('Members');
   const [status, setStatus] = useState('All');
   const [plan, setPlan] = useState('All');
@@ -57,6 +58,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
   const [activation, setActivation] = useState('All');
   const [query, setQuery] = useState('');
 
+  const digits = (v) => String(v || '').replace(/\D/g, '').slice(-10);
   const left = (m) => daysUntil(m.expiresOn);
   const isActive = (m) => m.status === 'Active' && (left(m) == null || left(m) >= 0);
   const isExpired = (m) => m.status === 'Expired' || (m.expiresOn && (left(m) ?? 0) < 0);
@@ -277,94 +279,138 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, actions
           </div>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
-            <thead>
-              <tr className="border-b border-ink-900/[0.07] text-left">
-                {['Member', 'Membership', 'Status', 'Start date', 'Expiry', 'Benefits used', 'Amount', 'Payment', 'Expert', ''].map((h) => (
-                  <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-900/[0.07]">
-              {list.map((m) => {
-                const l = left(m);
-                const p = plans.find((x) => x.id === m.planId);
-                return (
-                  <tr key={m.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => onOpen(m)}>
-                    <td className="py-2.5">
-                      <span className="flex items-center gap-2.5">
-                        <Avatar name={m.name} size="sm" />
-                        <span className="min-w-0">
-                          <span className="block truncate font-bold text-ink-900">{m.name}</span>
-                          <span className="num block text-xs text-ink-400">{m.id}</span>
-                        </span>
-                      </span>
-                    </td>
-                    <td className="py-2.5">
-                      <span className="flex items-center gap-1.5 font-semibold text-ink-800">
-                        <Crown size={12} className="text-brand-600" /> {m.plan}
-                      </span>
-                      <span className="num block text-xs text-ink-400">{m.members} members</span>
-                    </td>
-                    <td className="py-2.5">
-                      <Badge tone={signupTone[m.status] || 'slate'} dot>
-                        {m.status}
-                      </Badge>
-                    </td>
-                    <td className="num py-2.5 text-ink-700">{m.startedOn || '—'}</td>
-                    <td className="num py-2.5">
-                      <span className="block text-ink-700">{m.expiresOn || '—'}</span>
-                      {l != null && (
-                        <span className={`block text-xs font-bold ${l < 0 ? 'text-rose-600' : l <= 30 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                          {l < 0 ? `expired ${Math.abs(l)}d ago` : `${l} days left`}
-                        </span>
-                      )}
-                    </td>
-                    <td className="num py-2.5 text-ink-700">
-                      {usedOf(m)} of {allocatedOf(m)}
-                    </td>
-                    <td className="num py-2.5">
-                      <span className="block font-bold text-ink-900">{inr(m.amount || 0)}</span>
-                      {Number(m.paid || 0) < Number(m.amount || 0) && (
-                        <span className="block text-xs font-bold text-amber-600">
-                          {inr(Number(m.amount || 0) - Number(m.paid || 0))} due
-                        </span>
-                      )}
-                    </td>
-                    {/* Paid in full, part paid or nothing yet — what the desk chases by. */}
-                    <td className="py-2.5">
-                      {(() => {
-                        const amount = Number(m.amount || 0);
-                        const paid = Number(m.paid || 0);
-                        const state = paid >= amount && amount > 0 ? 'Paid' : paid > 0 ? 'Part paid' : 'Unpaid';
-                        return (
-                          <Badge tone={state === 'Paid' ? 'green' : state === 'Part paid' ? 'amber' : 'rose'} dot>
-                            {state}
-                          </Badge>
-                        );
-                      })()}
-                    </td>
-                    <td className="py-2.5 text-ink-700">{m.expert || '—'}</td>
-                    <td className="py-2.5 text-right">
-                      <button className="btn-line btn-sm" onClick={(e) => { e.stopPropagation(); onOpen(m); }}>
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {list.length === 0 && (
-                <tr>
-                  <td colSpan={10} className="py-6 text-center text-ink-500">
-                    No member matches this view.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {/*
+          One card a membership, in the order the client's sheet reads: the
+          membership and who holds it, how to reach them, where it stands,
+          the two dates it lives between, whose name is on it, and the
+          handful of things the desk actually does from the list.
+        */}
+        <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          {list.map((m) => {
+            const l = left(m);
+            const phone = digits(m.phone);
+            const amount = Number(m.amount || 0);
+            const paid = Number(m.paid || 0);
+            const pay =
+              paid >= amount && amount > 0
+                ? { text: 'Paid', tone: 'green' }
+                : paid > 0
+                  ? { text: 'Part paid', tone: 'amber' }
+                  : { text: 'Unpaid', tone: 'rose' };
+            return (
+              <article
+                key={m.id}
+                onClick={() => onOpen(m)}
+                className="card flex h-full cursor-pointer flex-col p-4 transition hover:shadow-raised"
+              >
+                {/* Who holds it, and which membership it is */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar name={m.name} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate font-display text-[15px] font-extrabold leading-tight text-ink-900">
+                        {m.name}
+                      </p>
+                      <p className="num truncate text-xs text-ink-500">{m.id}</p>
+                    </div>
+                  </div>
+                  <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <RowMenu
+                      items={[
+                        { label: 'Full profile', icon: UserRound, onClick: () => (onProfile ? onProfile(m) : onOpen(m)) },
+                        { label: 'Membership', icon: Crown, onClick: () => onOpen(m) },
+                        { label: 'Change status', icon: Tag, onClick: () => onStatus?.(m) },
+                        { label: 'Record payment', icon: Wallet, onClick: actions.recordPayment },
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <p className="mt-2 flex items-center gap-1.5 truncate text-[13px] font-bold text-ink-900">
+                  <Crown size={13} className="shrink-0 text-brand-600" />
+                  {m.plan || 'No plan'}
+                  <span className="num font-medium text-ink-400">· {m.members || 1} members</span>
+                </p>
+
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <Badge tone={signupTone[m.status] || 'slate'} dot>{m.status}</Badge>
+                  <Badge tone={pay.tone}>{pay.text}</Badge>
+                  {l != null && (
+                    <Badge tone={l < 0 ? 'rose' : l <= 30 ? 'amber' : 'green'}>
+                      {l < 0 ? `expired ${Math.abs(l)}d ago` : `${l} days left`}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* How to reach them */}
+                <p className="num mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-ink-500">
+                  <span className="inline-flex items-center gap-1"><Phone size={11} /> {m.phone || '—'}</span>
+                  <span className="inline-flex min-w-0 items-center gap-1">
+                    <Mail size={11} className="shrink-0" />
+                    <span className="truncate">{m.email || '—'}</span>
+                  </span>
+                </p>
+
+                {/* The two dates a membership lives between, and the money */}
+                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-ink-900/[0.07] pt-3">
+                  {[
+                    ['Purchased', m.startedOn || m.received || '—', 'text-ink-900'],
+                    ['Expires', m.expiresOn || '—', l != null && l < 0 ? 'text-rose-600' : 'text-ink-900'],
+                    ['Amount', inr(amount), 'text-brand-700'],
+                  ].map(([label, value, tone]) => (
+                    <div key={label} className="min-w-0">
+                      <p className="truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">{label}</p>
+                      <p className={`num truncate text-[13px] font-bold ${tone}`}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-ink-400">
+                  <span>Owner <span className="font-semibold text-ink-600">{m.expert || '—'}</span></span>
+                  <span>Benefits <span className="font-semibold text-ink-600">{usedOf(m)} of {allocatedOf(m)}</span></span>
+                  {paid < amount && (
+                    <span className="font-semibold text-amber-600">{inr(amount - paid)} due</span>
+                  )}
+                </p>
+
+                {/* Call, message, write, or move it along */}
+                <div className="mt-auto flex flex-wrap gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
+                  {phone && (
+                    <>
+                      <a href={`tel:${phone}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
+                      <a
+                        href={`https://wa.me/91${phone}?text=${encodeURIComponent(
+                          `Hi ${m.name}, about your Smira Club ${m.plan || 'membership'} (${m.id}).`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-line btn-sm"
+                      >
+                        <MessageCircle size={13} /> WhatsApp
+                      </a>
+                    </>
+                  )}
+                  {m.email && (
+                    <a href={`mailto:${m.email}`} className="btn-line btn-sm"><Mail size={13} /> Email</a>
+                  )}
+                  <button className="btn-line btn-sm" onClick={() => (onProfile ? onProfile(m) : onOpen(m))}>
+                    <UserRound size={13} /> Full profile
+                  </button>
+                  <button className="btn-line btn-sm" onClick={() => onOpen(m)}>
+                    <Crown size={13} /> Membership
+                  </button>
+                  <button className="btn-action btn-sm ml-auto" onClick={() => onStatus?.(m)}>
+                    <Tag size={13} /> Change status
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+          {list.length === 0 && (
+            <div className="card border-dashed p-14 text-center text-sm text-ink-500 lg:col-span-2 2xl:col-span-3">
+              No member matches this view.
+            </div>
+          )}
         </div>
       </Block>
       )}

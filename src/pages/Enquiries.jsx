@@ -26,7 +26,7 @@ import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, stageProbability, inr, shortInr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
 import { when } from '../lib/adapters.js';
-import { findMembership, membershipStanding } from '../lib/membership.js';
+import { findMembership, membershipBadge, membershipStanding } from '../lib/membership.js';
 
 const SOURCES = ['Campaign', 'WhatsApp', 'Website', 'Facebook Ads', 'Instagram', 'Google Ads', 'Referral', 'Walk-in', 'Calling data', 'Partner', 'Existing member', 'Other'];
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
@@ -571,7 +571,10 @@ export default function Enquiries() {
             <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
               {listRows.map((r) => {
                 const plan = planOf(r);
+                const standing = membershipBadge(plan);
                 const chance = Math.round((stageProbability[r.status] || 0) * 100);
+                /** What actually happened last, not just when. */
+                const last = (r.activities || [])[0];
                 return (
                   <article
                     key={r.id}
@@ -599,14 +602,19 @@ export default function Enquiries() {
                               {r.name}
                             </p>
                             <p className="num truncate text-xs text-ink-500">{r.id} · {r.phone}</p>
+                            {r.email && <p className="truncate text-xs text-ink-400">{r.email}</p>}
                           </div>
                           <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            {plan && <Badge tone="amber"><Crown size={11} /> {plan.signup.plan}</Badge>}
                             <RowMenu items={menuFor(r)} />
                           </div>
                         </div>
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           <Badge tone={statusTone[r.status]} dot>{r.status}</Badge>
+                          {/* Member or not, and whether it still runs — the
+                              question the desk asks before it quotes. */}
+                          <Badge tone={standing.tone}>
+                            {standing.member && <Crown size={11} />} {standing.text}
+                          </Badge>
                           {r.priority && <Badge tone={priorityTone[r.priority] || 'slate'}>{r.priority}</Badge>}
                           {r.owner === 'Unassigned' && (
                             <button
@@ -632,6 +640,13 @@ export default function Enquiries() {
                       <span className={r.nextFollowUp ? 'font-semibold text-ink-600' : ''}>
                         next {r.nextFollowUp || 'nothing scheduled'}
                       </span>
+                      <span>came in {r.created || '—'}</span>
+                    </p>
+
+                    {/* What the last activity actually was. */}
+                    <p className="mt-1 truncate text-xs text-ink-500">
+                      <span className="font-semibold text-ink-700">Last activity:</span>{' '}
+                      {last?.text || 'nothing logged yet'}
                     </p>
 
                     {/* The three facts management reads, and the chance of closing */}
@@ -656,6 +671,15 @@ export default function Enquiries() {
                       <button className="btn-line btn-sm" onClick={() => setViewing(r)}>
                         <Eye size={13} /> Details
                       </button>
+                      <button className="btn-line btn-sm" onClick={() => navigate('/payment')}>
+                        <Wallet size={13} /> Payment
+                      </button>
+                      <a
+                        href={`mailto:${r.email}?subject=${encodeURIComponent(`Your ${r.destination || 'Smira Club'} enquiry`)}`}
+                        className="btn-line btn-sm"
+                      >
+                        <Mail size={13} /> Send
+                      </a>
                       {!['Won', 'Lost'].includes(r.status) && (
                         <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([r.id])}>
                           <Tag size={13} /> Move stage

@@ -490,6 +490,12 @@ export const ADAPTERS = {
       ...base(b),
       customer: b.customerName || fullName(b.customer),
       customerId: ref(b.customer),
+      /** Their own number and member id, for calling and for the card. */
+      customerCode: b.customer?.code || '',
+      customerPhone: b.customer?.phone || '',
+      customerEmail: b.customer?.email || '',
+      /** The booking desk person who handled it, not the lead's owner. */
+      expert: who(b.handledBy?.handled),
       membership: b.membershipPlan,
       bookingType: b.bookingType,
       hotel: b.hotel,

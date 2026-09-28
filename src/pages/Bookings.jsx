@@ -3,7 +3,7 @@ import {
   Plus, Pencil, Trash2, Tag, Receipt, LayoutGrid,
   Rows3, Crown, CalendarCheck, Wallet, Users, Search,
   Download, Filter, Zap, Eye, Clock, AlertTriangle,
-  UserPlus, Warehouse,
+  UserPlus, Warehouse, Phone, MessageCircle,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -11,6 +11,7 @@ import Badge from '../components/ui/Badge.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
 import MenuButton from '../components/ui/MenuButton.jsx';
 import RowMenu from '../components/ui/RowMenu.jsx';
+import { membershipBadge } from '../lib/membership.js';
 import FormModal from '../components/ui/FormModal.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import Modal from '../components/ui/Modal.jsx';
@@ -67,7 +68,7 @@ function Ring({ value, size = 44 }) {
 
 export default function Bookings() {
   const {
-    bookings, packages, team, customers, memberSignups, memberships, invoices, partners,
+    bookings, packages, team, customers, memberSignups, memberships, invoices, partners, enquiries,
     owner, create, update, updateMany, remove, toast,
   } = useApp();
   const navigate = useNavigate();
@@ -92,13 +93,29 @@ export default function Bookings() {
 
   /** The plan this customer holds, so a card can say who is a member. */
   const digitsOf = (v) => String(v || '').replace(/\D/g, '').slice(-10);
-  const planFor = (b) => {
-    if (b.membership) return b.membership;
-    const phone = digitsOf(b.phone || customers.find((c) => c.name === b.customer)?.phone);
-    const signup = memberSignups.find(
+  const signupFor = (b) => {
+    const phone = digitsOf(b.customerPhone || b.phone || customers.find((c) => c.name === b.customer)?.phone);
+    return memberSignups.find(
       (m) => (phone && digitsOf(m.phone) === phone) || m.name === b.customer,
     );
-    return signup?.plan || '';
+  };
+  const planFor = (b) => b.membership || signupFor(b)?.plan || '';
+
+  /**
+   * Whether the plan still runs, not just that there is one — an expired
+   * Gold and a live Gold price very differently.
+   */
+  const standingFor = (b) => {
+    const signup = signupFor(b);
+    if (signup) return membershipBadge(signup);
+    return membershipBadge(b.membership ? { plan: b.membership, status: 'Active' } : null);
+  };
+
+  /** The enquiry this booking grew out of, matched on the guest's number. */
+  const leadFor = (b) => {
+    const phone = digitsOf(b.customerPhone || customers.find((c) => c.name === b.customer)?.phone);
+    if (!phone) return null;
+    return (enquiries || []).find((e) => digitsOf(e.phone) === phone) || null;
   };
 
   /** The two the sheet filters by that the record only implies. */
@@ -452,6 +469,26 @@ export default function Bookings() {
               {listRows.map((b) => {
                 const paidPct = b.amount ? Math.round((b.paid / b.amount) * 100) : 0;
                 const due = Math.max(0, Number(b.amount || 0) - Number(b.paid || 0));
+                /**
+                 * What the guest was saved, and what they owe.
+                 *
+                 * The sheet asks for the original value beside the payable
+                 * one, because "₹24,000" means nothing on its own — the
+                 * saving is the reason they are a member.
+                 */
+                const c = b.charges || {};
+                const saved = Number(c.membershipDiscount || 0) + Number(c.offerDiscount || 0);
+                const listPrice = Number(c.base || 0) || Number(b.amount || 0) + saved;
+                const pay =
+                  b.paid >= b.amount && b.amount > 0
+                    ? { text: 'Paid', tone: 'green' }
+                    : b.paid > 0
+                      ? { text: 'Part paid', tone: 'amber' }
+                      : { text: 'Payment pending', tone: 'rose' };
+                const standing = standingFor(b);
+                /** The enquiry this booking grew out of, if there was one. */
+                const lead = leadFor(b);
+                const phone = digitsOf(b.customerPhone);
                 return (
                   <article
                     key={b.id}
@@ -465,6 +502,11 @@ export default function Bookings() {
                           {b.customer}
                         </p>
                         <p className="num truncate text-xs text-ink-500">{b.id} · {b.pkg || b.hotel}</p>
+                        <p className="num truncate text-xs text-ink-400">
+                          {[b.customerCode && `Cust ${b.customerCode}`, lead && `Lead ${lead.id}`, b.customerPhone]
+                            .filter(Boolean)
+                            .join(' · ') || '—'}
+                        </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <RowMenu
@@ -483,46 +525,79 @@ export default function Bookings() {
                       <Badge tone={bookingStatusTone[b.status]} dot>{b.status}</Badge>
                       <Badge tone="sky">{b.bookingType || 'Package'}</Badge>
                       {/* Whether the guest holds a plan — the desk prices by it. */}
-                      <Badge tone={b.membership ? 'amber' : 'slate'}>
-                        <Crown size={11} /> {b.membership ? `${b.membership} member` : 'Not a member'}
+                      <Badge tone={standing.tone}>
+                        {standing.member && <Crown size={11} />} {standing.text}
                       </Badge>
+                      <Badge tone={pay.tone}>{pay.text}</Badge>
                       {b.freeStay && <Badge tone="green">Free stay</Badge>}
                     </div>
 
                     {/* The one line that says what the trip is */}
                     <p className="mt-3 truncate text-[13px] text-ink-700">
-                      <span className="font-bold text-ink-900">{b.destination}</span>
-                      {` · ${b.pax} pax · ${b.nights || 0} nights`}
+                      <span className="font-bold text-ink-900">{b.destination || b.hotel || '—'}</span>
+                      {` · ${b.adults || b.pax || 0} adults${b.children ? `, ${b.children} children` : ''}`}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-ink-500">
+                      {[b.roomType, `${b.rooms || 1} room${(b.rooms || 1) === 1 ? '' : 's'}`, b.mealPlan]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </p>
                     <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-ink-400">
                       <span className="inline-flex items-center gap-1">
-                        <Clock size={11} /> {b.checkIn || b.departure} → {b.checkOut || '—'}
-                      </span>
-                      <span className={due ? 'font-semibold text-amber-600' : 'text-emerald-600'}>
-                        {due ? `${shortInr(due)} due` : 'paid in full'}
+                        <Clock size={11} /> {b.checkIn || b.departure || '—'} → {b.checkOut || '—'}
+                        {b.nights ? ` · ${b.nights} nights` : ''}
                       </span>
                     </p>
 
-                    {/* The three facts management reads, and how much is paid */}
+                    {/* What it was worth, what they saved, and what is left to pay */}
                     <div className="mt-3 flex items-center gap-3 border-t border-ink-900/[0.07] pt-3">
                       <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
-                        <Fact label="Value" value={shortInr(b.amount)} tone="text-brand-700" />
-                        <Fact label="Rooms" value={b.rooms || 1} />
-                        <Fact label="Owner" value={b.owner || '—'} />
+                        <Fact label="Payable" value={shortInr(b.amount)} tone="text-brand-700" />
+                        <Fact
+                          label={saved > 0 ? 'Saved' : 'List price'}
+                          value={saved > 0 ? shortInr(saved) : shortInr(listPrice)}
+                          tone={saved > 0 ? 'text-emerald-600' : undefined}
+                        />
+                        <Fact
+                          label={due ? 'Due' : 'Balance'}
+                          value={due ? shortInr(due) : 'nil'}
+                          tone={due ? 'text-amber-600' : 'text-emerald-600'}
+                        />
                       </div>
                       <Ring value={paidPct} />
                     </div>
 
+                    {/* Whose booking it is, on both sides of the desk */}
+                    <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-ink-400">
+                      <span>Owner <span className="font-semibold text-ink-600">{b.owner || '—'}</span></span>
+                      <span>Expert <span className="font-semibold text-ink-600">{b.expert || '—'}</span></span>
+                    </p>
+
                     {/* Three actions; the rest live in the booking panel */}
                     <div className="mt-auto flex flex-wrap gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
+                      {phone && (
+                        <>
+                          <a href={`tel:${phone}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
+                          <a
+                            href={`https://wa.me/${phone}?text=${encodeURIComponent(
+                              `Hi ${b.customer}, about your Smira Club booking ${b.id}${due ? ` — ${shortInr(due)} is due.` : '.'}`,
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-line btn-sm"
+                          >
+                            <MessageCircle size={13} /> WhatsApp
+                          </a>
+                        </>
+                      )}
+                      <button className="btn-line btn-sm" onClick={() => setViewing(b)}>
+                        <Eye size={13} /> Details
+                      </button>
                       <button className="btn-line btn-sm" onClick={() => raiseInvoice(b)}>
                         <Receipt size={13} /> Invoice
                       </button>
                       <button className="btn-line btn-sm" onClick={() => navigate('/payment')}>
                         <Wallet size={13} /> Payment
-                      </button>
-                      <button className="btn-line btn-sm" onClick={() => setViewing(b)}>
-                        <Eye size={13} /> Details
                       </button>
                       {b.status !== 'Cancelled' && (
                         <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([b.id])}>

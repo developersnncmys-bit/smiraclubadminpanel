@@ -481,7 +481,7 @@ export default function PartnerPortal() {
       <>
         <Panel
           title="Availability calendar"
-          note="What is open each day, and who is staying"
+          note="What you charge each day, and who is staying"
           action={
             <span className="flex items-center gap-2">
               <button type="button" className="btn-line btn-sm" onClick={() => shiftMonth(-1)}>Previous</button>
@@ -512,12 +512,13 @@ export default function PartnerPortal() {
                   <span className="num block text-center text-xs font-bold text-ink-900">{d.getDate()}</span>
                   {row && (
                     <>
-                      <span className={`num block text-center text-[11px] font-bold ${row.blackout ? 'text-rose-600' : row.open ? 'text-emerald-600' : 'text-ink-400'}`}>
-                        {row.blackout ? 'closed' : `${row.open} open`}
-                      </span>
-                      {row.rate > 0 && !row.blackout && (
-                        <span className="num block text-center text-[11px] font-semibold text-ink-700">
-                          {row.rateFrom ? 'from ' : ''}{shortInr(row.rate)}
+                      {/* The price is what a day is for. The room count lives in
+                          the day panel below, where it can be changed. */}
+                      {row.blackout ? (
+                        <span className="block text-center text-[11px] font-bold text-rose-600">closed</span>
+                      ) : (
+                        <span className="num block text-center text-[12px] font-bold text-emerald-700">
+                          {row.rate > 0 ? `${row.rateFrom ? 'from ' : ''}${shortInr(row.rate)}` : '—'}
                         </span>
                       )}
                       {row.staying > 0 && (

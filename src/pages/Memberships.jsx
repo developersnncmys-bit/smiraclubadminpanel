@@ -34,6 +34,9 @@ const ACCENTS = {
 };
 const ACCENT_KEYS = ['brand', 'sky', 'amber', 'violet', 'slate'];
 
+/** The five the website's pricing page was designed in, named as it names them. */
+const WEBSITE_COLOURS = ['silver', 'gold', 'platinum', 'diamond', 'crown'];
+
 /**
  * The plans must not read as three identical cards. The plan marked popular
  * gets the raised gold treatment, the dearest of the rest gets the dark
@@ -151,10 +154,25 @@ export default function Memberships({ embedded = false }) {
       name: 'accent',
       label: 'Colour',
       type: 'select',
-      options: ['', ...ACCENT_KEYS],
-      help: 'The colour this plan wears here and on the website. Blank keeps the website’s own tier colour.',
+      options: ['', ...WEBSITE_COLOURS, ...ACCENT_KEYS],
+      help: 'Silver to Crown are the website’s own tier colours. Blank leaves it as the website has it.',
     },
-    { name: 'tagline', label: 'Tagline shown on the website', type: 'text', full: true },
+    {
+      name: 'shortLabel',
+      label: 'Short name on the website',
+      type: 'text',
+      placeholder: 'Gold',
+      help: 'The one word on the tier button. The full name above heads the card.',
+    },
+    { name: 'tagline', label: 'Tagline shown on the website', type: 'text' },
+    {
+      name: 'blurb',
+      label: 'Who the plan is for',
+      type: 'text',
+      full: true,
+      placeholder: 'For families who travel a few times a year',
+      help: 'The line under the plan name on the website.',
+    },
   ];
 
   const savePlan = ({ freeNights, freeValidity, ...values }) => {

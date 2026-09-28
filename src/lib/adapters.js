@@ -385,7 +385,9 @@ export const ADAPTERS = {
     from: (p) => ({
       ...base(p),
       name: p.name,
+      shortLabel: p.shortLabel || '',
       tagline: p.tagline,
+      blurb: p.blurb || '',
       price: p.price,
       billing: p.billing,
       discount: p.discount ?? 0,
@@ -410,7 +412,9 @@ export const ADAPTERS = {
     }),
     to: (p) => ({
       name: p.name,
+      shortLabel: p.shortLabel,
       tagline: p.tagline,
+      blurb: p.blurb,
       price: num(p.price),
       billing: p.billing,
       discount: num(p.discount),

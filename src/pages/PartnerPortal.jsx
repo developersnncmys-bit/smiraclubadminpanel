@@ -8,7 +8,7 @@ import {
 import Brand from '../components/ui/Brand.jsx';
 import ListingWizard from '../components/partners/ListingWizard.jsx';
 import Badge from '../components/ui/Badge.jsx';
-import { inr } from '../data/mockData.js';
+import { inr, shortInr } from '../data/mockData.js';
 import { partnerApi, getPartnerToken, setPartnerToken } from '../lib/partnerApi.js';
 
 /**
@@ -174,6 +174,7 @@ export default function PartnerPortal() {
   const [month, setMonth] = useState(() => new Date());
   const [picked, setPicked] = useState(null);
   const [roomsOpen, setRoomsOpen] = useState({});
+  const [dayRate, setDayRate] = useState({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -268,14 +269,34 @@ export default function PartnerPortal() {
     setBusy((b) => ({ ...b, accepting: false }));
   };
 
-  /** How many rooms of one property are open on the chosen day. */
+  /**
+   * What this property was set to on the chosen day, if it was set at all.
+   * The boxes open showing that, rather than pretending the day is untouched.
+   */
+  const overrideFor = (item) =>
+    picked
+      ? (item.overrides || []).find((o) => new Date(o.date).toDateString() === picked.toDateString())
+      : null;
+  const pickedRooms = (item) => {
+    const o = overrideFor(item);
+    return o && o.left != null ? o.left : item.units;
+  };
+  const pickedRate = (item) => {
+    const o = overrideFor(item);
+    return o && o.rate != null ? o.rate : '';
+  };
+
+  /** How many rooms of one property are open on the chosen day, and at what. */
   const saveDay = async (item) => {
     if (!picked) return;
     try {
+      // Left blank, the day keeps the usual rate rather than becoming free.
+      const typed = dayRate[item.id];
       await partnerApi.setAvailability({
         item: item.id,
         date: picked.toISOString(),
-        left: Number(roomsOpen[item.id] ?? item.units),
+        left: Number(roomsOpen[item.id] ?? pickedRooms(item)),
+        rate: typed === '' || typed == null ? null : Number(typed),
       });
       await loadCalendar();
       setNote('Availability saved');
@@ -494,6 +515,11 @@ export default function PartnerPortal() {
                       <span className={`num block text-center text-[11px] font-bold ${row.blackout ? 'text-rose-600' : row.open ? 'text-emerald-600' : 'text-ink-400'}`}>
                         {row.blackout ? 'closed' : `${row.open} open`}
                       </span>
+                      {row.rate > 0 && !row.blackout && (
+                        <span className="num block text-center text-[11px] font-semibold text-ink-700">
+                          {row.rateFrom ? 'from ' : ''}{shortInr(row.rate)}
+                        </span>
+                      )}
                       {row.staying > 0 && (
                         <span className="block text-center text-[10px] text-ink-500">{row.staying} staying</span>
                       )}
@@ -507,7 +533,7 @@ export default function PartnerPortal() {
 
         <Panel
           title={picked ? `${picked.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : 'Pick a day'}
-          note={picked ? 'Set how many rooms are open that day' : 'Choose a day above to change it'}
+          note={picked ? 'Set how many rooms are open that day, and what you charge for it' : 'Choose a day above to change it'}
         >
           {picked ? (
             <div className="space-y-3">
@@ -515,18 +541,39 @@ export default function PartnerPortal() {
                 <div key={i.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-900/[0.07] px-4 py-3">
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold text-ink-800">{i.name}</span>
-                    <span className="block text-xs text-ink-500">{i.units} rooms in total</span>
+                    <span className="block text-xs text-ink-500">
+                      {i.units} rooms in total{i.rate > 0 ? ` · usually ${inr(i.rate)}` : ''}
+                    </span>
                   </span>
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max={i.units}
-                      key={`${i.id}-${picked.toDateString()}`}
-                      defaultValue={i.units}
-                      onChange={(e) => setRoomsOpen((v) => ({ ...v, [i.id]: e.target.value }))}
-                      className="input h-9 w-24 py-0 text-sm"
-                    />
+                  <span className="flex flex-wrap items-end gap-2">
+                    <label className="block">
+                      <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">
+                        Rooms open
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={i.units}
+                        key={`rooms-${i.id}-${picked.toDateString()}`}
+                        defaultValue={pickedRooms(i)}
+                        onChange={(e) => setRoomsOpen((v) => ({ ...v, [i.id]: e.target.value }))}
+                        className="input h-9 w-24 py-0 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-ink-400">
+                        Your rate (₹)
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        key={`rate-${i.id}-${picked.toDateString()}`}
+                        defaultValue={pickedRate(i)}
+                        placeholder={i.rate ? String(i.rate) : 'Usual rate'}
+                        onChange={(e) => setDayRate((v) => ({ ...v, [i.id]: e.target.value }))}
+                        className="input h-9 w-28 py-0 text-sm"
+                      />
+                    </label>
                     <button type="button" className="btn-action btn-sm" onClick={() => saveDay(i)}>
                       Save
                     </button>
@@ -549,6 +596,73 @@ export default function PartnerPortal() {
 
     performance: (
       <>
+        {/*
+          How many people looked, before any of the booking figures. A
+          partner whose listing nobody opens has a different problem from
+          one whose listing everybody opens and nobody books, and the
+          booking numbers alone cannot tell them apart.
+        */}
+        <Panel
+          title="Who is looking"
+          note="How often your listing was opened on the Smira Club website"
+        >
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Figure label="Views this week" value={score?.views?.last7 ?? 0} tone="text-brand-700" />
+            <Figure label="Views this month" value={score?.views?.last30 ?? 0} />
+            <Figure label="Views all time" value={score?.views?.total ?? 0} />
+            <Figure
+              label="Looked, then booked"
+              value={score?.views?.conversion != null ? `${score.views.conversion}%` : '—'}
+              hint={`${score?.views?.booked ?? 0} bookings this month`}
+            />
+          </div>
+
+          {/* The last fortnight, so a quiet week is visible as a shape. */}
+          {(score?.views?.recent || []).some((d) => d.views > 0) ? (
+            <div className="mt-5">
+              <p className="eyebrow mb-2">The last 14 days</p>
+              <div className="flex items-end gap-1.5">
+                {score.views.recent.map((d) => {
+                  const top = Math.max(1, ...score.views.recent.map((x) => x.views));
+                  const day = new Date(d.date);
+                  return (
+                    <span
+                      key={d.date}
+                      title={`${day.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} — ${d.views} view${d.views === 1 ? '' : 's'}`}
+                      className="flex min-w-0 flex-1 flex-col items-center gap-1"
+                    >
+                      <span className="num text-[10px] font-bold text-ink-500">{d.views || ''}</span>
+                      <span
+                        className="w-full rounded-t bg-brand-500"
+                        style={{ height: `${Math.max(2, Math.round((d.views / top) * 56))}px` }}
+                      />
+                      <span className="text-[9px] text-ink-400">{day.getDate()}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-ink-500">
+              Nobody has opened your listing yet. Views are counted from the day your listing went live.
+            </p>
+          )}
+
+          {(score?.views?.listings || []).length > 1 && (
+            <div className="mt-5">
+              <p className="eyebrow mb-2">By listing</p>
+              <ul className="divide-y divide-ink-900/[0.07]">
+                {score.views.listings.map((l) => (
+                  <li key={l.name} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <span className="min-w-0 truncate text-ink-700">{l.name}</span>
+                    <span className="num shrink-0 font-bold text-ink-900">{l.views}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Panel>
+
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Figure label="Bookings sent to you" value={score?.bookings ?? 0} />
           <Figure label="Answered" value={score?.answered ?? 0} hint={`${score?.waiting ?? 0} waiting`} />

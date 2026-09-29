@@ -547,6 +547,49 @@ export default function Customers() {
               )}
             </div>
 
+            {/*
+              What they have been looking at. A member who has saved four
+              villas in Goa is a phone call, not a mystery — and until the
+              wishlist reached Smira the desk could not see any of it.
+            */}
+            {(viewing?.wishlist || []).length > 0 && (
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="eyebrow">Saved on the website</p>
+                  <span className="text-xs font-semibold text-ink-400">
+                    {viewing.wishlist.length} saved
+                  </span>
+                </div>
+                <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+                  {viewing.wishlist.slice(0, 8).map((w) => (
+                    <li key={w.href} className="flex items-center gap-3 px-3 py-2.5">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-ink-800">
+                          {w.name || w.href}
+                        </span>
+                        <span className="block truncate text-xs text-ink-500">
+                          {[w.place, w.savedAt && `saved ${w.savedAt}`].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                      <a
+                        href={w.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-line btn-sm shrink-0"
+                      >
+                        Open
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                {viewing.wishlist.length > 8 && (
+                  <p className="mt-2 text-xs text-ink-400">
+                    and {viewing.wishlist.length - 8} more
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Gifts — tap a row to tick it off */}
             {membership?.plan && (
               <div>

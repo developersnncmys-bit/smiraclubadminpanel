@@ -341,6 +341,8 @@ export const ADAPTERS = {
       source: c.source,
       last: d(c.lastBookingOn),
       notes: c.notes,
+      // What they have saved on the website, so the desk can call about it.
+      wishlist: (c.wishlist || []).map((w) => ({ ...w, savedAt: d(w.savedAt) })),
       lastBooking: d(c.lastBookingOn),
       lastInteraction: d(c.lastInteractionOn),
       referral: c.referral || {},

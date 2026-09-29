@@ -23,7 +23,73 @@ const STEPS = [
   { n: 5, title: 'Ownership and legal' },
 ];
 
-const PROPERTY_TYPES = ['Hotel', 'Resort', 'Homestay', 'Villa', 'Camp', 'Lifestyle'];
+const PROPERTY_TYPES = [
+  'Hotel', 'Resort', 'Homestay', 'Villa', 'Camp',
+  'Restaurant', 'Spa & Salon', 'Games Zone', 'Theme Park',
+  'Activity', 'Transport', 'Lifestyle',
+];
+
+/**
+ * What the form asks a partner, by what kind of place they run.
+ *
+ * Every type used to get the hotel's form, so a restaurant was asked for
+ * its star category, its bed types and whether an extra bed was available,
+ * and a spa was asked its check-out time. The fields underneath are the
+ * same — a thing you sell, how many of it there are, who it holds and what
+ * it costs — so this renames them and hides the ones that mean nothing,
+ * rather than inventing a separate form per type.
+ *
+ * `unit` is what one of their sellable things is called. Everything else
+ * is whether a stay-shaped question applies at all.
+ */
+const STAY = {
+  star: true, bed: true, occupancy: true, extraBed: true, meals: true,
+  times: 'stay', nightly: true,
+};
+const VISIT = {
+  star: false, bed: false, occupancy: true, extraBed: false, meals: false,
+  times: 'open', nightly: false,
+};
+
+const PROFILES = {
+  Hotel: { ...STAY, unit: 'Room', units: 'Rooms', eg: 'Deluxe Room', egType: 'Deluxe' },
+  Resort: { ...STAY, unit: 'Room', units: 'Rooms', eg: 'Garden Villa Room', egType: 'Premium' },
+  Homestay: { ...STAY, star: false, unit: 'Room', units: 'Rooms', eg: 'Upstairs bedroom', egType: 'Double' },
+  Villa: { ...STAY, star: false, unit: 'Villa', units: 'Villas', eg: '3-bedroom pool villa', egType: 'Pool villa' },
+  Camp: { ...STAY, star: false, unit: 'Tent', units: 'Tents', eg: 'Riverside tent', egType: 'Deluxe tent' },
+
+  Restaurant: {
+    ...VISIT, unit: 'Table', units: 'Tables', eg: 'Window table for four', egType: 'Four-seater',
+    occupancyLabel: 'Seats', priceNote: 'Per cover, in rupees.',
+  },
+  'Spa & Salon': {
+    ...VISIT, unit: 'Treatment', units: 'Treatments', eg: 'Aroma full body massage', egType: '60 minutes',
+    occupancyLabel: 'People at once', priceNote: 'Per treatment, in rupees.',
+  },
+  'Games Zone': {
+    ...VISIT, unit: 'Game', units: 'Games', eg: 'Bowling lane', egType: 'Lane',
+    occupancyLabel: 'Players', priceNote: 'Per player, in rupees.',
+  },
+  'Theme Park': {
+    ...VISIT, unit: 'Ticket', units: 'Tickets', eg: 'Day pass with water park', egType: 'Day pass',
+    occupancyLabel: 'People covered', priceNote: 'Per ticket, in rupees.',
+  },
+  Activity: {
+    ...VISIT, unit: 'Activity', units: 'Activities', eg: 'Sunrise trek', egType: 'Half day',
+    occupancyLabel: 'People per slot', priceNote: 'Per person, in rupees.',
+  },
+  Transport: {
+    ...VISIT, unit: 'Vehicle', units: 'Vehicles', eg: 'Innova Crysta', egType: 'SUV',
+    occupancyLabel: 'Seats', priceNote: 'Per trip, in rupees.', times: 'none',
+  },
+  Lifestyle: {
+    ...VISIT, unit: 'Experience', units: 'Experiences', eg: 'Private yacht evening', egType: 'Evening',
+    occupancyLabel: 'Guests', priceNote: 'Per booking, in rupees.',
+  },
+};
+
+const DEFAULT_PROFILE = { ...STAY, unit: 'Room', units: 'Rooms', eg: 'Deluxe Room', egType: 'Deluxe' };
+const profileOf = (type) => PROFILES[type] || DEFAULT_PROFILE;
 const ACCOUNT_TYPES = ['Hotel / Property', 'Channel manager'];
 const OWNERSHIP = ['Self owned', 'Company owned', 'Family owned', 'Lease', 'Other'];
 const MEAL_PLANS = ['EP — Room only', 'CP — Breakfast', 'MAP — Breakfast + Dinner', 'AP — All meals'];
@@ -40,6 +106,54 @@ const RULES = [
   'Valid ID Required', 'Couple Friendly', 'Pets Allowed', 'Smoking', 'Alcohol', 'Visitors',
   'Child Policy', 'Extra Bed Policy', 'Food Policy',
 ];
+
+/**
+ * What to tick, by what kind of place it is.
+ *
+ * "Swimming Pool" and "Extra Bed Policy" are not questions for a
+ * restaurant, and "Serves Alcohol" is not one for a hotel room. Each
+ * family gets its own list; anything already ticked stays ticked even if
+ * the partner changes type, so nothing is lost by exploring.
+ */
+const TICKS = {
+  stay: { popular: POPULAR, facilities: FACILITIES, rules: RULES },
+  Restaurant: {
+    popular: ['Wi-Fi', 'AC', 'Parking', 'Live Music', 'Outdoor Seating', 'Rooftop', 'Private Dining', 'Bar', 'Buffet', 'Home Delivery'],
+    facilities: ['Valet Parking', 'Wheelchair Access', 'Baby Chairs', 'Smoking Area', 'Card Payment', 'UPI', 'Party Hall', 'Catering'],
+    rules: ['Table Booking Required', 'Couple Friendly', 'Pets Allowed', 'Smoking', 'Alcohol Served', 'Pure Veg', 'Dress Code', 'Outside Food'],
+  },
+  'Spa & Salon': {
+    popular: ['Wi-Fi', 'AC', 'Parking', 'Steam Room', 'Sauna', 'Jacuzzi', 'Couple Rooms', 'Ayurvedic', 'Salon', 'Products Included'],
+    facilities: ['Changing Room', 'Lockers', 'Showers', 'Wheelchair Access', 'Card Payment', 'UPI', 'Female Therapists', 'Male Therapists'],
+    rules: ['Appointment Required', 'Valid ID Required', 'Couple Friendly', 'Age Limit', 'Cancellation Notice', 'No Outside Products'],
+  },
+  'Games Zone': {
+    popular: ['Wi-Fi', 'AC', 'Parking', 'Arcade', 'Bowling', 'VR Games', 'Pool Table', 'Cafe', 'Party Packages', 'Kids Area'],
+    facilities: ['Lockers', 'Wheelchair Access', 'Card Payment', 'UPI', 'Seating Area', 'Birthday Hall', 'First Aid'],
+    rules: ['Age Limit', 'Height Limit', 'Adult Supervision', 'Socks Required', 'No Outside Food', 'Prepaid Card'],
+  },
+  'Theme Park': {
+    popular: ['Parking', 'Water Park', 'Dry Rides', 'Kids Zone', 'Food Court', 'Locker Rental', 'Costume Rental', 'Photography'],
+    facilities: ['Changing Room', 'Showers', 'Wheelchair Access', 'First Aid', 'Lifeguards', 'ATM', 'Card Payment', 'UPI'],
+    rules: ['Height Limit', 'Age Limit', 'Adult Supervision', 'Swimwear Required', 'No Outside Food', 'Valid ID Required'],
+  },
+  Activity: {
+    popular: ['Guide Included', 'Equipment Included', 'Transport Included', 'Refreshments', 'Photos Included', 'Insurance', 'Training'],
+    facilities: ['Changing Room', 'Lockers', 'Washrooms', 'Parking', 'First Aid', 'Card Payment', 'UPI'],
+    rules: ['Age Limit', 'Weight Limit', 'Fitness Declaration', 'Adult Supervision', 'Weather Dependent', 'Valid ID Required'],
+  },
+  Transport: {
+    popular: ['AC', 'Wi-Fi', 'Driver Included', 'Fuel Included', 'Music System', 'Charging Point', 'Water Bottles', 'GPS Tracked'],
+    facilities: ['Luggage Space', 'Child Seat', 'Wheelchair Access', 'First Aid', 'Card Payment', 'UPI', '24x7 Support'],
+    rules: ['Valid ID Required', 'Driving Licence Required', 'Smoking', 'Pets Allowed', 'Alcohol', 'Toll and Parking Extra', 'Night Charges'],
+  },
+  Lifestyle: {
+    popular: ['Wi-Fi', 'AC', 'Parking', 'Refreshments', 'Host Included', 'Photography', 'Decoration', 'Music'],
+    facilities: ['Washrooms', 'Changing Room', 'Wheelchair Access', 'Card Payment', 'UPI', 'Private Area'],
+    rules: ['Advance Booking', 'Valid ID Required', 'Age Limit', 'Cancellation Notice', 'Weather Dependent'],
+  },
+};
+const ticksFor = (type) => TICKS[type] || TICKS.stay;
 
 const EMPTY_ROOM = {
   name: '', type: '', count: '', size: '', bedType: '', adults: '', children: '',
@@ -131,6 +245,15 @@ export default function ListingWizard({
     type: '', name: '', starCategory: '', contactName: '', contactPhone: '', contactEmail: '',
     bookingStartDate: '', description: '', ...initial.property,
   });
+  /**
+   * What this partner is, and so what the rest of the form asks them.
+   *
+   * Everything below reads these instead of naming rooms and beds outright,
+   * which is how a restaurant came to be asked for its star category.
+   */
+  const kind = profileOf(property.type);
+  const ticks = ticksFor(property.type);
+
   const [location, setLocation] = useState({
     line1: '', line2: '', landmark: '', city: '', state: '', country: 'India', pin: '',
     latitude: '', longitude: '', mapsUrl: '', ...initial.location,
@@ -306,7 +429,9 @@ export default function ListingWizard({
       <div className="card space-y-4 p-4 sm:p-6">
         <div>
           <p className="text-[11px] font-extrabold uppercase tracking-wide text-brand-600">Step {step} of 5</p>
-          <h2 className="font-display text-xl font-extrabold text-ink-900">{STEPS[step - 1].title}</h2>
+          <h2 className="font-display text-xl font-extrabold text-ink-900">
+            {step === 2 ? kind.units : STEPS[step - 1].title}
+          </h2>
         </div>
 
         {/* -- Step 1 -------------------------------------------------------- */}
@@ -343,7 +468,9 @@ export default function ListingWizard({
 
             <Group title="Basic property information">
               <Field label="Property name" required><input {...prop('name')} /></Field>
-              <Field label="Star category"><input {...prop('starCategory')} placeholder="3 star, 4 star…" /></Field>
+              {kind.star && (
+                <Field label="Star category"><input {...prop('starCategory')} placeholder="3 star, 4 star…" /></Field>
+              )}
               <Field label="Property contact name"><input {...prop('contactName')} /></Field>
               <Field label="Mobile number"><input {...prop('contactPhone')} inputMode="tel" /></Field>
               <Field label="Email"><input {...prop('contactEmail')} type="email" /></Field>
@@ -379,7 +506,7 @@ export default function ListingWizard({
             {rooms.map((r, i) => (
               <section key={i} className="rounded-2xl border border-ink-900/[0.07] p-4 sm:p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-display text-sm font-extrabold text-ink-900">Room category {i + 1}</h3>
+                  <h3 className="font-display text-sm font-extrabold text-ink-900">{kind.unit} {i + 1}</h3>
                   {rooms.length > 1 && (
                     <button type="button" onClick={() => setRooms(rooms.filter((_, j) => j !== i))} className="icon-btn-danger h-8 w-8" title="Remove">
                       <Trash2 size={14} />
@@ -387,34 +514,38 @@ export default function ListingWizard({
                   )}
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <Field label="Room name" required><input className="input" value={r.name} onChange={(e) => setRoom(i, 'name', e.target.value)} placeholder="Deluxe Room" /></Field>
-                  <Field label="Room type"><input className="input" value={r.type} onChange={(e) => setRoom(i, 'type', e.target.value)} placeholder="Deluxe" /></Field>
-                  <Field label="Number of rooms" required><input className="input" type="number" min="0" value={r.count} onChange={(e) => setRoom(i, 'count', e.target.value)} placeholder="10" /></Field>
-                  <Field label="Room size"><input className="input" value={r.size} onChange={(e) => setRoom(i, 'size', e.target.value)} placeholder="320 sq ft" /></Field>
-                  <Field label="Bed type"><input className="input" value={r.bedType} onChange={(e) => setRoom(i, 'bedType', e.target.value)} placeholder="1 King Bed" /></Field>
+                  <Field label={`${kind.unit} name`} required><input className="input" value={r.name} onChange={(e) => setRoom(i, 'name', e.target.value)} placeholder={kind.eg} /></Field>
+                  <Field label={`${kind.unit} type`}><input className="input" value={r.type} onChange={(e) => setRoom(i, 'type', e.target.value)} placeholder={kind.egType} /></Field>
+                  <Field label={`How many ${kind.units.toLowerCase()}`} required><input className="input" type="number" min="0" value={r.count} onChange={(e) => setRoom(i, 'count', e.target.value)} placeholder="10" /></Field>
+                  <Field label={kind.nightly ? `${kind.unit} size` : 'Size or duration'}><input className="input" value={r.size} onChange={(e) => setRoom(i, 'size', e.target.value)} placeholder={kind.nightly ? '320 sq ft' : '60 minutes'} /></Field>
+                  {kind.bed && (
+                    <Field label="Bed type"><input className="input" value={r.bedType} onChange={(e) => setRoom(i, 'bedType', e.target.value)} placeholder="1 King Bed" /></Field>
+                  )}
                   <Field label="Number of adults"><input className="input" type="number" min="0" value={r.adults} onChange={(e) => setRoom(i, 'adults', e.target.value)} placeholder="2" /></Field>
                   <Field label="Number of children"><input className="input" type="number" min="0" value={r.children} onChange={(e) => setRoom(i, 'children', e.target.value)} placeholder="1" /></Field>
-                  <Field label="Maximum occupancy"><input className="input" type="number" min="0" value={r.maxOccupancy} onChange={(e) => setRoom(i, 'maxOccupancy', e.target.value)} placeholder="3" /></Field>
-                  <Field label="Extra bed available">
-                    <select className="input" value={r.extraBed ? 'Yes' : 'No'} onChange={(e) => setRoom(i, 'extraBed', e.target.value === 'Yes')}>
-                      <option>No</option>
-                      <option>Yes</option>
-                    </select>
-                  </Field>
-                  <Field label="Room amenities" wide><input className="input" value={r.amenities} onChange={(e) => setRoom(i, 'amenities', e.target.value)} placeholder="AC, TV, minibar, balcony" /></Field>
-                  <Field label="Room description" wide><textarea className="input" rows={2} value={r.description} onChange={(e) => setRoom(i, 'description', e.target.value)} /></Field>
+                  <Field label={kind.occupancyLabel || 'Maximum occupancy'}><input className="input" type="number" min="0" value={r.maxOccupancy} onChange={(e) => setRoom(i, 'maxOccupancy', e.target.value)} placeholder="3" /></Field>
+                  {kind.extraBed && (
+                    <Field label="Extra bed available">
+                      <select className="input" value={r.extraBed ? 'Yes' : 'No'} onChange={(e) => setRoom(i, 'extraBed', e.target.value === 'Yes')}>
+                        <option>No</option>
+                        <option>Yes</option>
+                      </select>
+                    </Field>
+                  )}
+                  <Field label={`${kind.unit} amenities`} wide><input className="input" value={r.amenities} onChange={(e) => setRoom(i, 'amenities', e.target.value)} placeholder="AC, TV, minibar, balcony" /></Field>
+                  <Field label={`${kind.unit} description`} wide><textarea className="input" rows={2} value={r.description} onChange={(e) => setRoom(i, 'description', e.target.value)} /></Field>
                 </div>
               </section>
             ))}
             <button type="button" onClick={() => setRooms([...rooms, { ...EMPTY_ROOM }])} className="btn-line">
-              <Plus size={15} /> Add room category
+              <Plus size={15} /> Add another {kind.unit.toLowerCase()}
             </button>
 
             <Group title="Photos and videos" note="Paste links — Google Drive, Dropbox or your website. One per line.">
               <Field label="Property photos" hint="Exterior, lobby, reception, restaurant, swimming pool, facilities, other areas" wide>
                 <textarea className="input" rows={3} value={propertyPhotos} onChange={(e) => setPropertyPhotos(e.target.value)} placeholder="https://…" />
               </Field>
-              <Field label="Room photos" hint="Room, bathroom, view, amenities" wide>
+              <Field label={`${kind.unit} photos`} hint={kind.nightly ? 'Room, bathroom, view, amenities' : 'Whatever a member would want to see before booking'} wide>
                 <textarea className="input" rows={3} value={roomPhotos} onChange={(e) => setRoomPhotos(e.target.value)} placeholder="https://…" />
               </Field>
             </Group>
@@ -424,10 +555,10 @@ export default function ListingWizard({
         {/* -- Step 3 -------------------------------------------------------- */}
         {step === 3 && (
           <>
-            <Group title="Popular amenities"><Checks options={POPULAR} value={amenities} onChange={setAmenities} /></Group>
-            <Group title="Property facilities"><Checks options={FACILITIES} value={facilities} onChange={setFacilities} /></Group>
-            <Group title="Property rules" note="Tick the ones that apply at your property.">
-              <Checks options={RULES} value={rules} onChange={setRules} />
+            <Group title="Popular amenities"><Checks options={ticks.popular} value={amenities} onChange={setAmenities} /></Group>
+            <Group title="Facilities"><Checks options={ticks.facilities} value={facilities} onChange={setFacilities} /></Group>
+            <Group title="Rules" note="Tick the ones that apply.">
+              <Checks options={ticks.rules} value={rules} onChange={setRules} />
             </Group>
           </>
         )}
@@ -435,31 +566,41 @@ export default function ListingWizard({
         {/* -- Step 4 -------------------------------------------------------- */}
         {step === 4 && (
           <>
-            <Group title="Room pricing" note="Per room per night, in rupees.">
+            <Group title={`${kind.unit} pricing`} note={kind.priceNote || `Per ${kind.unit.toLowerCase()} per night, in rupees.`}>
               <Field label="Standard tariff"><input {...pri('standardTariff')} type="number" min="0" /></Field>
               <Field label="Smira partner rate" required hint="What Smira pays you"><input {...pri('partnerRate')} type="number" min="0" /></Field>
               <Field label="Weekday rate"><input {...pri('weekdayRate')} type="number" min="0" /></Field>
               <Field label="Weekend rate"><input {...pri('weekendRate')} type="number" min="0" /></Field>
-              <Field label="Extra adult rate"><input {...pri('extraAdultRate')} type="number" min="0" /></Field>
+              <Field label={kind.nightly ? 'Extra adult rate' : 'Extra person rate'}><input {...pri('extraAdultRate')} type="number" min="0" /></Field>
               <Field label="Child rate"><input {...pri('childRate')} type="number" min="0" /></Field>
             </Group>
 
-            <Group title="Meal plan">
-              <Checks options={MEAL_PLANS} value={pricing.mealPlans} onChange={(v) => setPricing({ ...pricing, mealPlans: v })} />
-            </Group>
+            {kind.meals && (
+              <Group title="Meal plan">
+                <Checks options={MEAL_PLANS} value={pricing.mealPlans} onChange={(v) => setPricing({ ...pricing, mealPlans: v })} />
+              </Group>
+            )}
 
             <Group title="Inventory and calendar">
-              <Field label="Total rooms"><input {...inv('totalRooms')} type="number" min="0" /></Field>
-              <Field label="Available rooms"><input {...inv('availableRooms')} type="number" min="0" /></Field>
+              <Field label={`Total ${kind.units.toLowerCase()}`}><input {...inv('totalRooms')} type="number" min="0" /></Field>
+              <Field label={`Available ${kind.units.toLowerCase()}`}><input {...inv('availableRooms')} type="number" min="0" /></Field>
               <Field label="Closed dates" hint="e.g. 24–26 Dec"><input {...inv('closedDates')} /></Field>
               <Field label="Blackout dates"><input {...inv('blackoutDates')} /></Field>
             </Group>
 
             <Group title="Policies">
-              <Field label="Check-in time"><input {...pol('checkIn')} type="time" /></Field>
-              <Field label="Check-out time"><input {...pol('checkOut')} type="time" /></Field>
-              <Field label="Free cancellation until" hint="e.g. 48 hours before check-in"><input {...pol('freeCancellationUntil')} /></Field>
-              <Field label="Cancellation charge"><input {...pol('cancellationCharge')} placeholder="One night" /></Field>
+              {kind.times !== 'none' && (
+                <>
+                  <Field label={kind.times === 'stay' ? 'Check-in time' : 'Opens at'}>
+                    <input {...pol('checkIn')} type="time" />
+                  </Field>
+                  <Field label={kind.times === 'stay' ? 'Check-out time' : 'Closes at'}>
+                    <input {...pol('checkOut')} type="time" />
+                  </Field>
+                </>
+              )}
+              <Field label="Free cancellation until" hint={kind.times === 'stay' ? 'e.g. 48 hours before check-in' : 'e.g. 24 hours before the booking'}><input {...pol('freeCancellationUntil')} /></Field>
+              <Field label="Cancellation charge"><input {...pol('cancellationCharge')} placeholder={kind.nightly ? 'One night' : 'Half the booking'} /></Field>
               <Field label="No-show policy" wide><input {...pol('noShowPolicy')} /></Field>
             </Group>
           </>

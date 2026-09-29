@@ -383,18 +383,43 @@ export default function Memberships({ embedded = false }) {
                 </p>
               )}
 
+              {/* The plan's own colour, the one the website paints with, so
+                  the card is not the only place it cannot be seen. */}
+              {swatchFor(plan.accent) !== 'transparent' && (
+                <div
+                  className="h-1.5 w-full"
+                  style={{ background: swatchFor(plan.accent) }}
+                  title={`Website colour: ${plan.accent}`}
+                />
+              )}
+
               {/* Skinned head — this is what makes each tier look its part */}
               <div className={variant.head}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${variant.tile}`}>
+                    <span
+                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${variant.tile}`}
+                      style={
+                        swatchFor(plan.accent) !== 'transparent'
+                          ? { background: swatchFor(plan.accent), color: '#fff' }
+                          : undefined
+                      }
+                    >
                       <Crown size={18} strokeWidth={2.2} />
                     </span>
                     <div className="min-w-0">
                       <p className={`truncate font-display text-base font-extrabold ${variant.name}`}>
                         {plan.name}
                       </p>
-                      <p className={`truncate text-xs ${variant.id}`}>{plan.id}</p>
+                      <p className={`flex items-center gap-1.5 truncate text-xs ${variant.id}`}>
+                        {plan.id}
+                        {plan.accent && (
+                          <>
+                            <span aria-hidden>·</span>
+                            <span className="num">{plan.accent}</span>
+                          </>
+                        )}
+                      </p>
                     </div>
                   </div>
                   {isPremium && (

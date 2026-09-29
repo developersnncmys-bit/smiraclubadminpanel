@@ -232,10 +232,75 @@ export const ADAPTERS = {
     }),
   },
 
+  /**
+   * A role, with what it may actually reach.
+   *
+   * The adapter used to keep the name and throw the rest away, so the
+   * Users screen drew its permission grid from a seed file — the desk
+   * could tick boxes all day and the server never heard. Everything the
+   * Role model holds now comes through, and goes back.
+   */
   roles: {
     path: '/roles',
-    from: (r) => ({ ...base(r), id: r._id, people: r.people ?? 0 }),
-    to: (p) => p,
+    from: (r) => ({
+      ...base(r),
+      id: r._id,
+      name: r.name,
+      department: r.department || '',
+      reportsTo: r.reportsTo || '—',
+      dashboard: r.dashboard || '',
+      modules: r.modules || [],
+      permissions: r.permissions || [],
+      scope: r.scope || 'own',
+      approvals: r.approvals || [],
+      superAdmin: Boolean(r.superAdmin),
+      description: r.description || '',
+      people: r.people ?? 0,
+    }),
+    to: (r) => ({
+      name: r.name,
+      department: r.department,
+      reportsTo: r.reportsTo,
+      dashboard: r.dashboard,
+      modules: r.modules,
+      permissions: r.permissions,
+      scope: r.scope,
+      approvals: r.approvals,
+      description: r.description,
+      // Not the screen's to grant: one role skips every check and it is
+      // set where the database is, not from a form anybody can open.
+    }),
+  },
+
+  /** What is waiting for somebody senior to say yes to. */
+  approvals: {
+    path: '/approvals',
+    from: (a) => ({
+      ...base(a),
+      area: a.area,
+      what: a.what,
+      value: a.value ?? 0,
+      raisedBy: who(a.raisedBy),
+      raisedById: ref(a.raisedBy),
+      approver: who(a.approver),
+      approverId: ref(a.approver),
+      level: a.level ?? 1,
+      levels: a.levels ?? 1,
+      status: a.status,
+      reason: a.reason || '',
+      decidedBy: who(a.decidedBy),
+      raised: dt(a.createdAt),
+    }),
+    to: (a, ctx) => ({
+      area: a.area,
+      what: a.what,
+      value: num(a.value),
+      level: num(a.level),
+      levels: num(a.levels),
+      status: a.status,
+      reason: a.reason,
+      ...(a.approverId ? { approver: a.approverId } : a.approver ? { approver: userId(a.approver, ctx) } : {}),
+    }),
   },
 
   // -- Sales ---------------------------------------------------------------

@@ -93,6 +93,24 @@ export default function Users() {
   const store = useApp();
   const { team, roles, approvals, enquiries, bookings, memberSignups, create, update, toast } = store;
 
+  /**
+   * Switch a module on or off for a role.
+   *
+   * Sent as the whole list rather than a delta, because that is what the
+   * role holds and two people editing at once should not be able to merge
+   * into something neither of them chose.
+   */
+  const toggleModule = (role, moduleName) => {
+    if (role.superAdmin) return;
+    const had = (role.modules || []).includes(moduleName);
+    const modules = had
+      ? role.modules.filter((m) => m !== moduleName)
+      : [...(role.modules || []), moduleName];
+    update('roles', role.id, { modules }, {
+      message: had ? `${role.name} can no longer open ${moduleName}` : `${role.name} can now open ${moduleName}`,
+    });
+  };
+
   const [section, setSection] = useState('People');
   const [viewing, setViewing] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -505,7 +523,11 @@ export default function Users() {
           </div>
         </Block>
 
-        <Block title="Which modules each role can open" note="Nine modules, switched on one at a time" wide>
+        <Block
+          title="Which modules each role can open"
+          note="Tap a cell to switch it on or off — it saves as you go"
+          wide
+        >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-sm">
               <thead>
@@ -520,11 +542,32 @@ export default function Users() {
                 {roles.map((r) => (
                   <tr key={r.id} className="hover:bg-surface-soft">
                     <td className="py-2.5 font-bold text-ink-900">{r.name}</td>
-                    {permissionModules.map((m) => (
-                      <td key={m} className="py-2.5 text-center">
-                        <span className="inline-flex"><Mark on={(r.modules || []).includes(m)} /></span>
-                      </td>
-                    ))}
+                    {permissionModules.map((m) => {
+                      const on = (r.modules || []).includes(m);
+                      /*
+                        The grid was a picture of the permissions. Ticking
+                        it does something now: the role goes back to the
+                        server, so what the desk sees is what the API
+                        actually enforces.
+                      */
+                      return (
+                        <td key={m} className="py-2.5 text-center">
+                          <button
+                            type="button"
+                            disabled={r.superAdmin}
+                            title={
+                              r.superAdmin
+                                ? `${r.name} reaches everything — that is not set from here`
+                                : on ? `Take ${m} away from ${r.name}` : `Give ${r.name} ${m}`
+                            }
+                            onClick={() => toggleModule(r, m)}
+                            className="inline-flex rounded-md p-1 transition hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <Mark on={r.superAdmin || on} />
+                          </button>
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>

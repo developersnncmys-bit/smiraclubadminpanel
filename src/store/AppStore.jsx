@@ -9,6 +9,7 @@ import * as autoSeed from '../data/automationData.js';
 import * as inventorySeed from '../data/inventoryData.js';
 import { api, isLive, getToken, setToken } from '../lib/api.js';
 import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor, fallbackPathFor } from '../lib/adapters.js';
+import * as reportsSeed from '../data/reportsData.js';
 
 /**
  * Single client-side store for the whole panel.
@@ -40,6 +41,7 @@ const PREFIX = {
   memberSignups: 'MSU',
   rewardGrants: 'RWD',
   tickets: 'TCK',
+  schedules: 'RPT',
   inventory: 'INV',
   partners: 'PTR',
   lifestyle: 'LIF',
@@ -75,6 +77,7 @@ export const SINGULAR = {
   memberSignups: 'Membership signup',
   rewardGrants: 'Reward',
   tickets: 'Ticket',
+  schedules: 'Scheduled report',
   inventory: 'Inventory item',
   partners: 'Partner',
   lifestyle: 'Add-on',
@@ -110,6 +113,7 @@ const seedState = () => ({
   memberSignups: seed.memberSignups,
   rewardGrants: seed.rewardGrants,
   tickets: support.tickets,
+  schedules: reportsSeed.scheduledReports,
   inventory: inventorySeed.inventory,
   partners: partnerSeed.partners,
   lifestyle: extra.lifestyle,

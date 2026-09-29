@@ -569,6 +569,35 @@ export const ADAPTERS = {
   },
 
   // -- Support -------------------------------------------------------------
+  /** Standing instructions for the reports that go out on a schedule. */
+  schedules: {
+    path: '/scheduled-reports',
+    from: (r) => ({
+      ...base(r),
+      name: r.name,
+      module: r.module,
+      frequency: r.frequency,
+      at: r.at || '09:00',
+      weekday: r.weekday ?? null,
+      dayOfMonth: r.dayOfMonth ?? null,
+      recipients: r.recipients || [],
+      format: r.format || 'PDF',
+      active: r.active !== false,
+      lastSentOn: d(r.lastSentOn),
+    }),
+    to: (r) => ({
+      name: r.name,
+      module: r.module,
+      frequency: r.frequency,
+      at: r.at,
+      weekday: num(r.weekday),
+      dayOfMonth: num(r.dayOfMonth),
+      recipients: r.recipients,
+      format: r.format,
+      active: r.active,
+    }),
+  },
+
   tickets: {
     path: '/tickets',
     from: (t) => ({

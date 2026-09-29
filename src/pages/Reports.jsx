@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../lib/api.js';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -37,9 +38,6 @@ import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
   sourceCosts,
-  engagementStats,
-  messagingStats,
-  scheduledReports as seedSchedules,
   reportRecipients,
   reportModules,
   reportMeasures,
@@ -116,16 +114,49 @@ function Table({ head, rows, empty = 'Nothing to report yet.' }) {
  * Report & Analytics as the client's sheet lays it out: fifteen reports
  * behind one switcher, every one built from what the panel already knows.
  */
+const DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+/** "Monday, 9:00 am" — the schedule read back the way somebody would say it. */
+function whenItRuns(s) {
+  const [h, m] = String(s.at || '09:00').split(':').map(Number);
+  const hour = ((h + 11) % 12) + 1;
+  const time = `${hour}:${String(m || 0).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
+  if (s.frequency === 'Daily') return `Every day, ${time}`;
+  if (s.frequency === 'Weekly' || s.frequency === 'Fortnightly') return `${DAYS[s.weekday || 1]}, ${time}`;
+  return `Day ${s.dayOfMonth || 1}, ${time}`;
+}
+
 export default function Reports() {
+  const store = useApp();
   const {
     enquiries, bookings, invoices, payments, team, customers,
     memberSignups, memberships, tickets, partners, automations,
-    owner, range, toast,
-  } = useApp();
+    owner, range, toast, create, update, live,
+  } = store;
+
+  /**
+   * The two sets of figures this page cannot work out for itself.
+   *
+   * What a campaign sent and what members did are counted by the server,
+   * over the whole database rather than the slice this screen holds. They
+   * were nine constants in the panel's own source before, so they never
+   * moved and meant nothing.
+   */
+  const [messaging, setMessaging] = useState(null);
+  const [engagement, setEngagement] = useState(null);
+  useEffect(() => {
+    if (!live) return;
+    api.get('/reports/messaging').then((r) => setMessaging(r.data)).catch(() => {});
+    api.get('/reports/engagement?days=30').then((r) => setEngagement(r.data)).catch(() => {});
+  }, [live]);
 
   const [section, setSection] = useState('Overview');
   const [builder, setBuilder] = useState({ module: 'Sales', dimension: 'Salesperson', measure: 'Revenue' });
-  const [schedules, setSchedules] = useState(seedSchedules);
+  /**
+   * Scheduled reports are records, not a list in this screen's memory. They
+   * used to vanish on refresh and nobody else on the desk could see them.
+   */
+  const schedules = store.schedules || [];
   const [teamCut, setTeamCut] = useState({ employee: 'All', team: 'All', manager: 'All', branch: 'All' });
 
   const leads = byOwner(enquiries, owner);
@@ -582,20 +613,34 @@ export default function Reports() {
           </div>
         </Block>
 
-        <Block title="Member engagement" note="What members actually do">
+{/*
+          Counted, over the last thirty days. Four of these are not things
+          the site reports yet, and they say so rather than printing a
+          number nobody measured — which is what they used to do.
+        */}
+        <Block title="Member engagement" note="What members actually did, the last 30 days">
           <Table
             head={['Activity', 'Count']}
             rows={[
-              ['App logins', engagementStats.logins],
-              ['Searches', engagementStats.searches],
-              ['Wishlist adds', engagementStats.wishlist],
-              ['Booking enquiries', engagementStats.inquiries],
-              ['Bookings', engagementStats.bookings],
-              ['Offers viewed', engagementStats.offersViewed],
-              ['Gifts claimed', engagementStats.giftsClaimed],
-              ['Referrals', engagementStats.referrals],
-              ['WhatsApp interactions', engagementStats.whatsapp],
-            ].map(([label, value]) => ({ key: label, cells: [label, num(value)] }))}
+              ['Listings opened', engagement?.listingViews],
+              ['Booking enquiries', engagement?.enquiries],
+              ['Bookings', engagement?.bookings],
+              ['Referrals', engagement?.referrals],
+              ['WhatsApp conversations', engagement?.whatsapp],
+              ['App logins', engagement?.logins],
+              ['Searches', engagement?.searches],
+              ['Wishlist adds', engagement?.wishlist],
+              ['Offers viewed', engagement?.offersViewed],
+              ['Gifts claimed', engagement?.giftsClaimed],
+            ].map(([label, value]) => ({
+              key: label,
+              cells: [
+                label,
+                value == null
+                  ? <span key="x" className="text-xs text-ink-400">not tracked yet</span>
+                  : num(value),
+              ],
+            }))}
           />
         </Block>
 
@@ -901,12 +946,30 @@ export default function Reports() {
       <div className="grid gap-5 xl:grid-cols-2">
         <Block title="Messages" note="What went out, and what came back">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Sent" value={messagingStats.sent} />
-            <Stat label="Delivered" value={messagingStats.delivered} />
-            <Stat label="Read" value={messagingStats.read} tone="text-emerald-600" />
-            <Stat label="Replied" value={messagingStats.replied} />
-            <Stat label="Templates" value={messagingStats.templates} />
-            <Stat label="Campaigns" value={messagingStats.campaigns} />
+            <Stat label="Sent" value={num(messaging?.sent ?? 0)} />
+            <Stat
+              label="Delivered"
+              value={num(messaging?.delivered ?? 0)}
+              hint={messaging?.deliveredRate != null ? `${messaging.deliveredRate}% of sent` : undefined}
+            />
+            <Stat
+              label="Read"
+              value={num(messaging?.read ?? 0)}
+              tone="text-emerald-600"
+              hint={messaging?.readRate != null ? `${messaging.readRate}% of delivered` : undefined}
+            />
+            <Stat
+              label="Replied"
+              value={num(messaging?.replied ?? 0)}
+              hint={messaging?.replyRate != null ? `${messaging.replyRate}% of delivered` : undefined}
+            />
+            <Stat label="Campaigns" value={num(messaging?.campaigns ?? 0)} />
+            <Stat
+              label="Back per rupee"
+              value={messaging?.returnOnSpend != null ? `${messaging.returnOnSpend}x` : '—'}
+              tone="text-brand-700"
+              hint={messaging?.cost ? `on ${inr(messaging.cost)} spent` : 'no spend recorded'}
+            />
           </div>
         </Block>
 
@@ -1047,21 +1110,18 @@ export default function Reports() {
             <button
               className="btn-line"
               onClick={() => {
-                setSchedules((list) => [
-                  ...list,
-                  {
-                    id: `SCH-0${list.length + 1}`,
-                    name: `${builder.module} by ${builder.dimension.toLowerCase()}`,
-                    every: 'Weekly',
-                    at: 'Monday, 9:00 am',
-                    module: builder.module,
-                    recipients: ['Admin'],
-                    format: 'PDF',
-                    status: 'On',
-                  },
-                ]);
+                create('schedules', {
+                  name: `${builder.module} by ${builder.dimension.toLowerCase()}`,
+                  module: builder.module,
+                  frequency: 'Weekly',
+                  at: '09:00',
+                  weekday: 1,
+                  recipients: ['Admin'],
+                  format: 'PDF',
+                  active: true,
+                }, { silent: true });
                 setSection('Scheduled reports');
-                toast('Report scheduled weekly');
+                toast('Report scheduled — every Monday at 9:00 am');
               }}
             >
               <CalendarClock size={15} /> Schedule
@@ -1107,8 +1167,21 @@ export default function Reports() {
             rows={schedules.map((s) => ({
               key: s.id,
               cells: [
-                s.name, s.every, s.at, s.module, s.recipients.join(', '), s.format,
-                <Badge tone={s.status === 'On' ? 'green' : 'slate'} dot>{s.status}</Badge>,
+                s.name,
+                s.frequency,
+                whenItRuns(s),
+                s.module,
+                (s.recipients || []).join(', ') || '—',
+                s.format,
+                <button
+                  key="on"
+                  onClick={() => update('schedules', s.id, { active: !s.active }, {
+                    message: s.active ? `${s.name} paused` : `${s.name} back on`,
+                  })}
+                  title={s.active ? 'Pause this one' : 'Turn it back on'}
+                >
+                  <Badge tone={s.active ? 'green' : 'slate'} dot>{s.active ? 'On' : 'Paused'}</Badge>
+                </button>,
               ],
             }))}
           />

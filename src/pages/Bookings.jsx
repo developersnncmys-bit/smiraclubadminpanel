@@ -174,10 +174,20 @@ export default function Bookings() {
     shared.has(c.name) ? `${c.name} · ${String(c.phone || '').replace(/\D/g, '').slice(-4)}` : c.name;
   const customerOptions = customers.map(labelOf);
 
-  /** Partners the server knows, for sending a confirmed booking to their portal. */
+  /**
+   * Partners a confirmed booking can actually be sent to.
+   *
+   * Only the live ones. The list used to be every partner on file, so it
+   * offered half-finished registrations and test rows — and sending a
+   * booking to one of those is not a mistake the desk finds out about
+   * until the partner cannot open it: the portal refuses anybody whose
+   * listing is not live. This is the same rule the server applies.
+   */
+  const BEFORE_LIVE = ['Registration', 'Admin review', 'Needs changes', 'Contract', 'Rejected'];
   const partnerOptions = (partners || [])
-    .filter((p) => p._id)
-    .map((p) => ({ id: p._id, label: p.name }));
+    .filter((p) => p._id && p.status === 'Active' && !BEFORE_LIVE.includes(p.stage))
+    .map((p) => ({ id: p._id, label: p.name }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   const fields = [
     {
@@ -717,7 +727,9 @@ export default function Bookings() {
             ))}
           </select>
           <span className="mt-1 block text-xs text-ink-500">
-            Confirmed bookings appear on the partner&rsquo;s portal for them to accept.
+            {partnerOptions.length
+              ? 'Confirmed bookings appear on the partner’s portal for them to accept.'
+              : 'No partner is live yet — approve one on the Partners page and it will appear here.'}
           </span>
         </label>
         <div className="space-y-2">

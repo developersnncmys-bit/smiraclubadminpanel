@@ -297,7 +297,8 @@ export default function ListingWizard({
     documentLinks: { ownershipProof: '', leaseAgreement: '', authorisation: '', ...initial.ownership?.documentLinks },
   });
   const [bank, setBank] = useState({
-    holder: '', bankName: '', accountNumber: '', ifsc: '', branch: '', proofLink: '', ...initial.bank,
+    holder: '', bankName: '', accountNumber: '', ifsc: '', branch: '', proofLink: '',
+    upiId: '', upiName: '', preferred: '', ...initial.bank,
   });
   const [agreed, setAgreed] = useState(Boolean(initial.agreementAccepted));
 
@@ -674,7 +675,14 @@ export default function ListingWizard({
               <Field label="TAN" hint="If applicable"><input {...own('tan')} className="input uppercase" /></Field>
             </Group>
 
-            <Group title="Bank details" note="Where Smira settles your payouts.">
+            {/*
+              Two ways to be paid, asked as two things. A bank transfer
+              needs an account, an IFSC and a proof; a UPI payout needs a
+              handle. They were one block, so a partner who only takes UPI
+              left four boxes empty and the desk could not tell "not filled
+              in" from "does not apply".
+            */}
+            <Group title="Account information" note="Where Smira settles your payouts by bank transfer.">
               <Field label="Account holder name" required><input {...bnk('holder')} /></Field>
               <Field label="Bank name"><input {...bnk('bankName')} /></Field>
               <Field label="Account number" required><input {...bnk('accountNumber')} inputMode="numeric" autoComplete="off" /></Field>
@@ -687,6 +695,20 @@ export default function ListingWizard({
                   upload={sendFile}
                   onChange={(url) => setBank({ ...bank, proofLink: url })}
                 />
+              </Field>
+            </Group>
+
+            <Group title="UPI" note="Quicker for small settlements. Either this or the account above, or both.">
+              <Field label="UPI ID" hint="e.g. yourname@okhdfcbank">
+                <input {...bnk('upiId')} autoComplete="off" spellCheck={false} />
+              </Field>
+              <Field label="Name on the UPI account"><input {...bnk('upiName')} /></Field>
+              <Field label="How you would rather be paid">
+                <select {...bnk('preferred')}>
+                  <option value="">No preference</option>
+                  <option>Bank transfer</option>
+                  <option>UPI</option>
+                </select>
               </Field>
             </Group>
 

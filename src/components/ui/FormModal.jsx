@@ -102,6 +102,42 @@ export default function FormModal({
                   </option>
                 ))}
               </select>
+            ) : f.type === 'colour' ? (
+              /*
+                A colour is a name or a code, so it is a text box — and
+                beside it the swatch the value actually produces, plus the
+                system picker for anybody who would rather point at one than
+                remember that #b8860b is the gold.
+              */
+              <span className="flex items-center gap-2">
+                <input
+                  id={f.name}
+                  type="text"
+                  className="input"
+                  placeholder={f.placeholder}
+                  list={`${f.name}-known`}
+                  value={values[f.name] ?? ''}
+                  onChange={(e) => set(f.name, e.target.value)}
+                />
+                <datalist id={`${f.name}-known`}>
+                  {(f.options || []).filter(Boolean).map((o) => (
+                    <option key={o} value={o} />
+                  ))}
+                </datalist>
+                <span
+                  aria-hidden
+                  title={values[f.name] || 'No colour set'}
+                  className="h-9 w-9 shrink-0 rounded-lg border border-ink-900/10"
+                  style={{ background: f.swatch ? f.swatch(values[f.name]) : values[f.name] || 'transparent' }}
+                />
+                <input
+                  type="color"
+                  aria-label={`Pick a colour for ${f.label}`}
+                  value={/^#[0-9a-fA-F]{6}$/.test(values[f.name] || '') ? values[f.name] : '#1b3a6b'}
+                  onChange={(e) => set(f.name, e.target.value)}
+                  className="h-9 w-10 shrink-0 cursor-pointer rounded-lg border border-ink-900/10 bg-white p-1"
+                />
+              </span>
             ) : f.type === 'textarea' ? (
               <textarea
                 id={f.name}

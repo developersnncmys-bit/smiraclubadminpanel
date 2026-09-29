@@ -38,6 +38,31 @@ const ACCENT_KEYS = ['brand', 'sky', 'amber', 'violet', 'slate'];
 const WEBSITE_COLOURS = ['silver', 'gold', 'platinum', 'diamond', 'crown'];
 
 /**
+ * What each tier name is actually worth, taken from the website's own
+ * values, so the swatch beside the box shows the colour the member will
+ * see rather than something close to it.
+ */
+const TIER_HEX = {
+  silver: '#5f686f',
+  gold: '#b8860b',
+  platinum: '#4f6c80',
+  diamond: '#1f8f98',
+  crown: '#6e2a4f',
+  slate: '#5f686f',
+  amber: '#b8860b',
+  violet: '#5b4a9c',
+  brand: '#1b3a6b',
+  sky: '#0f6f8c',
+  emerald: '#12674a',
+  rose: '#9c2a4f',
+};
+const swatchFor = (v) => {
+  const key = String(v || '').trim().toLowerCase();
+  if (TIER_HEX[key]) return TIER_HEX[key];
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(key) ? key : 'transparent';
+};
+
+/**
  * The plans must not read as three identical cards. The plan marked popular
  * gets the raised gold treatment, the dearest of the rest gets the dark
  * premium header, and everything else stays a plain white card — so the
@@ -153,9 +178,11 @@ export default function Memberships({ embedded = false }) {
     {
       name: 'accent',
       label: 'Colour',
-      type: 'select',
-      options: ['', ...WEBSITE_COLOURS, ...ACCENT_KEYS],
-      help: 'Silver to Crown are the website’s own tier colours. Blank leaves it as the website has it.',
+      type: 'colour',
+      options: [...WEBSITE_COLOURS, ...ACCENT_KEYS],
+      swatch: swatchFor,
+      placeholder: 'gold, or #b8860b',
+      help: 'A tier name — silver, gold, platinum, diamond, crown — or any colour code. The website builds the card’s gradient from it.',
     },
     {
       name: 'shortLabel',

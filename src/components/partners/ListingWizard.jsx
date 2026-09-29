@@ -3,6 +3,8 @@ import {
   ArrowLeft, ArrowRight, Check, Loader2, Plus, Trash2, AlertTriangle, Send, MapPin,
 } from 'lucide-react';
 import { partnerApi } from '../../lib/partnerApi.js';
+import { api } from '../../lib/api.js';
+import FileField from './FileField.jsx';
 
 /**
  * The five steps of the partner listing, exactly as the client's sheet lays
@@ -252,6 +254,20 @@ export default function ListingWizard({
    * which is how a restaurant came to be asked for its star category.
    */
   const kind = profileOf(property.type);
+
+  /**
+   * Where a document goes.
+   *
+   * The desk and the partner reach the same store through different doors
+   * — `onSaveStep` is only ever passed when the desk is filling this in on
+   * somebody's behalf, so it is also what tells the two apart here.
+   */
+  const sendFile = async (body) => {
+    const res = onSaveStep
+      ? await api.post('/uploads', body)
+      : await partnerApi.uploadDocument(body);
+    return res.data;
+  };
   const ticks = ticksFor(property.type);
 
   const [location, setLocation] = useState({
@@ -628,15 +644,30 @@ export default function ListingWizard({
               </Field>
             </Group>
 
-            <Group title="Documents" note="Paste a link to each document — Google Drive or Dropbox.">
+            <Group title="Documents" note="A scan or a photograph of each — PDF, JPG or PNG.">
               <Field label="Property registration / ownership proof" wide>
-                <input className="input" value={ownership.documentLinks.ownershipProof} onChange={(e) => setOwnership({ ...ownership, documentLinks: { ...ownership.documentLinks, ownershipProof: e.target.value } })} placeholder="https://…" />
+                <FileField
+                  label="Ownership proof"
+                  value={ownership.documentLinks.ownershipProof}
+                  upload={sendFile}
+                  onChange={(url) => setOwnership({ ...ownership, documentLinks: { ...ownership.documentLinks, ownershipProof: url } })}
+                />
               </Field>
               <Field label="Lease agreement" hint="If applicable">
-                <input className="input" value={ownership.documentLinks.leaseAgreement} onChange={(e) => setOwnership({ ...ownership, documentLinks: { ...ownership.documentLinks, leaseAgreement: e.target.value } })} placeholder="https://…" />
+                <FileField
+                  label="Lease agreement"
+                  value={ownership.documentLinks.leaseAgreement}
+                  upload={sendFile}
+                  onChange={(url) => setOwnership({ ...ownership, documentLinks: { ...ownership.documentLinks, leaseAgreement: url } })}
+                />
               </Field>
               <Field label="Relationship / authorisation document" hint="If applicable">
-                <input className="input" value={ownership.documentLinks.authorisation} onChange={(e) => setOwnership({ ...ownership, documentLinks: { ...ownership.documentLinks, authorisation: e.target.value } })} placeholder="https://…" />
+                <FileField
+                  label="Authorisation"
+                  value={ownership.documentLinks.authorisation}
+                  upload={sendFile}
+                  onChange={(url) => setOwnership({ ...ownership, documentLinks: { ...ownership.documentLinks, authorisation: url } })}
+                />
               </Field>
               <Field label="PAN"><input {...own('pan')} className="input uppercase" /></Field>
               <Field label="GST"><input {...own('gst')} className="input uppercase" /></Field>
@@ -649,7 +680,14 @@ export default function ListingWizard({
               <Field label="Account number" required><input {...bnk('accountNumber')} inputMode="numeric" autoComplete="off" /></Field>
               <Field label="IFSC" required><input {...bnk('ifsc')} className="input uppercase" /></Field>
               <Field label="Branch"><input {...bnk('branch')} /></Field>
-              <Field label="Cancelled cheque / bank proof" hint="Link"><input {...bnk('proofLink')} placeholder="https://…" /></Field>
+              <Field label="Cancelled cheque / bank proof">
+                <FileField
+                  label="Bank proof"
+                  value={bank.proofLink}
+                  upload={sendFile}
+                  onChange={(url) => setBank({ ...bank, proofLink: url })}
+                />
+              </Field>
             </Group>
 
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-900/[0.07] p-4">

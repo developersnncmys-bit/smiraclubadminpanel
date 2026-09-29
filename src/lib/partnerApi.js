@@ -91,6 +91,33 @@ export const partnerApi = {
   /** 'login' only finds a partner we hold; 'register' only makes a new one. */
   requestOtp: (phone, mode = 'login') => request('/otp/request', { method: 'POST', body: { phone, mode } }),
   verifyOtp: (phone, code, mode = 'login') => request('/otp/verify', { method: 'POST', body: { phone, code, mode } }),
+  /**
+   * A scan or a photograph of a document. It does not go through
+   * `request` because uploads live outside the portal's own routes — the
+   * desk posts the same files to the same store through its own door.
+   */
+  uploadDocument: async (body) => {
+    if (!apiBase) throw new PartnerApiError(0, 'The partner portal needs the Smira API');
+    const token = getPartnerToken();
+    let res;
+    try {
+      res = await fetch(`${apiBase}/uploads/partner`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      throw new PartnerApiError(0, 'Could not reach Smira just now — check your connection');
+    }
+    const json = await res.json().catch(() => ({}));
+    if (res.status === 401) setPartnerToken(null);
+    if (!res.ok) throw new PartnerApiError(res.status, json.message || 'That did not upload', json.details);
+    return json;
+  },
+
   getListing: () => request('/listing'),
   saveListing: (body) => request('/listing', { method: 'PUT', body }),
   submitListing: () => request('/listing/submit', { method: 'POST' }),

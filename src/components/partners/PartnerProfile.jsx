@@ -79,6 +79,68 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
                   Partner score {score.value}/100 · {score.band}
                 </p>
               )}
+              {/*
+                Where this partner has got to, and the one move that takes
+                them forward. The row of icons below could verify, approve
+                and suspend, but never said which of them was the next
+                thing to do — so nobody knew how to get a partner live.
+              */}
+              {(() => {
+                const stage = p.stage || 'Registration';
+                const steps = ['Registration', 'Admin review', 'Verified', 'Contract', 'Live'];
+                const at = steps.indexOf(stage === 'Needs changes' ? 'Registration' : stage);
+                const next =
+                  p.approval === 'Rejected' ? null
+                    : stage === 'Contract' ? { label: 'Contract signed — go live', run: actions.goLive }
+                      : p.approval === 'Approved' ? { label: 'Contract signed — go live', run: actions.goLive }
+                        : p.verification === 'Verified' ? { label: 'Approve', run: actions.approve }
+                          : { label: 'Verify papers', run: actions.verify };
+
+                return (
+                  <div className="mt-4 rounded-2xl border border-ink-900/[0.07] p-3">
+                    <p className="eyebrow mb-2">Where they are</p>
+                    <ol className="flex flex-wrap items-center gap-1.5">
+                      {steps.map((sName, i) => (
+                        <li key={sName} className="flex items-center gap-1.5">
+                          <span
+                            className={`rounded-lg px-2 py-1 text-[11px] font-bold ${
+                              i < at ? 'bg-emerald-50 text-emerald-700'
+                                : i === at ? 'bg-brand-600 text-white'
+                                  : 'bg-surface-soft text-ink-400'
+                            }`}
+                          >
+                            {sName}
+                          </span>
+                          {i < steps.length - 1 && <span className="text-ink-300">›</span>}
+                        </li>
+                      ))}
+                    </ol>
+                    {stage === 'Needs changes' && (
+                      <p className="mt-2 text-xs font-semibold text-amber-600">Sent back to the partner to change</p>
+                    )}
+                    {p.approval === 'Rejected' && (
+                      <p className="mt-2 text-xs font-semibold text-rose-600">Rejected{p.rejectedReason ? ` — ${p.rejectedReason}` : ''}</p>
+                    )}
+
+                    {stage !== 'Live' && next && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button onClick={() => next.run(p)} className="btn-action btn-sm">
+                          {next.label}
+                        </button>
+                        {actions.requestChanges && p.approval !== 'Approved' && (
+                          <button onClick={() => actions.requestChanges(p)} className="btn-line btn-sm">
+                            Send back for changes
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {stage === 'Live' && (
+                      <p className="mt-3 text-xs font-semibold text-emerald-700">Live — taking bookings</p>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <a href={`tel:${digits(p.phone)}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Call">
                   <Phone size={15} />

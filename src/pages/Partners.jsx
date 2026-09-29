@@ -152,21 +152,31 @@ export default function Partners() {
    * Where the listing already says something the record needs — the property
    * name, who to ring — that is what the record gets.
    */
+  /**
+   * The desk has just filled in all five steps on a partner's behalf, so
+   * the listing is submitted — not waiting for the partner to fill in what
+   * the desk has already typed. Without this the partner signed in and was
+   * handed the same form back, asking for rooms that were already there.
+   */
   const saveFromWizard = () => {
-    const listing = draft || {};
+    const listing = { ...(draft || {}), step: 5, submittedOn: new Date().toISOString() };
     const prop = listing.property || {};
+    const loc = listing.location || {};
     const acc = listing.account || {};
     const values = {
       name: prop.name || acc.fullName || 'New partner',
       category: prop.type || partnerCategories[0],
-      location: [prop.city, prop.state].filter(Boolean).join(', ') || prop.addressLine1 || '',
+      location: [loc.city, loc.state].filter(Boolean).join(', ') || loc.line1 || '',
       contact: prop.contactName || acc.fullName || '',
-      phone: prop.mobile || acc.alternatePhone || '',
-      email: prop.email || acc.email || '',
+      phone: prop.contactPhone || acc.alternatePhone || '',
+      email: prop.contactEmail || acc.email || '',
       gst: listing.ownership?.gst || '',
       pan: listing.ownership?.pan || '',
       commission: editing?.commission ?? 10,
       listing,
+      // Straight to the desk's own review queue.
+      stage: 'Admin review',
+      submittedOn: new Date().toISOString(),
     };
     savePartner(values);
     setDraft(null);
@@ -184,9 +194,9 @@ export default function Partners() {
       {
         ...clean,
         submitted: 'today',
-        verification: 'Pending',
-        approval: 'Pending review',
-        stage: 'Registration',
+        verification: 'Waiting',
+        approval: 'Waiting',
+        stage: clean.stage || 'Registration',
         status: 'Pending',
         bookings: 0, confirmed: 0, cancelled: 0, failed: 0,
         revenue: 0, commissionEarned: 0, payable: 0, paid: 0,
@@ -242,20 +252,33 @@ export default function Partners() {
   };
 
   const actions = {
+    /**
+     * The four moves that walk a partner from applied to live. Each one is
+     * the server's, not the screen's — the panel used to mark papers
+     * verified in its own copy only, so the desk saw "Verified" and the
+     * partner's portal never heard about it.
+     */
     verify: (p) =>
-      update(
-        'partners',
-        p.id,
+      decide(
+        p,
+        'verify',
+        undefined,
         {
           verification: 'Verified',
-          approval: 'Verification pending',
-          stage: 'Verification',
+          stage: 'Verified',
           documents: (p.documents || []).map((d) => (d.status === 'Submitted' ? { ...d, status: 'Verified' } : d)),
         },
-        { message: `${p.name} verified — ready for approval` }
+        `${p.name} — papers verified, ready for approval`,
       ),
     approve: (p) =>
       decide(p, 'approve', undefined, { approval: 'Approved', verification: 'Verified', stage: 'Contract' }, `${p.name} approved — contract next`),
+    goLive: (p) =>
+      decide(p, 'go-live', undefined, { stage: 'Live', status: 'Active' }, `${p.name} is live`),
+    requestChanges: (p) => {
+      const note = window.prompt(`What does ${p.name} need to change?`);
+      if (!note) return;
+      decide(p, 'request-changes', { note }, { approval: 'Needs changes', stage: 'Needs changes' }, `Sent back to ${p.name}`);
+    },
     reject: (p) => {
       const reason = window.prompt(`Why is ${p.name} being rejected?`);
       if (!reason) return;

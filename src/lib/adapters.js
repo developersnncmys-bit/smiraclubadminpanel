@@ -667,6 +667,12 @@ export const ADAPTERS = {
       pan: p.pan,
       commission: p.commission,
       status: p.status,
+      // Where the partner is in the review, so the desk can move them along
+      // and so a listing the desk filled in is not sent back for filling in.
+      stage: p.stage,
+      verification: p.verification,
+      approval: p.approval,
+      submittedOn: p.submittedOn,
       listing: p.listing,
     }),
   },

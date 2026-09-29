@@ -577,6 +577,56 @@ export default function Bookings() {
                       <Ring value={paidPct} />
                     </div>
 
+                    {/*
+                      What the customer actually asked for, from the lead
+                      this booking grew out of. The client's note is the
+                      whole point of it: the booking team should see the
+                      requirement before they build the booking, not after
+                      somebody has read a paragraph of notes.
+                    */}
+                    {(() => {
+                      const t = lead?.trip || {};
+                      const want = [
+                        ['Hotel', t.hotelPreference],
+                        ['Travellers', t.travelPersons],
+                        ['Rooms', t.roomsRequired],
+                        ['Meals', t.mealPlan],
+                        ['Occasion', t.occasion],
+                        ['Transport', (t.transport || []).join(', ')],
+                        ['Pick-up', t.pickupFrom && `${t.pickupFrom} → ${t.pickupTo || '—'}`],
+                        ['Sightseeing', t.sightseeing],
+                        ['Trips a year', t.yearlyTrips],
+                        ['Last spend', t.lastExpenses ? shortInr(t.lastExpenses) : ''],
+                        ['Plans to travel', t.planToTravel],
+                      ].filter(([, v]) => v || v === 0);
+                      const extras = [...(t.extras || []), ...(t.support || [])];
+                      if (!want.length && !extras.length && !t.needs) return null;
+                      return (
+                        <details className="mt-3 rounded-xl bg-surface-soft px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                          <summary className="cursor-pointer select-none text-[11px] font-extrabold uppercase tracking-[0.08em] text-ink-500">
+                            What they asked for
+                          </summary>
+                          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-3">
+                            {want.map(([label, value]) => (
+                              <div key={label} className="min-w-0">
+                                <dt className="truncate text-[10px] font-bold uppercase tracking-[0.06em] text-ink-400">{label}</dt>
+                                <dd className="truncate text-[12px] font-bold text-ink-800" title={String(value)}>{value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                          {extras.length > 0 && (
+                            <p className="mt-2 flex flex-wrap gap-1">
+                              {extras.map((x) => (
+                                <span key={x} className="chip text-[11px] text-ink-600">{x}</span>
+                              ))}
+                            </p>
+                          )}
+                          {t.needs && <p className="mt-2 text-[12px] text-ink-600">{t.needs}</p>}
+                          {t.note && <p className="mt-1 text-[12px] italic text-ink-500">“{t.note}”</p>}
+                        </details>
+                      );
+                    })()}
+
                     {/* Whose booking it is, on both sides of the desk */}
                     <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-ink-400">
                       <span>Owner <span className="font-semibold text-ink-600">{b.owner || '—'}</span></span>
@@ -608,6 +658,10 @@ export default function Bookings() {
                       </button>
                       <button className="btn-line btn-sm" onClick={() => navigate('/payment')}>
                         <Wallet size={13} /> Payment
+                      </button>
+                      {/* What is live to put against this booking. */}
+                      <button className="btn-line btn-sm" onClick={() => navigate('/offers')}>
+                        <Tag size={13} /> View offers
                       </button>
                       {b.status !== 'Cancelled' && (
                         <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([b.id])}>

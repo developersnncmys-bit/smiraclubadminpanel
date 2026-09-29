@@ -262,6 +262,13 @@ export const ADAPTERS = {
       lastContact: l.lastContactAt ? dt(l.lastContactAt) : '—',
       nextFollowUp: l.nextFollowUpAt ? dt(l.nextFollowUpAt) : '—',
       lostReason: l.lostReason,
+      // How they travel and what they asked for, as fields rather than
+      // buried in the notes the website wrote.
+      trip: {
+        ...(l.trip || {}),
+        checkIn: d(l.trip?.checkIn),
+        checkOut: d(l.trip?.checkOut),
+      },
       activities: l.activities || [],
     }),
     to: (p, ctx) => ({
@@ -281,6 +288,7 @@ export const ADAPTERS = {
       lostReason: p.lostReason,
       notes: p.notes,
       tags: p.tags,
+      trip: p.trip,
       travelDate: has(p, 'travelDate') ? when(p.travelDate) : undefined,
       nextFollowUpAt: has(p, 'nextFollowUp') ? when(p.nextFollowUp) : undefined,
       lastContactAt: has(p, 'lastContact') ? when(p.lastContact) : undefined,

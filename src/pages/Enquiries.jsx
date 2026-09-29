@@ -290,9 +290,45 @@ export default function Enquiries() {
     { name: 'campaign', label: 'Campaign (if it came from one)', placeholder: 'e.g. Diwali Goa offer' },
     { name: 'label', label: 'Label', type: 'select', options: LABELS },
     { name: 'owner', label: 'Assign to', type: 'select', options: owners },
+
+    /*
+      How they travel. The website's customised tour form fills most of
+      this in for itself; these are here because the desk asks the same
+      questions on a call, and two of them — how often they travel and
+      what they spent last time — the website never asks at all.
+    */
+    { name: 'trip.yearlyTrips', label: 'Trips a year', type: 'select', options: ['', '1', '2', '3', '4', '5 or more'], section: 'How they travel' },
+    { name: 'trip.hotelPreference', label: 'Hotel preference', type: 'select', options: ['', '3 star', '4 star', '5 star', 'Resort', 'Villa', 'Homestay', 'Any'], section: 'How they travel' },
+    { name: 'trip.travelPersons', label: 'Travel persons', type: 'number', section: 'How they travel' },
+    { name: 'trip.roomsRequired', label: 'Rooms required', type: 'number', section: 'How they travel' },
+    { name: 'trip.lastExpenses', label: 'Last trip spend (₹)', type: 'number', section: 'How they travel', help: 'What they spent on their last holiday — the best guide to what they will spend now.' },
+    { name: 'trip.planToTravel', label: 'Plans to travel', type: 'select', options: ['', 'This month', 'Next month', 'In 2–3 months', 'In 6 months', 'Just looking'], section: 'How they travel' },
   ];
 
-  const saveEnquiry = (values) => {
+  /**
+   * The form writes `trip.rooms` as a flat key; the API wants it nested.
+   * Doing it here keeps the form declarative and the adapter honest.
+   */
+  const nest = (values) => {
+    const out = {};
+    const trip = {};
+    Object.entries(values).forEach(([k, v]) => {
+      if (k.startsWith('trip.')) trip[k.slice(5)] = v;
+      else out[k] = v;
+    });
+    return Object.keys(trip).length ? { ...out, trip } : out;
+  };
+
+  /** And back the other way, so an open form shows what is already saved. */
+  const flatten = (row) => {
+    if (!row) return row;
+    const out = { ...row };
+    Object.entries(row.trip || {}).forEach(([k, v]) => { out[`trip.${k}`] = v ?? ''; });
+    return out;
+  };
+
+  const saveEnquiry = (raw) => {
+    const values = nest(raw);
     if (editing) update('enquiries', editing.id, values);
     else create('enquiries', { ...values, created: '04 Aug 2026' });
   };
@@ -649,6 +685,39 @@ export default function Enquiries() {
                       {last?.text || 'nothing logged yet'}
                     </p>
 
+                    {/*
+                      How this person travels. The booking team has to know
+                      the requirement before they can quote it, and until
+                      now it was buried in a paragraph of notes.
+                    */}
+                    {(() => {
+                      const t = r.trip || {};
+                      const usage = [
+                        ['Yearly trips', t.yearlyTrips],
+                        ['Hotel', t.hotelPreference],
+                        ['Travellers', t.travelPersons],
+                        ['Rooms', t.roomsRequired],
+                        ['Last spend', t.lastExpenses ? shortInr(t.lastExpenses) : ''],
+                        ['Plans to travel', t.planToTravel],
+                      ].filter(([, v]) => v || v === 0);
+                      if (!usage.length) return null;
+                      return (
+                        <div className="mt-3 rounded-xl bg-surface-soft px-3 py-2.5">
+                          <p className="eyebrow mb-1.5">Travel usage</p>
+                          <dl className="grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-3">
+                            {usage.map(([label, value]) => (
+                              <div key={label} className="min-w-0">
+                                <dt className="truncate text-[10px] font-bold uppercase tracking-[0.06em] text-ink-400">
+                                  {label}
+                                </dt>
+                                <dd className="num truncate text-[12px] font-bold text-ink-800">{value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
+                      );
+                    })()}
+
                     {/* The three facts management reads, and the chance of closing */}
                     <div className="mt-3 flex items-center gap-3 border-t border-ink-900/[0.07] pt-3">
                       <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
@@ -751,7 +820,7 @@ export default function Enquiries() {
         title={editing ? `Edit ${editing.id}` : 'Add lead'}
         subtitle={editing ? editing.name : 'Capture a new travel enquiry'}
         fields={fields}
-        initial={editing || { status: 'New', owner: 'Unassigned' }}
+        initial={flatten(editing) || { status: 'New', owner: 'Unassigned' }}
         submitLabel={editing ? 'Save changes' : 'Create lead'}
       />
 

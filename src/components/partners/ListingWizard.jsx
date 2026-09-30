@@ -26,10 +26,18 @@ const STEPS = [
   { n: 5, title: 'Ownership and legal' },
 ];
 
+/*
+ * One entry for every service the website sells.
+ *
+ * The list used to stop at Lifestyle, which left a tour operator, an
+ * airline desk and a bus operator with nowhere to put themselves — and a
+ * partner who picked the nearest wrong type landed on the wrong page.
+ */
 const PROPERTY_TYPES = [
   'Hotel', 'Resort', 'Homestay', 'Villa', 'Camp',
-  'Restaurant', 'Spa & Salon', 'Games Zone', 'Theme Park',
-  'Activity', 'Transport', 'Lifestyle',
+  'Restaurant', 'Spa & Salon', 'Games Zone', 'Theme Park', 'Water Park',
+  'Activity', 'Package', 'Group Departure',
+  'Flight', 'Train & Bus', 'Transport', 'Lifestyle',
 ];
 
 /**
@@ -88,6 +96,27 @@ const PROFILES = {
   Lifestyle: {
     ...VISIT, unit: 'Experience', units: 'Experiences', eg: 'Private yacht evening', egType: 'Evening',
     occupancyLabel: 'Guests', priceNote: 'Per booking, in rupees.',
+  },
+
+  'Water Park': {
+    ...VISIT, unit: 'Ticket', units: 'Tickets', eg: 'Day pass with locker', egType: 'Day pass',
+    occupancyLabel: 'People covered', priceNote: 'Per ticket, in rupees.',
+  },
+  Package: {
+    ...VISIT, unit: 'Departure', units: 'Departures', eg: '5 nights Kerala, twin sharing', egType: 'Twin sharing',
+    occupancyLabel: 'Travellers', priceNote: 'Per person, in rupees.', times: 'none',
+  },
+  'Group Departure': {
+    ...VISIT, unit: 'Departure', units: 'Departures', eg: '12 Nov, 20 seats', egType: 'Fixed departure',
+    occupancyLabel: 'Seats', priceNote: 'Per seat, in rupees.', times: 'none',
+  },
+  Flight: {
+    ...VISIT, unit: 'Fare', units: 'Fares', eg: 'Mumbai - Goa, economy', egType: 'Economy',
+    occupancyLabel: 'Seats', priceNote: 'Per seat, in rupees.', times: 'none',
+  },
+  'Train & Bus': {
+    ...VISIT, unit: 'Service', units: 'Services', eg: 'Bengaluru - Goa sleeper', egType: 'Sleeper',
+    occupancyLabel: 'Seats', priceNote: 'Per seat, in rupees.', times: 'none',
   },
 };
 
@@ -154,6 +183,32 @@ const TICKS = {
     popular: ['Wi-Fi', 'AC', 'Parking', 'Refreshments', 'Host Included', 'Photography', 'Decoration', 'Music'],
     facilities: ['Washrooms', 'Changing Room', 'Wheelchair Access', 'Card Payment', 'UPI', 'Private Area'],
     rules: ['Advance Booking', 'Valid ID Required', 'Age Limit', 'Cancellation Notice', 'Weather Dependent'],
+  },
+
+  'Water Park': {
+    popular: ['Parking', 'Wave Pool', 'Slides', 'Lazy River', 'Kids Pool', 'Rain Dance', 'Food Court', 'Locker Rental'],
+    facilities: ['Changing Room', 'Showers', 'Lifeguards', 'First Aid', 'Wheelchair Access', 'ATM', 'Card Payment', 'UPI'],
+    rules: ['Height Limit', 'Swimwear Required', 'Adult Supervision', 'No Outside Food', 'Valid ID Required'],
+  },
+  Package: {
+    popular: ['Flights Included', 'Hotel Included', 'Breakfast', 'Airport Transfers', 'Sightseeing', 'Tour Manager', 'Visa Assistance', 'Travel Insurance'],
+    facilities: ['Hotel Pick-up', 'AC Coach', 'English Speaking Guide', 'Card Payment', 'UPI', 'EMI Available'],
+    rules: ['Advance Booking', 'Passport Required', 'Valid ID Required', 'Cancellation Notice', 'Minimum Travellers'],
+  },
+  'Group Departure': {
+    popular: ['Fixed Departure', 'Tour Manager', 'Flights Included', 'Hotel Included', 'All Meals', 'Sightseeing', 'Airport Transfers'],
+    facilities: ['AC Coach', 'English Speaking Guide', 'Card Payment', 'UPI', 'EMI Available', 'Solo Traveller Friendly'],
+    rules: ['Advance Booking', 'Minimum Group Size', 'Age Limit', 'Passport Required', 'Cancellation Notice'],
+  },
+  Flight: {
+    popular: ['Cabin Baggage', 'Check-in Baggage', 'Meal Included', 'Seat Selection', 'Priority Boarding', 'Date Change'],
+    facilities: ['Web Check-in', 'Wheelchair Assistance', 'Card Payment', 'UPI', 'EMI Available'],
+    rules: ['Valid ID Required', 'Advance Booking', 'Cancellation Notice', 'Name Change Not Allowed'],
+  },
+  'Train & Bus': {
+    popular: ['AC', 'Sleeper', 'Water Bottle', 'Blanket', 'Charging Point', 'Wi-Fi', 'Live Tracking', 'Entertainment'],
+    facilities: ['Washroom', 'Boarding Point Pick-up', 'Luggage Space', 'Card Payment', 'UPI'],
+    rules: ['Valid ID Required', 'Advance Booking', 'No Smoking', 'Cancellation Notice', 'Reporting Time'],
   },
 };
 const ticksFor = (type) => TICKS[type] || TICKS.stay;

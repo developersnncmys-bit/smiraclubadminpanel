@@ -268,13 +268,15 @@ export default function PartnerLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-white to-surface-soft px-4 py-10">
-      <div className="w-full max-w-[440px]">
+    <div className="flex min-h-screen items-start justify-center bg-gradient-to-br from-brand-50 via-white to-surface-soft px-4 py-10">
+      {/* Signing in is one field and stays narrow; registering is the five
+          steps and needs the room, so the card widens for it. */}
+      <div className={`w-full ${registering ? 'max-w-[1100px]' : 'max-w-[440px]'}`}>
         <div className="mb-7 flex justify-center">
           <Brand className="h-12" />
         </div>
 
-        <div className="card p-7 sm:p-9">
+        <div className={`card p-7 sm:p-9 ${registering ? 'lg:p-10' : ''}`}>
           <span className="chip bg-brand-50 text-brand-700">
             <Handshake size={13} /> Partner portal
           </span>

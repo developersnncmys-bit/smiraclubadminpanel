@@ -282,6 +282,42 @@ export default function ListingWizard({
   const [amenities, setAmenities] = useState(initial.amenities || []);
   const [facilities, setFacilities] = useState(initial.facilities || []);
   const [rules, setRules] = useState(initial.rules || []);
+
+  /**
+   * The rest of what the website's detail pages print.
+   *
+   * The form asked for rooms, rates and a description; the pages show how
+   * the place is laid out, who hosts it, what is nearby and what the rules
+   * are. A listing filling a third of the page looks like an afterthought
+   * beside the hand-written ones, so this asks for the rest.
+   */
+  const [details, setDetails] = useState(() => ({
+    layout: '', bedrooms: '', beds: '', baths: '', sleeps: '', extraGuests: '', unitType: '',
+    highlight: '', notes: [], freeCancellation: false, taxes: '',
+    host: { title: '', speaks: '', blurb: '' },
+    nearby: [], spaces: [], included: [], ruleNotes: [], guidelines: [],
+    ...initial.details,
+    host: { title: '', speaks: '', blurb: '', ...(initial.details?.host || {}) },
+  }));
+  const det = (key) => ({
+    className: 'input',
+    value: details[key] ?? '',
+    onChange: (e) => setDetails({ ...details, [key]: e.target.value }),
+  });
+  const host = (key) => ({
+    className: 'input',
+    value: details.host?.[key] ?? '',
+    onChange: (e) => setDetails({ ...details, host: { ...details.host, [key]: e.target.value } }),
+  });
+  /** A list of rows, edited in place. */
+  const rowsOf = (key) => details[key] || [];
+  const setRows = (key, rows) => setDetails({ ...details, [key]: rows });
+  const setRow = (key, i, patch) =>
+    setRows(key, rowsOf(key).map((r, n2) => (n2 === i ? { ...r, ...patch } : r)));
+  /** A plain list of lines, one per row. */
+  const linesOf = (key) => (details[key] || []).join('\n');
+  const setLines = (key, text) =>
+    setDetails({ ...details, [key]: String(text).split('\n').map((x) => x.trim()).filter(Boolean) });
   const [pricing, setPricing] = useState({
     standardTariff: '', partnerRate: '', weekdayRate: '', weekendRate: '', extraAdultRate: '', childRate: '',
     mealPlans: [], ...initial.pricing,
@@ -338,7 +374,19 @@ export default function ListingWizard({
           photos: { property: propertyPhotos, rooms: roomPhotos },
         };
       case 3:
-        return { amenities, facilities, rules };
+        return {
+          amenities,
+          facilities,
+          rules,
+          details: {
+            ...details,
+            bedrooms: n(details.bedrooms),
+            baths: n(details.baths),
+            sleeps: n(details.sleeps),
+            extraGuests: n(details.extraGuests),
+            taxes: n(details.taxes),
+          },
+        };
       case 4:
         return {
           pricing: {
@@ -596,6 +644,187 @@ export default function ListingWizard({
             <Group title="Facilities"><Checks options={ticks.facilities} value={facilities} onChange={setFacilities} /></Group>
             <Group title="Rules" note="Tick the ones that apply.">
               <Checks options={ticks.rules} value={rules} onChange={setRules} />
+            </Group>
+
+            {/*
+              What the website prints beyond the basics. Every field here
+              draws a section of the listing page; leave one empty and the
+              page simply does without that section.
+            */}
+            <Group title="How the place reads" note="The line under the name, and the one on the card.">
+              <Field
+                label={kind.nightly ? 'Layout' : 'What a booking is'}
+                hint={kind.nightly ? 'e.g. Entire 3-Bedroom Villa' : 'e.g. Table for four, 60-minute treatment'}
+              >
+                <input {...det('layout')} placeholder={kind.nightly ? 'Entire 3-Bedroom Villa' : 'Table for four'} />
+              </Field>
+              <Field label="One line that sells it" wide hint="Shown on the card, under the price.">
+                <textarea {...det('highlight')} rows={2} placeholder="A private pool, a game room, a sea view and a kitchen of your own." />
+              </Field>
+              <Field label="Small print on the card" wide hint="One per line — e.g. Breakfast available at extra charges.">
+                <textarea className="input" rows={2} value={linesOf('notes')} onChange={(e) => setLines('notes', e.target.value)} />
+              </Field>
+              <Field label="Taxes and fees (₹)" hint="Shown beside the price, per night.">
+                <input {...det('taxes')} type="number" min="0" />
+              </Field>
+              <Field label="Free cancellation">
+                <select
+                  className="input"
+                  value={details.freeCancellation ? 'Yes' : 'No'}
+                  onChange={(e) => setDetails({ ...details, freeCancellation: e.target.value === 'Yes' })}
+                >
+                  <option>No</option>
+                  <option>Yes</option>
+                </select>
+              </Field>
+            </Group>
+
+            {kind.nightly && (
+              <Group title="The unit itself" note="The row of figures under the name.">
+                <Field label="Bedrooms"><input {...det('bedrooms')} type="number" min="0" /></Field>
+                <Field label="Beds" hint="e.g. 3 Double beds"><input {...det('beds')} /></Field>
+                <Field label="Bathrooms"><input {...det('baths')} type="number" min="0" /></Field>
+                <Field label="Sleeps"><input {...det('sleeps')} type="number" min="0" /></Field>
+                <Field label="Extra guests at cost"><input {...det('extraGuests')} type="number" min="0" /></Field>
+                <Field label="Unit type" hint="e.g. Single Unit"><input {...det('unitType')} /></Field>
+              </Group>
+            )}
+
+            <Group title="Who hosts it" note="The Hosted By card.">
+              <Field label="Hosted by"><input {...host('title')} placeholder="Hosted By Smira Stays" /></Field>
+              <Field label="Languages spoken"><input {...host('speaks')} placeholder="Speaks Hindi, English, Marathi" /></Field>
+              <Field label="A word from the host" wide>
+                <textarea {...host('blurb')} rows={2} />
+              </Field>
+            </Group>
+
+            {/* -- What is nearby ------------------------------------- */}
+            <Group title="What's nearby" note="Shown under the map, with the distance.">
+              <div className="sm:col-span-2">
+                {rowsOf('nearby').map((row, i) => (
+                  <div key={i} className="mb-2 flex flex-wrap items-center gap-2">
+                    <input
+                      className="input flex-1"
+                      value={row.place || ''}
+                      onChange={(e) => setRow('nearby', i, { place: e.target.value })}
+                      placeholder="Baga Beach"
+                    />
+                    <input
+                      className="input w-28"
+                      value={row.km || ''}
+                      onChange={(e) => setRow('nearby', i, { km: e.target.value })}
+                      placeholder="1.2 km"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRows('nearby', rowsOf('nearby').filter((_, n2) => n2 !== i))}
+                      className="icon-btn-danger h-9 w-9"
+                      title="Remove"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                <button type="button" className="btn-line btn-sm" onClick={() => setRows('nearby', [...rowsOf('nearby'), { place: '', km: '' }])}>
+                  <Plus size={14} /> Add a place
+                </button>
+              </div>
+            </Group>
+
+            {/* -- The layout ----------------------------------------- */}
+            {kind.nightly && (
+              <Group title="Property layout" note="Each room of the property, with its own photographs.">
+                <div className="sm:col-span-2 space-y-3">
+                  {rowsOf('spaces').map((row, i) => (
+                    <section key={i} className="rounded-2xl border border-ink-900/[0.07] p-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-extrabold text-ink-900">Space {i + 1}</h4>
+                        <button
+                          type="button"
+                          onClick={() => setRows('spaces', rowsOf('spaces').filter((_, n2) => n2 !== i))}
+                          className="icon-btn-danger h-8 w-8"
+                          title="Remove"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        <Field label="Name"><input className="input" value={row.name || ''} onChange={(e) => setRow('spaces', i, { name: e.target.value })} placeholder="Bedroom 1" /></Field>
+                        <Field label="Floor"><input className="input" value={row.floor || ''} onChange={(e) => setRow('spaces', i, { floor: e.target.value })} placeholder="Ground Floor" /></Field>
+                        <Field label="Private or shared"><input className="input" value={row.tag || ''} onChange={(e) => setRow('spaces', i, { tag: e.target.value })} placeholder="Private" /></Field>
+                        <Field label="What is in it" wide hint="One per line — e.g. 1 double bed, extra mattress available">
+                          <textarea
+                            className="input"
+                            rows={2}
+                            value={(row.lines || []).join('\n')}
+                            onChange={(e) => setRow('spaces', i, { lines: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) })}
+                          />
+                        </Field>
+                        <Field label="Photographs" wide>
+                          <ImagesField
+                            label={row.name || `Space ${i + 1}`}
+                            value={row.images || []}
+                            onChange={(images) => setRow('spaces', i, { images })}
+                            upload={sendFile}
+                          />
+                        </Field>
+                      </div>
+                    </section>
+                  ))}
+                  <button type="button" className="btn-line btn-sm" onClick={() => setRows('spaces', [...rowsOf('spaces'), { name: '', floor: '', tag: 'Private', images: [], lines: [] }])}>
+                    <Plus size={14} /> Add a space
+                  </button>
+                </div>
+              </Group>
+            )}
+
+            <Group title="What's included" note="One per line — what the price covers.">
+              <Field label="Included" wide>
+                <textarea className="input" rows={3} value={linesOf('included')} onChange={(e) => setLines('included', e.target.value)} placeholder={'Breakfast for two\nAirport pickup'} />
+              </Field>
+            </Group>
+
+            {/* -- The rules and guidelines, in full ------------------- */}
+            <Group title="Rules, in full" note="The Property Rules section. A heading and the rule under it.">
+              <div className="sm:col-span-2">
+                {rowsOf('ruleNotes').map((row, i) => (
+                  <div key={i} className="mb-2 flex flex-wrap items-start gap-2">
+                    <input className="input w-56" value={row.title || ''} onChange={(e) => setRow('ruleNotes', i, { title: e.target.value })} placeholder="Couple / Bachelor rules" />
+                    <input className="input flex-1" value={row.body || ''} onChange={(e) => setRow('ruleNotes', i, { body: e.target.value })} placeholder="Unmarried couples allowed." />
+                    <button type="button" onClick={() => setRows('ruleNotes', rowsOf('ruleNotes').filter((_, n2) => n2 !== i))} className="icon-btn-danger h-9 w-9" title="Remove">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                <button type="button" className="btn-line btn-sm" onClick={() => setRows('ruleNotes', [...rowsOf('ruleNotes'), { title: '', body: '' }])}>
+                  <Plus size={14} /> Add a rule
+                </button>
+              </div>
+            </Group>
+
+            <Group title="Guidelines" note="The Stay Guidelines section — a heading and its lines.">
+              <div className="sm:col-span-2">
+                {rowsOf('guidelines').map((row, i) => (
+                  <div key={i} className="mb-3 rounded-2xl border border-ink-900/[0.07] p-3">
+                    <div className="flex items-center gap-2">
+                      <input className="input flex-1" value={row.title || ''} onChange={(e) => setRow('guidelines', i, { title: e.target.value })} placeholder="Guest policy" />
+                      <button type="button" onClick={() => setRows('guidelines', rowsOf('guidelines').filter((_, n2) => n2 !== i))} className="icon-btn-danger h-9 w-9" title="Remove">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <textarea
+                      className="input mt-2"
+                      rows={2}
+                      value={(row.lines || []).join('\n')}
+                      onChange={(e) => setRow('guidelines', i, { lines: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) })}
+                      placeholder={'Valid ID is required at check-in.\nChildren must be accompanied by an adult.'}
+                    />
+                  </div>
+                ))}
+                <button type="button" className="btn-line btn-sm" onClick={() => setRows('guidelines', [...rowsOf('guidelines'), { title: '', lines: [] }])}>
+                  <Plus size={14} /> Add a guideline
+                </button>
+              </div>
             </Group>
           </>
         )}

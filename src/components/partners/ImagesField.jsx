@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { ImagePlus, Loader2, X } from 'lucide-react';
 
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic';
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 15 * 1024 * 1024;
 const MAX_FILES = 24;
 
 /**
@@ -28,7 +28,7 @@ export default function ImagesField({ value = [], onChange, upload, label, hint 
 
     const tooBig = picked.find((f) => f.size > MAX_BYTES);
     if (tooBig) {
-      setFailed(`${tooBig.name} is over 5 MB — send a smaller photograph`);
+      setFailed(`${tooBig.name} is over 15 MB — send a smaller photograph`);
       return;
     }
 
@@ -88,7 +88,7 @@ export default function ImagesField({ value = [], onChange, upload, label, hint 
         {busy > 0 ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />}
         {busy > 0 ? `Sending ${busy}…` : value.length ? 'Add more photographs' : 'Choose photographs'}
         <span className="ml-auto text-[11px] font-medium text-ink-400">
-          {value.length}/{MAX_FILES} · JPG or PNG, up to 5 MB each
+          {value.length}/{MAX_FILES} · JPG or PNG, up to 15 MB each
         </span>
       </button>
 

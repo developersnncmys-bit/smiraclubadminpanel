@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Check, FileText, Loader2, Paperclip, Trash2 } from 'lucide-react';
 
 const ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp,image/heic';
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 15 * 1024 * 1024;
 
 const readable = (n) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
 
@@ -27,7 +27,7 @@ export default function FileField({ value, onChange, upload, label }) {
     if (!file) return;
     setFailed('');
     if (file.size > MAX_BYTES) {
-      setFailed('That file is over 5 MB — send a smaller scan');
+      setFailed('That file is over 15 MB — send a smaller scan');
       return;
     }
     setBusy(true);

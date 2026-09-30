@@ -5,6 +5,7 @@ import {
 import { partnerApi } from '../../lib/partnerApi.js';
 import { api } from '../../lib/api.js';
 import FileField from './FileField.jsx';
+import ImagesField from './ImagesField.jsx';
 
 /**
  * The five steps of the partner listing, exactly as the client's sheet lays
@@ -164,7 +165,6 @@ const EMPTY_ROOM = {
 
 /** Numbers leave the form as numbers, and blanks leave as nothing. */
 const n = (v) => (v === '' || v === null || v === undefined ? undefined : Number(v));
-const lines = (v) => String(v || '').split('\n').map((x) => x.trim()).filter(Boolean);
 
 function Field({ label, required, hint, children, wide }) {
   return (
@@ -277,8 +277,8 @@ export default function ListingWizard({
   const [rooms, setRooms] = useState(
     initial.rooms?.length ? initial.rooms.map((r) => ({ ...EMPTY_ROOM, ...r })) : [{ ...EMPTY_ROOM }]
   );
-  const [propertyPhotos, setPropertyPhotos] = useState((initial.photos?.property || []).join('\n'));
-  const [roomPhotos, setRoomPhotos] = useState((initial.photos?.rooms || []).join('\n'));
+  const [propertyPhotos, setPropertyPhotos] = useState(initial.photos?.property || []);
+  const [roomPhotos, setRoomPhotos] = useState(initial.photos?.rooms || []);
   const [amenities, setAmenities] = useState(initial.amenities || []);
   const [facilities, setFacilities] = useState(initial.facilities || []);
   const [rules, setRules] = useState(initial.rules || []);
@@ -335,7 +335,7 @@ export default function ListingWizard({
               maxOccupancy: n(r.maxOccupancy),
               extraBed: Boolean(r.extraBed),
             })),
-          photos: { property: lines(propertyPhotos), rooms: lines(roomPhotos) },
+          photos: { property: propertyPhotos, rooms: roomPhotos },
         };
       case 3:
         return { amenities, facilities, rules };
@@ -558,12 +558,32 @@ export default function ListingWizard({
               <Plus size={15} /> Add another {kind.unit.toLowerCase()}
             </button>
 
-            <Group title="Photos and videos" note="Paste links — Google Drive, Dropbox or your website. One per line.">
+            {/*
+              Photographs, chosen from the machine. They used to be links —
+              and nobody photographs their hotel and then uploads it to
+              Drive to get one, so in practice this box stayed empty and the
+              listing reached the website with no pictures.
+            */}
+            <Group title="Photographs" note="These are what a member sees first. The first one leads the listing.">
               <Field label="Property photos" hint="Exterior, lobby, reception, restaurant, swimming pool, facilities, other areas" wide>
-                <textarea className="input" rows={3} value={propertyPhotos} onChange={(e) => setPropertyPhotos(e.target.value)} placeholder="https://…" />
+                <ImagesField
+                  label="Property photo"
+                  value={propertyPhotos}
+                  onChange={setPropertyPhotos}
+                  upload={sendFile}
+                />
               </Field>
-              <Field label={`${kind.unit} photos`} hint={kind.nightly ? 'Room, bathroom, view, amenities' : 'Whatever a member would want to see before booking'} wide>
-                <textarea className="input" rows={3} value={roomPhotos} onChange={(e) => setRoomPhotos(e.target.value)} placeholder="https://…" />
+              <Field
+                label={`${kind.unit} photos`}
+                hint={kind.nightly ? 'Room, bathroom, view, amenities' : 'Whatever a member would want to see before booking'}
+                wide
+              >
+                <ImagesField
+                  label={`${kind.unit} photo`}
+                  value={roomPhotos}
+                  onChange={setRoomPhotos}
+                  upload={sendFile}
+                />
               </Field>
             </Group>
           </>

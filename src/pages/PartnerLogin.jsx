@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, KeyRound, Loader2, Smartphone, Handshake, ShieldCheck, UserPlus } from 'lucide-react';
 import Brand from '../components/ui/Brand.jsx';
 import { partnerApi, getPartnerToken, setPartnerToken, partnerLive } from '../lib/partnerApi.js';
+import ListingWizard from '../components/partners/ListingWizard.jsx';
 
 /**
  * Partner sign-in.
@@ -21,21 +22,9 @@ const DEMO_PARTNERS = [
   { phone: '+91 98450 11201', label: 'Ayana Resort & Spa' },
 ];
 
-const CATEGORIES = ['Hotel', 'Villa', 'Package', 'Lifestyle', 'Transport', 'Restaurant', 'Activity', 'Spa'];
 
-const FIELD = 'w-full rounded-xl border border-ink-900/10 px-3.5 py-2.5 text-sm font-medium text-ink-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100';
 
 /** A labelled box on the registration form. */
-function Ask({ label, required, children }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-bold text-ink-700">
-        {label} {required && <span className="text-rose-500">*</span>}
-      </span>
-      {children}
-    </label>
-  );
-}
 
 /**
  * Registering, which is a form and not a code.
@@ -45,7 +34,16 @@ function Ask({ label, required, children }) {
  * gets the application straight away, and the five steps come afterwards,
  * once they sign in with the number they gave here.
  */
-function RegisterCard({ form, field, onSubmit, busy, error, applied, onSignIn }) {
+/**
+ * Registering a property, in the five steps everyone else fills in.
+ *
+ * It used to be seven boxes — name, kind, rooms, town, a contact and a
+ * number — and the five steps came afterwards, once they had signed in.
+ * So a partner typed their property name, waited for a code, signed in,
+ * and was asked for everything again. It is one form now, the same one
+ * the desk uses and the same one the website's application shows.
+ */
+function RegisterCard({ form, phone, busy, error, applied, onSignIn, onFinish, onSaveStep }) {
   if (applied) {
     return (
       <div className="pt-2">
@@ -68,71 +66,36 @@ function RegisterCard({ form, field, onSubmit, busy, error, applied, onSignIn })
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate>
+    <div>
       <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink-900">
         Register your property
       </h1>
       <p className="mt-1.5 text-sm text-ink-500">
-        Tell us about the property. The full listing — rooms, rates, photos and papers — comes
-        after, in five short steps.
+        Five short steps — the property, the rooms, what it has, what it costs and the paperwork.
+        Each one saves as you go.
       </p>
 
-      <div className="mt-6 space-y-3.5">
-        <Ask label="Property name" required>
-          <input value={form.name} onChange={field('name')} placeholder="Ayana Resort & Spa" className={FIELD} autoFocus />
-        </Ask>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Ask label="Kind">
-            <select value={form.category} onChange={field('category')} className={FIELD}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </Ask>
-          <Ask label="Rooms or units">
-            <input value={form.rooms} onChange={field('rooms')} inputMode="numeric" placeholder="24" className={`num ${FIELD}`} />
-          </Ask>
-        </div>
-
-        <Ask label="Where it is">
-          <input value={form.location} onChange={field('location')} placeholder="Baga, Goa" className={FIELD} />
-        </Ask>
-
-        <Ask label="Who we speak to">
-          <input value={form.contact} onChange={field('contact')} placeholder="Name of the person in charge" className={FIELD} />
-        </Ask>
-
-        <Ask label="Mobile number" required>
-          <span className="flex overflow-hidden rounded-xl border border-ink-900/10 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100">
-            <span className="flex items-center gap-1.5 border-r border-ink-900/10 bg-surface-soft px-3 text-sm font-bold text-ink-700">
-              <Smartphone size={15} className="text-ink-400" /> +91
-            </span>
-            <input
-              value={form.phone}
-              onChange={field('phone')}
-              inputMode="numeric"
-              autoComplete="tel-national"
-              placeholder="10-digit mobile number"
-              className="num min-w-0 flex-1 border-0 bg-white px-3.5 py-2.5 text-sm font-semibold text-ink-900 outline-none"
-            />
-          </span>
-          <span className="mt-1 block text-[11px] text-ink-400">
-            This is how you will sign in, so use a number you can take a code on.
-          </span>
-        </Ask>
-
-        <Ask label="Email">
-          <input value={form.email} onChange={field('email')} type="email" placeholder="bookings@yourproperty.com" className={FIELD} />
-        </Ask>
+      {/*
+        The same wizard the desk fills in and the same one the website's
+        application shows, so a partner is asked once and asked the same
+        thing wherever they start.
+      */}
+      <div className="mt-6">
+        <ListingWizard
+          partner={{ phone: phone ? `+91 ${phone}` : '' }}
+          initial={{}}
+          onSaveStep={onSaveStep}
+          onFinish={onFinish}
+          finishLabel="Register property"
+        />
       </div>
 
       {error && <p className="mt-3 text-xs font-semibold text-rose-600">{error}</p>}
-
-      <button type="submit" disabled={busy || !partnerLive} className="btn-action mt-5 w-full py-3">
-        {busy ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-        {busy ? 'Registering…' : 'Register property'}
-      </button>
+      {busy && (
+        <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-ink-500">
+          <Loader2 size={14} className="animate-spin" /> Registering…
+        </p>
+      )}
 
       <p className="mt-4 text-center text-xs text-ink-500">
         Already a partner?{' '}
@@ -140,7 +103,7 @@ function RegisterCard({ form, field, onSubmit, busy, error, applied, onSignIn })
           Sign in
         </button>
       </p>
-    </form>
+    </div>
   );
 }
 
@@ -162,42 +125,59 @@ export default function PartnerLogin() {
 
   const registering = mode === 'register';
 
-  /** What registering asks for. The five steps come after, once signed in. */
-  const [form, setForm] = useState({
-    name: '', category: 'Hotel', location: '', contact: '', phone: '', email: '', rooms: '',
-  });
+  /**
+   * What the five steps have filled in so far.
+   *
+   * Nothing is sent until the last one, so a half-finished registration
+   * never leaves a partner record for the desk to chase.
+   */
+  const [draft, setDraft] = useState({});
   const [applied, setApplied] = useState(false);
-  const field = (key) => (e) => {
-    setForm((f) => ({ ...f, [key]: key === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value }));
-    setError('');
-  };
+  /** Only what the "you are registered" screen needs to read back. */
+  const [form, setForm] = useState({ name: '', phone: '' });
 
-  const register = async (e) => {
-    e?.preventDefault();
-    if (!form.name.trim()) return setError('Tell us the property name');
-    if (!/^[6-9]\d{9}$/.test(form.phone)) return setError('Enter a 10-digit mobile number');
-    if (form.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
-      return setError('That email does not look right');
+  /**
+   * The last step: everything the five collected, sent as one application.
+   *
+   * The number is taken off the property's contact, or the account's
+   * alternate, because that is what they will sign in with afterwards.
+   */
+  const register = async () => {
+    const listing = draft || {};
+    const prop = listing.property || {};
+    const acct = listing.account || {};
+    const loc = listing.location || {};
+    const number = String(prop.contactPhone || acct.alternatePhone || '')
+      .replace(/\D/g, '')
+      .slice(-10);
+
+    if (!String(prop.name || '').trim()) return setError('Tell us the property name, on step one');
+    if (!/^[6-9]\d{9}$/.test(number)) {
+      return setError('A 10-digit mobile number on step one — it is how you will sign in');
     }
+
     setError('');
     setBusy(true);
     try {
       await partnerApi.apply({
-        name: form.name.trim(),
-        category: form.category,
-        location: form.location.trim(),
-        contact: form.contact.trim(),
-        phone: `+91 ${form.phone}`,
-        whatsapp: `+91 ${form.phone}`,
-        email: form.email.trim(),
-        rooms: Number(form.rooms) || 0,
+        name: prop.name.trim(),
+        category: prop.type || 'Hotel',
+        location: [loc.city, loc.state].filter(Boolean).join(', '),
+        contact: prop.contactName || acct.fullName || '',
+        phone: `+91 ${number}`,
+        whatsapp: `+91 ${number}`,
+        email: prop.contactEmail || acct.email || '',
+        rooms: (listing.rooms || []).reduce((n2, r) => n2 + (Number(r.count) || 0), 0),
+        listing,
       });
+      setForm({ name: prop.name.trim(), phone: number });
       setApplied(true);
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
+    return undefined;
   };
 
   const validPhone = /^[6-9]\d{9}$/.test(phone);
@@ -302,12 +282,13 @@ export default function PartnerLogin() {
           {registering ? (
             <RegisterCard
               form={form}
-              field={field}
-              onSubmit={register}
+              phone={form.phone}
               busy={busy}
               error={error}
               applied={applied}
               onSignIn={() => swap('login')}
+              onSaveStep={(body) => setDraft((d) => ({ ...(d || {}), ...body }))}
+              onFinish={register}
             />
           ) : step === 'phone' ? (
             <form onSubmit={send} noValidate>

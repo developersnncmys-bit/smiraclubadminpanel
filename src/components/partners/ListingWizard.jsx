@@ -292,6 +292,7 @@ export default function ListingWizard({
    * beside the hand-written ones, so this asks for the rest.
    */
   const [details, setDetails] = useState(() => ({
+    tag: '', rating: '', reviews: '', hours: '',
     layout: '', bedrooms: '', beds: '', baths: '', sleeps: '', extraGuests: '', unitType: '',
     highlight: '', notes: [], freeCancellation: false, taxes: '',
     host: { title: '', speaks: '', blurb: '' },
@@ -382,6 +383,8 @@ export default function ListingWizard({
             ...details,
             bedrooms: n(details.bedrooms),
             baths: n(details.baths),
+            rating: n(details.rating),
+            reviews: n(details.reviews),
             sleeps: n(details.sleeps),
             extraGuests: n(details.extraGuests),
             taxes: n(details.taxes),
@@ -654,6 +657,14 @@ export default function ListingWizard({
               page simply does without that section.
             */}
             <Group title="How the place reads" note="The line under the name, and the one on the card.">
+              <Field label="Service line" hint="Under the name on the card — e.g. Spa & Wellness">
+                <input {...det('tag')} placeholder={kind.nightly ? 'Beach Resort' : 'Spa & Wellness'} />
+              </Field>
+              <Field label="Opening hours" hint="e.g. 10:00 AM - 8:00 PM"><input {...det('hours')} /></Field>
+              <Field label="Rating out of 5" hint="The desk's, not the partner's to claim.">
+                <input {...det('rating')} type="number" min="0" max="5" step="0.1" />
+              </Field>
+              <Field label="Number of reviews"><input {...det('reviews')} type="number" min="0" /></Field>
               <Field
                 label={kind.nightly ? 'Layout' : 'What a booking is'}
                 hint={kind.nightly ? 'e.g. Entire 3-Bedroom Villa' : 'e.g. Table for four, 60-minute treatment'}

@@ -503,15 +503,17 @@ export default function ListingWizard({
         {step === 1 && (
           <>
             <Group title="Account registration" note={`Signed in with ${partner?.phone || 'your mobile'}. No password — you sign in with a code each time.`}>
-              <Field label="Full name" required><input {...acc('fullName')} autoComplete="name" /></Field>
-              <Field label="Email address"><input {...acc('email')} type="email" autoComplete="email" /></Field>
-              <Field label="Alternate number"><input {...acc('alternatePhone')} inputMode="tel" /></Field>
-              <Field label="Account type">
+              {/* What kind of account this is comes first: it decides who
+                  is signing up, before anything about the person. */}
+              <Field label="Account type" required>
                 <select {...acc('accountType')}>
                   <option value="">Select</option>
                   {ACCOUNT_TYPES.map((o) => <option key={o}>{o}</option>)}
                 </select>
               </Field>
+              <Field label="Full name" required><input {...acc('fullName')} autoComplete="name" /></Field>
+              <Field label="Email address"><input {...acc('email')} type="email" autoComplete="email" /></Field>
+              <Field label="Alternate number"><input {...acc('alternatePhone')} inputMode="tel" /></Field>
             </Group>
 
             <Group title="Property type" note="What type of property are you listing?">

@@ -518,17 +518,6 @@ export default function Bookings() {
                             .join(' · ') || '—'}
                         </p>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <RowMenu
-                          items={[
-                            { label: 'Edit booking', icon: Pencil, onClick: () => { setEditing(b); setFormOpen(true); } },
-                            { label: 'Change status', icon: Tag, onClick: () => setStatusFor([b.id]) },
-                            { label: 'Raise invoice', icon: Receipt, onClick: () => raiseInvoice(b) },
-                            { label: 'Record payment', icon: Wallet, onClick: () => navigate('/payment') },
-                            { label: 'Delete', icon: Trash2, danger: true, onClick: () => setConfirm([b.id]) },
-                          ]}
-                        />
-                      </div>
                     </div>
 
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -635,7 +624,7 @@ export default function Bookings() {
 
                     {/* One Actions button, and the status — the same two as
                         a lead card carries, so the desk learns it once. */}
-                    <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-auto flex items-center gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
                       <RowMenu
                         label="Actions"
                         icon={Zap}
@@ -650,10 +639,11 @@ export default function Bookings() {
                               `Hi ${b.customer}, about your Smira Club booking ${b.id}${due ? ` — ${shortInr(due)} is due.` : '.'}`,
                             )}`,
                           },
-                          { label: 'Details', icon: Eye, onClick: () => setViewing(b) },
-                          { label: 'Invoice', icon: Receipt, onClick: () => raiseInvoice(b) },
-                          { label: 'Payment', icon: Wallet, onClick: () => navigate('/payment') },
                           { label: 'View offers', icon: Tag, onClick: () => navigate('/offers') },
+                          { label: 'Edit booking', icon: Pencil, onClick: () => { setEditing(b); setFormOpen(true); } },
+                          { label: 'Raise invoice', icon: Receipt, onClick: () => raiseInvoice(b) },
+                          { label: 'Record payment', icon: Wallet, onClick: () => navigate('/payment') },
+                          { label: 'Delete', icon: Trash2, danger: true, onClick: () => setConfirm([b.id]) },
                         ]}
                       />
                       {b.status !== 'Cancelled' && (

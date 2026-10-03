@@ -361,13 +361,17 @@ export default function Enquiries() {
       target: '_blank',
       href: `https://wa.me/${digits(r.phone)}?text=${encodeURIComponent(`Hi ${r.name}, thanks for your ${r.destination} enquiry with Smira Club!`)}`,
     },
-    { label: 'Details', icon: Eye, onClick: () => setViewing(r) },
     { label: 'Payment', icon: Wallet, onClick: () => navigate('/payment') },
     r.email && {
       label: 'Send email',
       icon: Mail,
       href: `mailto:${r.email}?subject=${encodeURIComponent(`Your ${r.destination || 'Smira Club'} enquiry`)}`,
     },
+    { label: 'Edit', icon: Pencil, onClick: () => { setEditing(r); setFormOpen(true); } },
+    { label: 'Assign owner', icon: UserCheck, onClick: () => setAssignFor([r.id]) },
+    { label: 'Schedule follow-up', icon: CalendarClock, onClick: () => act('task', { type: 'Follow-up', title: `Follow up with ${r.name}`, customer: r.name, suggest: `Follow-up — ${r.destination}` }) },
+    { label: 'Create quotation', icon: FileText, onClick: () => makeQuote(r) },
+    { label: 'Delete', icon: Trash2, danger: true, onClick: () => setConfirm([r.id]) },
   ];
 
   const menuFor = (r) => [
@@ -662,9 +666,6 @@ export default function Enquiries() {
                             <p className="num truncate text-xs text-ink-500">{r.id} · {r.phone}</p>
                             {r.email && <p className="truncate text-xs text-ink-400">{r.email}</p>}
                           </div>
-                          <div className="flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <RowMenu items={menuFor(r)} />
-                          </div>
                         </div>
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           <Badge tone={statusTone[r.status]} dot>{r.status}</Badge>
@@ -759,7 +760,7 @@ export default function Enquiries() {
                       and pushed Move stage — the one thing the desk is on
                       this card to do — below the fold of it.
                     */}
-                    <div className="mt-3 flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-3 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                       <RowMenu
                         label="Actions"
                         icon={Zap}

@@ -57,7 +57,9 @@ export default function RowMenu({ items = [], label, icon: Face, drop = 'down' }
 
       {open && (
         <div
-          className={`absolute left-0 z-30 w-48 overflow-hidden rounded-xl bg-white py-1 shadow-lift ring-1 ring-ink-900/[0.07] ${
+          /* Taller than this and it runs off the card it opened from, so
+             the list scrolls inside instead. */
+          className={`absolute left-0 z-30 max-h-[18rem] w-48 overflow-y-auto rounded-xl bg-white py-1 shadow-lift ring-1 ring-ink-900/[0.07] ${
             label ? '' : 'left-auto right-0'
           } ${drop === 'up' ? 'bottom-9' : 'top-9'}`}
         >

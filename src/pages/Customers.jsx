@@ -512,6 +512,22 @@ export default function Customers() {
                       ? ` · ${inr(membershipAmount(membership.plan, membership.signup.members).total)}`
                       : ''}
                   </span>
+                  {/*
+                    What they say they paid. The website takes money into
+                    Smira's own UPI account and asks for the reference the
+                    member’s app showed them — nothing there can confirm a
+                    payment, so this is how the desk finds it in the account
+                    rather than ringing to ask.
+                  */}
+                  {membership.signup.paymentRef && (
+                    <p className="w-full text-sm text-ink-600">
+                      Says they paid
+                      {membership.signup.paidTo ? ` to ${membership.signup.paidTo}` : ''}
+                      {' · '}
+                      <b className="num text-ink-900">{membership.signup.paymentRef}</b>
+                      {' — check the account before activating'}
+                    </p>
+                  )}
                   {membership.signup.quote && (
                     <button
                       onClick={() => toast('Quotations arrive with that sheet', 'info')}

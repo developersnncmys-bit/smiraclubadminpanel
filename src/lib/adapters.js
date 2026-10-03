@@ -536,6 +536,10 @@ export const ADAPTERS = {
       amount: m.amount ?? 0,
       paid: m.paid ?? 0,
       refund: m.refund ?? 0,
+      // What the member says they paid on the website, for the desk to
+      // match against the account. Not proof — see the Membership model.
+      paymentRef: m.paymentRef || '',
+      paidTo: m.paidTo || '',
       status: m.status,
       expert: who(m.expert),
       expertId: ref(m.expert),

@@ -467,6 +467,9 @@ export const ADAPTERS = {
       billing: p.billing,
       discount: p.discount ?? 0,
       duration: p.durationMonths ? `${p.durationMonths} months` : '',
+      // The number as well as the sentence: the panel's card writes the
+      // validity the way the website does ("5 Years"), which needs months.
+      durationMonths: p.durationMonths ?? 0,
       persons: p.persons,
       rooms: p.rooms,
       privileges: p.privileges ?? 1,

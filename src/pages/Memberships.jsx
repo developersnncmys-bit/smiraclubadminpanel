@@ -80,29 +80,62 @@ const VARIANTS = {
     note: 'text-ink-500',
     pill: 'bg-slate-100 text-slate-600',
   },
+  /**
+   * The most popular plan is lifted a little on a wide screen. It used to
+   * be ringed in amber as well, which fought with its own colour.
+   */
   highlight: {
-    card: 'card ring-2 ring-amber-400 shadow-raised xl:-mt-3 xl:mb-3',
-    head: 'bg-gradient-to-br from-amber-50 to-orange-50 border-b border-amber-500/25 px-5 pb-5 pt-5',
-    tile: 'bg-amber-400 text-white',
+    card: 'card shadow-raised xl:-mt-3 xl:mb-3',
+    head: 'px-5 pb-5 pt-5',
+    tile: 'bg-slate-100 text-slate-600',
     name: 'text-ink-900',
-    id: 'text-amber-700',
-    tagline: 'text-ink-600',
+    id: 'text-ink-500',
+    tagline: 'text-ink-500',
     price: 'text-ink-900',
-    note: 'text-amber-800',
-    pill: 'bg-amber-100 text-amber-800',
+    note: 'text-ink-500',
+    pill: 'bg-slate-100 text-slate-600',
   },
+  /**
+   * The dearest plan used to be painted end to end in near-black, which
+   * made it the one card you could not read at a glance and the one card
+   * that did not wear the colour the desk had chosen for it. Every card is
+   * white now and carries its colour on its border, where it marks the
+   * plan without swallowing the writing.
+   */
   premium: {
     card: 'card',
-    head: 'bg-gradient-to-br from-ink-900 via-ink-800 to-grape px-5 pb-5 pt-5',
-    tile: 'bg-white/15 text-white',
-    name: 'text-white',
-    id: 'text-white/55',
-    tagline: 'text-white/70',
-    price: 'text-white',
-    note: 'text-white/70',
-    pill: 'bg-white/15 text-white',
+    head: 'px-5 pb-5 pt-5',
+    tile: 'bg-slate-100 text-slate-600',
+    name: 'text-ink-900',
+    id: 'text-ink-500',
+    tagline: 'text-ink-500',
+    price: 'text-ink-900',
+    note: 'text-ink-500',
+    pill: 'bg-slate-100 text-slate-600',
   },
 };
+
+/** "5 Years", "18 Months" — the way the website writes a duration. */
+const yearsOf = (months) => {
+  const y = Math.round((Number(months) || 0) / 12);
+  return y >= 1 ? `${y} Year${y === 1 ? '' : 's'}` : `${months || 0} Months`;
+};
+
+/**
+ * The four tiles the website draws for a plan, in the website's own words.
+ *
+ * The card used to summarise them as "150 days free stay · 60 months · 12
+ * persons · 3 rooms", which is the same numbers in different words — so the
+ * desk could not tell from the panel what a member would actually read.
+ * These are the labels the pricing page prints, with the desk's figures in
+ * them, and every one of them is a field on the form behind the pencil.
+ */
+const websiteStats = (plan) => [
+  { figure: `${plan.freeStay?.nights ?? 0} Days`, note: 'Free Hotel Stay' },
+  { figure: yearsOf(plan.durationMonths ?? plan.freeStay?.validityMonths), note: 'Membership Validity' },
+  { figure: `${plan.persons ?? 0} Persons`, note: 'Covered per stay' },
+  { figure: `${plan.rooms ?? 0} Room${(plan.rooms ?? 0) === 1 ? '' : 's'}`, note: 'Allowed Per Booking' },
+];
 
 // Stand-ins for real website traffic so the incoming flow can be demonstrated.
 const VISITORS = [
@@ -372,25 +405,18 @@ export default function Memberships({ embedded = false }) {
         {memberships.map((plan) => {
           const variant = VARIANTS[variantOf(plan)];
           const isPremium = variantOf(plan) === 'premium';
+          const edge = swatchFor(plan.accent);
           return (
             <article
               key={plan.id}
               className={`flex flex-col overflow-hidden transition ${variant.card}`}
+              /* The plan's own colour, as the border — see VARIANTS above. */
+              style={edge !== 'transparent' ? { borderColor: edge, borderWidth: 2 } : undefined}
             >
               {plan.popular && (
                 <p className="flex items-center justify-center gap-1.5 bg-amber-400 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-900">
                   <Crown size={12} /> Most popular
                 </p>
-              )}
-
-              {/* The plan's own colour, the one the website paints with, so
-                  the card is not the only place it cannot be seen. */}
-              {swatchFor(plan.accent) !== 'transparent' && (
-                <div
-                  className="h-1.5 w-full"
-                  style={{ background: swatchFor(plan.accent) }}
-                  title={`Website colour: ${plan.accent}`}
-                />
               )}
 
               {/* Skinned head — this is what makes each tier look its part */}
@@ -448,14 +474,30 @@ export default function Memberships({ embedded = false }) {
                   <span className={`chip ${variant.pill}`}>{plan.members} members</span>
                 </div>
 
-                {/* What the website shows for this plan */}
-                <div className={`mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold ${variant.note}`}>
-                  <span>{plan.freeStay?.nights ?? 0} days free stay</span>·
-                  <span>{plan.duration || '—'}</span>·
-                  <span>{plan.persons ?? 0} persons</span>·
-                  <span>{plan.rooms ?? 0} rooms</span>·
-                  <span>{plan.privileges ?? 1} preferred services</span>
-                </div>
+                {/* The line under the name on the website's own card. */}
+                {plan.blurb && (
+                  <p className={`mt-2 text-xs leading-snug ${variant.tagline}`}>{plan.blurb}</p>
+                )}
+
+                {/* The four tiles the website draws, word for word. */}
+                <dl className="mt-3 grid grid-cols-2 gap-2">
+                  {websiteStats(plan).map((stat) => (
+                    <div key={stat.note} className="rounded-lg bg-surface-soft px-3 py-2">
+                      <dt className="text-[13px] font-extrabold text-ink-900">{stat.figure}</dt>
+                      <dd className="text-[11px] leading-snug text-ink-500">{stat.note}</dd>
+                    </div>
+                  ))}
+                </dl>
+
+                {plan.discount > 0 && (
+                  <p className="mt-2 rounded-lg bg-surface-soft px-3 py-2 text-[11px] font-bold text-ink-700">
+                    {plan.discount}% off every package, for as long as you are a member
+                  </p>
+                )}
+
+                <p className={`mt-2 text-[11px] font-semibold ${variant.note}`}>
+                  {plan.privileges ?? 1} preferred services
+                </p>
               </div>
 
               <div className="flex flex-1 flex-col border-t border-ink-900/[0.07] px-5 pb-5 pt-4">

@@ -587,7 +587,9 @@ export default function Memberships({ embedded = false }) {
                     value={draftFeature[plan.id] || ''}
                     onChange={(e) => setDraftFeature((d) => ({ ...d, [plan.id]: e.target.value }))}
                     onKeyDown={(e) => e.key === 'Enter' && addFeature(plan)}
-                    placeholder="Add a feature…"
+                    /* The website draws a feature as a heading with a
+                       sentence under it when it is written this way. */
+                    placeholder="Free airport transfers — on every booking"
                     className="input py-2 text-sm"
                   />
                   <button onClick={() => addFeature(plan)} className="btn-soft shrink-0 px-3 py-2" title="Add feature">

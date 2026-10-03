@@ -27,17 +27,21 @@ const STEPS = [
 ];
 
 /*
- * One entry for every service the website sells.
+ * One entry for every service the website sells, in the order it lists
+ * them. Two of the website's own names cover two kinds of place each —
+ * "Waterpark & Themepark" and "Camping & Adventure" — so those are two
+ * entries here, because a partner runs one or the other and the form asks
+ * them different things.
  *
- * The list used to stop at Lifestyle, which left a tour operator, an
- * airline desk and a bus operator with nowhere to put themselves — and a
- * partner who picked the nearest wrong type landed on the wrong page.
+ * "Lifestyle" is kept behind the scenes: it is what Luxury Experience used
+ * to be called and some partners are still saved under it.
  */
 const PROPERTY_TYPES = [
-  'Hotel', 'Resort', 'Homestay', 'Villa', 'Camp',
-  'Restaurant', 'Spa & Salon', 'Games Zone', 'Theme Park', 'Water Park',
-  'Activity', 'Package', 'Group Departure',
-  'Flight', 'Train & Bus', 'Transport', 'Lifestyle',
+  'Hotel', 'Resort', 'Villa', 'Homestay', 'Free Stay',
+  'International Trip', 'Group Departure', 'Package',
+  'Restaurant', 'Water Park', 'Theme Park', 'Games Zone', 'Spa & Salon',
+  'Luxury Experience', 'Camp', 'Activity',
+  'Flight', 'Train & Bus', 'Transport',
 ];
 
 /**
@@ -93,9 +97,22 @@ const PROFILES = {
     ...VISIT, unit: 'Vehicle', units: 'Vehicles', eg: 'Innova Crysta', egType: 'SUV',
     occupancyLabel: 'Seats', priceNote: 'Per trip, in rupees.', times: 'none',
   },
+  'Luxury Experience': {
+    ...VISIT, unit: 'Experience', units: 'Experiences', eg: 'Private yacht evening', egType: 'Evening',
+    occupancyLabel: 'Guests', priceNote: 'Per booking, in rupees.',
+  },
+  // What Luxury Experience used to be called.
   Lifestyle: {
     ...VISIT, unit: 'Experience', units: 'Experiences', eg: 'Private yacht evening', egType: 'Evening',
     occupancyLabel: 'Guests', priceNote: 'Per booking, in rupees.',
+  },
+  'Free Stay': {
+    ...STAY, unit: 'Room', units: 'Rooms', eg: 'Deluxe Room', egType: 'Deluxe',
+    priceNote: 'What the room would cost. Members stay free and pay for food.',
+  },
+  'International Trip': {
+    ...VISIT, unit: 'Departure', units: 'Departures', eg: '5 nights Bali, twin sharing', egType: 'Twin sharing',
+    occupancyLabel: 'Travellers', priceNote: 'Per person, in rupees.', times: 'none',
   },
 
   'Water Park': {
@@ -185,6 +202,16 @@ const TICKS = {
     rules: ['Advance Booking', 'Valid ID Required', 'Age Limit', 'Cancellation Notice', 'Weather Dependent'],
   },
 
+  'Luxury Experience': {
+    popular: ['Wi-Fi', 'AC', 'Parking', 'Refreshments', 'Host Included', 'Photography', 'Decoration', 'Music'],
+    facilities: ['Washrooms', 'Changing Room', 'Wheelchair Access', 'Card Payment', 'UPI', 'Private Area'],
+    rules: ['Advance Booking', 'Valid ID Required', 'Age Limit', 'Cancellation Notice', 'Weather Dependent'],
+  },
+  'International Trip': {
+    popular: ['Flights Included', 'Hotel Included', 'Breakfast', 'Airport Transfers', 'Sightseeing', 'Tour Manager', 'Visa Assistance', 'Travel Insurance'],
+    facilities: ['Hotel Pick-up', 'AC Coach', 'English Speaking Guide', 'Card Payment', 'UPI', 'EMI Available'],
+    rules: ['Passport Required', 'Advance Booking', 'Valid Visa', 'Cancellation Notice', 'Minimum Travellers'],
+  },
   'Water Park': {
     popular: ['Parking', 'Wave Pool', 'Slides', 'Lazy River', 'Kids Pool', 'Rain Dance', 'Food Court', 'Locker Rental'],
     facilities: ['Changing Room', 'Showers', 'Lifeguards', 'First Aid', 'Wheelchair Access', 'ATM', 'Card Payment', 'UPI'],

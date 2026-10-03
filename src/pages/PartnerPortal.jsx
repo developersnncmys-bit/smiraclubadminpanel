@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Brand from '../components/ui/Brand.jsx';
 import ListingWizard from '../components/partners/ListingWizard.jsx';
+import FlashOffers, { portalFlash } from '../components/partners/FlashOffers.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import { inr, shortInr } from '../data/mockData.js';
 import { partnerApi, getPartnerToken, setPartnerToken } from '../lib/partnerApi.js';
@@ -463,18 +464,36 @@ export default function PartnerPortal() {
     ),
 
     rates: (
-      <Panel title="Rates & offers" note="The terms you agreed with Smira">
-        <Facts
-          rows={[
-            ['Rate plan', p?.ratePlan],
-            ['Smira commission', p?.commission ? `${p.commission}%` : '—'],
-            ['Contract ends', day(p?.contractEndsOn)],
-          ]}
-        />
-        <p className="mt-4 text-xs text-ink-500">
-          To change a rate or add an offer, call the partnerships desk on {DESK_PHONE}.
-        </p>
-      </Panel>
+      <>
+        <Panel title="Rates & offers" note="The terms you agreed with Smira">
+          <Facts
+            rows={[
+              ['Rate plan', p?.ratePlan],
+              ['Smira commission', p?.commission ? `${p.commission}%` : '—'],
+              ['Contract ends', day(p?.contractEndsOn)],
+            ]}
+          />
+          <p className="mt-4 text-xs text-ink-500">
+            To change your contracted rate or your commission, call the partnerships desk on{' '}
+            {DESK_PHONE}. A flash offer below is yours to run without asking.
+          </p>
+        </Panel>
+
+        {/*
+          The one offer a partner does not have to ring up for.
+
+          Rooms still empty at four o'clock are worth less than discounted
+          rooms, and by the time the desk has been called and the change
+          made, the evening has gone. It only ever cuts their own rate, and
+          it stops on the clock they set, so there is nothing to approve.
+        */}
+        <Panel
+          title="Flash offers"
+          note="A short discount on your own rate — live straight away, ends on its own"
+        >
+          <FlashOffers io={portalFlash()} mine live={p?.stage === 'Live' || p?.status === 'Active'} />
+        </Panel>
+      </>
     ),
 
     calendar: (

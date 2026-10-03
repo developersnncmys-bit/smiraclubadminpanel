@@ -633,36 +633,29 @@ export default function Bookings() {
                       <span>Expert <span className="font-semibold text-ink-600">{b.expert || '—'}</span></span>
                     </p>
 
-                    {/* Three actions; the rest live in the booking panel */}
-                    <div className="mt-auto flex flex-wrap gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
-                      {phone && (
-                        <>
-                          <a href={`tel:${phone}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
-                          <a
-                            href={`https://wa.me/${phone}?text=${encodeURIComponent(
+                    {/* One Actions button, and the status — the same two as
+                        a lead card carries, so the desk learns it once. */}
+                    <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
+                      <RowMenu
+                        label="Actions"
+                        icon={Zap}
+                        drop="up"
+                        items={[
+                          phone && { label: 'Call', icon: Phone, href: `tel:${phone}` },
+                          phone && {
+                            label: 'WhatsApp',
+                            icon: MessageCircle,
+                            target: '_blank',
+                            href: `https://wa.me/${phone}?text=${encodeURIComponent(
                               `Hi ${b.customer}, about your Smira Club booking ${b.id}${due ? ` — ${shortInr(due)} is due.` : '.'}`,
-                            )}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn-line btn-sm"
-                          >
-                            <MessageCircle size={13} /> WhatsApp
-                          </a>
-                        </>
-                      )}
-                      <button className="btn-line btn-sm" onClick={() => setViewing(b)}>
-                        <Eye size={13} /> Details
-                      </button>
-                      <button className="btn-line btn-sm" onClick={() => raiseInvoice(b)}>
-                        <Receipt size={13} /> Invoice
-                      </button>
-                      <button className="btn-line btn-sm" onClick={() => navigate('/payment')}>
-                        <Wallet size={13} /> Payment
-                      </button>
-                      {/* What is live to put against this booking. */}
-                      <button className="btn-line btn-sm" onClick={() => navigate('/offers')}>
-                        <Tag size={13} /> View offers
-                      </button>
+                            )}`,
+                          },
+                          { label: 'Details', icon: Eye, onClick: () => setViewing(b) },
+                          { label: 'Invoice', icon: Receipt, onClick: () => raiseInvoice(b) },
+                          { label: 'Payment', icon: Wallet, onClick: () => navigate('/payment') },
+                          { label: 'View offers', icon: Tag, onClick: () => navigate('/offers') },
+                        ]}
+                      />
                       {b.status !== 'Cancelled' && (
                         <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([b.id])}>
                           <Tag size={13} /> Change status

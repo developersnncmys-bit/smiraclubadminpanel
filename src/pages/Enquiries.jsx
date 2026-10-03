@@ -348,6 +348,28 @@ export default function Enquiries() {
     toast(`Quotation ${id} drafted for ${row.name}`);
   };
 
+  /**
+   * The things the desk does to a lead without opening it: reach them, read
+   * them, take money, write to them. The "⋯" menu keeps the desk's own
+   * housekeeping — editing, assigning, deleting — which is a different job.
+   */
+  const actionsFor = (r) => [
+    r.phone && { label: 'Call', icon: Phone, href: `tel:${digits(r.phone)}` },
+    r.phone && {
+      label: 'WhatsApp',
+      icon: MessageCircle,
+      target: '_blank',
+      href: `https://wa.me/${digits(r.phone)}?text=${encodeURIComponent(`Hi ${r.name}, thanks for your ${r.destination} enquiry with Smira Club!`)}`,
+    },
+    { label: 'Details', icon: Eye, onClick: () => setViewing(r) },
+    { label: 'Payment', icon: Wallet, onClick: () => navigate('/payment') },
+    r.email && {
+      label: 'Send email',
+      icon: Mail,
+      href: `mailto:${r.email}?subject=${encodeURIComponent(`Your ${r.destination || 'Smira Club'} enquiry`)}`,
+    },
+  ];
+
   const menuFor = (r) => [
     { label: 'Edit', icon: Pencil, onClick: () => { setEditing(r); setFormOpen(true); } },
     { label: 'Assign owner', icon: UserCheck, onClick: () => setAssignFor([r.id]) },
@@ -728,27 +750,22 @@ export default function Enquiries() {
                       <Ring value={chance} />
                     </div>
 
-                    {/* Three actions; the rest live in the lead panel */}
-                    <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
-                      <a href={`tel:${digits(r.phone)}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
-                      <a
-                        href={`https://wa.me/${digits(r.phone)}?text=${encodeURIComponent(`Hi ${r.name}, thanks for your ${r.destination} enquiry with Smira Club!`)}`}
-                        target="_blank" rel="noreferrer" className="btn-line btn-sm"
-                      >
-                        <MessageCircle size={13} /> WhatsApp
-                      </a>
-                      <button className="btn-line btn-sm" onClick={() => setViewing(r)}>
-                        <Eye size={13} /> Details
-                      </button>
-                      <button className="btn-line btn-sm" onClick={() => navigate('/payment')}>
-                        <Wallet size={13} /> Payment
-                      </button>
-                      <a
-                        href={`mailto:${r.email}?subject=${encodeURIComponent(`Your ${r.destination || 'Smira Club'} enquiry`)}`}
-                        className="btn-line btn-sm"
-                      >
-                        <Mail size={13} /> Send
-                      </a>
+                    {/*
+                      One Actions button, and the stage.
+
+                      Call, WhatsApp, Details, Payment and Send used to sit
+                      here as five buttons in a row. On anything narrower
+                      than a wide desktop they wrapped onto a second line
+                      and pushed Move stage — the one thing the desk is on
+                      this card to do — below the fold of it.
+                    */}
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <RowMenu
+                        label="Actions"
+                        icon={Zap}
+                        drop="up"
+                        items={actionsFor(r)}
+                      />
                       {!['Won', 'Lost'].includes(r.status) && (
                         <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([r.id])}>
                           <Tag size={13} /> Move stage

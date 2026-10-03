@@ -11,6 +11,7 @@ import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import DrawerTabs from '../ui/DrawerTabs.jsx';
+import FlashOffers, { deskFlash } from './FlashOffers.jsx';
 import {
   onboardingFlow,
   settlementFlow,
@@ -20,6 +21,7 @@ import {
 const digits = (v) => String(v || '').replace(/[^\d]/g, '');
 const TABS = [
   'Overview', 'Details', 'Documents', 'Inventory', 'Rates', 'Availability',
+  'Flash offers',
   'Bookings', 'Customers', 'Support', 'Finance', 'Communication', 'Activity log',
 ];
 
@@ -276,6 +278,12 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
                     ? `${p.rooms} held on contract · ${theirRequests.length} requests in flight`
                     : 'Availability is confirmed request by request.'}
                 </p>
+              )}
+
+              {/* A short discount on their own rate, raised from either side
+                  of the desk — see FlashOffers for why it needs no approval. */}
+              {tab === 'Flash offers' && (
+                <FlashOffers io={deskFlash(p.id)} live={p.stage === 'Live' || p.status === 'Active'} />
               )}
 
               {tab === 'Bookings' && (

@@ -127,5 +127,9 @@ export const partnerApi = {
   setAccepting: (open) => request('/accepting', { method: 'PATCH', body: { open } }),
   performance: () => request('/performance'),
   availability: (from, days = 42) => request(`/availability?from=${from}&days=${days}`),
+  /** Their own short discounts: nothing to approve, so nothing to wait for. */
+  flashOffers: () => request('/flash-offers'),
+  createFlashOffer: (body) => request('/flash-offers', { method: 'POST', body }),
+  stopFlashOffer: (id) => request(`/flash-offers/${id}/stop`, { method: 'POST' }),
   setAvailability: (body) => request('/availability', { method: 'PATCH', body }),
 };

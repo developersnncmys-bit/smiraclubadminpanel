@@ -467,7 +467,10 @@ export default function Rewards() {
         </Block>
 
         <Block title="The referral pipeline" note="Every referral sits at one of these" wide>
-          <Flow steps={referralPipeline} at={referralPipeline.indexOf(referrals[0].stage)} />
+          {/* No referrals yet means no stage to point at, and Flow takes -1
+              for that. Reading stage off referrals[0] threw and took the
+              whole page down with it. */}
+          <Flow steps={referralPipeline} at={referralPipeline.indexOf(referrals[0]?.stage)} />
           <p className="eyebrow mt-5">What the panel does the moment it converts</p>
           <ol className="mt-2 space-y-2 border-l border-ink-900/[0.07] pl-4">
             {referralAutomation.map((a) => (

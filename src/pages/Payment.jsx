@@ -29,7 +29,6 @@ import {
   paymentLinks,
   gateways,
   collectionBuckets,
-  chaseFlow,
   refundFlow,
   refundRequests,
   receivables,
@@ -697,10 +696,6 @@ export default function Payment() {
               ],
             }))}
           />
-        </Block>
-
-        <Block title="What the panel does about it" note="Nobody has to remember to chase" wide>
-          <Flow steps={chaseFlow} />
         </Block>
       </>
     ),

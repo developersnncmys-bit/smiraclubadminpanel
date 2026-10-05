@@ -70,12 +70,32 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 lg:grid-cols-[320px_minmax(0,1fr)]">
+        {/*
+          One column of the drawer, scrolling as a whole: the two panels
+          side by side, then everything that has happened underneath.
+
+          It used to be a single grid with the trail spanning both
+          columns. The row sized itself to the shorter card on the right,
+          and the taller one on the left ran through it — the partner's
+          own details, mobile number included, were behind the activities
+          panel and unreadable.
+        */}
+        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5">
+          <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
           <section className="card h-fit overflow-hidden">
             <div className="px-4 pb-4 pt-5 text-center">
               <Avatar name={p.name} size="lg" className="mx-auto" />
               <p className="mt-3 font-display text-base font-extrabold text-ink-900">{p.contact}</p>
               <p className="text-sm text-ink-500">{p.location}</p>
+              {/*
+                The number is how a partner signs into their own portal —
+                there is no password — so the desk reads it out when they
+                help somebody in. It is in the details below as well; up
+                here it does not need finding first.
+              */}
+              {p.phone && (
+                <p className="num mt-1 text-sm font-semibold text-ink-700">{p.phone}</p>
+              )}
               {score && (
                 <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-700">
                   Partner score {score.value}/100 · {score.band}
@@ -407,10 +427,10 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
               )}
             </div>
           </section>
-          {/* Everything that has happened with this partner */}
-          <div className="lg:col-span-2">
-            <RecordTrail id={p.id} name={p.name} tasks={[]} />
           </div>
+
+          {/* Everything that has happened with this partner */}
+          <RecordTrail id={p.id} name={p.name} tasks={[]} />
         </div>
       </aside>
     </div>

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import {
   Megaphone,
   Plus,
+  Tag,
+  Trash2,
   GripVertical,
   Eye,
   MousePointerClick,
@@ -22,12 +24,6 @@ import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
   homepageSections,
-  offerTypes,
-  benefitTypes,
-  membershipEligibility,
-  customerConditions,
-  validityControls,
-  usageControls,
   distribution,
   tierAccess,
   offers,
@@ -144,20 +140,74 @@ const marginOf = (o) => {
  * many times, what it costs and what it brings back.
  */
 export default function Offers() {
-  const { toast } = useApp();
+  const { toast, create, update, remove, offers: saved = [], live: online } = useApp();
   const [section, setSection] = useState('Dashboard');
+  const [saving, setSaving] = useState(false);
+
+  /**
+   * A new offer, in the shape the server keeps one.
+   *
+   * These were the website's words before — "Percentage discount", a tier,
+   * a condition — none of which the server has a field for, which is why
+   * the form only ever raised a toast. They are its own words now, so what
+   * is typed here is what a member types a code into the website and gets.
+   */
   const [draft, setDraft] = useState({
-    name: 'Weekend villa escape',
-    code: 'WEEKEND25',
-    category: 'Holiday and travel',
-    benefit: 'Percentage discount',
-    value: 25,
-    tier: 'Gold',
-    condition: 'Minimum booking value',
-    minBooking: 10000,
-    total: 500,
-    perCustomer: 1,
+    name: '',
+    code: '',
+    description: '',
+    kind: 'Percent off',
+    value: 10,
+    maxDiscount: 0,
+    minSpend: 0,
+    appliesTo: ['Membership'],
+    startsOn: '',
+    endsOn: '',
+    usageLimit: 0,
+    status: 'Live',
   });
+
+  const set = (k) => (e) => setDraft((o) => ({ ...o, [k]: e.target.value }));
+  const setNum = (k) => (e) => setDraft((o) => ({ ...o, [k]: e.target.value === '' ? '' : Number(e.target.value) }));
+  const toggleUse = (what) =>
+    setDraft((o) => ({
+      ...o,
+      appliesTo: o.appliesTo.includes(what)
+        ? o.appliesTo.filter((x) => x !== what)
+        : [...o.appliesTo, what],
+    }));
+
+  const percent = draft.kind === 'Percent off';
+  const moneyOff = percent || draft.kind === 'Flat off';
+
+  /** Only the real ones — the seed rows above have no code to type. */
+  const coupons = saved.filter((o) => o.code && !o.flash);
+
+  const saveOffer = () => {
+    const name = draft.name.trim();
+    const code = draft.code.trim().toUpperCase();
+    if (!name) return toast('Give the offer a name', 'danger');
+    if (!code) return toast('Give it a code for members to type', 'danger');
+    if (coupons.some((o) => (o.code || '').toUpperCase() === code))
+      return toast(`${code} is already in use`, 'danger');
+    if (moneyOff && !(Number(draft.value) > 0)) return toast('Put a value on it', 'danger');
+    if (draft.startsOn && draft.endsOn && draft.endsOn < draft.startsOn)
+      return toast('It cannot end before it starts', 'danger');
+
+    setSaving(true);
+    create('offers', {
+      ...draft,
+      name,
+      code,
+      value: Number(draft.value) || 0,
+      maxDiscount: percent ? Number(draft.maxDiscount) || 0 : 0,
+      minSpend: Number(draft.minSpend) || 0,
+      usageLimit: Number(draft.usageLimit) || 0,
+      used: 0,
+    });
+    setSaving(false);
+    setDraft((o) => ({ ...o, name: '', code: '', description: '' }));
+  };
 
   const live = offers.filter((o) => o.status === 'Live');
   const views = offers.reduce((s, o) => s + o.views, 0);
@@ -392,106 +442,193 @@ export default function Offers() {
       <>
         <Block
           title="Create an offer"
-          note="Name it, choose what it gives, then who and how often"
+          note={
+            online
+              ? 'Name it, give it a code, say what it takes off and for how long'
+              : 'Name it, give it a code, say what it takes off and for how long — not signed in, so this stays on this screen'
+          }
           wide
           action={
-            <button className="btn-action btn-sm" onClick={() => toast('Offer sent for approval')}>
-              <Plus size={14} /> Save and submit
+            <button className="btn-action btn-sm" onClick={saveOffer} disabled={saving}>
+              <Plus size={14} /> {saving ? 'Saving…' : 'Save offer'}
             </button>
           }
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Offer name</label>
-              <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+              <input
+                className="input"
+                placeholder="Festive membership offer"
+                value={draft.name}
+                onChange={set('name')}
+              />
             </div>
             <div>
-              <label className="label">Offer code</label>
-              <input className="input" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
+              <label className="label">Coupon code</label>
+              <input
+                className="input num uppercase"
+                placeholder="SMIRA500"
+                spellCheck={false}
+                value={draft.code}
+                onChange={(e) => setDraft({ ...draft, code: e.target.value.toUpperCase().replace(/\s+/g, '') })}
+              />
+              <p className="mt-1 text-xs text-ink-500">What a member types on the website.</p>
             </div>
-            <div>
-              <label className="label">Category</label>
-              <select className="input" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })}>
-                {Object.keys(offerTypes).map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Sub-category</label>
-              <select className="input">
-                {offerTypes[draft.category].map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+
             <div>
               <label className="label">What the customer gets</label>
-              <select className="input" value={draft.benefit} onChange={(e) => setDraft({ ...draft, benefit: e.target.value })}>
-                {benefitTypes.map((b) => (
-                  <option key={b}>{b}</option>
+              <select className="input" value={draft.kind} onChange={set('kind')}>
+                {['Percent off', 'Flat off', 'Free night', 'Upgrade', 'Gift'].map((k) => (
+                  <option key={k}>{k}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="label">Value</label>
-              <input type="number" className="input" value={draft.value} onChange={(e) => setDraft({ ...draft, value: e.target.value })} />
+              <label className="label">{percent ? 'Percentage off' : moneyOff ? 'Amount off (₹)' : 'Value (for the books)'}</label>
+              <input type="number" min="0" className="input" value={draft.value} onChange={setNum('value')} />
             </div>
+
+            {percent && (
+              <div>
+                <label className="label">Most it can take off (₹)</label>
+                <input type="number" min="0" className="input" value={draft.maxDiscount} onChange={setNum('maxDiscount')} />
+                <p className="mt-1 text-xs text-ink-500">0 for no ceiling.</p>
+              </div>
+            )}
             <div>
-              <label className="label">Who it is for</label>
-              <select className="input" value={draft.tier} onChange={(e) => setDraft({ ...draft, tier: e.target.value })}>
-                {membershipEligibility.map((m) => (
-                  <option key={m}>{m}</option>
+              <label className="label">Minimum spend (₹)</label>
+              <input type="number" min="0" className="input" value={draft.minSpend} onChange={setNum('minSpend')} />
+              <p className="mt-1 text-xs text-ink-500">0 to let it go on anything.</p>
+            </div>
+
+            <div>
+              <label className="label">Where it can be used</label>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {['Membership', 'Booking'].map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => toggleUse(w)}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
+                      draft.appliesTo.includes(w)
+                        ? 'border-brand-600 bg-brand-50 text-brand-700'
+                        : 'border-ink-900/10 text-ink-600 hover:bg-surface-soft'
+                    }`}
+                  >
+                    {w}
+                  </button>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Condition</label>
-              <select className="input" value={draft.condition} onChange={(e) => setDraft({ ...draft, condition: e.target.value })}>
-                {customerConditions.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Minimum booking (₹)</label>
-              <input type="number" className="input" value={draft.minBooking} onChange={(e) => setDraft({ ...draft, minBooking: e.target.value })} />
+              </div>
+              <p className="mt-1 text-xs text-ink-500">Nothing picked means anywhere.</p>
             </div>
             <div>
               <label className="label">Total redemptions</label>
-              <input type="number" className="input" value={draft.total} onChange={(e) => setDraft({ ...draft, total: e.target.value })} />
+              <input type="number" min="0" className="input" value={draft.usageLimit} onChange={setNum('usageLimit')} />
+              <p className="mt-1 text-xs text-ink-500">0 for no cap.</p>
+            </div>
+
+            <div>
+              <label className="label">Starts on</label>
+              <input type="date" className="input" value={draft.startsOn} onChange={set('startsOn')} />
+            </div>
+            <div>
+              <label className="label">Ends on</label>
+              <input type="date" className="input" value={draft.endsOn} onChange={set('endsOn')} />
+            </div>
+
+            <div>
+              <label className="label">Status</label>
+              <select className="input" value={draft.status} onChange={set('status')}>
+                {['Live', 'Draft', 'Paused'].map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-ink-500">Only a Live code works on the website.</p>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Description</label>
+              <input
+                className="input"
+                placeholder="Shown to the member when the code goes on"
+                value={draft.description}
+                onChange={set('description')}
+              />
             </div>
           </div>
 
           <p className="mt-4 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-800">
-            <b>{draft.name}</b> — {draft.benefit.toLowerCase()} of{' '}
-            <b>
-              {draft.benefit === 'Percentage discount' ? `${draft.value}%` : inr(draft.value)}
-            </b>{' '}
-            for <b>{draft.tier}</b>, on bookings over {inr(draft.minBooking)}, {draft.perCustomer} per customer, capped
-            at {draft.total} redemptions. Code <b className="num">{draft.code}</b>.
+            <b>{draft.name || 'This offer'}</b> — code <b className="num">{draft.code || '—'}</b> takes{' '}
+            <b>{percent ? `${draft.value || 0}%` : moneyOff ? inr(draft.value || 0) : draft.kind.toLowerCase()}</b>
+            {percent && Number(draft.maxDiscount) > 0 ? ` off, up to ${inr(draft.maxDiscount)},` : ' off'}{' '}
+            {Number(draft.minSpend) > 0 ? `on anything over ${inr(draft.minSpend)}` : 'with no minimum'}, for{' '}
+            <b>{draft.appliesTo.length ? draft.appliesTo.join(' and ') : 'anything'}</b>
+            {Number(draft.usageLimit) > 0 ? `, capped at ${draft.usageLimit} uses` : ', uncapped'}
+            {draft.endsOn ? `, until ${draft.endsOn}` : ''}.
           </p>
         </Block>
 
-        <Block title="Everything else the admin sets" note="Validity, usage and eligibility" wide>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              ['When it can be used', validityControls],
-              ['How often', usageControls],
-              ['Who qualifies', customerConditions],
-            ].map(([title, list]) => (
-              <div key={title} className="rounded-xl border border-ink-900/[0.07] p-4">
-                <p className="eyebrow">{title}</p>
-                <ul className="mt-2 space-y-1.5">
-                  {list.map((x) => (
-                    <li key={x} className="text-sm text-ink-700">
-                      {x}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+        <Block
+          title="Coupon codes"
+          note="What a member can type on the website right now"
+          wide
+        >
+          {coupons.length === 0 ? (
+            <p className="rounded-xl bg-surface-soft px-4 py-6 text-center text-sm text-ink-600">
+              No codes yet. The one above goes live as soon as you save it.
+            </p>
+          ) : (
+            <Table
+              head={['Code', 'Offer', 'Takes off', 'Used', 'Until', 'Status', '']}
+              rows={coupons.map((o) => ({
+                key: o.id,
+                cells: [
+                  <span className="num font-semibold text-ink-900">{o.code}</span>,
+                  <span className="text-ink-700">{o.name}</span>,
+                  <span className="text-ink-700">
+                    {o.kind === 'Percent off'
+                      ? `${o.value}%${o.maxDiscount ? ` (max ${inr(o.maxDiscount)})` : ''}`
+                      : o.kind === 'Flat off'
+                        ? inr(o.value)
+                        : o.kind}
+                    {o.minSpend ? ` over ${inr(o.minSpend)}` : ''}
+                  </span>,
+                  <span className="num text-ink-700">
+                    {o.used || 0}
+                    {o.usageLimit ? ` / ${o.usageLimit}` : ''}
+                  </span>,
+                  <span className="text-ink-700">{o.endsOn || '—'}</span>,
+                  <Badge tone={o.status === 'Live' ? 'success' : o.status === 'Paused' ? 'warning' : 'neutral'}>
+                    {o.status}
+                  </Badge>,
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="btn-ghost btn-sm"
+                      onClick={() =>
+                        update('offers', o.id, { status: o.status === 'Live' ? 'Paused' : 'Live' })
+                      }
+                    >
+                      {o.status === 'Live' ? 'Pause' : 'Make live'}
+                    </button>
+                    <button
+                      className="btn-ghost btn-sm text-rose-600"
+                      onClick={() => remove('offers', o.id)}
+                      aria-label={`Delete ${o.code}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>,
+                ],
+              }))}
+            />
+          )}
+
+          <p className="mt-4 flex items-start gap-2 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
+            <Tag size={15} className="mt-0.5 shrink-0 text-brand-600" />
+            The website checks every one of these against this list when a member
+            presses Apply — the dates, the cap, the minimum spend and the status.
+            Pausing a code stops it being accepted on the next press.
+          </p>
         </Block>
       </>
     ),

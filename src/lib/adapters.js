@@ -1044,6 +1044,15 @@ export const ADAPTERS = {
     to: (p) => ({ status: p.status, reward: p.reward, paid: p.paid }),
   },
 
+  /**
+   * An offer, which is also how a coupon code is held.
+   *
+   * Everything but the name, code, kind, value and status used to be
+   * dropped on the way out, so an offer saved from the panel had no dates,
+   * no cap and no minimum spend — it was live for ever, to everyone, as
+   * often as they liked. The website checks all of those before it takes a
+   * code, so they have to survive the trip.
+   */
   offers: {
     path: '/offers',
     from: (o) => ({
@@ -1053,18 +1062,28 @@ export const ADAPTERS = {
       description: o.description,
       kind: o.kind,
       value: o.value ?? 0,
+      maxDiscount: o.maxDiscount ?? 0,
+      minSpend: o.minSpend ?? 0,
+      appliesTo: o.appliesTo || [],
       startsOn: d(o.startsOn),
       endsOn: d(o.endsOn),
       used: o.used ?? 0,
       usageLimit: o.usageLimit ?? 0,
       status: o.status,
+      flash: Boolean(o.flash),
     }),
     to: (p) => ({
       name: p.name,
       couponCode: p.code,
       description: p.description,
       kind: p.kind,
-      value: p.value,
+      value: num(p.value),
+      maxDiscount: num(p.maxDiscount),
+      minSpend: num(p.minSpend),
+      appliesTo: p.appliesTo,
+      startsOn: when(p.startsOn),
+      endsOn: when(p.endsOn),
+      usageLimit: num(p.usageLimit),
       status: p.status,
     }),
   },

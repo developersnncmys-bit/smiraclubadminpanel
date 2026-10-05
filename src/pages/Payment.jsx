@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Wallet,
   Search,
@@ -31,7 +31,6 @@ import {
   collectionBuckets,
   refundFlow,
   refundRequests,
-  receivables,
   salary,
   commissionRules,
   expenseCategories,
@@ -271,6 +270,76 @@ export default function Payment() {
       String(v || '').toLowerCase().includes(q)
     );
   });
+
+  /**
+   * Who owes what, built from what is actually owed.
+   *
+   * This was two rows of demo data, which made the collections queue a
+   * picture of a queue. Meanwhile the website was telling anybody who
+   * chose a card or net banking that the desk would send them a payment
+   * link — and the desk had nowhere to see that they had asked. The two
+   * ends are joined here: every membership and booking with a balance
+   * on it, newest first, with how they said they would pay.
+   */
+  const receivables = useMemo(() => {
+    const today = new Date();
+    const bucketFor = (dueOn) => {
+      if (!dueOn) return 'Due today';
+      const days = Math.floor((today - new Date(dueOn)) / 86400000);
+      if (days <= 0) return 'Due today';
+      if (days === 1) return '1 day overdue';
+      if (days <= 3) return '3 days';
+      if (days <= 7) return '7 days';
+      if (days <= 15) return '15 days';
+      return '30+ days';
+    };
+    const asRow = (o) => ({
+      ...o,
+      bucket: bucketFor(o.dueOn),
+      // Nothing has been chased yet on a website request, and saying so
+      // is more use than a date somebody made up.
+      lastReminder: o.lastReminder || '—',
+      nextFollowUp: o.nextFollowUp || '—',
+      call: o.call || '—',
+      whatsapp: o.whatsapp || '—',
+    });
+
+    const fromMemberships = memberSignups
+      .filter((m) => Number(m.amount || 0) - Number(m.paid || 0) > 0)
+      .map((m) =>
+        asRow({
+          id: m.id,
+          kind: 'Membership',
+          customer: m.name,
+          product: [m.plan, m.paidVia ? `by ${m.paidVia.toLowerCase()}` : ''].filter(Boolean).join(' · '),
+          paidVia: m.paidVia || '',
+          reference: m.payRef || m.id,
+          salesperson: m.expert || '—',
+          amount: Number(m.amount || 0) - Number(m.paid || 0),
+          due: m.received || m.startedOn || '—',
+          dueOn: m.receivedRaw || null,
+        }),
+      );
+
+    const fromBookings = bookings
+      .filter((b) => Number(b.amount || 0) - Number(b.paid || 0) > 0)
+      .map((b) =>
+        asRow({
+          id: b.id,
+          kind: 'Booking',
+          customer: b.customer,
+          product: b.hotel || b.pkg || b.bookingType || 'Booking',
+          paidVia: '',
+          reference: b.payRef || b.id,
+          salesperson: b.owner || '—',
+          amount: Number(b.amount || 0) - Number(b.paid || 0),
+          due: b.checkIn || '—',
+          dueOn: null,
+        }),
+      );
+
+    return [...fromMemberships, ...fromBookings];
+  }, [memberSignups, bookings]);
 
   const dueRows = receivables.filter((r) => bucket === 'All' || r.bucket === bucket);
 

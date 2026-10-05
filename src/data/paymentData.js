@@ -79,35 +79,6 @@ export const refundRequests = [
   },
 ];
 
-/** What is still owed, and how the chase is going. */
-export const receivables = [
-  {
-    id: 'RCV-01',
-    customer: 'Ananya Deshmukh',
-    product: 'Maldives Overwater Luxury',
-    salesperson: 'Kabir',
-    amount: 186000,
-    due: '28 Aug 2026',
-    bucket: 'Due today',
-    lastReminder: '26 Aug 2026',
-    nextFollowUp: '28 Aug 2026, 5:00 pm',
-    call: 'Answered',
-    whatsapp: 'Read',
-  },
-  {
-    id: 'RCV-02',
-    customer: 'Ananya Deshmukh',
-    product: 'Platinum Elite membership',
-    salesperson: 'Sneha',
-    amount: 35396,
-    due: '11 Aug 2026',
-    bucket: '15 days',
-    lastReminder: '24 Aug 2026',
-    nextFollowUp: '29 Aug 2026, 11:00 am',
-    call: 'No answer',
-    whatsapp: 'Delivered',
-  },
-];
 
 /** Payroll, the way the sheet lays it out. */
 export const salary = [

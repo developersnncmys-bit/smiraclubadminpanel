@@ -545,6 +545,9 @@ export const ADAPTERS = {
       // match against the account. Not proof — see the Membership model.
       paymentRef: m.paymentRef || '',
       paidTo: m.paidTo || '',
+      // UPI, Card or Netbanking — which link the desk has to send.
+      paidVia: m.paidVia || '',
+      payRef: m.payRef || '',
       status: m.status,
       expert: who(m.expert),
       expertId: ref(m.expert),

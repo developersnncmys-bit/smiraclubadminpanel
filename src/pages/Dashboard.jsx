@@ -26,7 +26,7 @@ import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr, enquiryStatuses, bookingStatusTone, salesTrend } from '../data/mockData.js';
 import { daysUntil } from '../lib/membership.js';
 import { expenses as expenseBudget } from '../data/revenueData.js';
-import { receivables, salary } from '../data/paymentData.js';
+import { salary } from '../data/paymentData.js';
 import { inboxStats, botSessions } from '../data/whatsappData.js';
 import { rules as automationRules, history as automationHistory } from '../data/automationData.js';
 import { customerRewards, referrals } from '../data/rewardsData.js';
@@ -98,6 +98,15 @@ export default function Dashboard() {
     team, enquiries, bookings, memberSignups, memberships, customers,
     invoices, payments, tickets, partners, inventory, range,
   } = useApp();
+
+  /**
+   * How many people owe something, counted the same way the Payment
+   * page counts them. It used to read the length of a two-row demo
+   * list, so the dashboard said two chases however many there were.
+   */
+  const chases =
+    memberSignups.filter((m) => Number(m.amount || 0) - Number(m.paid || 0) > 0).length +
+    bookings.filter((b) => Number(b.amount || 0) - Number(b.paid || 0) > 0).length;
 
   // -- Money -----------------------------------------------------------------
   const won = enquiries.filter((e) => e.status === 'Won');
@@ -422,7 +431,7 @@ export default function Dashboard() {
           <ModuleLine
             icon={Wallet}
             label="Payment"
-            note={`${payments.length} receipts · ${receivables.length} chases · ${salary.filter((p) => p.status !== 'Paid').length} salary pending`}
+            note={`${payments.length} receipts · ${chases} chases · ${salary.filter((p) => p.status !== 'Paid').length} salary pending`}
             value={shortInr(collected + membershipPaid)}
             tone="text-emerald-600"
             to="/payment"

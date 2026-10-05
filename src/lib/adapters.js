@@ -479,6 +479,10 @@ export const ADAPTERS = {
         validity: p.freeStay?.note || `${p.freeStay?.validityMonths ?? 12} months from joining`,
       },
       services: p.services || [],
+      sharing: {
+        price: p.sharing?.price ?? 0,
+        label: p.sharing?.label || '',
+      },
       gifts: p.gifts || [],
       features: p.features || [],
       published: p.published,
@@ -508,6 +512,7 @@ export const ADAPTERS = {
           }
         : undefined,
       services: p.services,
+      sharing: p.sharing ? { price: num(p.sharing.price) ?? 0, label: p.sharing.label } : undefined,
       gifts: p.gifts,
       features: p.features,
       published: p.published,

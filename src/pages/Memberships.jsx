@@ -202,10 +202,22 @@ export default function Memberships({ embedded = false }) {
     { name: 'billing', label: 'Billing cycle', type: 'select', options: BILLING },
     { name: 'duration', label: 'Duration', type: 'text', placeholder: '12 months' },
     { name: 'price', label: 'Price per member (₹)', type: 'number', required: true },
-    { name: 'discount', label: 'Package discount (%)', type: 'number', help: 'Members get this off every package' },
     { name: 'persons', label: 'Persons covered', type: 'number' },
     { name: 'rooms', label: 'Rooms per free stay', type: 'number' },
     { name: 'privileges', label: 'Preferred services a member can choose', type: 'number' },
+    {
+      name: 'sharingPrice',
+      label: 'Membership sharing (₹)',
+      type: 'number',
+      help: 'What it costs to share this plan with family. Nought and the website does not offer it.',
+    },
+    {
+      name: 'sharingLabel',
+      label: 'Line under the sharing price',
+      type: 'text',
+      full: true,
+      placeholder: 'To share your member benefits',
+    },
     { name: 'freeNights', label: 'Free stay nights', type: 'number' },
     { name: 'freeValidity', label: 'Free stay validity', type: 'text', placeholder: '12 months from joining' },
     {
@@ -235,9 +247,10 @@ export default function Memberships({ embedded = false }) {
     },
   ];
 
-  const savePlan = ({ freeNights, freeValidity, ...values }) => {
+  const savePlan = ({ freeNights, freeValidity, sharingPrice, sharingLabel, ...values }) => {
     const withStay = {
       ...values,
+      sharing: { price: Number(sharingPrice || 0), label: sharingLabel || '' },
       freeStay: {
         nights: Number(freeNights || 0),
         rooms: Number(values.rooms || 0),
@@ -467,7 +480,6 @@ export default function Memberships({ embedded = false }) {
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  <span className={`chip ${variant.pill}`}>{plan.discount}% off packages</span>
                   <span className={`chip ${variant.pill}`}>
                     <Gift size={11} /> {(plan.gifts || []).length} gifts
                   </span>
@@ -489,14 +501,11 @@ export default function Memberships({ embedded = false }) {
                   ))}
                 </dl>
 
-                {plan.discount > 0 && (
-                  <p className="mt-2 rounded-lg bg-surface-soft px-3 py-2 text-[11px] font-bold text-ink-700">
-                    {plan.discount}% off every package, for as long as you are a member
-                  </p>
-                )}
-
                 <p className={`mt-2 text-[11px] font-semibold ${variant.note}`}>
                   {plan.privileges ?? 1} preferred services
+                  {plan.sharing?.price > 0
+                    ? ` · sharing ${inr(plan.sharing.price)}`
+                    : ' · not shared'}
                 </p>
               </div>
 
@@ -665,8 +674,10 @@ export default function Memberships({ embedded = false }) {
                 ...editing,
                 freeNights: editing.freeStay?.nights ?? 0,
                 freeValidity: editing.freeStay?.validity || '',
+                sharingPrice: editing.sharing?.price ?? 0,
+                sharingLabel: editing.sharing?.label || '',
               }
-            : { billing: 'Yearly', duration: '12 months', discount: 5, persons: 2, rooms: 1, privileges: 1, freeNights: 1 }
+            : { billing: 'Yearly', duration: '12 months', persons: 2, rooms: 1, privileges: 1, freeNights: 1, sharingPrice: 0 }
         }
         submitLabel={editing ? 'Save changes' : 'Create plan'}
       />

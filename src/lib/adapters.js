@@ -875,18 +875,64 @@ export const ADAPTERS = {
     }),
   },
 
+  /**
+   * A payment, whole.
+   *
+   * This used to hand over six fields — who, when, how, how much, its
+   * status and a dash where the invoice should be. Everything else the
+   * Payment page shows was reconstructed on the other side: the product
+   * by hunting the invoice for a booking, the tax and discount off that
+   * booking rather than off the payment, and the gateway and branch
+   * invented outright from the mode and the owner's first name. All of
+   * it was already stored here and none of it was being read.
+   */
   payments: {
     path: '/payments',
     from: (p) => ({
       ...base(p),
       customer: p.customerName || fullName(p.customer),
-      invoice: p.invoice ? '—' : '—',
+      customerCode: p.customer?.code || '',
+      customerPhone: p.customer?.phone || '',
+
+      // What the money was for, and the record it settled.
+      product: p.product || '',
+      bookingCode: p.booking?.code || '',
+      bookingType: p.booking?.bookingType || '',
+      bookingName: p.booking?.hotel || p.booking?.packageName || '',
+      membershipCode: p.membership?.code || '',
+      planName: p.membership?.planName || '',
+      // The reference the gateway was given — see withPayRef on the API.
+      payRef: p.booking?.payRef || p.membership?.payRef || '',
+
+      invoice: ref(p.invoice) || '',
       date: d(p.paidOn),
       mode: p.mode,
+      gateway: p.gateway && p.gateway !== '—' ? p.gateway : '',
+      txnId: p.gatewayTxnId || '',
+      gatewayFee: p.gatewayFee ?? 0,
+      settlement: p.settlementStatus || '',
+      settledOn: p.settlementOn ? d(p.settlementOn) : '',
+
       amount: p.amount ?? 0,
+      tax: p.tax ?? 0,
+      discount: p.discount ?? 0,
+
+      collectedBy: who(p.collectedBy),
+      branch: p.branch || '',
+      reference: p.reference || '',
+      note: p.note || '',
       status: p.status,
     }),
-    to: (p) => ({ amount: p.amount, mode: p.mode, status: p.status }),
+    to: (p) => ({
+      amount: num(p.amount),
+      mode: p.mode,
+      status: p.status,
+      gateway: p.gateway,
+      gatewayTxnId: p.txnId,
+      branch: p.branch,
+      reference: p.reference,
+      note: p.note,
+    }),
   },
 
   approvals: {

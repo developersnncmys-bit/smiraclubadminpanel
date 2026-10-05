@@ -185,27 +185,42 @@ export default function Payment() {
 
   const vendorPayable = bookings.reduce((s, b) => s + Number(b.vendorContact?.payable || 0), 0);
 
-  // -- Every transaction, from what the panel already knows -------------------
+  /**
+   * Every transaction, as the payment itself records it.
+   *
+   * The product, the tax, the discount, the gateway, who took it and
+   * where used to be worked out here from whatever booking could be
+   * found through the invoice — and the gateway and the branch were not
+   * worked out at all, they were guessed from the mode and the owner's
+   * name. Every one of them is on the payment, so every one is read from
+   * it. A payment with nothing filled in shows a dash rather than
+   * something made up.
+   */
   const transactions = [
     ...payments.map((p) => {
-      const inv = invoices.find((i) => i.id === p.invoice);
-      const bk = bookings.find((b) => b.id === inv?.booking);
+      const what = [p.bookingType || (p.membershipCode ? 'Membership' : ''), p.bookingName || p.planName]
+        .filter(Boolean)
+        .join(' · ');
       return {
         key: p.id,
         id: p.id,
         customer: p.customer,
-        product: bk ? `${bk.bookingType || 'Package'} · ${bk.hotel || bk.pkg}` : 'Booking',
-        kind: 'Booking',
+        customerCode: p.customerCode,
+        // The record it settled, so a row can be traced without opening it.
+        against: p.bookingCode || p.membershipCode || '',
+        payRef: p.payRef,
+        product: p.product || what || '—',
+        kind: p.membershipCode ? 'Membership' : 'Booking',
         amount: Number(p.amount || 0),
-        tax: Number(bk?.charges?.taxes || 0),
-        discount: Number(bk?.charges?.membershipDiscount || 0) + Number(bk?.charges?.offerDiscount || 0),
+        tax: Number(p.tax || 0),
+        discount: Number(p.discount || 0),
         mode: p.mode,
-        gateway: p.mode === 'Cash' ? '—' : 'Razorpay',
-        employee: bk?.owner || '—',
-        branch: bk?.owner === 'Sneha' ? 'Mumbai' : 'Pune',
+        gateway: p.gateway || '—',
+        employee: p.collectedBy || '—',
+        branch: p.branch || '—',
         date: p.date,
         status: p.status === 'Success' ? 'Paid' : p.status,
-        txn: bk?.payment?.txnId || '—',
+        txn: p.txnId || '—',
       };
     }),
     ...memberSignups

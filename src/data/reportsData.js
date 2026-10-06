@@ -51,44 +51,6 @@ export const membershipStates = [
   'Cancelled',
 ];
 
-/** What the agency spends on each channel, for cost per lead and ROI. */
-export const sourceCosts = {
-  Website: 18000,
-  Instagram: 42000,
-  'Google Ads': 56000,
-  'Facebook Ads': 24000,
-  WhatsApp: 6000,
-  Referral: 0,
-  'Walk-in': 0,
-  'Field team': 30000,
-  Campaign: 22000,
-  'Existing member': 0,
-  Other: 0,
-};
-
-/** How members actually use the app and the website. */
-export const engagementStats = {
-  logins: 168,
-  searches: 412,
-  wishlist: 37,
-  inquiries: 24,
-  bookings: 2,
-  offersViewed: 96,
-  giftsClaimed: 3,
-  referrals: 5,
-  whatsapp: 143,
-};
-
-/** Messages and automation, for the WhatsApp report. */
-export const messagingStats = {
-  sent: 312,
-  delivered: 298,
-  read: 241,
-  replied: 88,
-  templates: 6,
-  campaigns: 2,
-};
-
 /** Reports that go out without anyone asking. */
 export const scheduledReports = [];
 

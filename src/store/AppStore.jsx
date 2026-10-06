@@ -21,7 +21,10 @@ import * as reportsSeed from '../data/reportsData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
-const KEY = 'smira-club-admin:v36';
+// v37: the offers, rewards, revenue and automation seeds were removed, so
+// a snapshot saved before that holds rows in a shape those pages no longer
+// read. Bumping the key drops it rather than crashing on it.
+const KEY = 'smira-club-admin:v37';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 

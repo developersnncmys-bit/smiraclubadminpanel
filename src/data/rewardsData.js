@@ -62,62 +62,6 @@ export const needsApproval = ['Physical gifts', 'High-value rewards', 'Special c
 /** A gift has to physically arrive. */
 export const dispatchFlow = ['Approved', 'Packed', 'Dispatched', 'Delivered'];
 
-/** The rules already live. */
-export const rewardRules = [
-  {
-    id: 'RR-01',
-    name: 'Two villa bookings, dinner on us',
-    when: 'Booking completed',
-    conditions: ['Booking type is Villa', 'Completed bookings = 2'],
-    gives: 'Dinner coupon',
-    value: 1000,
-    cost: 350,
-    validFor: '60 days',
-    max: '1 per customer',
-    status: 'Active',
-    earned: 14,
-  },
-  {
-    id: 'RR-02',
-    name: 'Gold membership welcome gift',
-    when: 'Membership purchased',
-    conditions: ['Plan is Gold Voyager or above'],
-    gives: 'Travel bag',
-    value: 1500,
-    cost: 600,
-    validFor: '90 days',
-    max: '1 per customer',
-    status: 'Active',
-    earned: 21,
-  },
-  {
-    id: 'RR-03',
-    name: 'Package booking travel bag',
-    when: 'Package booked',
-    conditions: ['Package value is ₹25,000 or more'],
-    gives: 'Travel bag',
-    value: 1500,
-    cost: 600,
-    validFor: '60 days',
-    max: '2 per year',
-    status: 'Active',
-    earned: 9,
-  },
-  {
-    id: 'RR-04',
-    name: 'Five hotel bookings, ₹1,000 back',
-    when: 'Hotel booking',
-    conditions: ['Completed bookings = 5'],
-    gives: '₹1,000 booking voucher',
-    value: 1000,
-    cost: 1000,
-    validFor: '120 days',
-    max: '1 per year',
-    status: 'Paused',
-    earned: 4,
-  },
-];
-
 /** Booking milestones, by product. */
 export const milestones = {
   Villa: [
@@ -138,39 +82,6 @@ export const milestones = {
     { at: '₹2,00,000+', gives: 'Special experience' },
   ],
 };
-
-/** What each customer has earned, and where it has got to. */
-export const customerRewards = [];
-
-/** Physical gifts on their way to somebody. */
-export const dispatches = [
-  {
-    id: 'GFT-01',
-    customer: 'Rohan Bhatt',
-    gift: 'Travel bag',
-    reason: 'Package booking',
-    stage: 'Pending dispatch',
-    courier: '—',
-    awb: '—',
-    dispatched: '—',
-    delivered: '—',
-    proof: '—',
-    staff: 'Ritik',
-  },
-  {
-    id: 'GFT-02',
-    customer: 'Siddhesh Rane',
-    gift: 'Welcome travel kit',
-    reason: 'Joined Silver Explorer',
-    stage: 'Delivered',
-    courier: 'Blue Dart',
-    awb: 'BD-88410277',
-    dispatched: '06 Oct 2025',
-    delivered: '08 Oct 2025',
-    proof: 'Signed slip',
-    staff: 'Ritik',
-  },
-];
 
 /** The referral pipeline, exactly as the sheet lists it. */
 export const referralPipeline = [
@@ -207,9 +118,6 @@ export const referralRule = {
   combinable: false,
 };
 
-/** Referrals in flight. */
-export const referrals = [];
-
 /** What the panel does the moment a referral converts. */
 export const referralAutomation = [
   'Identifies the referrer',
@@ -240,12 +148,6 @@ export const campaignControls = [
 /** The messages a reward sets off. */
 export const whatsappMessages = [];
 
-/** Coupon codes given to staff, so a sale can be traced back to them. */
-export const staffCoupons = [
-  { code: 'SNEHA10', staff: 'Sneha Kulkarni', gives: '10% off a package', validTill: '31 Dec 2026', used: 6, revenue: 285000, status: 'Active' },
-  { code: 'KABIR05', staff: 'Kabir Menon', gives: '5% off a hotel booking', validTill: '31 Dec 2026', used: 3, revenue: 118000, status: 'Active' },
-];
-
 /** What management wants out of the programme. */
 export const reportGroups = {
   Rewards: ['Rewards issued', 'Rewards redeemed', 'Rewards expired', 'Rewards cancelled', 'Reward cost', 'Reward liability', 'Most popular rewards'],
@@ -255,5 +157,3 @@ export const reportGroups = {
   Team: ['Which staff generated the most referrals', 'Which staff generated repeat bookings', 'Which team member holds customers longest'],
 };
 
-/** Revenue the rewarded customers brought back. */
-export const roi = { revenueFromRewarded: 5000000, rewardCost: 500000 };

@@ -227,7 +227,7 @@ export default function Offers() {
                 <li key={r.label} className="flex items-center gap-3 rounded-xl bg-surface-soft px-3.5 py-2.5">
                   <span className={`h-8 w-1.5 shrink-0 rounded-full ${r.tone}`} />
                   <span className="min-w-0 flex-1 text-sm font-semibold text-ink-700">{r.label}</span>
-                  <span className="num font-display text-lg font-extrabold text-ink-900">{r.value.toLocaleString('en-IN')}</span>
+                  <span className="num font-display text-lg font-extrabold text-ink-900">{Number(r.value || 0).toLocaleString('en-IN')}</span>
                 </li>
               ))}
             </ul>
@@ -279,7 +279,7 @@ export default function Offers() {
                   key: o.id,
                   cells: [
                     o.name,
-                    <span className="num">{o.views.toLocaleString('en-IN')}</span>,
+                    <span className="num">{Number(o.views || 0).toLocaleString('en-IN')}</span>,
                     <span className="num">{o.clicks}</span>,
                     <span className="num">{o.enquiries}</span>,
                     <span className="num">{o.bookings}</span>,
@@ -374,7 +374,7 @@ export default function Offers() {
               </span>,
               o.benefit,
               <span className="flex flex-wrap gap-1">
-                {o.tiers.map((t) => (
+                {(o.tiers || []).map((t) => (
                   <Badge key={t} tone="teal">
                     {t}
                   </Badge>
@@ -622,7 +622,7 @@ export default function Offers() {
               cells: [
                 o.name,
                 <span className="flex flex-wrap gap-1.5">
-                  {o.where.map((w) => (
+                  {(o.where || []).map((w) => (
                     <span key={w} className="chip text-ink-600">
                       {w}
                     </span>
@@ -652,7 +652,7 @@ export default function Offers() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              {c.includes.map((i) => (
+              {(c.includes || []).map((i) => (
                 <span key={i} className="chip text-ink-600">
                   {i}
                 </span>

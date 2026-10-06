@@ -29,8 +29,6 @@ import { useEndpoint } from '../lib/useEndpoint.js';
 import { groupExpenses } from '../lib/expenses.js';
 import { salary } from '../data/paymentData.js';
 import { inboxStats, botSessions } from '../data/whatsappData.js';
-import { rules as automationRules, history as automationHistory } from '../data/automationData.js';
-import { customerRewards, referrals } from '../data/rewardsData.js';
 import { holds } from '../data/inventoryData.js';
 
 /**
@@ -97,7 +95,8 @@ export default function Dashboard() {
   const {
     team, enquiries, bookings, memberSignups, memberships, customers,
     invoices, payments, tickets, partners, inventory, range,
-    offers = [],
+    offers = [], rewardGrants: customerRewards = [], referrals = [],
+    automations: automationRules = [],
   } = useApp();
 
   /**
@@ -144,7 +143,8 @@ export default function Dashboard() {
   const openTickets = tickets.filter((t) => !['Closed', 'Customer confirmed'].includes(t.stage));
   const breached = tickets.filter((t) => t.slaState === 'Breached');
   const online = team.filter((m) => m.live === 'Online').length;
-  const failedJobs = automationHistory.filter((h) => h.status === 'Failed').length;
+  // Errors the rules themselves have recorded, rather than a log that was empty.
+  const failedJobs = automationRules.reduce((s, r) => s + Number(r.errors || 0), 0);
 
   const alerts = [
     ...(outstanding ? [{ level: 'critical', text: `${inr(outstanding)} outstanding on bookings`, to: '/payment' }] : []),
@@ -458,13 +458,13 @@ export default function Dashboard() {
             icon={Zap}
             label="Automation"
             note={`${automationRules.filter((r) => r.status === 'On').length} rules on · ${failedJobs} failed`}
-            value={automationRules.reduce((s, r) => s + r.runs, 0)}
+            value={automationRules.reduce((s, r) => s + Number(r.runs || 0), 0)}
             to="/automation"
           />
           <ModuleLine
             icon={Gift}
             label="Rewards and referrals"
-            note={`${referrals.filter((r) => r.verified).length} successful referrals · ${inr(customerRewards.reduce((s, r) => s + r.cost, 0))} cost`}
+            note={`${referrals.filter((r) => r.paid).length} successful referrals · ${inr(customerRewards.reduce((s, r) => s + Number(r.cost ?? r.value ?? 0), 0))} cost`}
             value={customerRewards.length}
             to="/rewards"
           />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Zap,
   Plus,
@@ -25,7 +25,6 @@ import {
   operators,
   actions,
   builderShape,
-  rules as seedRules,
   leadStages as seedStages,
   followUpSequence as seedSequence,
   configureBy,
@@ -38,7 +37,6 @@ import {
   escalationRules as seedEscalations,
   templates,
   customFields as seedFields,
-  history,
   structure,
   waitOptions,
   recipients,
@@ -47,6 +45,7 @@ import {
   automationPermissions,
 } from '../data/automationData.js';
 import Table from '../components/ui/Table.jsx';
+import { useEndpoint } from '../lib/useEndpoint.js';
 
 const SECTIONS = [
   'Dashboard',
@@ -84,6 +83,26 @@ function RuleLine({ label, value, tone = 'bg-surface-soft text-ink-800' }) {
  */
 export default function Automation() {
   const { automations, create, update, remove, toast } = useApp();
+
+  /**
+   * What the panel actually did on its own.
+   *
+   * The log was an empty array in this repository, so the History tab
+   * said nothing had ever run however many rules were firing. It reads
+   * the audit trail the server keeps against automation rules.
+   */
+  const { data: logged } = useEndpoint('/automation/history?limit=200', { fallback: [] });
+  const history = useMemo(
+    () =>
+      (logged || []).map((h) => ({
+        at: h.createdAt ? new Date(h.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '',
+        lead: h.entityId || '',
+        text: h.message || h.action || '',
+        rule: h.actorName || 'Automation',
+        status: /fail|error/i.test(`${h.action} ${h.message}`) ? 'Failed' : 'Done',
+      })),
+    [logged],
+  );
   const [section, setSection] = useState('Dashboard');
   const [stages, setStages] = useState(seedStages);
   const [sequence, setSequence] = useState(seedSequence);

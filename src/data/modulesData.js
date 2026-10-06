@@ -31,10 +31,8 @@ export const notificationRules = [
 ];
 
 // -- Offers and promotions --------------------------------------------------
-export const offers = [
-  { id: 'OFR-01', code: 'MONSOON15', title: 'Monsoon Kerala — 15% off', discount: 15, kind: 'Percent', appliesTo: 'Kerala packages', validTill: '30 Sep 2026', used: 24, limit: 100, status: 'Running' },
-  { id: 'OFR-02', code: 'HONEY5000', title: 'Honeymoon flat ₹5,000 off', discount: 5000, kind: 'Flat', appliesTo: 'Honeymoon packages', validTill: '31 Dec 2026', used: 11, limit: 50, status: 'Running' },
-];
+// The offers are whatever the Offers page has saved to the server.
+export const offers = [];
 
 // -- Roles ------------------------------------------------------------------
 export const permissionAreas = [

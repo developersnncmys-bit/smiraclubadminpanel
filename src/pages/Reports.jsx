@@ -37,7 +37,6 @@ import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
-  sourceCosts,
   reportRecipients,
   reportModules,
   reportMeasures,
@@ -47,6 +46,17 @@ import {
   membershipStates,
 } from '../data/reportsData.js';
 import Table from '../components/ui/Table.jsx';
+
+/**
+ * What each lead source costs to run.
+ *
+ * Nothing records it. There were nine figures written in here — fifty-six
+ * thousand of Google Ads a month, forty-two of Instagram — which made
+ * cost per lead and return on spend read like measurements of something.
+ * Until marketing spend is entered per channel, those columns show a
+ * dash, which is the true answer.
+ */
+const sourceCosts = {};
 
 const SECTIONS = [
   'Overview',
@@ -231,8 +241,9 @@ export default function Reports() {
       sales: w.length,
       revenue,
       conversion: all.length ? Math.round((w.length / all.length) * 100) : 0,
-      cpl: all.length ? Math.round(cost / all.length) : 0,
-      cpa: w.length ? Math.round(cost / w.length) : 0,
+      // Null, not nought: nobody has said what this source costs.
+      cpl: cost && all.length ? Math.round(cost / all.length) : null,
+      cpa: cost && w.length ? Math.round(cost / w.length) : null,
       roi: cost ? Math.round(((revenue - cost) / cost) * 100) : null,
     };
   });
@@ -480,7 +491,7 @@ export default function Reports() {
                 r.source, num(r.leads), num(r.qualified), num(r.presentations), num(r.sales),
                 <span className="num font-bold text-brand-700">{r.revenue ? inr(r.revenue) : '—'}</span>,
                 num(`${r.conversion}%`),
-                num(r.cpl ? inr(r.cpl) : 'free'),
+                num(r.cpl != null ? inr(r.cpl) : '—'),
                 num(r.cpa ? inr(r.cpa) : '—'),
                 r.roi == null ? '—' : (
                   <span className={`num font-bold ${r.roi >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{r.roi}%</span>

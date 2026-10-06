@@ -81,7 +81,6 @@ export const builderShape = [
 ];
 
 /** The rules already running. */
-export const rules = [];
 
 /** The stages a lead walks, which the admin owns. */
 export const leadStages = [
@@ -180,7 +179,6 @@ export const customFields = [
 ];
 
 /** Every automated action, logged. */
-export const history = [];
 
 /** What the admin panel holds under automation. */
 export const structure = [

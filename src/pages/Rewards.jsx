@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Gift,
   Plus,
@@ -27,21 +27,15 @@ import {
   autoApproved,
   needsApproval,
   dispatchFlow,
-  rewardRules,
   milestones,
-  customerRewards,
-  dispatches,
   referralPipeline,
   referralControls,
   referralRule,
-  referrals,
   referralAutomation,
   campaigns,
   campaignControls,
   whatsappMessages,
-  staffCoupons,
   reportGroups,
-  roi,
 } from '../data/rewardsData.js';
 import Table from '../components/ui/Table.jsx';
 
@@ -89,7 +83,45 @@ function Flow({ steps, at = -1 }) {
  * gift that has to physically arrive.
  */
 export default function Rewards() {
-  const { toast } = useApp();
+  /**
+   * Grants, referrals and the customers behind them, from the server.
+   *
+   * Everything on this page used to be read out of a file: rules the
+   * agency had never written, a gift on its way to a customer who does
+   * not exist, two staff coupons, and five lakh of revenue attributed
+   * to the programme. Those are gone; this is what is actually recorded.
+   */
+  const { toast, rewardGrants = [], referrals = [], customers = [] } = useApp();
+
+  const customerRewards = rewardGrants;
+
+  /** A gift somebody has to put in a box and send. */
+  const dispatches = useMemo(
+    () => rewardGrants.filter((r) => dispatchFlow.includes(r.stage)),
+    [rewardGrants],
+  );
+
+  /**
+   * What the programme cost and what the rewarded customers spent.
+   *
+   * Worked out from the grants and those customers' own spend, rather
+   * than the two round numbers that used to sit here.
+   */
+  const roi = useMemo(() => {
+    const names = new Set(rewardGrants.map((r) => r.customer).filter(Boolean));
+    return {
+      rewardCost: rewardGrants.reduce((s, r) => s + Number(r.cost ?? r.value ?? 0), 0),
+      revenueFromRewarded: customers
+        .filter((c) => names.has(c.name))
+        .reduce((s, c) => s + Number(c.spend || 0), 0),
+    };
+  }, [rewardGrants, customers]);
+
+  /** Nothing records a coupon against a member of staff yet. */
+  const staffCoupons = [];
+
+  /** Nor a reward rule — the builder below writes one, the server keeps none. */
+  const rewardRules = [];
   const [section, setSection] = useState('Dashboard');
   const [draft, setDraft] = useState({
     trigger: 'Booking completed',
@@ -105,15 +137,16 @@ export default function Rewards() {
   const available = customerRewards.filter((r) => r.stage === 'Available').length;
   const pending = customerRewards.filter((r) => ['Earned', 'Pending'].includes(r.stage)).length;
   const redeemed = customerRewards.filter((r) => r.stage === 'Redeemed').length;
-  const faceValue = customerRewards.reduce((s, r) => s + r.value, 0);
-  const companyCost = customerRewards.reduce((s, r) => s + r.cost, 0);
+  const faceValue = customerRewards.reduce((s, r) => s + Number(r.value || 0), 0);
+  const companyCost = customerRewards.reduce((s, r) => s + Number(r.cost ?? r.value ?? 0), 0);
   const liability = customerRewards
     .filter((r) => ['Earned', 'Pending', 'Approved', 'Available'].includes(r.stage))
-    .reduce((s, r) => s + r.value, 0);
+    .reduce((s, r) => s + Number(r.value || 0), 0);
 
-  const successful = referrals.filter((r) => r.verified).length;
-  const referralRevenue = referrals.reduce((s, r) => s + r.value, 0);
-  const referralCost = referrals.reduce((s, r) => s + r.rewardValue, 0);
+  // A referral counts as successful once the desk has paid the reward on it.
+  const successful = referrals.filter((r) => r.paid || r.status === 'Rewarded').length;
+  const referralRevenue = referrals.reduce((s, r) => s + Number(r.value || 0), 0);
+  const referralCost = referrals.reduce((s, r) => s + Number(r.reward || 0), 0);
   const conversion = referrals.length ? Math.round((successful / referrals.length) * 100) : 0;
   const roiMultiple = roi.rewardCost ? Math.round(roi.revenueFromRewarded / roi.rewardCost) : 0;
 

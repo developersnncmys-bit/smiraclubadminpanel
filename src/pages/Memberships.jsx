@@ -564,6 +564,32 @@ export default function Memberships({ embedded = false }) {
                     down to this; left empty it counts down to nothing
                     and simply lists them, which is the honest default.
                   */}
+                  {/*
+                    Nought means every gift listed comes with the plan;
+                    one means "choose any one", which is how the lower
+                    tiers are sold.
+                  */}
+                  <label className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-brand-800">
+                    <span className="shrink-0">Member chooses</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max={(plan.gifts || []).length}
+                      value={plan.giftChoices ?? 0}
+                      onChange={(e) =>
+                        update('memberships', plan.id, { giftChoices: Number(e.target.value) || 0 }, {
+                          message: Number(e.target.value)
+                            ? `${plan.name} members choose ${Number(e.target.value)} of the gifts`
+                            : `${plan.name} members get every gift listed`,
+                        })
+                      }
+                      className="input w-16 border-brand-600/20 bg-white py-1 text-xs"
+                    />
+                    <span className="text-brand-700/70">
+                      {Number(plan.giftChoices) ? 'of the gifts' : '= all of them'}
+                    </span>
+                  </label>
+
                   <label className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-brand-800">
                     <span className="shrink-0">Offer ends</span>
                     <input

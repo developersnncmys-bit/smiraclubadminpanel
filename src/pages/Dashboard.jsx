@@ -126,6 +126,12 @@ export default function Dashboard() {
     bookings.filter((b) => Number(b.amount || 0) - Number(b.paid || 0) > 0).length;
 
   // -- Money -----------------------------------------------------------------
+  /**
+   * What the finance module has added up: revenue taken, what it cost,
+   * what is still owed. Read before anything below needs it.
+   */
+  const { data: money } = useEndpoint('/revenue');
+
   const won = enquiries.filter((e) => e.status === 'Won');
   const openLeads = enquiries.filter((e) => !['Won', 'Lost'].includes(e.status));
   const collected = invoices.reduce((s, i) => s + Number(i.paid || 0), 0);
@@ -135,15 +141,24 @@ export default function Dashboard() {
   const bookingValue = bookings.reduce((s, b) => s + Number(b.amount || 0), 0);
   const partnerCost = bookings.reduce((s, b) => s + Number(b.vendorContact?.payable || 0), 0);
   const markup = Math.max(0, bookingValue - partnerCost);
-  // The company's revenue is what the desk booked — the same roll-up Team
-  // Status reports, so profit and achievement agree across the panel.
-  const revenue = team.reduce((s, m) => s + Number(m.revenue || 0), 0);
-  const target = team.reduce((s, m) => s + Number(m.target || 0), 0);
-  const achievement = target ? Math.round((revenue / target) * 100) : 0;
+  /**
+   * Revenue is money the agency has taken.
+   *
+   * It used to be the sum of a `revenue` figure sitting on each user
+   * record — a sales credit somebody types, not a payment anybody made.
+   * That is how the tile could read twenty-six lakh with nothing
+   * collected underneath it, which is the wrong number in the most
+   * expensive place on the panel.
+   *
+   * /revenue adds up what was actually paid: memberships by what has
+   * been received against them, bookings by their markup, less refunds.
+   * Until the API answers it is nought rather than a guess.
+   */
+  const revenue = Number(money?.netRevenue || 0);
+  const target = Number(money?.target || 0);
+  const achievement = Number(money?.achievement || 0);
 
   const sum = (list) => list.reduce((s, x) => s + Number(x.amount || 0), 0);
-  // What the agency has actually spent, from the Expenses module.
-  const { data: money } = useEndpoint('/revenue');
 
   /** The last thirty days the desk took money, and the day's share of target. */
   const trend = useMemo(() => {
@@ -185,6 +200,8 @@ export default function Dashboard() {
   const totalExpenses = officeCost + staffCost + businessCost;
   const profit = revenue - totalExpenses;
   const margin = revenue ? Math.round((profit / revenue) * 100) : 0;
+  /** Billed and not yet paid, as the finance module has it. */
+  const receivable = Number(money?.receivable || 0);
 
   // -- Counts ----------------------------------------------------------------
   const activeMembers = memberSignups.filter((m) => m.status === 'Active');
@@ -271,7 +288,7 @@ export default function Dashboard() {
             { label: 'Profit', value: shortInr(profit), icon: TrendingUp, tone: profit >= 0 ? 'text-emerald-600' : 'text-rose-600', hint: `${margin}% margin` },
             { label: 'Open leads', value: openLeads.length, icon: Users, hint: `${shortInr(openLeads.reduce((s, e) => s + Number(e.budget || 0), 0))} in play` },
             { label: 'Trips', value: bookings.length, icon: CalendarCheck, hint: `${shortInr(bookingValue)} booked` },
-            { label: 'Outstanding', value: shortInr(outstanding + membershipDue), icon: AlertTriangle, tone: outstanding + membershipDue ? 'text-amber-600' : 'text-ink-900', hint: 'still to collect' },
+            { label: 'Outstanding', value: shortInr(receivable || outstanding + membershipDue), icon: AlertTriangle, tone: (receivable || outstanding + membershipDue) ? 'text-amber-600' : 'text-ink-900', hint: 'still to collect' },
           ]}
         />
       </div>
@@ -315,10 +332,13 @@ export default function Dashboard() {
           {/* Where the money came from — the tiles above say how much */}
           <div className="mt-4 grid grid-cols-2 divide-ink-900/[0.07] rounded-xl border border-ink-900/[0.07] sm:grid-cols-4 sm:divide-x">
             {[
-              ['Membership', team.reduce((a, m) => a + Number(m.revenueDetail?.sources?.Membership || 0), 0), 'text-ink-900'],
-              ['Booking', team.reduce((a, m) => a + Number(m.revenueDetail?.sources?.Booking || 0), 0), 'text-ink-900'],
-              ['Add-ons', team.reduce((a, m) => a + Number(m.revenueDetail?.sources?.Addons || 0), 0), 'text-ink-900'],
-              ['Collected', team.reduce((a, m) => a + Number(m.revenueDetail?.collected || 0), 0), 'text-emerald-600'],
+              // Where the money came from, as the finance module has it.
+              // These read a revenueDetail nobody fills in, so all four
+              // showed nought under a revenue of twenty-six lakh.
+              ['Membership', Number(money?.membershipRevenue || 0), 'text-ink-900'],
+              ['Booking markup', Number(money?.bookingMarkup || 0), 'text-ink-900'],
+              ['Refunds', -Number(money?.refunds || 0), 'text-rose-600'],
+              ['Collected on invoices', Number(money?.collected || 0), 'text-emerald-600'],
             ].map(([label, v, tone]) => (
               <div key={label} className="px-4 py-3">
                 <p className={`num truncate font-display text-lg font-extrabold leading-none ${tone}`}>{shortInr(v)}</p>

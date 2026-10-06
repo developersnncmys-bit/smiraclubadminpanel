@@ -7,11 +7,22 @@
 export const inr = (n) =>
   '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
+/**
+ * The same, shortened — and a loss shortens too.
+ *
+ * Every branch here compared against the raw number, so a negative fell
+ * through all of them to the long form: a profit of 22 lakh read as
+ * ₹22.58 L while a loss of two read as ₹-2,39,894 — and that is the one
+ * figure on the page you most want to compare at a glance.
+ */
 export const shortInr = (n) => {
-  if (n >= 10000000) return '₹' + (n / 10000000).toFixed(2) + ' Cr';
-  if (n >= 100000) return '₹' + (n / 100000).toFixed(2) + ' L';
-  if (n >= 1000) return '₹' + (n / 1000).toFixed(1) + 'K';
-  return inr(n);
+  const v = Number(n) || 0;
+  const sign = v < 0 ? '-' : '';
+  const size = Math.abs(v);
+  if (size >= 10000000) return sign + '₹' + (size / 10000000).toFixed(2) + ' Cr';
+  if (size >= 100000) return sign + '₹' + (size / 100000).toFixed(2) + ' L';
+  if (size >= 1000) return sign + '₹' + (size / 1000).toFixed(1) + 'K';
+  return inr(v);
 };
 
 /** '02 Sep 2026' -> '2026-09-02', the only format a date input accepts. */

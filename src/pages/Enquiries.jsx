@@ -112,7 +112,7 @@ export default function Enquiries() {
   const [params, setParams] = useSearchParams();
   const store = useApp();
   const {
-    enquiries, bookings, invoices, team, memberSignups, memberships,
+    enquiries, bookings, invoices, payments, team, memberSignups, memberships,
     owner, create, update, updateMany, remove, toast,
   } = store;
 
@@ -818,6 +818,7 @@ export default function Enquiries() {
             rows={rows}
             bookings={bookings}
             invoices={invoices}
+            payments={payments}
             team={team}
             signups={memberSignups}
             onPickStatus={openStage}

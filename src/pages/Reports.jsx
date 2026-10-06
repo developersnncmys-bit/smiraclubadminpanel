@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api.js';
 import {
   ResponsiveContainer,
@@ -28,7 +28,6 @@ import { daysUntil } from '../lib/membership.js';
 import {
   enquiryStatuses,
   statusTone,
-  salesTrend,
   inr,
   shortInr,
 } from '../data/mockData.js';
@@ -46,6 +45,7 @@ import {
   membershipStates,
 } from '../data/reportsData.js';
 import Table from '../components/ui/Table.jsx';
+import { dailyTrend } from '../lib/trend.js';
 
 /**
  * What each lead source costs to run.
@@ -148,7 +148,8 @@ export default function Reports() {
   const won = leads.filter((e) => e.status === 'Won');
   const lost = leads.filter((e) => e.status === 'Lost');
 
-  const chart = salesTrend.map((d) => ({ ...d }));
+  // The real last thirty days, from the receipts.
+  const chart = useMemo(() => dailyTrend(payments), [payments]);
 
   /** Records carry their dates as text, so read the day off the front. */
   const dayOf = (value) => {

@@ -525,39 +525,6 @@ export const upcomingDepartures = bookings
   .slice(0, 5);
 
 // -- Thirty days behind today, for the sales performance graph --------------
-export const salesTrend = [
-  { day: 1, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 2, revenue: 142000, closings: 1, customers: 1, target: 40000 },
-  { day: 3, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 4, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 5, revenue: 96000, closings: 1, customers: 1, target: 40000 },
-  { day: 6, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 7, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 8, revenue: 178000, closings: 1, customers: 1, target: 40000 },
-  { day: 9, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 10, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 11, revenue: 132000, closings: 1, customers: 1, target: 40000 },
-  { day: 12, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 13, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 14, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 15, revenue: 210000, closings: 1, customers: 1, target: 40000 },
-  { day: 16, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 17, revenue: 88000, closings: 1, customers: 1, target: 40000 },
-  { day: 18, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 19, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 20, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 21, revenue: 164000, closings: 1, customers: 1, target: 40000 },
-  { day: 22, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 23, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 24, revenue: 185000, closings: 1, customers: 1, target: 40000 },
-  { day: 25, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 26, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 27, revenue: 120000, closings: 1, customers: 1, target: 40000 },
-  { day: 28, revenue: 0, closings: 0, customers: 0, target: 40000 },
-  { day: 29, revenue: 336000, closings: 1, customers: 1, target: 40000 },
-  { day: 30, revenue: 0, closings: 0, customers: 0, target: 40000 },
-];
-
 /** The live activity feed on Sales & Leads. */
 export const salesActivity = [];
 

@@ -4,7 +4,7 @@ import {
   Handshake, Headphones, PieChart, IndianRupee, Wallet, Zap,
   MessageCircle, Warehouse, Gift, Megaphone, AlertTriangle, TrendingUp,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -23,13 +23,11 @@ import Block from '../components/ui/Block.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
-import { inr, shortInr, enquiryStatuses, bookingStatusTone, salesTrend } from '../data/mockData.js';
+import { inr, shortInr, enquiryStatuses, bookingStatusTone } from '../data/mockData.js';
 import { daysUntil } from '../lib/membership.js';
 import { useEndpoint } from '../lib/useEndpoint.js';
 import { groupExpenses } from '../lib/expenses.js';
-import { salary } from '../data/paymentData.js';
-import { inboxStats, botSessions } from '../data/whatsappData.js';
-import { holds } from '../data/inventoryData.js';
+
 
 /**
  * One module, as a line rather than a box: what it is, the one number that
@@ -96,8 +94,27 @@ export default function Dashboard() {
     team, enquiries, bookings, memberSignups, memberships, customers,
     invoices, payments, tickets, partners, inventory, range,
     offers = [], rewardGrants: customerRewards = [], referrals = [],
-    automations: automationRules = [],
+    automations: automationRules = [], conversations = [],
   } = useApp();
+
+  /**
+   * The month's takings by day, and what the desk has spent.
+   *
+   * The graph drew thirty days written into mockData — a hundred and
+   * forty-two thousand on the second, nothing on the third — so it told
+   * the same story every morning whatever the agency had done.
+   */
+  const { data: daily } = useEndpoint('/revenue/trend?grain=day', { fallback: [] });
+
+  /**
+   * One daily target out of the company's monthly one, which is the
+   * only target anything records. Spread evenly, because nothing says
+   * a Tuesday should carry more than a Thursday.
+   */
+  const monthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+
+  /** WhatsApp, counted from the conversations rather than described. */
+  const { data: messaging } = useEndpoint('/reports/messaging', { fallback: null });
 
   /**
    * How many people owe something, counted the same way the Payment
@@ -127,6 +144,42 @@ export default function Dashboard() {
   const sum = (list) => list.reduce((s, x) => s + Number(x.amount || 0), 0);
   // What the agency has actually spent, from the Expenses module.
   const { data: money } = useEndpoint('/revenue');
+
+  /** The last thirty days the desk took money, and the day's share of target. */
+  const trend = useMemo(() => {
+    const perDay = Math.round(Number(money?.target || 0) / monthDays);
+    return (daily || []).slice(-30).map((d) => ({
+      day: Number(String(d.period || '').slice(8)) || d.period,
+      revenue: Number(d.amount || 0),
+      target: perDay,
+    }));
+  }, [daily, money, monthDays]);
+
+  /**
+   * The WhatsApp desk, counted.
+   *
+   * These were nine constants in whatsappData — thirty-eight chats
+   * today, two hundred and sixty-eight handled by the bot — so the tile
+   * read the same every morning. Today's count and what is unanswered
+   * come from the conversations themselves; leads come from the
+   * messaging report, which is the thing that counts them.
+   */
+  const inbox = useMemo(() => {
+    const today = new Date().toDateString();
+    const sameDay = (v) => {
+      if (!v) return false;
+      const when = new Date(v);
+      return !Number.isNaN(when.getTime()) && when.toDateString() === today;
+    };
+    const bot = conversations.filter((c) => /bot/i.test(c.handledBy || '')).length;
+    return {
+      today: conversations.filter((c) => sameDay(c.lastAt)).length,
+      unanswered: conversations.filter((c) => Number(c.unread || 0) > 0).length,
+      leads: Number(messaging?.leads || 0),
+      // Null rather than nought: no conversations is not "0% bot handled".
+      botShare: conversations.length ? Math.round((bot / conversations.length) * 100) : null,
+    };
+  }, [conversations, messaging]);
   const spend = groupExpenses(money?.expenses?.byCategory);
   const { officeCost, staffCost, businessCost } = spend;
   const totalExpenses = officeCost + staffCost + businessCost;
@@ -149,11 +202,11 @@ export default function Dashboard() {
   const alerts = [
     ...(outstanding ? [{ level: 'critical', text: `${inr(outstanding)} outstanding on bookings`, to: '/payment' }] : []),
     ...(breached.length ? [{ level: 'critical', text: `${breached.length} complaint past its SLA`, to: '/support' }] : []),
-    ...(inboxStats.unanswered ? [{ level: 'critical', text: `${inboxStats.unanswered} WhatsApp chats unanswered`, to: '/whatsapp' }] : []),
+    ...(inbox.unanswered ? [{ level: 'critical', text: `${inbox.unanswered} WhatsApp ${inbox.unanswered === 1 ? 'chat is' : 'chats are'} unanswered`, to: '/whatsapp' }] : []),
     ...(soldOut.length ? [{ level: 'warning', text: `${soldOut.length} inventory items sold out`, to: '/inventory' }] : []),
     ...(expiringSoon.length ? [{ level: 'warning', text: `${expiringSoon.length} membership expiring within 30 days`, to: '/customers' }] : []),
     ...(pendingActivation.length ? [{ level: 'warning', text: `${pendingActivation.length} membership waiting on activation`, to: '/customers' }] : []),
-    ...(holds.length ? [{ level: 'warning', text: `${holds.length} inventory holds about to expire`, to: '/inventory' }] : []),
+
     ...(failedJobs ? [{ level: 'warning', text: `${failedJobs} automation job failed`, to: '/automation' }] : []),
   ];
 
@@ -231,7 +284,7 @@ export default function Dashboard() {
         >
           <div className="h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={salesTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <ComposedChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="4 6" stroke="rgba(11,21,36,0.07)" vertical={false} />
                 <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#96a2b4' }} dy={6} />
                 <YAxis
@@ -433,7 +486,7 @@ export default function Dashboard() {
           <ModuleLine
             icon={Wallet}
             label="Payment"
-            note={`${payments.length} receipts · ${chases} chases · ${salary.filter((p) => p.status !== 'Paid').length} salary pending`}
+            note={`${payments.length} receipts · ${chases} ${chases === 1 ? 'chase' : 'chases'}`}
             value={shortInr(collected + membershipPaid)}
             tone="text-emerald-600"
             to="/payment"
@@ -449,9 +502,9 @@ export default function Dashboard() {
           <ModuleLine
             icon={MessageCircle}
             label="WhatsApp"
-            note={`${inboxStats.leads} leads · bot handled ${Math.round((botSessions.completed / botSessions.total) * 100)}%`}
-            value={inboxStats.conversationsToday}
-            alert={inboxStats.unanswered > 0}
+            note={`${inbox.leads} ${inbox.leads === 1 ? 'lead' : 'leads'}${inbox.botShare != null ? ` · bot handled ${inbox.botShare}%` : ''}`}
+            value={inbox.today}
+            alert={inbox.unanswered > 0}
             to="/whatsapp"
           />
           <ModuleLine

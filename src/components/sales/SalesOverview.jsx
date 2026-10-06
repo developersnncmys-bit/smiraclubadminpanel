@@ -18,13 +18,13 @@ import {
   statusTone,
   enquiryStatuses,
   stageProbability,
-  salesTrend,
   salesActivity,
   activityKinds,
   inr,
   shortInr,
 } from '../../data/mockData.js';
 import Paged from '../../components/ui/Pagination.jsx';
+import { dailyTrend } from '../../lib/trend.js';
 
 const OPEN = enquiryStatuses.filter((s) => !['Won', 'Lost'].includes(s));
 
@@ -93,7 +93,7 @@ const tooltipStyle = {
  * rather than one long scroll: the numbers and the actions stay on screen, and
  * the pipeline, the performance, the team and today each get their own page.
  */
-export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoices = [], team, signups = [], onPickStatus, onOpen, actions }) {
+export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoices = [], payments = [], team, signups = [], onPickStatus, onOpen, actions }) {
   const [metric, setMetric] = useState('revenue');
   const [lostBy, setLostBy] = useState('Reason');
   const [rankBy, setRankBy] = useState('revenue');
@@ -190,7 +190,7 @@ export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoi
 
   // -- Sales performance -----------------------------------------------------
   const metricLabel = { revenue: 'Revenue', closings: 'Closings', customers: 'Customers', avgDeal: 'Average deal' }[metric];
-  const chart = salesTrend.map((d) => ({
+  const chart = dailyTrend(payments).map((d) => ({
     ...d,
     avgDeal: d.closings ? Math.round(d.revenue / d.closings) : 0,
   }));

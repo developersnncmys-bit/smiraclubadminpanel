@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -26,21 +26,28 @@ import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { daysUntil } from '../lib/membership.js';
-import { inr, shortInr, stageProbability, salesTrend } from '../data/mockData.js';
+import { inr, shortInr, stageProbability } from '../data/mockData.js';
 import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import {
-  monthlyRevenue,
-  expenses,
-  openingCash,
-  branches,
   forecast,
   revenueReports,
-  previousYears,
   incentivePlan,
   revenueAlertKinds,
 } from '../data/revenueData.js';
+import { useEndpoints } from '../lib/useEndpoint.js';
+import { groupExpenses } from '../lib/expenses.js';
+
+/** "2026-08" reads as "Aug", "2026-W31" as "W31", a date as its day. */
+const periodLabel = (period = '') => {
+  if (/^\d{4}-\d{2}$/.test(period)) {
+    return new Date(`${period}-01T00:00:00`).toLocaleString('en-IN', { month: 'short' });
+  }
+  if (/^\d{4}-W\d+$/.test(period)) return period.split('-')[1];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(period)) return period.slice(8);
+  return period;
+};
 import Table from '../components/ui/Table.jsx';
 
 const SECTIONS = [
@@ -143,23 +150,50 @@ export default function Revenue() {
     payments.filter((x) => daysAgo(x.date) === 0).reduce((s2, x) => s2 + Number(x.amount || 0), 0) +
     memberSignups.filter((m) => daysAgo(m.startedOn) === 0).reduce((s2, m) => s2 + Number(m.paid || 0), 0);
 
-  const thisMonth = monthlyRevenue[monthlyRevenue.length - 1];
-  const lastMonth = monthlyRevenue[monthlyRevenue.length - 2];
-  const monthTotal = (m) => m.membership + m.markup + m.other;
+  /**
+   * Paid revenue by period, the company's spend, and each desk against
+   * its target — added up by the database rather than in the browser.
+   */
+  const { data: server } = useEndpoints(
+    {
+      overview: '/revenue',
+      daily: '/revenue/trend?grain=day',
+      monthly: '/revenue/trend?grain=month',
+      yearly: '/revenue/trend?grain=year',
+      desks: '/revenue/compare',
+    },
+    { overview: null, daily: [], monthly: [], yearly: [], desks: [] },
+  );
+
+  const companyTarget = Number(server.overview?.target || 0);
+
+  /** The last six periods the desk took money in, newest last. */
+  const months = (server.monthly || []).slice(-6).map((m) => ({
+    month: periodLabel(m.period),
+    total: Number(m.amount || 0),
+    target: companyTarget,
+  }));
+  const thisMonth = months[months.length - 1];
+  const lastMonth = months[months.length - 2];
+  const monthTotal = (m) => Number(m?.total || 0);
   const growth = lastMonth && monthTotal(lastMonth)
     ? Math.round(((monthTotal(thisMonth) - monthTotal(lastMonth)) / monthTotal(lastMonth)) * 100)
     : 0;
 
   // -- Money out --------------------------------------------------------------
+  /**
+   * Spend, as the Expenses module holds it, under the three headings the
+   * sheet reads. Every category is listed even at nought, so a heading
+   * does not quietly lose a line the month nobody spent on it.
+   */
+  const expenses = groupExpenses(server.overview?.expenses?.byCategory);
   const sum = (list) => list.reduce((s, x) => s + Number(x.amount || 0), 0);
-  const officeCost = sum(expenses.office);
-  const staffCost = sum(expenses.staff);
-  const businessCost = sum(expenses.business);
+  const { officeCost, staffCost, businessCost } = expenses;
   const line = (group, label) => Number(expenses[group].find((x) => x.label === label)?.amount || 0);
   const marketing = line('office', 'Marketing');
-  const technology = line('office', 'Software and subscriptions') + line('office', 'Internet');
+  const technology = line('office', 'Software') + line('office', 'Internet');
   const administration =
-    line('office', 'Office supplies') + line('office', 'Telephone') + line('office', 'Maintenance');
+    line('office', 'Office expenses') + line('office', 'Travel') + line('office', 'Rent') + line('office', 'Electricity');
   const officeOther = officeCost - marketing - technology - administration;
   const totalExpenses = officeCost + staffCost + businessCost;
   const profit = netRevenue - totalExpenses;
@@ -169,7 +203,10 @@ export default function Revenue() {
   // -- Cash -------------------------------------------------------------------
   const cashIn = membershipPaid + collected;
   const cashOut = staffCost + officeCost + businessCost;
-  const closingCash = openingCash + cashIn - cashOut;
+  // What the month moved, not what the account holds: nothing here is
+  // told the opening balance, and inventing one made the closing figure
+  // look like a bank statement it was not.
+  const netCash = cashIn - cashOut;
 
   // -- Where revenue comes from ----------------------------------------------
   const sources = [
@@ -290,6 +327,27 @@ export default function Revenue() {
     if (q && ![l.customer, l.invoice].some((v) => String(v || '').toLowerCase().includes(q))) return false;
     return true;
   });
+
+  /**
+   * The branches are whichever branches the team is in.
+   *
+   * There were two written down here, with a named manager each. A desk
+   * that opens a third office should see a third row without anybody
+   * editing this file.
+   */
+  const branches = useMemo(() => {
+    const names = [...new Set(team.map((m) => m.branch).filter(Boolean))].sort();
+    return names.map((name) => {
+      const mine = team.filter((m) => m.branch === name);
+      const lead = mine.find((m) => /manager|head|owner/i.test(m.role || '')) || mine[0];
+      return {
+        name,
+        manager: lead?.name || '—',
+        target: mine.reduce((s, m) => s + Number(m.target || 0), 0),
+        revenue: mine.reduce((s, m) => s + Number(m.revenue || 0), 0),
+      };
+    });
+  }, [team]);
 
   // -- Branch, manager, team or one person ----------------------------------
   const groupsFor = (mode) => {
@@ -419,30 +477,27 @@ export default function Revenue() {
 
   /** The same money at four grains, the way the sheet's graph asks for it. */
   const chart = (() => {
-    if (grain === 'Daily') return salesTrend.map((d) => ({ label: `${d.day}`, revenue: d.revenue, target: d.target }));
+    const days = server.daily || [];
+    if (grain === 'Daily') {
+      return days.slice(-30).map((d) => ({ label: periodLabel(d.period), revenue: Number(d.amount || 0), target: 0 }));
+    }
     if (grain === 'Weekly') {
       const weeks = [];
-      for (let i = 0; i < salesTrend.length; i += 7) {
-        const slice = salesTrend.slice(i, i + 7);
+      const recent = days.slice(-42);
+      for (let i = 0; i < recent.length; i += 7) {
+        const slice = recent.slice(i, i + 7);
         weeks.push({
           label: `W${weeks.length + 1}`,
-          revenue: slice.reduce((s2, d) => s2 + Number(d.revenue || 0), 0),
-          target: slice.reduce((s2, d) => s2 + Number(d.target || 0), 0),
+          revenue: slice.reduce((s2, d) => s2 + Number(d.amount || 0), 0),
+          target: 0,
         });
       }
       return weeks;
     }
     if (grain === 'Yearly') {
-      return [
-        ...previousYears.map((y) => ({ label: y.year, revenue: y.revenue, target: y.target })),
-        {
-          label: 'This year',
-          revenue: monthlyRevenue.reduce((s2, m) => s2 + monthTotal(m), 0),
-          target: monthlyRevenue.reduce((s2, m) => s2 + Number(m.target || 0), 0),
-        },
-      ];
+      return (server.yearly || []).map((y) => ({ label: y.period, revenue: Number(y.amount || 0), target: 0 }));
     }
-    return monthlyRevenue.map((m) => ({ label: m.month, revenue: monthTotal(m), target: m.target }));
+    return months.map((m) => ({ label: m.month, revenue: m.total, target: m.target }));
   })();
 
   const exportAs = (name, rows, columns) => {
@@ -610,9 +665,9 @@ export default function Revenue() {
         <Block title="Revenue by branch" note="Each desk against what it was asked for" wide>
           <Table
             head={['Branch', 'Manager', 'Revenue', 'Target', 'Achievement', 'Customers']}
+            empty="No branch has been set on anybody's profile yet."
             rows={branches.map((b) => {
-              const mine = team.filter((m) => m.name === b.manager);
-              const revenue = mine.reduce((s, m) => s + Number(m.revenue || 0), 0);
+              const revenue = b.revenue;
               return {
                 key: b.name,
                 cells: [
@@ -621,7 +676,7 @@ export default function Revenue() {
                   <span className="num font-bold text-brand-700">{inr(revenue)}</span>,
                   <span className="num">{inr(b.target)}</span>,
                   <span className={`num font-bold ${revenue >= b.target ? 'text-emerald-600' : 'text-ink-700'}`}>
-                    {Math.round((revenue / b.target) * 100)}%
+                    {b.target ? Math.round((revenue / b.target) * 100) : 0}%
                   </span>,
                   <span className="num">{customers.filter((c) => c.branch === b.name || c.city === b.name).length}</span>,
                 ],
@@ -1286,7 +1341,7 @@ export default function Revenue() {
 
         <Block title="Cash flow" note="What actually moved through the bank">
           <ul>
-            <Line2 label="Opening cash" value={inr(openingCash)} />
+
             <p className="eyebrow mb-1 mt-3">Cash in</p>
             <Line2 label="Membership payments received" value={inr(membershipPaid)} />
             <Line2 label="Booking payments received" value={inr(collected)} />
@@ -1297,7 +1352,7 @@ export default function Revenue() {
             <Line2 label="Office expenses paid" value={inr(officeCost - marketing)} tone="text-rose-600" />
             <Line2 label="Marketing paid" value={inr(marketing)} tone="text-rose-600" />
             <Line2 label="Refunds" value={inr(line('business', 'Refunds') + membershipRefunds)} tone="text-rose-600" />
-            <Line2 label="Closing cash" value={inr(closingCash)} bold tone={closingCash >= 0 ? 'text-emerald-600' : 'text-rose-600'} />
+            <Line2 label="Net movement" value={inr(netCash)} bold tone={netCash >= 0 ? 'text-emerald-600' : 'text-rose-600'} />
           </ul>
         </Block>
 

@@ -26,7 +26,6 @@ import {
   homepageSections,
   distribution,
   tierAccess,
-  offers,
   lifestyleCategories,
   lifestyleOffers,
   campaigns,
@@ -94,7 +93,14 @@ const marginOf = (o) => {
  * many times, what it costs and what it brings back.
  */
 export default function Offers() {
-  const { toast, create, update, remove, offers: saved = [], live: online } = useApp();
+  /**
+   * The offers are the ones on the server, not a list in this repository.
+   *
+   * The seed had been emptied already, so every figure on this page was
+   * nought whatever the desk had running. It reads the Offers collection
+   * now — the same rows the website checks a coupon against.
+   */
+  const { toast, create, update, remove, offers = [], live: online } = useApp();
   const [section, setSection] = useState('Dashboard');
   const [saving, setSaving] = useState(false);
 
@@ -135,7 +141,7 @@ export default function Offers() {
   const moneyOff = percent || draft.kind === 'Flat off';
 
   /** Only the real ones — the seed rows above have no code to type. */
-  const coupons = saved.filter((o) => o.code && !o.flash);
+  const coupons = offers.filter((o) => o.code && !o.flash);
 
   const saveOffer = () => {
     const name = draft.name.trim();
@@ -164,12 +170,15 @@ export default function Offers() {
   };
 
   const live = offers.filter((o) => o.status === 'Live');
-  const views = offers.reduce((s, o) => s + o.views, 0);
-  const clicks = offers.reduce((s, o) => s + o.clicks, 0);
-  const enquiries = offers.reduce((s, o) => s + o.enquiries, 0);
-  const bookings = offers.reduce((s, o) => s + o.bookings, 0);
-  const revenue = offers.reduce((s, o) => s + o.revenue, 0);
-  const discountCost = offers.reduce((s, o) => s + o.discountCost, 0);
+  // Nothing counts a view or a click against an offer yet, so these are
+  // nought until something does — not a number this page made up.
+  const add = (key) => offers.reduce((s, o) => s + Number(o[key] || 0), 0);
+  const views = add('views');
+  const clicks = add('clicks');
+  const enquiries = add('enquiries');
+  const bookings = add('bookings');
+  const revenue = add('revenue');
+  const discountCost = add('discountCost');
   const netMargin = offers.reduce((s, o) => s + marginOf(o).net, 0);
   const roi = discountCost ? Math.round(revenue / discountCost) : 0;
   const lowMargin = offers.filter((o) => marginOf(o).pct < minimumMargin);

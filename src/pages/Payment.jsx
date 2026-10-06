@@ -17,7 +17,8 @@ import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { inr, shortInr } from '../data/mockData.js';
-import { expenses as expenseBudget, openingCash } from '../data/revenueData.js';
+import { useEndpoint } from '../lib/useEndpoint.js';
+import { groupExpenses } from '../lib/expenses.js';
 import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
@@ -126,8 +127,10 @@ export default function Payment() {
 
   // -- Money out --------------------------------------------------------------
   const sum = (list) => list.reduce((s, x) => s + Number(x.amount || 0), 0);
-  const officeCost = sum(expenseBudget.office);
-  const businessCost = sum(expenseBudget.business);
+  // What the agency has actually spent, from the Expenses module.
+  const { data: money } = useEndpoint('/revenue');
+  const spend = groupExpenses(money?.expenses?.byCategory);
+  const { officeCost, businessCost } = spend;
   const netOf = (p) =>
     p.basic + p.incentives + p.attendance + p.sales + p.closing + p.commission + p.allowances - p.deductions - p.advances;
   const staffPayable = salary.reduce((s, p) => s + netOf(p), 0);

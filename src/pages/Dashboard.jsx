@@ -25,12 +25,12 @@ import Avatar from '../components/ui/Avatar.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr, enquiryStatuses, bookingStatusTone, salesTrend } from '../data/mockData.js';
 import { daysUntil } from '../lib/membership.js';
-import { expenses as expenseBudget } from '../data/revenueData.js';
+import { useEndpoint } from '../lib/useEndpoint.js';
+import { groupExpenses } from '../lib/expenses.js';
 import { salary } from '../data/paymentData.js';
 import { inboxStats, botSessions } from '../data/whatsappData.js';
 import { rules as automationRules, history as automationHistory } from '../data/automationData.js';
 import { customerRewards, referrals } from '../data/rewardsData.js';
-import { offers } from '../data/offersData.js';
 import { holds } from '../data/inventoryData.js';
 
 /**
@@ -97,6 +97,7 @@ export default function Dashboard() {
   const {
     team, enquiries, bookings, memberSignups, memberships, customers,
     invoices, payments, tickets, partners, inventory, range,
+    offers = [],
   } = useApp();
 
   /**
@@ -125,9 +126,10 @@ export default function Dashboard() {
   const achievement = target ? Math.round((revenue / target) * 100) : 0;
 
   const sum = (list) => list.reduce((s, x) => s + Number(x.amount || 0), 0);
-  const officeCost = sum(expenseBudget.office);
-  const staffCost = sum(expenseBudget.staff);
-  const businessCost = sum(expenseBudget.business);
+  // What the agency has actually spent, from the Expenses module.
+  const { data: money } = useEndpoint('/revenue');
+  const spend = groupExpenses(money?.expenses?.byCategory);
+  const { officeCost, staffCost, businessCost } = spend;
   const totalExpenses = officeCost + staffCost + businessCost;
   const profit = revenue - totalExpenses;
   const margin = revenue ? Math.round((profit / revenue) * 100) : 0;
@@ -469,8 +471,8 @@ export default function Dashboard() {
           <ModuleLine
             icon={Megaphone}
             label="Offers"
-            note={`${offers.filter((o) => o.status === 'Live').length} live · ${offers.reduce((s, o) => s + o.used, 0)} redeemed`}
-            value={shortInr(offers.reduce((s, o) => s + o.revenue, 0))}
+            note={`${offers.filter((o) => o.status === 'Live').length} live · ${offers.reduce((s, o) => s + Number(o.used || 0), 0)} redeemed`}
+            value={shortInr(offers.reduce((s, o) => s + Number(o.revenue || 0), 0))}
             tone="text-brand-700"
             to="/offers"
           />

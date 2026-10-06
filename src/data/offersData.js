@@ -85,34 +85,19 @@ export const tierAccess = [
 ];
 
 /** The offers themselves. */
-export const offers = [];
-
 /** Lifestyle offers come from vendors, and redeem differently. */
 export const lifestyleCategories = ['Restaurants', 'Spa', 'Salon', 'Movies', 'Theme parks', 'Water parks', 'Gaming', 'Adventure', 'Shopping', 'Events'];
 
 export const lifestyleOffers = [];
 
-/** Campaigns bundle offers together. */
-export const campaigns = [
-  {
-    id: 'OCM-01',
-    name: 'Monsoon holiday sale',
-    from: '01 Sep 2026',
-    to: '30 Sep 2026',
-    includes: ['Hotel discount', 'Villa discount', 'Package offer', 'Restaurant offer', 'Spa offer', 'Referral bonus', 'Membership upgrade offer'],
-    revenue: 2480000,
-    leads: 186,
-    bookings: 105,
-    redemptions: 190,
-    conversion: 56,
-    discountCost: 408000,
-    profit: 612000,
-    bestOffer: 'Weekend villa escape',
-    bestLocation: 'Goa',
-    bestTier: 'Gold',
-    status: 'Live',
-  },
-];
+/**
+ * Campaigns bundle offers together.
+ *
+ * Empty, because nothing records one yet. There was a Monsoon holiday
+ * sale here with ₹24.8 lakh of revenue against it, which read on the
+ * page exactly like something the agency had run.
+ */
+export const campaigns = [];
 
 /** Where a redemption stands. */
 export const redemptionStates = ['Reserved', 'Applied', 'Redeemed', 'Cancelled', 'Expired', 'Refunded', 'Fraud or blocked'];

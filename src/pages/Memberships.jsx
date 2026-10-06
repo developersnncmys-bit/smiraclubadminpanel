@@ -558,6 +558,27 @@ export default function Memberships({ embedded = false }) {
                       <Plus size={14} />
                     </button>
                   </div>
+
+                  {/*
+                    How long the gifts are on offer. The website counts
+                    down to this; left empty it counts down to nothing
+                    and simply lists them, which is the honest default.
+                  */}
+                  <label className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-brand-800">
+                    <span className="shrink-0">Offer ends</span>
+                    <input
+                      type="date"
+                      value={plan.giftsEndOn || ''}
+                      onChange={(e) =>
+                        update('memberships', plan.id, { giftsEndOn: e.target.value }, {
+                          message: e.target.value
+                            ? `Gifts on ${plan.name} run to ${e.target.value}`
+                            : `Gifts on ${plan.name} have no end date`,
+                        })
+                      }
+                      className="input border-brand-600/20 bg-white py-1 text-xs"
+                    />
+                  </label>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">

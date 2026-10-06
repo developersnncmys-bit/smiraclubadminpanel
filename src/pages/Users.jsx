@@ -22,6 +22,8 @@ import {
   moduleAccess, roleOf, accounts, visibilityRules, hierarchy, approvalFlows,
   roleDashboards, auditLog, userFilters, userQuickActions, modulePurpose,
 } from '../data/usersData.js';
+import Table from '../components/ui/Table.jsx';
+import Paged from '../components/ui/Pagination.jsx';
 
 /**
  * Four tabs, not twelve.
@@ -37,44 +39,6 @@ import {
 const SECTIONS = ['People', 'Roles and access', 'Reporting and approvals', 'Security'];
 
 /** The table every section here builds with, so they all read the same. */
-function Table({ head, rows, empty = 'Nothing to show yet.', onRow }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[680px] text-sm">
-        <thead>
-          <tr className="border-b border-ink-900/[0.07] text-left">
-            {head.map((h) => (
-              <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-ink-900/[0.07]">
-          {rows.map((r) => (
-            <tr
-              key={r.key}
-              className={onRow ? 'cursor-pointer hover:bg-surface-soft' : 'hover:bg-surface-soft'}
-              onClick={onRow ? () => onRow(r.key) : undefined}
-            >
-              {r.cells.map((c, i) => (
-                <td key={i} className={`py-2.5 ${i === 0 ? 'font-bold text-ink-900' : 'text-ink-700'}`}>
-                  {c}
-                </td>
-              ))}
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={head.length} className="py-6 text-center text-ink-500">{empty}</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 /** A tick or a cross, for the permission grid. */
 function Mark({ on }) {
   return on ? (
@@ -378,7 +342,7 @@ export default function Users() {
           </div>
         }
       >
-        <Table
+        <Table minWidth={680}
           head={['User', 'Role', 'Department', 'Branch', 'Reports to', 'Joined', 'Status', "Today's activity", 'Last active']}
           empty="Nobody matches this cut."
           onRow={(id) => setViewing(users.find((u) => u.id === id))}
@@ -470,7 +434,7 @@ export default function Users() {
           </button>
         }
       >
-        <Table
+        <Table minWidth={680}
           head={['Role', 'Department', 'Reports to', 'Dashboard', 'People', 'Data access', 'Can approve', 'Modules']}
           rows={roles.map((r) => {
             const people = users.filter((u) => u.roleName === r.name).length;
@@ -495,32 +459,36 @@ export default function Users() {
     'Permission matrix': (
       <>
         <Block title="What each role may do" note="The nine levels, against every role" wide>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  <th className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">Role</th>
-                  {permissionLevels.map((p) => (
-                    <th key={p} className="pb-2 text-center text-xs font-bold uppercase tracking-wide text-ink-400">{p}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {roles.map((r) => (
-                  <tr key={r.id} className="hover:bg-surface-soft">
-                    <td className="py-2.5 font-bold text-ink-900">{r.name}</td>
-                    {permissionLevels.map((p) => (
-                      <td key={p} className="py-2.5 text-center">
-                        <span className="inline-flex">
-                          <Mark on={p === 'Restricted' ? r.scope === 'Own' : (r.can || []).includes(p)} />
-                        </span>
-                      </td>
+          <Paged items={roles}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[860px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      <th className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">Role</th>
+                      {permissionLevels.map((p) => (
+                        <th key={p} className="pb-2 text-center text-xs font-bold uppercase tracking-wide text-ink-400">{p}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((r) => (
+                      <tr key={r.id} className="hover:bg-surface-soft">
+                        <td className="py-2.5 font-bold text-ink-900">{r.name}</td>
+                        {permissionLevels.map((p) => (
+                          <td key={p} className="py-2.5 text-center">
+                            <span className="inline-flex">
+                              <Mark on={p === 'Restricted' ? r.scope === 'Own' : (r.can || []).includes(p)} />
+                            </span>
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
         </Block>
 
         <Block
@@ -528,51 +496,55 @@ export default function Users() {
           note="Tap a cell to switch it on or off — it saves as you go"
           wide
         >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  <th className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">Role</th>
-                  {permissionModules.map((m) => (
-                    <th key={m} className="pb-2 text-center text-xs font-bold uppercase tracking-wide text-ink-400">{m}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {roles.map((r) => (
-                  <tr key={r.id} className="hover:bg-surface-soft">
-                    <td className="py-2.5 font-bold text-ink-900">{r.name}</td>
-                    {permissionModules.map((m) => {
-                      const on = (r.modules || []).includes(m);
-                      /*
-                        The grid was a picture of the permissions. Ticking
-                        it does something now: the role goes back to the
-                        server, so what the desk sees is what the API
-                        actually enforces.
-                      */
-                      return (
-                        <td key={m} className="py-2.5 text-center">
-                          <button
-                            type="button"
-                            disabled={r.superAdmin}
-                            title={
-                              r.superAdmin
-                                ? `${r.name} reaches everything — that is not set from here`
-                                : on ? `Take ${m} away from ${r.name}` : `Give ${r.name} ${m}`
-                            }
-                            onClick={() => toggleModule(r, m)}
-                            className="inline-flex rounded-md p-1 transition hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            <Mark on={r.superAdmin || on} />
-                          </button>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={roles}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[860px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      <th className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">Role</th>
+                      {permissionModules.map((m) => (
+                        <th key={m} className="pb-2 text-center text-xs font-bold uppercase tracking-wide text-ink-400">{m}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((r) => (
+                      <tr key={r.id} className="hover:bg-surface-soft">
+                        <td className="py-2.5 font-bold text-ink-900">{r.name}</td>
+                        {permissionModules.map((m) => {
+                          const on = (r.modules || []).includes(m);
+                          /*
+                            The grid was a picture of the permissions. Ticking
+                            it does something now: the role goes back to the
+                            server, so what the desk sees is what the API
+                            actually enforces.
+                          */
+                          return (
+                            <td key={m} className="py-2.5 text-center">
+                              <button
+                                type="button"
+                                disabled={r.superAdmin}
+                                title={
+                                  r.superAdmin
+                                    ? `${r.name} reaches everything — that is not set from here`
+                                    : on ? `Take ${m} away from ${r.name}` : `Give ${r.name} ${m}`
+                                }
+                                onClick={() => toggleModule(r, m)}
+                                className="inline-flex rounded-md p-1 transition hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                <Mark on={r.superAdmin || on} />
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
         </Block>
       </>
     ),
@@ -601,7 +573,7 @@ export default function Users() {
             return (
               <div key={mg} className="mb-4 last:mb-0">
                 <p className="eyebrow mb-2">{mg} · {mine.length} reporting</p>
-                <Table
+                <Table minWidth={680}
                   head={['Member', 'Online', 'Attendance', 'Leads', 'Calls', 'Presentations', 'Visits', 'Closings', 'Revenue', 'Target', 'Achievement', 'Follow-ups', 'Productivity']}
                   onRow={(id) => setViewing(users.find((u) => u.id === id))}
                   rows={mine.map((u) => {
@@ -651,7 +623,7 @@ export default function Users() {
         </Block>
 
         <Block title="Data access" note="Not every employee should see everything — the sheet calls this critical" wide>
-          <Table
+          <Table minWidth={680}
             head={['Role', 'Can see', 'Cannot see']}
             rows={visibilityRules.map((r) => ({
               key: r.role,
@@ -677,7 +649,7 @@ export default function Users() {
         </Block>
 
         <Block title="Approval access" note="Which roles may sign each thing off" wide>
-          <Table
+          <Table minWidth={680}
             head={['Right', 'Roles that carry it']}
             rows={approvalRights.map((right) => ({
               key: right,
@@ -700,7 +672,7 @@ export default function Users() {
 
     Performance: (
       <Block title="What everyone is carrying" note="Target, achievement, incentive and where they rank" wide>
-        <Table
+        <Table minWidth={680}
           head={['Rank', 'User', 'Role', 'Leads', 'Conversion', 'Bookings', 'Booking value', 'Revenue', 'Target', 'Achievement', 'Productivity']}
           onRow={(id) => setViewing(users.find((u) => u.id === id))}
           rows={[...users]
@@ -732,7 +704,7 @@ export default function Users() {
 
     'Attendance and activity': (
       <Block title="Who turned up, and what they have done" note="Attendance, login and the work behind it" wide>
-        <Table
+        <Table minWidth={680}
           head={['User', 'Attendance', 'Live', 'Last active', 'Signed in', 'Signed out', 'Calls', 'Follow-ups', 'Tasks', 'Activity']}
           onRow={(id) => setViewing(users.find((u) => u.id === id))}
           rows={users.map((u) => ({
@@ -762,7 +734,7 @@ export default function Users() {
     Approvals: (
       <>
         <Block title="Waiting on someone" note="Nothing here happens without a sign-off" wide>
-          <Table
+          <Table minWidth={680}
             head={['Request', 'Area', 'What', 'Raised by', 'Approver', 'Value', 'Raised', 'Status', '']}
             empty="Nothing is waiting."
             rows={(approvals || []).map((a) => ({
@@ -792,7 +764,7 @@ export default function Users() {
         </Block>
 
         <Block title="What always needs approving" note="The six flows the sheet lists" wide>
-          <Table
+          <Table minWidth={680}
             head={['Area', 'What happens', 'Who signs it off']}
             rows={approvalFlows.map((f) => ({
               key: f.area,
@@ -806,7 +778,7 @@ export default function Users() {
     'Login and security': (
       <>
         <Block title="Sessions and sign-ins" note="Every login the panel has recorded" wide>
-          <Table
+          <Table minWidth={680}
             head={['User', 'Last login', 'Login', 'Logout', 'IP', 'Browser or device', 'Failed attempts', 'Active sessions', '2FA', '']}
             rows={users.map((u) => ({
               key: u.id,
@@ -835,7 +807,7 @@ export default function Users() {
         </Block>
 
         <Block title="Who can sign in from where" note="Login permission and device restrictions">
-          <Table
+          <Table minWidth={680}
             head={['User', 'Username', 'Web', 'Mobile', 'Devices']}
             rows={users.map((u) => ({
               key: u.id,

@@ -30,6 +30,7 @@ import {
   partnerTickets,
   settlements as seedSettlements,
 } from '../data/partnersData.js';
+import Paged from '../components/ui/Pagination.jsx';
 
 const VIEWS = ['Partners', 'Onboarding', 'Bookings', 'Support', 'Performance', 'Finance', 'Communication'];
 
@@ -326,71 +327,75 @@ export default function Partners() {
           </div>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] text-sm">
-            <thead>
-              <tr className="border-b border-ink-900/[0.07] text-left">
-                {['Partner', 'Category', 'Location', 'Status', 'Bookings', 'Revenue', 'Rating', 'Response', 'Score', 'Action'].map((h) => (
-                  <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-900/[0.07]">
-              {rows.map((p) => {
-                const s = scoreOf(p);
-                return (
-                  <tr key={p.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(p)}>
-                    <td className="py-2.5">
-                      <span className="flex items-center gap-2.5">
-                        <Avatar name={p.name} size="sm" />
-                        <span className="min-w-0">
-                          <span className="block truncate font-bold text-ink-900">{p.name}</span>
-                          <span className="block truncate text-xs text-ink-500">{p.contact}</span>
-                        </span>
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-ink-700">{p.category}</td>
-                    <td className="py-2.5 text-ink-700">{p.location}</td>
-                    <td className="py-2.5">
-                      <Badge tone={p.status === 'Active' ? 'green' : p.status === 'Suspended' ? 'rose' : 'amber'} dot>
-                        {p.status}
-                      </Badge>
-                    </td>
-                    <td className="num py-2.5 text-ink-700">{p.bookings || '—'}</td>
-                    <td className="num py-2.5 font-bold text-brand-700">{p.revenue ? inr(p.revenue) : '—'}</td>
-                    <td className="num py-2.5">
-                      {p.rating ? (
-                        <span className="flex items-center gap-1 font-bold text-amber-600">
-                          <Star size={12} className="fill-amber-400 text-amber-400" /> {p.rating}
-                        </span>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td className="num py-2.5 text-ink-700">{p.responseMins ? `${p.responseMins} min` : '—'}</td>
-                    <td className="py-2.5">
-                      <Badge tone={s.tone}>{s.value ? `${s.value} · ${s.band}` : s.band}</Badge>
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <button className="btn-line btn-sm" onClick={(e) => { e.stopPropagation(); setViewing(p); }}>
-                        {p.approval === 'Approved' ? 'View' : 'Review'}
-                      </button>
-                    </td>
+        <Paged items={rows}>
+          {(shown) => (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[880px] text-sm">
+                <thead>
+                  <tr className="border-b border-ink-900/[0.07] text-left">
+                    {['Partner', 'Category', 'Location', 'Status', 'Bookings', 'Revenue', 'Rating', 'Response', 'Score', 'Action'].map((h) => (
+                      <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                );
-              })}
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={10} className="py-6 text-center text-ink-500">
-                    No partner matches this view.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-ink-900/[0.07]">
+                  {shown.map((p) => {
+                    const s = scoreOf(p);
+                    return (
+                      <tr key={p.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(p)}>
+                        <td className="py-2.5">
+                          <span className="flex items-center gap-2.5">
+                            <Avatar name={p.name} size="sm" />
+                            <span className="min-w-0">
+                              <span className="block truncate font-bold text-ink-900">{p.name}</span>
+                              <span className="block truncate text-xs text-ink-500">{p.contact}</span>
+                            </span>
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-ink-700">{p.category}</td>
+                        <td className="py-2.5 text-ink-700">{p.location}</td>
+                        <td className="py-2.5">
+                          <Badge tone={p.status === 'Active' ? 'green' : p.status === 'Suspended' ? 'rose' : 'amber'} dot>
+                            {p.status}
+                          </Badge>
+                        </td>
+                        <td className="num py-2.5 text-ink-700">{p.bookings || '—'}</td>
+                        <td className="num py-2.5 font-bold text-brand-700">{p.revenue ? inr(p.revenue) : '—'}</td>
+                        <td className="num py-2.5">
+                          {p.rating ? (
+                            <span className="flex items-center gap-1 font-bold text-amber-600">
+                              <Star size={12} className="fill-amber-400 text-amber-400" /> {p.rating}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="num py-2.5 text-ink-700">{p.responseMins ? `${p.responseMins} min` : '—'}</td>
+                        <td className="py-2.5">
+                          <Badge tone={s.tone}>{s.value ? `${s.value} · ${s.band}` : s.band}</Badge>
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <button className="btn-line btn-sm" onClick={(e) => { e.stopPropagation(); setViewing(p); }}>
+                            {p.approval === 'Approved' ? 'View' : 'Review'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {rows.length === 0 && (
+                    <tr>
+                      <td colSpan={10} className="py-6 text-center text-ink-500">
+                        No partner matches this view.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Paged>
       </Block>
     ),
 
@@ -413,53 +418,57 @@ export default function Partners() {
         </Block>
 
         <Block title="Requests with partners" note="Open one for everything it carries" wide>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Booking', 'Customer', 'Membership', 'Partner', 'Service', 'Stay', 'Guests', 'Amount', 'Commission', 'Payout', 'Stage'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {sentToPartners.map((r) => (
-                  <tr
-                    key={r.id}
-                    className="cursor-pointer hover:bg-surface-soft"
-                    onClick={() => setRequest(r)}
-                  >
-                    <td className="num py-2.5 font-bold text-brand-700">{r.booking}</td>
-                    <td className="py-2.5 text-ink-800">{r.customer}</td>
-                    <td className="num py-2.5 text-ink-600">{r.membership}</td>
-                    <td className="py-2.5 text-ink-700">{r.partner}</td>
-                    <td className="py-2.5 text-ink-700">
-                      {r.service}
-                      <span className="block text-xs text-ink-500">
-                        {r.occasion} · {r.request}
-                      </span>
-                    </td>
-                    <td className="num py-2.5 text-ink-700">
-                      {r.checkIn} → {r.checkOut}
-                    </td>
-                    <td className="num py-2.5 text-ink-700">
-                      {r.guests} · {r.rooms} rooms
-                    </td>
-                    <td className="num py-2.5 font-bold text-ink-900">{inr(r.amount)}</td>
-                    <td className="num py-2.5 text-emerald-600">{inr(r.commission)}</td>
-                    <td className="num py-2.5 text-ink-700">{inr(r.payout)}</td>
-                    <td className="py-2.5">
-                      <Badge tone={r.stage === 'Completed' ? 'green' : 'sky'} dot>
-                        {r.stage}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={sentToPartners}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Booking', 'Customer', 'Membership', 'Partner', 'Service', 'Stay', 'Guests', 'Amount', 'Commission', 'Payout', 'Stage'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((r) => (
+                      <tr
+                        key={r.id}
+                        className="cursor-pointer hover:bg-surface-soft"
+                        onClick={() => setRequest(r)}
+                      >
+                        <td className="num py-2.5 font-bold text-brand-700">{r.booking}</td>
+                        <td className="py-2.5 text-ink-800">{r.customer}</td>
+                        <td className="num py-2.5 text-ink-600">{r.membership}</td>
+                        <td className="py-2.5 text-ink-700">{r.partner}</td>
+                        <td className="py-2.5 text-ink-700">
+                          {r.service}
+                          <span className="block text-xs text-ink-500">
+                            {r.occasion} · {r.request}
+                          </span>
+                        </td>
+                        <td className="num py-2.5 text-ink-700">
+                          {r.checkIn} → {r.checkOut}
+                        </td>
+                        <td className="num py-2.5 text-ink-700">
+                          {r.guests} · {r.rooms} rooms
+                        </td>
+                        <td className="num py-2.5 font-bold text-ink-900">{inr(r.amount)}</td>
+                        <td className="num py-2.5 text-emerald-600">{inr(r.commission)}</td>
+                        <td className="num py-2.5 text-ink-700">{inr(r.payout)}</td>
+                        <td className="py-2.5">
+                          <Badge tone={r.stage === 'Completed' ? 'green' : 'sky'} dot>
+                            {r.stage}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
         </Block>
       </>
     ),
@@ -511,44 +520,48 @@ export default function Partners() {
     Performance: (
       <>
         <Block title="Partner performance" note="Bookings, money, speed and how members rated them" wide>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Partner', 'Bookings', 'Confirmed', 'Cancelled', 'Failed', 'Revenue', 'Commission', 'Response', 'Rating', 'Repeat', 'Cancellation rate', 'Score'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {partners.map((p) => {
-                  const s = scoreOf(p);
-                  return (
-                    <tr key={p.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(p)}>
-                      <td className="py-2.5 font-bold text-ink-900">{p.name}</td>
-                      <td className="num py-2.5 text-ink-700">{p.bookings}</td>
-                      <td className="num py-2.5 text-emerald-600">{p.confirmed}</td>
-                      <td className="num py-2.5 text-rose-600">{p.cancelled}</td>
-                      <td className="num py-2.5 text-ink-700">{p.failed}</td>
-                      <td className="num py-2.5 font-bold text-brand-700">{p.revenue ? inr(p.revenue) : '—'}</td>
-                      <td className="num py-2.5 text-ink-700">{p.commissionEarned ? inr(p.commissionEarned) : '—'}</td>
-                      <td className="num py-2.5 text-ink-700">{p.responseMins ? `${p.responseMins} min` : '—'}</td>
-                      <td className="num py-2.5 text-amber-600">{p.rating ? `${p.rating}★` : '—'}</td>
-                      <td className="num py-2.5 text-ink-700">{p.repeat}</td>
-                      <td className="num py-2.5 text-ink-700">
-                        {p.bookings ? `${((p.cancelled / p.bookings) * 100).toFixed(2)}%` : '—'}
-                      </td>
-                      <td className="py-2.5">
-                        <Badge tone={s.tone}>{s.value ? s.value : '—'}</Badge>
-                      </td>
+          <Paged items={partners}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Partner', 'Bookings', 'Confirmed', 'Cancelled', 'Failed', 'Revenue', 'Commission', 'Response', 'Rating', 'Repeat', 'Cancellation rate', 'Score'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((p) => {
+                      const s = scoreOf(p);
+                      return (
+                        <tr key={p.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(p)}>
+                          <td className="py-2.5 font-bold text-ink-900">{p.name}</td>
+                          <td className="num py-2.5 text-ink-700">{p.bookings}</td>
+                          <td className="num py-2.5 text-emerald-600">{p.confirmed}</td>
+                          <td className="num py-2.5 text-rose-600">{p.cancelled}</td>
+                          <td className="num py-2.5 text-ink-700">{p.failed}</td>
+                          <td className="num py-2.5 font-bold text-brand-700">{p.revenue ? inr(p.revenue) : '—'}</td>
+                          <td className="num py-2.5 text-ink-700">{p.commissionEarned ? inr(p.commissionEarned) : '—'}</td>
+                          <td className="num py-2.5 text-ink-700">{p.responseMins ? `${p.responseMins} min` : '—'}</td>
+                          <td className="num py-2.5 text-amber-600">{p.rating ? `${p.rating}★` : '—'}</td>
+                          <td className="num py-2.5 text-ink-700">{p.repeat}</td>
+                          <td className="num py-2.5 text-ink-700">
+                            {p.bookings ? `${((p.cancelled / p.bookings) * 100).toFixed(2)}%` : '—'}
+                          </td>
+                          <td className="py-2.5">
+                            <Badge tone={s.tone}>{s.value ? s.value : '—'}</Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
           <p className="mt-3 text-xs text-ink-400">
             The score blends availability, response time, confirmation rate, cancellation rate, customer rating and
             booking success — so top partners, risky ones and the ones needing attention stand apart.
@@ -607,39 +620,43 @@ export default function Partners() {
         </Block>
 
         <Block title="Settlements" note="Booking completed through to settlement closed" wide>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Settlement', 'Partner', 'Period', 'Booking value', 'Commission', 'Tax', 'Adjustment', 'Payable', 'Stage', 'Paid on'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {seedSettlements.map((s) => (
-                  <tr key={s.id} className="hover:bg-surface-soft">
-                    <td className="num py-2.5 font-bold text-brand-700">{s.id}</td>
-                    <td className="py-2.5 text-ink-800">{s.partner}</td>
-                    <td className="py-2.5 text-ink-600">{s.period}</td>
-                    <td className="num py-2.5 text-ink-700">{inr(s.bookingValue)}</td>
-                    <td className="num py-2.5 text-emerald-600">{inr(s.commission)}</td>
-                    <td className="num py-2.5 text-ink-600">{inr(s.tax)}</td>
-                    <td className="num py-2.5 text-ink-600">{s.adjustment ? inr(s.adjustment) : '—'}</td>
-                    <td className="num py-2.5 font-bold text-ink-900">{inr(s.payable)}</td>
-                    <td className="py-2.5">
-                      <Badge tone={s.stage === 'Partner paid' ? 'green' : 'amber'} dot>
-                        {s.stage}
-                      </Badge>
-                    </td>
-                    <td className="num py-2.5 text-ink-600">{s.paidOn}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={seedSettlements}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[820px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Settlement', 'Partner', 'Period', 'Booking value', 'Commission', 'Tax', 'Adjustment', 'Payable', 'Stage', 'Paid on'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((s) => (
+                      <tr key={s.id} className="hover:bg-surface-soft">
+                        <td className="num py-2.5 font-bold text-brand-700">{s.id}</td>
+                        <td className="py-2.5 text-ink-800">{s.partner}</td>
+                        <td className="py-2.5 text-ink-600">{s.period}</td>
+                        <td className="num py-2.5 text-ink-700">{inr(s.bookingValue)}</td>
+                        <td className="num py-2.5 text-emerald-600">{inr(s.commission)}</td>
+                        <td className="num py-2.5 text-ink-600">{inr(s.tax)}</td>
+                        <td className="num py-2.5 text-ink-600">{s.adjustment ? inr(s.adjustment) : '—'}</td>
+                        <td className="num py-2.5 font-bold text-ink-900">{inr(s.payable)}</td>
+                        <td className="py-2.5">
+                          <Badge tone={s.stage === 'Partner paid' ? 'green' : 'amber'} dot>
+                            {s.stage}
+                          </Badge>
+                        </td>
+                        <td className="num py-2.5 text-ink-600">{s.paidOn}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
           <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-ink-500">
             {settlementFlow.map((s, i) => (
               <span key={s} className="flex items-center gap-1.5">

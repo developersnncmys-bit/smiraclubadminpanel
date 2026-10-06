@@ -27,6 +27,7 @@ import {
   supportAutomation,
   supportDepartments,
 } from '../data/supportData.js';
+import Paged from '../components/ui/Pagination.jsx';
 
 const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
 const CATEGORIES = Object.keys(ticketCategories);
@@ -326,77 +327,81 @@ export default function Support() {
               </div>
             }
           >
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] text-sm">
-                <thead>
-                  <tr className="border-b border-ink-900/[0.07] text-left">
-                    {['Ticket', 'Customer', 'Membership', 'Category', 'Booking', 'Executive', 'Priority', 'Status', 'Updated', 'SLA', 'Resolution', 'Level', 'Rating'].map((h) => (
-                      <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-900/[0.07]">
-                  {rows.map((t) => (
-                    <tr key={t.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(t)}>
-                      <td className="num py-2.5 font-bold text-brand-700">
-                        {t.id}
-                        <span className="block text-xs font-normal text-ink-400">{t.created}</span>
-                      </td>
-                      <td className="py-2.5">
-                        <span className="flex items-center gap-2.5">
-                          <Avatar name={t.customer} size="sm" />
-                          <span className="min-w-0">
-                            <span className="block truncate font-bold text-ink-900">{t.customer}</span>
-                            <span className="num block text-xs text-ink-400">{t.phone}</span>
-                          </span>
-                        </span>
-                      </td>
-                      <td className="py-2.5 text-ink-700">{t.membership}</td>
-                      <td className="py-2.5">
-                        <span className="block font-semibold text-ink-800">{t.category}</span>
-                        <span className="block text-xs text-ink-500">{t.subCategory}</span>
-                      </td>
-                      <td className="num py-2.5 text-ink-700">{t.booking}</td>
-                      <td className="py-2.5 text-ink-700">{t.executive}</td>
-                      <td className="py-2.5">
-                        <Badge tone={priorities.find((p) => p.key === t.priority)?.tone || 'slate'}>{t.priority}</Badge>
-                      </td>
-                      <td className="py-2.5">
-                        <Badge tone={stageTone[t.stage]} dot>
-                          {t.stage}
-                        </Badge>
-                      </td>
-                      <td className="num py-2.5 text-xs text-ink-500">{t.updated}</td>
-                      <td className="py-2.5">
-                        <Badge tone={slaTone[t.slaState]}>{t.slaState}</Badge>
-                      </td>
-                      <td className="num py-2.5 text-ink-700">
-                        {t.resolutionMins ? `${Math.round(t.resolutionMins / 60)} hrs` : '—'}
-                      </td>
-                      <td className="num py-2.5 text-ink-700">L{t.escalation || 1}</td>
-                      <td className="py-2.5">
-                        {t.rating ? (
-                          <span className="num flex items-center gap-1 font-bold text-amber-600">
-                            <Star size={12} className="fill-amber-400 text-amber-400" /> {t.rating}
-                          </span>
-                        ) : (
-                          <span className="text-ink-400">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {rows.length === 0 && (
-                    <tr>
-                      <td colSpan={13} className="py-6 text-center text-ink-500">
-                        No ticket matches this view.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <Paged items={rows}>
+              {(shown) => (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1180px] text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/[0.07] text-left">
+                        {['Ticket', 'Customer', 'Membership', 'Category', 'Booking', 'Executive', 'Priority', 'Status', 'Updated', 'SLA', 'Resolution', 'Level', 'Rating'].map((h) => (
+                          <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-900/[0.07]">
+                      {shown.map((t) => (
+                        <tr key={t.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => setViewing(t)}>
+                          <td className="num py-2.5 font-bold text-brand-700">
+                            {t.id}
+                            <span className="block text-xs font-normal text-ink-400">{t.created}</span>
+                          </td>
+                          <td className="py-2.5">
+                            <span className="flex items-center gap-2.5">
+                              <Avatar name={t.customer} size="sm" />
+                              <span className="min-w-0">
+                                <span className="block truncate font-bold text-ink-900">{t.customer}</span>
+                                <span className="num block text-xs text-ink-400">{t.phone}</span>
+                              </span>
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-ink-700">{t.membership}</td>
+                          <td className="py-2.5">
+                            <span className="block font-semibold text-ink-800">{t.category}</span>
+                            <span className="block text-xs text-ink-500">{t.subCategory}</span>
+                          </td>
+                          <td className="num py-2.5 text-ink-700">{t.booking}</td>
+                          <td className="py-2.5 text-ink-700">{t.executive}</td>
+                          <td className="py-2.5">
+                            <Badge tone={priorities.find((p) => p.key === t.priority)?.tone || 'slate'}>{t.priority}</Badge>
+                          </td>
+                          <td className="py-2.5">
+                            <Badge tone={stageTone[t.stage]} dot>
+                              {t.stage}
+                            </Badge>
+                          </td>
+                          <td className="num py-2.5 text-xs text-ink-500">{t.updated}</td>
+                          <td className="py-2.5">
+                            <Badge tone={slaTone[t.slaState]}>{t.slaState}</Badge>
+                          </td>
+                          <td className="num py-2.5 text-ink-700">
+                            {t.resolutionMins ? `${Math.round(t.resolutionMins / 60)} hrs` : '—'}
+                          </td>
+                          <td className="num py-2.5 text-ink-700">L{t.escalation || 1}</td>
+                          <td className="py-2.5">
+                            {t.rating ? (
+                              <span className="num flex items-center gap-1 font-bold text-amber-600">
+                                <Star size={12} className="fill-amber-400 text-amber-400" /> {t.rating}
+                              </span>
+                            ) : (
+                              <span className="text-ink-400">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {rows.length === 0 && (
+                        <tr>
+                          <td colSpan={13} className="py-6 text-center text-ink-500">
+                            No ticket matches this view.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Paged>
           </Block>
         )}
 
@@ -447,30 +452,34 @@ export default function Support() {
               </p>
             </Block>
             <Block title="Who is carrying what" note="Open, in progress, overdue and resolved per executive">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[420px] text-sm">
-                  <thead>
-                    <tr className="border-b border-ink-900/[0.07] text-left">
-                      {['Executive', 'Open', 'In progress', 'Overdue', 'Resolved'].map((h) => (
-                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-ink-900/[0.07]">
-                    {workload.map((w) => (
-                      <tr key={w.name}>
-                        <td className="py-2.5 font-bold text-ink-900">{w.name}</td>
-                        <td className="num py-2.5 text-ink-700">{w.open}</td>
-                        <td className="num py-2.5 text-ink-700">{w.progress}</td>
-                        <td className={`num py-2.5 font-bold ${w.overdue ? 'text-rose-600' : 'text-ink-700'}`}>{w.overdue}</td>
-                        <td className="num py-2.5 font-bold text-emerald-600">{w.resolved}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Paged items={workload}>
+                {(shown) => (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[420px] text-sm">
+                      <thead>
+                        <tr className="border-b border-ink-900/[0.07] text-left">
+                          {['Executive', 'Open', 'In progress', 'Overdue', 'Resolved'].map((h) => (
+                            <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ink-900/[0.07]">
+                        {shown.map((w) => (
+                          <tr key={w.name}>
+                            <td className="py-2.5 font-bold text-ink-900">{w.name}</td>
+                            <td className="num py-2.5 text-ink-700">{w.open}</td>
+                            <td className="num py-2.5 text-ink-700">{w.progress}</td>
+                            <td className={`num py-2.5 font-bold ${w.overdue ? 'text-rose-600' : 'text-ink-700'}`}>{w.overdue}</td>
+                            <td className="num py-2.5 font-bold text-emerald-600">{w.resolved}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Paged>
               <p className="mt-3 text-xs text-ink-400">
                 Tickets are assigned on department, team, category, workload, priority, location or partner.
               </p>

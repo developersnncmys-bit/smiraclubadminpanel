@@ -20,6 +20,7 @@ import {
   inr,
   shortInr,
 } from '../../data/mockData.js';
+import Paged from '../../components/ui/Pagination.jsx';
 
 const confirmTone = {
   'Waiting for hotel': 'amber',
@@ -418,59 +419,63 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
           note="Send, chase, then upload the confirmation"
           wide
         >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Booking', 'Hotel', 'Customer', 'Check-in', 'Rooms', 'Vendor', 'Deadline', 'Status', ''].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {queue.map((b) => (
-                  <tr key={b.id} className="hover:bg-surface-soft">
-                    <td className="num py-2.5 font-bold text-brand-700">
-                      <button onClick={() => onOpen(b)}>{b.id}</button>
-                    </td>
-                    <td className="py-2.5 text-ink-800">{b.hotel}</td>
-                    <td className="py-2.5 text-ink-700">{b.customer}</td>
-                    <td className="num py-2.5 text-ink-700">{b.checkIn}</td>
-                    <td className="num py-2.5 text-ink-700">{b.rooms}</td>
-                    <td className="py-2.5 text-ink-700">{b.vendor}</td>
-                    <td className="num py-2.5 text-ink-700">{b.confirmation?.deadline}</td>
-                    <td className="py-2.5">
-                      <Badge tone={confirmTone[b.confirmation?.status] || 'slate'} dot>
-                        {b.confirmation?.status}
-                      </Badge>
-                    </td>
-                    <td className="py-2.5">
-                      <span className="flex justify-end gap-1.5">
-                        <button className="btn-line btn-sm" onClick={() => actions.note(`Sent to ${b.hotel}`)}>
-                          <Send size={13} /> Send
-                        </button>
-                        <a href={`tel:${String(b.vendorContact?.phone || '').replace(/[^\d+]/g, '')}`} className="icon-btn h-8 w-8" title="Call the hotel">
-                          <Phone size={13} />
-                        </a>
-                        <button className="btn-line btn-sm" onClick={() => actions.note('Confirmation upload comes with the storage work')}>
-                          <Upload size={13} /> Upload
-                        </button>
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {queue.length === 0 && (
-                  <tr>
-                    <td colSpan={9} className="py-6 text-center text-ink-500">
-                      Every booking is confirmed by the hotel.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={queue}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Booking', 'Hotel', 'Customer', 'Check-in', 'Rooms', 'Vendor', 'Deadline', 'Status', ''].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((b) => (
+                      <tr key={b.id} className="hover:bg-surface-soft">
+                        <td className="num py-2.5 font-bold text-brand-700">
+                          <button onClick={() => onOpen(b)}>{b.id}</button>
+                        </td>
+                        <td className="py-2.5 text-ink-800">{b.hotel}</td>
+                        <td className="py-2.5 text-ink-700">{b.customer}</td>
+                        <td className="num py-2.5 text-ink-700">{b.checkIn}</td>
+                        <td className="num py-2.5 text-ink-700">{b.rooms}</td>
+                        <td className="py-2.5 text-ink-700">{b.vendor}</td>
+                        <td className="num py-2.5 text-ink-700">{b.confirmation?.deadline}</td>
+                        <td className="py-2.5">
+                          <Badge tone={confirmTone[b.confirmation?.status] || 'slate'} dot>
+                            {b.confirmation?.status}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5">
+                          <span className="flex justify-end gap-1.5">
+                            <button className="btn-line btn-sm" onClick={() => actions.note(`Sent to ${b.hotel}`)}>
+                              <Send size={13} /> Send
+                            </button>
+                            <a href={`tel:${String(b.vendorContact?.phone || '').replace(/[^\d+]/g, '')}`} className="icon-btn h-8 w-8" title="Call the hotel">
+                              <Phone size={13} />
+                            </a>
+                            <button className="btn-line btn-sm" onClick={() => actions.note('Confirmation upload comes with the storage work')}>
+                              <Upload size={13} /> Upload
+                            </button>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {queue.length === 0 && (
+                      <tr>
+                        <td colSpan={9} className="py-6 text-center text-ink-500">
+                          Every booking is confirmed by the hotel.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
           <p className="mt-3 text-xs text-ink-400">
             Statuses: {confirmationStates.join(' · ')}
           </p>
@@ -487,43 +492,47 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
           </div>
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Booking', 'Customer', 'Amount', 'Paid', 'Balance', 'Mode', 'Transaction', 'Date', 'Status'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {rows.map((b) => {
-                  const balance = Number(b.amount || 0) - Number(b.paid || 0);
-                  return (
-                    <tr key={b.id} className="hover:bg-surface-soft">
-                      <td className="num py-2.5 font-bold text-brand-700">
-                        <button onClick={() => onOpen(b)}>{b.id}</button>
-                      </td>
-                      <td className="py-2.5 text-ink-800">{b.customer}</td>
-                      <td className="num py-2.5 text-ink-700">{inr(b.amount)}</td>
-                      <td className="num py-2.5 text-ink-700">{inr(b.paid)}</td>
-                      <td className={`num py-2.5 font-bold ${balance ? 'text-amber-600' : 'text-emerald-600'}`}>
-                        {balance ? inr(balance) : 'Settled'}
-                      </td>
-                      <td className="py-2.5 text-ink-700">{b.payment?.method || '—'}</td>
-                      <td className="num py-2.5 text-ink-500">{b.payment?.txnId || '—'}</td>
-                      <td className="num py-2.5 text-ink-500">{b.payment?.date || '—'}</td>
-                      <td className="py-2.5">
-                        <Badge tone={bookingStatusTone[b.status]} dot>
-                          {b.status}
-                        </Badge>
-                      </td>
+            <Paged items={rows}>
+              {(shown) => (
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Booking', 'Customer', 'Amount', 'Paid', 'Balance', 'Mode', 'Transaction', 'Date', 'Status'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((b) => {
+                      const balance = Number(b.amount || 0) - Number(b.paid || 0);
+                      return (
+                        <tr key={b.id} className="hover:bg-surface-soft">
+                          <td className="num py-2.5 font-bold text-brand-700">
+                            <button onClick={() => onOpen(b)}>{b.id}</button>
+                          </td>
+                          <td className="py-2.5 text-ink-800">{b.customer}</td>
+                          <td className="num py-2.5 text-ink-700">{inr(b.amount)}</td>
+                          <td className="num py-2.5 text-ink-700">{inr(b.paid)}</td>
+                          <td className={`num py-2.5 font-bold ${balance ? 'text-amber-600' : 'text-emerald-600'}`}>
+                            {balance ? inr(balance) : 'Settled'}
+                          </td>
+                          <td className="py-2.5 text-ink-700">{b.payment?.method || '—'}</td>
+                          <td className="num py-2.5 text-ink-500">{b.payment?.txnId || '—'}</td>
+                          <td className="num py-2.5 text-ink-500">{b.payment?.date || '—'}</td>
+                          <td className="py-2.5">
+                            <Badge tone={bookingStatusTone[b.status]} dot>
+                              {b.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </Paged>
           </div>
         </Block>
 
@@ -570,79 +579,87 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
 
         {/* Who is handling what */}
         <Block title="Who is handling what" note="Assign, reassign or transfer a booking" wide>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Booking', 'Customer', 'Assigned to', 'Role', 'Created by', 'Confirmed by', 'Modified by', 'Cancelled by', ''].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {rows.map((b) => (
-                  <tr key={b.id} className="hover:bg-surface-soft">
-                    <td className="num py-2.5 font-bold text-brand-700">
-                      <button onClick={() => onOpen(b)}>{b.id}</button>
-                    </td>
-                    <td className="py-2.5 text-ink-800">{b.customer}</td>
-                    <td className="py-2.5">
-                      <span className="flex items-center gap-2">
-                        <Avatar name={b.owner} size="sm" /> <span className="font-semibold text-ink-800">{b.owner}</span>
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-ink-600">{b.assignedRole || '—'}</td>
-                    <td className="py-2.5 text-ink-600">{b.handledBy?.created || '—'}</td>
-                    <td className="py-2.5 text-ink-600">{b.handledBy?.confirmed || '—'}</td>
-                    <td className="py-2.5 text-ink-600">{b.handledBy?.modified || '—'}</td>
-                    <td className="py-2.5 text-ink-600">{b.handledBy?.cancelled || '—'}</td>
-                    <td className="py-2.5 text-right">
-                      <button className="btn-line btn-sm" onClick={() => actions.note(`${b.id} reassigned`)}>
-                        Reassign
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={rows}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Booking', 'Customer', 'Assigned to', 'Role', 'Created by', 'Confirmed by', 'Modified by', 'Cancelled by', ''].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((b) => (
+                      <tr key={b.id} className="hover:bg-surface-soft">
+                        <td className="num py-2.5 font-bold text-brand-700">
+                          <button onClick={() => onOpen(b)}>{b.id}</button>
+                        </td>
+                        <td className="py-2.5 text-ink-800">{b.customer}</td>
+                        <td className="py-2.5">
+                          <span className="flex items-center gap-2">
+                            <Avatar name={b.owner} size="sm" /> <span className="font-semibold text-ink-800">{b.owner}</span>
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-ink-600">{b.assignedRole || '—'}</td>
+                        <td className="py-2.5 text-ink-600">{b.handledBy?.created || '—'}</td>
+                        <td className="py-2.5 text-ink-600">{b.handledBy?.confirmed || '—'}</td>
+                        <td className="py-2.5 text-ink-600">{b.handledBy?.modified || '—'}</td>
+                        <td className="py-2.5 text-ink-600">{b.handledBy?.cancelled || '—'}</td>
+                        <td className="py-2.5 text-right">
+                          <button className="btn-line btn-sm" onClick={() => actions.note(`${b.id} reassigned`)}>
+                            Reassign
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
         </Block>
 
         {/* Vendors and hotels */}
         <Block title="Hotels and vendors" note="Who we booked with, and what we owe them" wide>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Vendor', 'Hotel', 'Contact', 'Phone', 'Rate plan', 'Rooms booked', 'Confirmation', 'Payable'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {rows.map((b) => (
-                  <tr key={b.id} className="hover:bg-surface-soft">
-                    <td className="py-2.5 font-bold text-ink-900">{b.vendor}</td>
-                    <td className="py-2.5 text-ink-700">{b.hotel}</td>
-                    <td className="py-2.5 text-ink-700">{b.vendorContact?.person || '—'}</td>
-                    <td className="num py-2.5 text-ink-600">{b.vendorContact?.phone || '—'}</td>
-                    <td className="py-2.5 text-ink-600">{b.vendorContact?.ratePlan || '—'}</td>
-                    <td className="num py-2.5 text-ink-700">{b.rooms}</td>
-                    <td className="py-2.5">
-                      <Badge tone={confirmTone[b.confirmation?.status] || 'slate'}>{b.confirmation?.status}</Badge>
-                    </td>
-                    <td className="num py-2.5 font-bold text-ink-900">
-                      {b.vendorContact?.payable ? inr(b.vendorContact.payable) : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={rows}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Vendor', 'Hotel', 'Contact', 'Phone', 'Rate plan', 'Rooms booked', 'Confirmation', 'Payable'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((b) => (
+                      <tr key={b.id} className="hover:bg-surface-soft">
+                        <td className="py-2.5 font-bold text-ink-900">{b.vendor}</td>
+                        <td className="py-2.5 text-ink-700">{b.hotel}</td>
+                        <td className="py-2.5 text-ink-700">{b.vendorContact?.person || '—'}</td>
+                        <td className="num py-2.5 text-ink-600">{b.vendorContact?.phone || '—'}</td>
+                        <td className="py-2.5 text-ink-600">{b.vendorContact?.ratePlan || '—'}</td>
+                        <td className="num py-2.5 text-ink-700">{b.rooms}</td>
+                        <td className="py-2.5">
+                          <Badge tone={confirmTone[b.confirmation?.status] || 'slate'}>{b.confirmation?.status}</Badge>
+                        </td>
+                        <td className="num py-2.5 font-bold text-ink-900">
+                          {b.vendorContact?.payable ? inr(b.vendorContact.payable) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
         </Block>
 
         {/* Reports */}

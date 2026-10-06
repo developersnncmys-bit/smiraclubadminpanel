@@ -11,6 +11,7 @@ import FlashOffers, { portalFlash } from '../components/partners/FlashOffers.jsx
 import Badge from '../components/ui/Badge.jsx';
 import { inr, shortInr } from '../data/mockData.js';
 import { partnerApi, getPartnerToken, setPartnerToken } from '../lib/partnerApi.js';
+import Paged from '../components/ui/Pagination.jsx';
 
 /**
  * The partner portal — the only thing a partner can open.
@@ -434,29 +435,33 @@ export default function PartnerPortal() {
     rooms: (
       <Panel title="Rooms & inventory" note="What is released to Smira members">
         {data?.inventory?.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Room or service', 'Total', 'Booked', 'Blocked', 'Available', 'Status'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {data.inventory.map((i) => (
-                  <tr key={i.id}>
-                    <td className="py-2.5 font-semibold text-ink-900">{i.name}</td>
-                    <td className="num py-2.5">{i.units}</td>
-                    <td className="num py-2.5">{i.booked}</td>
-                    <td className="num py-2.5">{i.blocked}</td>
-                    <td className="num py-2.5 font-bold text-brand-700">{i.available}</td>
-                    <td className="py-2.5"><Badge tone={i.status === 'Active' ? 'green' : 'slate'}>{i.status}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={data.inventory}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[520px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Room or service', 'Total', 'Booked', 'Blocked', 'Available', 'Status'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((i) => (
+                      <tr key={i.id}>
+                        <td className="py-2.5 font-semibold text-ink-900">{i.name}</td>
+                        <td className="num py-2.5">{i.units}</td>
+                        <td className="num py-2.5">{i.booked}</td>
+                        <td className="num py-2.5">{i.blocked}</td>
+                        <td className="num py-2.5 font-bold text-brand-700">{i.available}</td>
+                        <td className="py-2.5"><Badge tone={i.status === 'Active' ? 'green' : 'slate'}>{i.status}</Badge></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
         ) : (
           <Empty>No rooms released yet. The desk adds these when your rate plan is signed.</Empty>
         )}
@@ -768,28 +773,32 @@ export default function PartnerPortal() {
     payments: (
       <Panel title="Payments" note="What Smira owes you, booking by booking">
         {bookings.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/[0.07] text-left">
-                  {['Booking', 'Guest', 'Payout', 'Paid', 'Balance'].map((h) => (
-                    <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/[0.07]">
-                {bookings.map((b) => (
-                  <tr key={b.id}>
-                    <td className="num py-2.5 font-bold text-brand-700">{b.code}</td>
-                    <td className="py-2.5">{b.guest}</td>
-                    <td className="num py-2.5">{inr(b.payout)}</td>
-                    <td className="num py-2.5">{inr(b.paidOut)}</td>
-                    <td className="num py-2.5 font-bold text-amber-600">{inr(Math.max(0, b.payout - b.paidOut))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Paged items={bookings}>
+            {(shown) => (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[480px] text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[0.07] text-left">
+                      {['Booking', 'Guest', 'Payout', 'Paid', 'Balance'].map((h) => (
+                        <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-900/[0.07]">
+                    {shown.map((b) => (
+                      <tr key={b.id}>
+                        <td className="num py-2.5 font-bold text-brand-700">{b.code}</td>
+                        <td className="py-2.5">{b.guest}</td>
+                        <td className="num py-2.5">{inr(b.payout)}</td>
+                        <td className="num py-2.5">{inr(b.paidOut)}</td>
+                        <td className="num py-2.5 font-bold text-amber-600">{inr(Math.max(0, b.payout - b.paidOut))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Paged>
         ) : (
           <Empty>No payments yet.</Empty>
         )}

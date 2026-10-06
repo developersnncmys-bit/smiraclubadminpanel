@@ -19,6 +19,7 @@ import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr, liveStatuses, attendanceStates } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
+import Paged from '../components/ui/Pagination.jsx';
 
 const ROLES = ['Owner', 'Senior Travel Consultant', 'Travel Consultant', 'Field Officer', 'Visa & Documentation', 'Accounts'];
 const ACCOUNT = ['Active', 'Invited', 'Disabled'];
@@ -645,76 +646,80 @@ export default function Team() {
 
             <Block title="Employee-level attendance" note="Login, logout, working hours, break, idle, late by, location, source and this month's attendance">
               <div className="-mx-5 overflow-x-auto">
-                <table className="w-full min-w-[980px] border-collapse">
-                  <thead>
-                    <tr>
-                      {['Employee', 'Status', 'Login', 'Logout', 'Working', 'Break', 'Idle', 'Late by', 'From', 'Source', 'Regularisation', 'Month'].map((h) => (
-                        <th key={h} className="th">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {team.map((m) => {
-                      const d = m.day || {};
-                      return (
-                        <tr key={m.id} className="border-b border-ink-900/[0.05] transition hover:bg-surface-soft">
-                          <td className="td">
-                            <button onClick={() => setViewing(m)} className="flex items-center gap-2.5 text-left">
-                              <Avatar name={m.name} size="sm" />
-                              <span className="min-w-0">
-                                <span className="block truncate text-sm font-bold text-ink-900">{m.name}</span>
-                                <span className="num block text-xs text-ink-400">{m.empId}</span>
-                              </span>
-                            </button>
-                          </td>
-                          <td className="td"><Badge tone={attendanceTone[m.attendance] || 'slate'}>{m.attendance}</Badge></td>
-                          <td className="td num">{d.login || '—'}</td>
-                          <td className="td num">{d.logout || '—'}</td>
-                          <td className="td num font-bold text-ink-900">{d.working || '—'}</td>
-                          <td className="td num">{d.breaks || '—'}</td>
-                          <td className="td num">{d.idle || '—'}</td>
-                          <td className={`td num ${d.lateBy ? 'font-bold text-amber-600' : 'text-emerald-600'}`}>{d.lateBy ? `${d.lateBy} min` : 'On time'}</td>
-                          <td className="td">
-                            {d.mode || 'Office'}
-                            {d.geo && <span className="mt-0.5 block text-xs text-emerald-600">{d.geo}</span>}
-                          </td>
-                          <td className="td">{d.source || '—'}</td>
-                          <td className="td">
-                            {/pending/i.test(d.regularisation || '') ? (
-                              <span className="inline-flex items-center gap-1.5">
-                                <Badge tone="amber">Pending</Badge>
-                                <button
-                                  className="btn-line btn-sm"
-                                  onClick={() =>
-                                    update(
-                                      'team',
-                                      m.id,
-                                      {
-                                        day: { ...(m.day || {}), regularisation: 'Approved' },
-                                        attendanceFlags: (m.attendanceFlags || []).filter(
-                                          (f) => !/regularisation/i.test(f)
-                                        ),
-                                      },
-                                      { message: `Regularisation approved for ${m.name.split(' ')[0]}` }
-                                    )
-                                  }
-                                >
-                                  Approve
-                                </button>
-                              </span>
-                            ) : (
-                              <span className="text-ink-500">{d.regularisation || 'None pending'}</span>
-                            )}
-                          </td>
-                          <td className="td">
-                            <span className="num text-sm font-bold text-ink-900">{d.attendancePct ?? 0}%</span>
-                            <Bar className="mt-1 w-20" pct={d.attendancePct ?? 0} tone={(d.attendancePct ?? 0) >= 90 ? 'bg-emerald-500' : 'bg-amber-400'} />
-                          </td>
+                <Paged items={team}>
+                  {(shown) => (
+                    <table className="w-full min-w-[980px] border-collapse">
+                      <thead>
+                        <tr>
+                          {['Employee', 'Status', 'Login', 'Logout', 'Working', 'Break', 'Idle', 'Late by', 'From', 'Source', 'Regularisation', 'Month'].map((h) => (
+                            <th key={h} className="th">{h}</th>
+                          ))}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {shown.map((m) => {
+                          const d = m.day || {};
+                          return (
+                            <tr key={m.id} className="border-b border-ink-900/[0.05] transition hover:bg-surface-soft">
+                              <td className="td">
+                                <button onClick={() => setViewing(m)} className="flex items-center gap-2.5 text-left">
+                                  <Avatar name={m.name} size="sm" />
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-sm font-bold text-ink-900">{m.name}</span>
+                                    <span className="num block text-xs text-ink-400">{m.empId}</span>
+                                  </span>
+                                </button>
+                              </td>
+                              <td className="td"><Badge tone={attendanceTone[m.attendance] || 'slate'}>{m.attendance}</Badge></td>
+                              <td className="td num">{d.login || '—'}</td>
+                              <td className="td num">{d.logout || '—'}</td>
+                              <td className="td num font-bold text-ink-900">{d.working || '—'}</td>
+                              <td className="td num">{d.breaks || '—'}</td>
+                              <td className="td num">{d.idle || '—'}</td>
+                              <td className={`td num ${d.lateBy ? 'font-bold text-amber-600' : 'text-emerald-600'}`}>{d.lateBy ? `${d.lateBy} min` : 'On time'}</td>
+                              <td className="td">
+                                {d.mode || 'Office'}
+                                {d.geo && <span className="mt-0.5 block text-xs text-emerald-600">{d.geo}</span>}
+                              </td>
+                              <td className="td">{d.source || '—'}</td>
+                              <td className="td">
+                                {/pending/i.test(d.regularisation || '') ? (
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <Badge tone="amber">Pending</Badge>
+                                    <button
+                                      className="btn-line btn-sm"
+                                      onClick={() =>
+                                        update(
+                                          'team',
+                                          m.id,
+                                          {
+                                            day: { ...(m.day || {}), regularisation: 'Approved' },
+                                            attendanceFlags: (m.attendanceFlags || []).filter(
+                                              (f) => !/regularisation/i.test(f)
+                                            ),
+                                          },
+                                          { message: `Regularisation approved for ${m.name.split(' ')[0]}` }
+                                        )
+                                      }
+                                    >
+                                      Approve
+                                    </button>
+                                  </span>
+                                ) : (
+                                  <span className="text-ink-500">{d.regularisation || 'None pending'}</span>
+                                )}
+                              </td>
+                              <td className="td">
+                                <span className="num text-sm font-bold text-ink-900">{d.attendancePct ?? 0}%</span>
+                                <Bar className="mt-1 w-20" pct={d.attendancePct ?? 0} tone={(d.attendancePct ?? 0) >= 90 ? 'bg-emerald-500' : 'bg-amber-400'} />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </Paged>
               </div>
             </Block>
 
@@ -748,45 +753,49 @@ export default function Team() {
           <div className="mt-5 space-y-5">
             <Block title="Employee comparison" note="The same row for everyone — calls, connection, presentations, visits, follow-up discipline, closings and revenue">
               <div className="-mx-5 overflow-x-auto">
-                <table className="w-full min-w-[1040px] border-collapse">
-                  <thead>
-                    <tr>
-                      {['Employee', 'Leads', 'Calls', 'Connected', 'Conn. rate', 'Present.', 'Converted', 'Visits', 'F/ups', 'Discipline', 'Closings', 'Revenue'].map((h) => (
-                        <th key={h} className="th">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ranked.map((m) => (
-                      <tr key={m.id} className="border-b border-ink-900/[0.05] transition hover:bg-surface-soft">
-                        <td className="td">
-                          <button onClick={() => setViewing(m)} className="flex items-center gap-2.5 text-left">
-                            <Avatar name={m.name} size="sm" />
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-bold text-ink-900">{m.name}</span>
-                              <span className="block truncate text-xs text-ink-400">{m.role}</span>
-                            </span>
-                          </button>
-                        </td>
-                        <td className="td num">{m.leads ?? 0}</td>
-                        <td className="td num">{m.calls ?? 0}</td>
-                        <td className="td num text-emerald-600">{m.callDetail?.connected ?? 0}</td>
-                        <td className="td num">{pct(m.callDetail?.connected || 0, m.calls)}%</td>
-                        <td className="td num">{m.presentationDetail?.completed ?? 0}</td>
-                        <td className="td num text-emerald-600">{m.presentationDetail?.converted ?? 0}</td>
-                        <td className="td num">{m.visitDetail?.completed ?? 0}</td>
-                        <td className="td num">{m.followUpDetail?.completed ?? 0}/{m.followUpDetail?.due ?? 0}</td>
-                        <td className="td num">
-                          <span className={pct(m.followUpDetail?.completed || 0, m.followUpDetail?.due) >= 80 ? 'text-emerald-600' : 'text-amber-600'}>
-                            {pct(m.followUpDetail?.completed || 0, m.followUpDetail?.due)}%
-                          </span>
-                        </td>
-                        <td className="td num font-bold">{m.bookings ?? 0}</td>
-                        <td className="td num font-bold text-brand-700">{m.revenue ? inr(m.revenue) : '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <Paged items={ranked}>
+                  {(shown) => (
+                    <table className="w-full min-w-[1040px] border-collapse">
+                      <thead>
+                        <tr>
+                          {['Employee', 'Leads', 'Calls', 'Connected', 'Conn. rate', 'Present.', 'Converted', 'Visits', 'F/ups', 'Discipline', 'Closings', 'Revenue'].map((h) => (
+                            <th key={h} className="th">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shown.map((m) => (
+                          <tr key={m.id} className="border-b border-ink-900/[0.05] transition hover:bg-surface-soft">
+                            <td className="td">
+                              <button onClick={() => setViewing(m)} className="flex items-center gap-2.5 text-left">
+                                <Avatar name={m.name} size="sm" />
+                                <span className="min-w-0">
+                                  <span className="block truncate text-sm font-bold text-ink-900">{m.name}</span>
+                                  <span className="block truncate text-xs text-ink-400">{m.role}</span>
+                                </span>
+                              </button>
+                            </td>
+                            <td className="td num">{m.leads ?? 0}</td>
+                            <td className="td num">{m.calls ?? 0}</td>
+                            <td className="td num text-emerald-600">{m.callDetail?.connected ?? 0}</td>
+                            <td className="td num">{pct(m.callDetail?.connected || 0, m.calls)}%</td>
+                            <td className="td num">{m.presentationDetail?.completed ?? 0}</td>
+                            <td className="td num text-emerald-600">{m.presentationDetail?.converted ?? 0}</td>
+                            <td className="td num">{m.visitDetail?.completed ?? 0}</td>
+                            <td className="td num">{m.followUpDetail?.completed ?? 0}/{m.followUpDetail?.due ?? 0}</td>
+                            <td className="td num">
+                              <span className={pct(m.followUpDetail?.completed || 0, m.followUpDetail?.due) >= 80 ? 'text-emerald-600' : 'text-amber-600'}>
+                                {pct(m.followUpDetail?.completed || 0, m.followUpDetail?.due)}%
+                              </span>
+                            </td>
+                            <td className="td num font-bold">{m.bookings ?? 0}</td>
+                            <td className="td num font-bold text-brand-700">{m.revenue ? inr(m.revenue) : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </Paged>
               </div>
             </Block>
 
@@ -1142,43 +1151,47 @@ export default function Team() {
               }
             >
               <div className="-mx-5 overflow-x-auto">
-                <table className="w-full min-w-[1100px] border-collapse">
-                  <thead>
-                    <tr>
-                      {['Task ID', 'Task', 'Type', 'Customer', 'Lead', 'Assigned to', 'Created', 'Due', 'Priority', 'Status', 'Last action', 'Next action'].map((h) => (
-                        <th key={h} className="th">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {taskRows.map((t) => (
-                      <tr key={t.id} className="border-b border-ink-900/[0.05] transition hover:bg-surface-soft">
-                        <td className="td num font-bold text-ink-900">{t.id}</td>
-                        <td className="td">
-                          <span className="block max-w-[240px] truncate font-semibold text-ink-800">{t.title}</span>
-                          {t.note && <span className="block max-w-[240px] truncate text-xs text-ink-400">{t.note}</span>}
-                        </td>
-                        <td className="td">{t.type}</td>
-                        <td className="td">{t.customer}</td>
-                        <td className="td num text-ink-500">{t.lead || '—'}</td>
-                        <td className="td font-semibold text-ink-800">{t.owner}</td>
-                        <td className="td num text-ink-500">{t.created || '—'}</td>
-                        <td className="td num">{t.due}</td>
-                        <td className="td"><Badge tone={priorityTone[t.priority] || 'slate'}>{t.priority}</Badge></td>
-                        <td className="td">
-                          <Badge tone={taskTone[t.status] || (t.bucket === 'overdue' ? 'rose' : t.bucket === 'done' ? 'green' : 'sky')} dot>
-                            {t.status || t.bucket}
-                          </Badge>
-                        </td>
-                        <td className="td text-ink-500">{t.lastAction || '—'}</td>
-                        <td className="td text-ink-500">{t.nextAction || '—'}</td>
-                      </tr>
-                    ))}
-                    {taskRows.length === 0 && (
-                      <tr><td className="td py-10 text-center text-ink-500" colSpan={12}>No tasks for this filter.</td></tr>
-                    )}
-                  </tbody>
-                </table>
+                <Paged items={taskRows}>
+                  {(shown) => (
+                    <table className="w-full min-w-[1100px] border-collapse">
+                      <thead>
+                        <tr>
+                          {['Task ID', 'Task', 'Type', 'Customer', 'Lead', 'Assigned to', 'Created', 'Due', 'Priority', 'Status', 'Last action', 'Next action'].map((h) => (
+                            <th key={h} className="th">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shown.map((t) => (
+                          <tr key={t.id} className="border-b border-ink-900/[0.05] transition hover:bg-surface-soft">
+                            <td className="td num font-bold text-ink-900">{t.id}</td>
+                            <td className="td">
+                              <span className="block max-w-[240px] truncate font-semibold text-ink-800">{t.title}</span>
+                              {t.note && <span className="block max-w-[240px] truncate text-xs text-ink-400">{t.note}</span>}
+                            </td>
+                            <td className="td">{t.type}</td>
+                            <td className="td">{t.customer}</td>
+                            <td className="td num text-ink-500">{t.lead || '—'}</td>
+                            <td className="td font-semibold text-ink-800">{t.owner}</td>
+                            <td className="td num text-ink-500">{t.created || '—'}</td>
+                            <td className="td num">{t.due}</td>
+                            <td className="td"><Badge tone={priorityTone[t.priority] || 'slate'}>{t.priority}</Badge></td>
+                            <td className="td">
+                              <Badge tone={taskTone[t.status] || (t.bucket === 'overdue' ? 'rose' : t.bucket === 'done' ? 'green' : 'sky')} dot>
+                                {t.status || t.bucket}
+                              </Badge>
+                            </td>
+                            <td className="td text-ink-500">{t.lastAction || '—'}</td>
+                            <td className="td text-ink-500">{t.nextAction || '—'}</td>
+                          </tr>
+                        ))}
+                        {taskRows.length === 0 && (
+                          <tr><td className="td py-10 text-center text-ink-500" colSpan={12}>No tasks for this filter.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </Paged>
               </div>
             </Block>
           </div>

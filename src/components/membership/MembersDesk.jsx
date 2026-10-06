@@ -20,6 +20,7 @@ import Block from '../ui/Block.jsx';
 import Stat from '../ui/Stat.jsx';
 import SectionTabs from '../ui/SectionTabs.jsx';
 import KpiRow from '../ui/KpiRow.jsx';
+import Paged from '../../components/ui/Pagination.jsx';
 
 const TABS = [
   { key: 'members', label: 'Members', icon: Users },
@@ -252,46 +253,50 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
       {tab === 'retention' && (
         <div className="grid gap-5 xl:grid-cols-2">
           <Block title="Where each member stands" note="Last booking, last contact and what is left unused" wide>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[780px] text-sm">
-                <thead>
-                  <tr className="border-b border-ink-900/[0.07] text-left">
-                    {['Member', 'Last booking', 'Last contact', 'Benefits used', 'Benefits left', 'Membership ends', 'Satisfaction', 'Risk'].map((h) => (
-                      <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-900/[0.07]">
-                  {members.map((c) => {
-                    const s = planOf(c);
-                    const used = (s?.benefits || []).reduce((n, b) => n + Number(b.used || 0), 0);
-                    const gap = sinceContact(c);
-                    const risk = atRisk.includes(c);
-                    return (
-                      <tr key={c.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => onOpen(c)}>
-                        <td className="py-2.5 font-bold text-ink-900">{c.name}</td>
-                        <td className="num py-2.5 text-ink-700">{c.lastBooking || '—'}</td>
-                        <td className="num py-2.5 text-ink-700">
-                          {c.lastInteraction || '—'}
-                          {gap != null && <span className="ml-1.5 text-xs text-ink-400">{gap}d ago</span>}
-                        </td>
-                        <td className="num py-2.5 text-ink-700">{used}</td>
-                        <td className="num py-2.5 font-bold text-amber-600">{benefitsLeft(c)}</td>
-                        <td className="num py-2.5 text-ink-700">{s?.expiresOn || '—'}</td>
-                        <td className="num py-2.5 text-ink-700">{c.satisfaction ? `${c.satisfaction}/5` : '—'}</td>
-                        <td className="py-2.5">
-                          <Badge tone={risk ? 'rose' : 'green'} dot>
-                            {risk ? 'At risk' : 'Healthy'}
-                          </Badge>
-                        </td>
+            <Paged items={members}>
+              {(shown) => (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[780px] text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/[0.07] text-left">
+                        {['Member', 'Last booking', 'Last contact', 'Benefits used', 'Benefits left', 'Membership ends', 'Satisfaction', 'Risk'].map((h) => (
+                          <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-ink-900/[0.07]">
+                      {shown.map((c) => {
+                        const s = planOf(c);
+                        const used = (s?.benefits || []).reduce((n, b) => n + Number(b.used || 0), 0);
+                        const gap = sinceContact(c);
+                        const risk = atRisk.includes(c);
+                        return (
+                          <tr key={c.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => onOpen(c)}>
+                            <td className="py-2.5 font-bold text-ink-900">{c.name}</td>
+                            <td className="num py-2.5 text-ink-700">{c.lastBooking || '—'}</td>
+                            <td className="num py-2.5 text-ink-700">
+                              {c.lastInteraction || '—'}
+                              {gap != null && <span className="ml-1.5 text-xs text-ink-400">{gap}d ago</span>}
+                            </td>
+                            <td className="num py-2.5 text-ink-700">{used}</td>
+                            <td className="num py-2.5 font-bold text-amber-600">{benefitsLeft(c)}</td>
+                            <td className="num py-2.5 text-ink-700">{s?.expiresOn || '—'}</td>
+                            <td className="num py-2.5 text-ink-700">{c.satisfaction ? `${c.satisfaction}/5` : '—'}</td>
+                            <td className="py-2.5">
+                              <Badge tone={risk ? 'rose' : 'green'} dot>
+                                {risk ? 'At risk' : 'Healthy'}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Paged>
           </Block>
 
           <Block title="Retention alerts" note="What the desk should act on first" wide>
@@ -424,50 +429,54 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
       {tab === 'rewards' && (
         <div className="grid gap-5 xl:grid-cols-2">
           <Block title="Gifts and rewards" note="Every gift, and how far along it is" wide>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-sm">
-                <thead>
-                  <tr className="border-b border-ink-900/[0.07] text-left">
-                    {['Member', 'Gift', 'Type', 'Eligibility', 'Assigned', 'Due', 'Field officer', 'Proof', 'Stage'].map((h) => (
-                      <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-900/[0.07]">
-                  {rewards.map((r) => (
-                    <tr key={r.id} className="hover:bg-surface-soft">
-                      <td className="py-2.5 font-bold text-ink-900">{r.member}</td>
-                      <td className="py-2.5 text-ink-800">{r.gift}</td>
-                      <td className="py-2.5 text-ink-600">{r.kind}</td>
-                      <td className="py-2.5 text-ink-600">{r.eligibility}</td>
-                      <td className="num py-2.5 text-ink-600">{r.assigned}</td>
-                      <td className="num py-2.5 text-ink-600">{r.due}</td>
-                      <td className="py-2.5 text-ink-600">{r.officer}</td>
-                      <td className="py-2.5 text-ink-500">{r.proof}</td>
-                      <td className="py-2.5">
-                        <Badge
-                          tone={
-                            r.stage === 'Delivered' ? 'green' : r.stage === 'Cancelled' ? 'rose' : r.stage === 'Pending' ? 'slate' : 'amber'
-                          }
-                          dot
-                        >
-                          {r.stage}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                  {rewards.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="py-6 text-center text-ink-500">
-                        No gifts in flight.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <Paged items={rewards}>
+              {(shown) => (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[860px] text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/[0.07] text-left">
+                        {['Member', 'Gift', 'Type', 'Eligibility', 'Assigned', 'Due', 'Field officer', 'Proof', 'Stage'].map((h) => (
+                          <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-900/[0.07]">
+                      {shown.map((r) => (
+                        <tr key={r.id} className="hover:bg-surface-soft">
+                          <td className="py-2.5 font-bold text-ink-900">{r.member}</td>
+                          <td className="py-2.5 text-ink-800">{r.gift}</td>
+                          <td className="py-2.5 text-ink-600">{r.kind}</td>
+                          <td className="py-2.5 text-ink-600">{r.eligibility}</td>
+                          <td className="num py-2.5 text-ink-600">{r.assigned}</td>
+                          <td className="num py-2.5 text-ink-600">{r.due}</td>
+                          <td className="py-2.5 text-ink-600">{r.officer}</td>
+                          <td className="py-2.5 text-ink-500">{r.proof}</td>
+                          <td className="py-2.5">
+                            <Badge
+                              tone={
+                                r.stage === 'Delivered' ? 'green' : r.stage === 'Cancelled' ? 'rose' : r.stage === 'Pending' ? 'slate' : 'amber'
+                              }
+                              dot
+                            >
+                              {r.stage}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                      {rewards.length === 0 && (
+                        <tr>
+                          <td colSpan={9} className="py-6 text-center text-ink-500">
+                            No gifts in flight.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Paged>
             <p className="mt-3 text-xs text-ink-400">Stages: {rewardStages.join(' → ')}</p>
           </Block>
 
@@ -525,31 +534,35 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
             </div>
 
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead>
-                  <tr className="border-b border-ink-900/[0.07] text-left">
-                    {['Member', 'Referral code', 'Referrals', 'Qualified', 'Converted', 'Earned', 'Redeemed', 'Pending'].map((h) => (
-                      <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-900/[0.07]">
-                  {members.map((c) => (
-                    <tr key={c.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => onOpen(c)}>
-                      <td className="py-2.5 font-bold text-ink-900">{c.name}</td>
-                      <td className="num py-2.5 text-brand-700">{c.referral?.code || '—'}</td>
-                      <td className="num py-2.5 text-ink-700">{c.referral?.total ?? 0}</td>
-                      <td className="num py-2.5 text-ink-700">{c.referral?.qualified ?? 0}</td>
-                      <td className="num py-2.5 font-bold text-emerald-600">{c.referral?.converted ?? 0}</td>
-                      <td className="num py-2.5 text-ink-700">{inr(c.referral?.earned || 0)}</td>
-                      <td className="num py-2.5 text-ink-700">{inr(c.referral?.redeemed || 0)}</td>
-                      <td className="num py-2.5 font-bold text-amber-600">{inr(c.referral?.pending || 0)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <Paged items={members}>
+                {(shown) => (
+                  <table className="w-full min-w-[720px] text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/[0.07] text-left">
+                        {['Member', 'Referral code', 'Referrals', 'Qualified', 'Converted', 'Earned', 'Redeemed', 'Pending'].map((h) => (
+                          <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-900/[0.07]">
+                      {shown.map((c) => (
+                        <tr key={c.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => onOpen(c)}>
+                          <td className="py-2.5 font-bold text-ink-900">{c.name}</td>
+                          <td className="num py-2.5 text-brand-700">{c.referral?.code || '—'}</td>
+                          <td className="num py-2.5 text-ink-700">{c.referral?.total ?? 0}</td>
+                          <td className="num py-2.5 text-ink-700">{c.referral?.qualified ?? 0}</td>
+                          <td className="num py-2.5 font-bold text-emerald-600">{c.referral?.converted ?? 0}</td>
+                          <td className="num py-2.5 text-ink-700">{inr(c.referral?.earned || 0)}</td>
+                          <td className="num py-2.5 text-ink-700">{inr(c.referral?.redeemed || 0)}</td>
+                          <td className="num py-2.5 font-bold text-amber-600">{inr(c.referral?.pending || 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </Paged>
             </div>
             <p className="mt-3 text-xs text-ink-400">
               Each member has a code and a share link; rewards are released once a referral converts.
@@ -575,47 +588,51 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
             </div>
 
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[820px] text-sm">
-                <thead>
-                  <tr className="border-b border-ink-900/[0.07] text-left">
-                    {['Member', 'Expiry', 'Eligibility', 'Benefits consumed', 'Renewal offer', 'Probability', 'Assigned', 'Last contact', 'Next follow-up'].map((h) => (
-                      <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-900/[0.07]">
-                  {members.map((c) => {
-                    const s = planOf(c);
-                    const l = daysLeft(c);
-                    const used = (s?.benefits || []).reduce((n, b) => n + Number(b.used || 0), 0);
-                    const allocated = (s?.benefits || []).reduce((n, b) => n + Number(b.allocated || 0), 0);
-                    const consumed = allocated ? Math.round((used / allocated) * 100) : 0;
-                    const probability = Math.min(95, consumed + (c.engagement === 'Highly engaged' ? 40 : 15));
-                    return (
-                      <tr key={c.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => onOpen(c)}>
-                        <td className="py-2.5 font-bold text-ink-900">{c.name}</td>
-                        <td className="num py-2.5 text-ink-700">
-                          {s?.expiresOn || '—'}
-                          {l != null && (
-                            <span className={`ml-1.5 text-xs font-bold ${l < 0 ? 'text-rose-600' : l <= 45 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                              {l < 0 ? 'lapsed' : `${l}d`}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2.5 text-ink-600">{s ? (l != null && l <= 90 ? 'Eligible now' : 'Not yet') : 'No membership'}</td>
-                        <td className="num py-2.5 text-ink-700">{consumed}%</td>
-                        <td className="py-2.5 text-ink-600">{s ? `${s.plan} at last year's rate` : '—'}</td>
-                        <td className="num py-2.5 font-bold text-ink-900">{s ? `${probability}%` : '—'}</td>
-                        <td className="py-2.5 text-ink-600">{c.expert || '—'}</td>
-                        <td className="num py-2.5 text-ink-600">{c.lastInteraction || '—'}</td>
-                        <td className="py-2.5 text-ink-600">{s?.renewal?.stage && s.renewal.stage !== '—' ? s.renewal.stage : 'Not started'}</td>
+              <Paged items={members}>
+                {(shown) => (
+                  <table className="w-full min-w-[820px] text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/[0.07] text-left">
+                        {['Member', 'Expiry', 'Eligibility', 'Benefits consumed', 'Renewal offer', 'Probability', 'Assigned', 'Last contact', 'Next follow-up'].map((h) => (
+                          <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-ink-900/[0.07]">
+                      {shown.map((c) => {
+                        const s = planOf(c);
+                        const l = daysLeft(c);
+                        const used = (s?.benefits || []).reduce((n, b) => n + Number(b.used || 0), 0);
+                        const allocated = (s?.benefits || []).reduce((n, b) => n + Number(b.allocated || 0), 0);
+                        const consumed = allocated ? Math.round((used / allocated) * 100) : 0;
+                        const probability = Math.min(95, consumed + (c.engagement === 'Highly engaged' ? 40 : 15));
+                        return (
+                          <tr key={c.id} className="cursor-pointer hover:bg-surface-soft" onClick={() => onOpen(c)}>
+                            <td className="py-2.5 font-bold text-ink-900">{c.name}</td>
+                            <td className="num py-2.5 text-ink-700">
+                              {s?.expiresOn || '—'}
+                              {l != null && (
+                                <span className={`ml-1.5 text-xs font-bold ${l < 0 ? 'text-rose-600' : l <= 45 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                  {l < 0 ? 'lapsed' : `${l}d`}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 text-ink-600">{s ? (l != null && l <= 90 ? 'Eligible now' : 'Not yet') : 'No membership'}</td>
+                            <td className="num py-2.5 text-ink-700">{consumed}%</td>
+                            <td className="py-2.5 text-ink-600">{s ? `${s.plan} at last year's rate` : '—'}</td>
+                            <td className="num py-2.5 font-bold text-ink-900">{s ? `${probability}%` : '—'}</td>
+                            <td className="py-2.5 text-ink-600">{c.expert || '—'}</td>
+                            <td className="num py-2.5 text-ink-600">{c.lastInteraction || '—'}</td>
+                            <td className="py-2.5 text-ink-600">{s?.renewal?.stage && s.renewal.stage !== '—' ? s.renewal.stage : 'Not started'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </Paged>
             </div>
           </Block>
         </div>

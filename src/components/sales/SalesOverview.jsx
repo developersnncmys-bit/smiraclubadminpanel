@@ -24,6 +24,7 @@ import {
   inr,
   shortInr,
 } from '../../data/mockData.js';
+import Paged from '../../components/ui/Pagination.jsx';
 
 const OPEN = enquiryStatuses.filter((s) => !['Won', 'Lost'].includes(s));
 
@@ -530,83 +531,91 @@ export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoi
             }
           >
             <div className="-mx-5 overflow-x-auto">
-              <table className="w-full min-w-[760px] border-collapse">
-                <thead>
-                  <tr>
-                    {['Consultant', 'Status', 'Leads', 'Calls', 'Follow-ups', 'Present.', 'Visits', 'Closings', 'Revenue', 'Target'].map((h) => (
-                      <th key={h} className="th">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {league.map((m) => {
-                    const first = m.name.split(' ')[0];
-                    const mine = rows.filter((e) => e.owner === first);
-                    return (
-                      <tr
-                        key={m.id}
-                        className="cursor-pointer border-b border-ink-900/[0.05] transition hover:bg-surface-soft"
-                        onClick={() => actions.openTeam()}
-                      >
-                        <td className="td">
-                          <span className="flex items-center gap-2.5">
-                            <Avatar name={m.name} size="sm" />
-                            <span className="font-bold text-ink-900">{m.name}</span>
-                          </span>
-                        </td>
-                        <td className="td">
-                          <Badge tone={m.live === 'Online' ? 'green' : m.live === 'Offline' ? 'slate' : 'sky'} dot>
-                            {m.live}
-                          </Badge>
-                        </td>
-                        <td className="td num">{mine.length}</td>
-                        <td className="td num">{m.calls ?? 0}</td>
-                        <td className="td num">{m.followUps ?? 0}</td>
-                        <td className="td num">{m.presentations ?? 0}</td>
-                        <td className="td num">{m.visits ?? 0}</td>
-                        <td className="td num font-bold text-emerald-600">{m.bookings ?? 0}</td>
-                        <td className="td num font-bold text-brand-700">{m.revenue ? inr(m.revenue) : '—'}</td>
-                        <td className="td num text-ink-500">
-                          {m.target ? `${Math.round((m.revenue / m.target) * 100)}%` : '—'}
-                        </td>
+              <Paged items={league}>
+                {(shown) => (
+                  <table className="w-full min-w-[760px] border-collapse">
+                    <thead>
+                      <tr>
+                        {['Consultant', 'Status', 'Leads', 'Calls', 'Follow-ups', 'Present.', 'Visits', 'Closings', 'Revenue', 'Target'].map((h) => (
+                          <th key={h} className="th">{h}</th>
+                        ))}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {shown.map((m) => {
+                        const first = m.name.split(' ')[0];
+                        const mine = rows.filter((e) => e.owner === first);
+                        return (
+                          <tr
+                            key={m.id}
+                            className="cursor-pointer border-b border-ink-900/[0.05] transition hover:bg-surface-soft"
+                            onClick={() => actions.openTeam()}
+                          >
+                            <td className="td">
+                              <span className="flex items-center gap-2.5">
+                                <Avatar name={m.name} size="sm" />
+                                <span className="font-bold text-ink-900">{m.name}</span>
+                              </span>
+                            </td>
+                            <td className="td">
+                              <Badge tone={m.live === 'Online' ? 'green' : m.live === 'Offline' ? 'slate' : 'sky'} dot>
+                                {m.live}
+                              </Badge>
+                            </td>
+                            <td className="td num">{mine.length}</td>
+                            <td className="td num">{m.calls ?? 0}</td>
+                            <td className="td num">{m.followUps ?? 0}</td>
+                            <td className="td num">{m.presentations ?? 0}</td>
+                            <td className="td num">{m.visits ?? 0}</td>
+                            <td className="td num font-bold text-emerald-600">{m.bookings ?? 0}</td>
+                            <td className="td num font-bold text-brand-700">{m.revenue ? inr(m.revenue) : '—'}</td>
+                            <td className="td num text-ink-500">
+                              {m.target ? `${Math.round((m.revenue / m.target) * 100)}%` : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </Paged>
             </div>
           </Block>
 
           <div className="grid gap-5 xl:grid-cols-2">
             <Block title="Where the leads come from" note="Leads, how many qualified, and what they were worth">
               <div className="-mx-5 overflow-x-auto">
-                <table className="w-full min-w-[620px] border-collapse">
-                  <thead>
-                    <tr>
-                      {['Source', 'Leads', 'Qualified', 'Present.', 'Won', 'Conversion', 'Revenue'].map((h) => (
-                        <th key={h} className="th">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sourceRows.map((r) => (
-                      <tr key={r.source} className="border-b border-ink-900/[0.05]">
-                        <td className="td font-bold text-ink-900">{r.source}</td>
-                        <td className="td num">{r.leads}</td>
-                        <td className="td num">{r.qualified}</td>
-                        <td className="td num">{r.presentations}</td>
-                        <td className="td num font-bold text-emerald-600">{r.won}</td>
-                        <td className="td num">{r.conversion}%</td>
-                        <td className="td num font-bold text-brand-700">{r.revenue ? inr(r.revenue) : '—'}</td>
-                      </tr>
-                    ))}
-                    {sourceRows.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="td py-6 text-center text-ink-500">No leads in this view.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                <Paged items={sourceRows}>
+                  {(shown) => (
+                    <table className="w-full min-w-[620px] border-collapse">
+                      <thead>
+                        <tr>
+                          {['Source', 'Leads', 'Qualified', 'Present.', 'Won', 'Conversion', 'Revenue'].map((h) => (
+                            <th key={h} className="th">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shown.map((r) => (
+                          <tr key={r.source} className="border-b border-ink-900/[0.05]">
+                            <td className="td font-bold text-ink-900">{r.source}</td>
+                            <td className="td num">{r.leads}</td>
+                            <td className="td num">{r.qualified}</td>
+                            <td className="td num">{r.presentations}</td>
+                            <td className="td num font-bold text-emerald-600">{r.won}</td>
+                            <td className="td num">{r.conversion}%</td>
+                            <td className="td num font-bold text-brand-700">{r.revenue ? inr(r.revenue) : '—'}</td>
+                          </tr>
+                        ))}
+                        {sourceRows.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="td py-6 text-center text-ink-500">No leads in this view.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </Paged>
               </div>
             </Block>
 

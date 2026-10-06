@@ -46,6 +46,7 @@ import {
   webhooks,
   automationPermissions,
 } from '../data/automationData.js';
+import Table from '../components/ui/Table.jsx';
 
 const SECTIONS = [
   'Dashboard',
@@ -65,42 +66,6 @@ const SECTIONS = [
   'Permissions',
   'Structure',
 ];
-
-function Table({ head, rows, empty = 'Nothing here yet.' }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-sm">
-        <thead>
-          <tr className="border-b border-ink-900/[0.07] text-left">
-            {head.map((h) => (
-              <th key={h} className="pb-2 text-xs font-bold uppercase tracking-wide text-ink-400">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-ink-900/[0.07]">
-          {rows.map((r) => (
-            <tr key={r.key} className="hover:bg-surface-soft">
-              {r.cells.map((c, i) => (
-                <td key={i} className={`py-2.5 ${i === 0 ? 'font-bold text-ink-900' : 'text-ink-700'}`}>
-                  {c}
-                </td>
-              ))}
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={head.length} className="py-6 text-center text-ink-500">
-                {empty}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 /** One line of a rule, written the way the builder writes it. */
 function RuleLine({ label, value, tone = 'bg-surface-soft text-ink-800' }) {

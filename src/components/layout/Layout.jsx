@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header.jsx';
 import Sidebar from './Sidebar.jsx';
 import Toaster from '../ui/Toaster.jsx';
+import SavedDialog from '../ui/SavedDialog.jsx';
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -28,6 +29,7 @@ export default function Layout() {
       </div>
 
       <Toaster />
+      <SavedDialog />
     </div>
   );
 }

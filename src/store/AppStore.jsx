@@ -209,6 +209,15 @@ export function AppProvider({ children }) {
     partners: dbRef.current.partners || [],
   });
   const [toasts, setToasts] = useState([]);
+
+  /**
+   * What was just saved, for the dialog that says so.
+   *
+   * Separate from the toasts: a toast is a note you may read, this is a
+   * confirmation somebody has to dismiss, which is what the desk asked
+   * for after adding a partner and not being sure it had worked.
+   */
+  const [saved, setSaved] = useState(null);
   const [owner, setOwner] = useState('All team members');
   const [range, setRange] = useState('Last 7 days');
   const [auth, setAuth] = useState(loadAuth);
@@ -352,6 +361,19 @@ export function AppProvider({ children }) {
     [db]
   );
 
+  const clearSaved = useCallback(() => setSaved(null), []);
+
+  /**
+   * Say it was saved.
+   *
+   * `code` is whatever the record is called once the server has made
+   * one — PRT-012 rather than the placeholder the browser invented
+   * while it waited.
+   */
+  const showSaved = useCallback((title, detail, code) => {
+    setSaved({ title, detail, code });
+  }, []);
+
   const create = useCallback(
     (collection, item, { silent = false } = {}) => {
       const id = item.id || nextId(collection);
@@ -360,15 +382,23 @@ export function AppProvider({ children }) {
       setDb((d) => ({ ...d, [collection]: [{ ...item, id }, ...d[collection]] }));
       if (!silent) toast(`${SINGULAR[collection]} ${id} created`);
 
+      const what = SINGULAR[collection] || 'Record';
+      // Nothing to wait for when the panel is on its own data.
+      if (!silent && !(live && ADAPTERS[collection])) {
+        showSaved(`${what} created`, item.name || undefined, id);
+      }
+
       if (live && ADAPTERS[collection]) {
         api
           .post(pathFor(collection), toApi(collection, item, lookups()))
           .then((res) => {
-            const saved = fromApi(collection, res.data);
+            const row = fromApi(collection, res.data);
             setDb((d) => ({
               ...d,
-              [collection]: d[collection].map((r) => (r.id === id ? saved : r)),
+              [collection]: d[collection].map((r) => (r.id === id ? row : r)),
             }));
+            // Now it exists, and the code is the server's.
+            if (!silent) showSaved(`${what} created`, row.name || item.name || undefined, row.id || id);
           })
           .catch((err) => {
             // Put the optimistic row back where it came from.
@@ -379,7 +409,7 @@ export function AppProvider({ children }) {
 
       return id;
     },
-    [nextId, toast, live]
+    [nextId, toast, live, showSaved]
   );
 
   const update = useCallback(
@@ -391,20 +421,31 @@ export function AppProvider({ children }) {
       }));
       if (!silent) toast(message || `${SINGULAR[collection]} ${id} updated`);
 
+      const what = SINGULAR[collection] || 'Record';
+      const sayItSaved = () =>
+        showSaved(`${what} updated`, message || before?.name || undefined, id);
+
       if (live && ADAPTERS[collection] && before?._id) {
         const body = toApi(collection, patch, lookups());
         if (Object.keys(body).length) {
-          api.patch(`${pathFor(collection)}/${before._id}`, body).catch((err) => {
+          api.patch(`${pathFor(collection)}/${before._id}`, body).then(() => {
+            if (!silent) sayItSaved();
+          }).catch((err) => {
             setDb((d) => ({
               ...d,
               [collection]: d[collection].map((r) => (r.id === id ? before : r)),
             }));
             toast(err.message || 'That change did not save', 'danger');
           });
+        } else if (!silent) {
+          // Nothing the server holds changed — a screen-only field.
+          sayItSaved();
         }
+      } else if (!silent) {
+        sayItSaved();
       }
     },
-    [toast, live]
+    [toast, live, showSaved]
   );
 
   const updateMany = useCallback(
@@ -867,6 +908,9 @@ export function AppProvider({ children }) {
       db,
       toasts,
       toast,
+      saved,
+      showSaved,
+      clearSaved,
       dismissToast,
       create,
       update,
@@ -901,6 +945,8 @@ export function AppProvider({ children }) {
       db,
       toasts,
       toast,
+      saved,
+      clearSaved,
       dismissToast,
       create,
       update,

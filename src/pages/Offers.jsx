@@ -792,7 +792,12 @@ export default function Offers() {
               t.tier,
               t.gets,
               <span className="num">
-                {offers.filter((o) => o.tiers.includes(t.tier) || o.tiers.includes('All members')).length}
+                {
+                  // An offer saved from the form above has no tiers on it:
+                  // nothing on the server records who an offer is for yet.
+                  offers.filter((o) => (o.tiers || []).some((x) => x === t.tier || x === 'All members'))
+                    .length
+                }
               </span>,
             ],
           }))}

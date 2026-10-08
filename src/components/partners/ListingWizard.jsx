@@ -6,6 +6,7 @@ import { partnerApi } from '../../lib/partnerApi.js';
 import { api } from '../../lib/api.js';
 import FileField from './FileField.jsx';
 import ImagesField from './ImagesField.jsx';
+import { checkPartnerForm, flatten, firstBadStep } from '../../lib/partnerForm.js';
 
 /**
  * The five steps of the partner listing, exactly as the client's sheet lays
@@ -248,7 +249,7 @@ const EMPTY_ROOM = {
 /** Numbers leave the form as numbers, and blanks leave as nothing. */
 const n = (v) => (v === '' || v === null || v === undefined ? undefined : Number(v));
 
-function Field({ label, required, hint, children, wide }) {
+function Field({ label, required, error, hint, children, wide }) {
   return (
     <label className={`block ${wide ? 'sm:col-span-2' : ''}`}>
       <span className="mb-1.5 flex items-baseline gap-1.5 text-xs font-bold text-ink-700">
@@ -256,7 +257,9 @@ function Field({ label, required, hint, children, wide }) {
         {required && <span className="text-rose-500">*</span>}
       </span>
       {children}
-      {hint && <span className="mt-1 block text-[11px] text-ink-400">{hint}</span>}
+      {/* What is wrong, under the field it is wrong about. */}
+      {error && <span className="mt-1 block text-[11px] font-semibold text-rose-600">{error}</span>}
+      {!error && hint && <span className="mt-1 block text-[11px] text-ink-400">{hint}</span>}
     </label>
   );
 }
@@ -318,6 +321,15 @@ export default function ListingWizard({
   finishLabel,
 }) {
   const [step, setStep] = useState(Math.min(5, Math.max(1, initial.step || 1)));
+  /**
+   * What is missing, by field.
+   *
+   * The form marked fields required and then let every one of them
+   * through — "the server decides what is required" — so the desk could
+   * fill in five steps, press Submit, and be told by the API that
+   * something on step one was wrong.
+   */
+  const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [missing, setMissing] = useState([]);
@@ -515,7 +527,31 @@ export default function ListingWizard({
     }
   };
 
+  /** Everything this form knows about itself, for the rules to read. */
+  const everything = () =>
+    checkPartnerForm(
+      {
+        account, property, location, rooms, propertyPhotos, roomPhotos, amenities,
+        facilities, rules, pricing, inventory, policies, ownership, bank, agreed,
+      },
+      kind,
+    );
+
+  const checkStep = (n) => {
+    const found = everything()[n] || {};
+    setErrors(found);
+    if (Object.keys(found).length) setError('Some answers are missing on this step.');
+    return Object.keys(found).length === 0;
+  };
+
   const next = async () => {
+    // Stop on the step that needs work, rather than at the end.
+    if (!checkStep(step)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setErrors({});
+    setError('');
     if (await save(step)) {
       setStep(Math.min(5, step + 1));
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -523,6 +559,15 @@ export default function ListingWizard({
   };
 
   const submit = async () => {
+    const all = everything();
+    const bad = firstBadStep(all);
+    if (bad !== null) {
+      setErrors(flatten(all));
+      setError('Some answers are missing — go back and finish them.');
+      setStep(bad);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     if (!(await save(5))) return;
     setBusy(true);
     try {
@@ -590,15 +635,15 @@ export default function ListingWizard({
             <Group title="Account registration" note={`Signed in with ${partner?.phone || 'your mobile'}. No password — you sign in with a code each time.`}>
               {/* What kind of account this is comes first: it decides who
                   is signing up, before anything about the person. */}
-              <Field label="Account type" required>
+              <Field label="Account type" required error={errors.accountType}>
                 <select {...acc('accountType')}>
                   <option value="">Select</option>
                   {ACCOUNT_TYPES.map((o) => <option key={o}>{o}</option>)}
                 </select>
               </Field>
-              <Field label="Full name" required><input {...acc('fullName')} autoComplete="name" /></Field>
-              <Field label="Email address"><input {...acc('email')} type="email" autoComplete="email" /></Field>
-              <Field label="Alternate number"><input {...acc('alternatePhone')} inputMode="tel" /></Field>
+              <Field label="Full name" required error={errors.fullName}><input {...acc('fullName')} autoComplete="name" /></Field>
+              <Field label="Email address" required error={errors.email}><input {...acc('email')} type="email" autoComplete="email" /></Field>
+              <Field label="Alternate number" required error={errors.alternatePhone}><input {...acc('alternatePhone')} inputMode="tel" /></Field>
             </Group>
 
             <Group title="Property type" note="What type of property are you listing?">
@@ -619,35 +664,35 @@ export default function ListingWizard({
             </Group>
 
             <Group title="Basic property information">
-              <Field label="Property name" required><input {...prop('name')} /></Field>
+              <Field label="Property name" required error={errors.name}><input {...prop('name')} /></Field>
               {kind.star && (
-                <Field label="Star category"><input {...prop('starCategory')} placeholder="3 star, 4 star…" /></Field>
+                <Field label="Star category" required error={errors.starCategory}><input {...prop('starCategory')} placeholder="3 star, 4 star…" /></Field>
               )}
-              <Field label="Property contact name"><input {...prop('contactName')} /></Field>
-              <Field label="Mobile number"><input {...prop('contactPhone')} inputMode="tel" /></Field>
-              <Field label="Email"><input {...prop('contactEmail')} type="email" /></Field>
-              <Field label="Booking start date"><input {...prop('bookingStartDate')} type="date" /></Field>
-              <Field label="Property description" wide>
+              <Field label="Property contact name" required error={errors.contactName}><input {...prop('contactName')} /></Field>
+              <Field label="Mobile number" required error={errors.contactPhone}><input {...prop('contactPhone')} inputMode="tel" /></Field>
+              <Field label="Email" required error={errors.contactEmail}><input {...prop('contactEmail')} type="email" /></Field>
+              <Field label="Booking start date" required error={errors.bookingStartDate}><input {...prop('bookingStartDate')} type="date" /></Field>
+              <Field label="Property description" required error={errors.description} wide>
                 <textarea {...prop('description')} rows={3} />
               </Field>
             </Group>
 
             <Group title="Property location" note="Address verification is mandatory — we check this before you go live.">
-              <Field label="Address line 1" required wide><input {...loc('line1')} /></Field>
-              <Field label="Address line 2" wide><input {...loc('line2')} /></Field>
-              <Field label="Landmark"><input {...loc('landmark')} /></Field>
-              <Field label="City" required><input {...loc('city')} /></Field>
-              <Field label="State" required><input {...loc('state')} /></Field>
-              <Field label="Country"><input {...loc('country')} /></Field>
-              <Field label="PIN code" required><input {...loc('pin')} inputMode="numeric" /></Field>
-              <Field label="Google Maps location" hint="Paste the share link from Google Maps">
+              <Field label="Address line 1" required error={errors.line1} wide><input {...loc('line1')} /></Field>
+              <Field label="Address line 2" required error={errors.line2} wide><input {...loc('line2')} /></Field>
+              <Field label="Landmark" required error={errors.landmark}><input {...loc('landmark')} /></Field>
+              <Field label="City" required error={errors.city}><input {...loc('city')} /></Field>
+              <Field label="State" required error={errors.state}><input {...loc('state')} /></Field>
+              <Field label="Country" required error={errors.country}><input {...loc('country')} /></Field>
+              <Field label="PIN code" required error={errors.pin}><input {...loc('pin')} inputMode="numeric" /></Field>
+              <Field label="Google Maps location" required error={errors.mapsUrl} hint="Paste the share link from Google Maps">
                 <span className="relative block">
                   <MapPin size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
                   <input {...loc('mapsUrl')} className="input pl-8" />
                 </span>
               </Field>
-              <Field label="Latitude"><input {...loc('latitude')} inputMode="decimal" /></Field>
-              <Field label="Longitude"><input {...loc('longitude')} inputMode="decimal" /></Field>
+              <Field label="Latitude" required error={errors.latitude}><input {...loc('latitude')} inputMode="decimal" /></Field>
+              <Field label="Longitude" required error={errors.longitude}><input {...loc('longitude')} inputMode="decimal" /></Field>
             </Group>
           </>
         )}
@@ -666,16 +711,16 @@ export default function ListingWizard({
                   )}
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <Field label={`${kind.unit} name`} required><input className="input" value={r.name} onChange={(e) => setRoom(i, 'name', e.target.value)} placeholder={kind.eg} /></Field>
-                  <Field label={`${kind.unit} type`}><input className="input" value={r.type} onChange={(e) => setRoom(i, 'type', e.target.value)} placeholder={kind.egType} /></Field>
-                  <Field label={`How many ${kind.units.toLowerCase()}`} required><input className="input" type="number" min="0" value={r.count} onChange={(e) => setRoom(i, 'count', e.target.value)} placeholder="10" /></Field>
-                  <Field label={kind.nightly ? `${kind.unit} size` : 'Size or duration'}><input className="input" value={r.size} onChange={(e) => setRoom(i, 'size', e.target.value)} placeholder={kind.nightly ? '320 sq ft' : '60 minutes'} /></Field>
+                  <Field label={`${kind.unit} name`} required error={errors[`room-${i}-name`]}><input className="input" value={r.name} onChange={(e) => setRoom(i, 'name', e.target.value)} placeholder={kind.eg} /></Field>
+                  <Field label={`${kind.unit} type`} required error={errors[`room-${i}-type`]}><input className="input" value={r.type} onChange={(e) => setRoom(i, 'type', e.target.value)} placeholder={kind.egType} /></Field>
+                  <Field label={`How many ${kind.units.toLowerCase()}`} required error={errors[`room-${i}-count`]}><input className="input" type="number" min="0" value={r.count} onChange={(e) => setRoom(i, 'count', e.target.value)} placeholder="10" /></Field>
+                  <Field label={kind.nightly ? `${kind.unit} size` : 'Size or duration'} required error={errors[`room-${i}-size`]}><input className="input" value={r.size} onChange={(e) => setRoom(i, 'size', e.target.value)} placeholder={kind.nightly ? '320 sq ft' : '60 minutes'} /></Field>
                   {kind.bed && (
-                    <Field label="Bed type"><input className="input" value={r.bedType} onChange={(e) => setRoom(i, 'bedType', e.target.value)} placeholder="1 King Bed" /></Field>
+                    <Field label="Bed type" required error={errors[`room-${i}-bedType`]}><input className="input" value={r.bedType} onChange={(e) => setRoom(i, 'bedType', e.target.value)} placeholder="1 King Bed" /></Field>
                   )}
-                  <Field label="Number of adults"><input className="input" type="number" min="0" value={r.adults} onChange={(e) => setRoom(i, 'adults', e.target.value)} placeholder="2" /></Field>
-                  <Field label="Number of children"><input className="input" type="number" min="0" value={r.children} onChange={(e) => setRoom(i, 'children', e.target.value)} placeholder="1" /></Field>
-                  <Field label={kind.occupancyLabel || 'Maximum occupancy'}><input className="input" type="number" min="0" value={r.maxOccupancy} onChange={(e) => setRoom(i, 'maxOccupancy', e.target.value)} placeholder="3" /></Field>
+                  <Field label="Number of adults" required error={errors[`room-${i}-adults`]}><input className="input" type="number" min="0" value={r.adults} onChange={(e) => setRoom(i, 'adults', e.target.value)} placeholder="2" /></Field>
+                  <Field label="Number of children" required error={errors[`room-${i}-children`]}><input className="input" type="number" min="0" value={r.children} onChange={(e) => setRoom(i, 'children', e.target.value)} placeholder="1" /></Field>
+                  <Field label={kind.occupancyLabel || 'Maximum occupancy'} required error={errors[`room-${i}-maxOccupancy`]}><input className="input" type="number" min="0" value={r.maxOccupancy} onChange={(e) => setRoom(i, 'maxOccupancy', e.target.value)} placeholder="3" /></Field>
                   {kind.extraBed && (
                     <Field label="Extra bed available">
                       <select className="input" value={r.extraBed ? 'Yes' : 'No'} onChange={(e) => setRoom(i, 'extraBed', e.target.value === 'Yes')}>
@@ -684,8 +729,8 @@ export default function ListingWizard({
                       </select>
                     </Field>
                   )}
-                  <Field label={`${kind.unit} amenities`} wide><input className="input" value={r.amenities} onChange={(e) => setRoom(i, 'amenities', e.target.value)} placeholder="AC, TV, minibar, balcony" /></Field>
-                  <Field label={`${kind.unit} description`} wide><textarea className="input" rows={2} value={r.description} onChange={(e) => setRoom(i, 'description', e.target.value)} /></Field>
+                  <Field label={`${kind.unit} amenities`} required error={errors[`room-${i}-amenities`]} wide><input className="input" value={r.amenities} onChange={(e) => setRoom(i, 'amenities', e.target.value)} placeholder="AC, TV, minibar, balcony" /></Field>
+                  <Field label={`${kind.unit} description`} required error={errors[`room-${i}-description`]} wide><textarea className="input" rows={2} value={r.description} onChange={(e) => setRoom(i, 'description', e.target.value)} /></Field>
                 </div>
               </section>
             ))}
@@ -700,7 +745,7 @@ export default function ListingWizard({
               listing reached the website with no pictures.
             */}
             <Group title="Photographs" note="These are what a member sees first. The first one leads the listing.">
-              <Field label="Property photos" hint="Exterior, lobby, reception, restaurant, swimming pool, facilities, other areas" wide>
+              <Field label="Property photos" required error={errors.propertyPhotos} hint="Exterior, lobby, reception, restaurant, swimming pool, facilities, other areas" wide>
                 <ImagesField
                   label="Property photo"
                   value={propertyPhotos}
@@ -928,12 +973,12 @@ export default function ListingWizard({
         {step === 4 && (
           <>
             <Group title={`${kind.unit} pricing`} note={kind.priceNote || `Per ${kind.unit.toLowerCase()} per night, in rupees.`}>
-              <Field label="Standard tariff"><input {...pri('standardTariff')} type="number" min="0" /></Field>
-              <Field label="Smira partner rate" required hint="What Smira pays you"><input {...pri('partnerRate')} type="number" min="0" /></Field>
-              <Field label="Weekday rate"><input {...pri('weekdayRate')} type="number" min="0" /></Field>
-              <Field label="Weekend rate"><input {...pri('weekendRate')} type="number" min="0" /></Field>
-              <Field label={kind.nightly ? 'Extra adult rate' : 'Extra person rate'}><input {...pri('extraAdultRate')} type="number" min="0" /></Field>
-              <Field label="Child rate"><input {...pri('childRate')} type="number" min="0" /></Field>
+              <Field label="Standard tariff" required error={errors.standardTariff}><input {...pri('standardTariff')} type="number" min="0" /></Field>
+              <Field label="Smira partner rate" required error={errors.partnerRate} hint="What Smira pays you"><input {...pri('partnerRate')} type="number" min="0" /></Field>
+              <Field label="Weekday rate" required error={errors.weekdayRate}><input {...pri('weekdayRate')} type="number" min="0" /></Field>
+              <Field label="Weekend rate" required error={errors.weekendRate}><input {...pri('weekendRate')} type="number" min="0" /></Field>
+              <Field label={kind.nightly ? 'Extra adult rate' : 'Extra person rate'} required error={errors.extraAdultRate}><input {...pri('extraAdultRate')} type="number" min="0" /></Field>
+              <Field label="Child rate" required error={errors.childRate}><input {...pri('childRate')} type="number" min="0" /></Field>
             </Group>
 
             {kind.meals && (
@@ -944,9 +989,9 @@ export default function ListingWizard({
 
             <Group title="Inventory and calendar">
               <Field label={`Total ${kind.units.toLowerCase()}`}><input {...inv('totalRooms')} type="number" min="0" /></Field>
-              <Field label={`Available ${kind.units.toLowerCase()}`}><input {...inv('availableRooms')} type="number" min="0" /></Field>
-              <Field label="Closed dates" hint="e.g. 24–26 Dec"><input {...inv('closedDates')} /></Field>
-              <Field label="Blackout dates"><input {...inv('blackoutDates')} /></Field>
+              <Field label={`Available ${kind.units.toLowerCase()}`} required error={errors.availableRooms}><input {...inv('availableRooms')} type="number" min="0" /></Field>
+              <Field label="Closed dates" required error={errors.closedDates} hint="e.g. 24–26 Dec"><input {...inv('closedDates')} /></Field>
+              <Field label="Blackout dates" required error={errors.blackoutDates}><input {...inv('blackoutDates')} /></Field>
             </Group>
 
             <Group title="Policies">
@@ -955,14 +1000,14 @@ export default function ListingWizard({
                   <Field label={kind.times === 'stay' ? 'Check-in time' : 'Opens at'}>
                     <input {...pol('checkIn')} type="time" />
                   </Field>
-                  <Field label={kind.times === 'stay' ? 'Check-out time' : 'Closes at'}>
+                  <Field label={kind.times === 'stay' ? 'Check-out time' : 'Closes at'} required error={errors.checkOut}>
                     <input {...pol('checkOut')} type="time" />
                   </Field>
                 </>
               )}
-              <Field label="Free cancellation until" hint={kind.times === 'stay' ? 'e.g. 48 hours before check-in' : 'e.g. 24 hours before the booking'}><input {...pol('freeCancellationUntil')} /></Field>
-              <Field label="Cancellation charge"><input {...pol('cancellationCharge')} placeholder={kind.nightly ? 'One night' : 'Half the booking'} /></Field>
-              <Field label="No-show policy" wide><input {...pol('noShowPolicy')} /></Field>
+              <Field label="Free cancellation until" required error={errors.freeCancellationUntil} hint={kind.times === 'stay' ? 'e.g. 48 hours before check-in' : 'e.g. 24 hours before the booking'}><input {...pol('freeCancellationUntil')} /></Field>
+              <Field label="Cancellation charge" required error={errors.cancellationCharge}><input {...pol('cancellationCharge')} placeholder={kind.nightly ? 'One night' : 'Half the booking'} /></Field>
+              <Field label="No-show policy" required error={errors.noShowPolicy} wide><input {...pol('noShowPolicy')} /></Field>
             </Group>
           </>
         )}
@@ -971,7 +1016,7 @@ export default function ListingWizard({
         {step === 5 && (
           <>
             <Group title="Ownership">
-              <Field label="Ownership type" required wide>
+              <Field label="Ownership type" required error={errors.ownershipType} wide>
                 <div className="flex flex-wrap gap-2">
                   {OWNERSHIP.map((o) => (
                     <button
@@ -1014,9 +1059,9 @@ export default function ListingWizard({
                   onChange={(url) => setOwnership({ ...ownership, documentLinks: { ...ownership.documentLinks, authorisation: url } })}
                 />
               </Field>
-              <Field label="PAN"><input {...own('pan')} className="input uppercase" /></Field>
-              <Field label="GST"><input {...own('gst')} className="input uppercase" /></Field>
-              <Field label="TAN" hint="If applicable"><input {...own('tan')} className="input uppercase" /></Field>
+              <Field label="PAN" required error={errors.pan}><input {...own('pan')} className="input uppercase" /></Field>
+              <Field label="GST" required error={errors.gst}><input {...own('gst')} className="input uppercase" /></Field>
+              <Field label="TAN" required error={errors.tan} hint="If applicable"><input {...own('tan')} className="input uppercase" /></Field>
             </Group>
 
             {/*
@@ -1027,11 +1072,11 @@ export default function ListingWizard({
               in" from "does not apply".
             */}
             <Group title="Account information" note="Where Smira settles your payouts by bank transfer.">
-              <Field label="Account holder name" required><input {...bnk('holder')} /></Field>
-              <Field label="Bank name"><input {...bnk('bankName')} /></Field>
-              <Field label="Account number" required><input {...bnk('accountNumber')} inputMode="numeric" autoComplete="off" /></Field>
-              <Field label="IFSC" required><input {...bnk('ifsc')} className="input uppercase" /></Field>
-              <Field label="Branch"><input {...bnk('branch')} /></Field>
+              <Field label="Account holder name" required error={errors.holder}><input {...bnk('holder')} /></Field>
+              <Field label="Bank name" required error={errors.bankName}><input {...bnk('bankName')} /></Field>
+              <Field label="Account number" required error={errors.accountNumber}><input {...bnk('accountNumber')} inputMode="numeric" autoComplete="off" /></Field>
+              <Field label="IFSC" required error={errors.ifsc}><input {...bnk('ifsc')} className="input uppercase" /></Field>
+              <Field label="Branch" required error={errors.branch}><input {...bnk('branch')} /></Field>
               <Field label="Cancelled cheque / bank proof">
                 <FileField
                   label="Bank proof"
@@ -1043,10 +1088,10 @@ export default function ListingWizard({
             </Group>
 
             <Group title="UPI" note="Quicker for small settlements. Either this or the account above, or both.">
-              <Field label="UPI ID" hint="e.g. yourname@okhdfcbank">
+              <Field label="UPI ID" required error={errors.upiId} hint="e.g. yourname@okhdfcbank">
                 <input {...bnk('upiId')} autoComplete="off" spellCheck={false} />
               </Field>
-              <Field label="Name on the UPI account"><input {...bnk('upiName')} /></Field>
+              <Field label="Name on the UPI account" required error={errors.upiName}><input {...bnk('upiName')} /></Field>
               <Field label="How you would rather be paid">
                 <select {...bnk('preferred')}>
                   <option value="">No preference</option>

@@ -67,6 +67,30 @@ const SECTIONS = [
   'Reports',
 ];
 
+/**
+ * A line under the switcher saying what this view is.
+ *
+ * Fourteen views named in two or three words each, and no way to tell
+ * Collections from Ledger, or Sources from Money in and out, without
+ * opening both and reading the tables.
+ */
+const ABOUT = {
+  Overview: 'What came in, what it cost, and whether that beats the target',
+  Sources: 'Which part of the business the money came from',
+  'Sales team': 'What each person sold, and how they are tracking',
+  'Branch and team': 'The same figures by branch, team or manager',
+  Commission: 'What each person has earned on what they sold, paid and pending',
+  Collections: 'Money billed and not yet in — who owes it and how long it has been owed',
+  Ledger: 'Every payment and invoice, line by line',
+  Membership: 'What memberships brought in, by plan',
+  Customers: 'Who spends the most, and what they are worth over time',
+  Forecast: 'What the pipeline should turn into, and what that leaves',
+  'Money in and out': 'Everything received against everything paid out',
+  'Profit and loss': 'Revenue, less cost of sales, less what it takes to run the place',
+  Alerts: 'What the desk should chase today',
+  Reports: 'Anything here, as a file',
+};
+
 const tooltipStyle = {
   borderRadius: 12,
   border: '1px solid rgba(11,21,36,0.06)',
@@ -1451,11 +1475,13 @@ export default function Revenue() {
       </PageHeader>
 
       <SectionTabs
-        className="mb-5"
         items={SECTIONS}
         value={section}
         onChange={setSection}
       />
+
+      {/* What this view is, so nobody has to open it to find out. */}
+      <p className="mb-5 mt-3 text-sm text-ink-500">{ABOUT[section]}</p>
 
       <div className="grid gap-5 xl:grid-cols-2">{body[section]}</div>
     </>

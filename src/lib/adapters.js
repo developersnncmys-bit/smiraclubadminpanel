@@ -62,6 +62,13 @@ const ref = (value) => {
   return typeof value === 'string' ? value : value._id;
 };
 
+/** "2026-05-18" — what an <input type="date"> can actually hold. */
+const iso = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+};
+
 /** What every adapted record carries, whatever collection it came from. */
 const base = (doc) => ({ ...doc, _id: doc._id, id: doc.code || doc._id });
 
@@ -894,6 +901,8 @@ export const ADAPTERS = {
       category: p.category,
       destination: p.destination,
       grade: p.grade,
+      address: p.address,
+      gps: p.gps,
       // The supplier behind the stock, by name and by record.
       vendorName: p.vendor || undefined,
       partner: has(p, 'vendor') ? (ctx?.partners || []).find((x) => x.name === p.vendor)?._id || null : undefined,
@@ -1148,6 +1157,68 @@ export const ADAPTERS = {
       endsOn: when(p.endsOn),
       usageLimit: num(p.usageLimit),
       status: p.status,
+    }),
+  },
+
+  /**
+   * Blog posts, as the website reads them.
+   *
+   * The body is the awkward part: the site draws a heading, then
+   * paragraphs, then a bulleted list, per section. The panel's writing
+   * screen works in plain text a person can type, so paragraphs and list
+   * items are lines here and arrays on the server.
+   */
+  blogs: {
+    path: '/blogs',
+    from: (b) => ({
+      ...base(b),
+      title: b.title,
+      slug: b.slug || '',
+      category: b.category || 'guide',
+      tag: b.tag || '',
+      excerpt: b.excerpt || '',
+      cover: b.coverUrl || '',
+      readMins: b.readMins ?? 5,
+      author: b.author || '',
+      published: d(b.publishedOn),
+      publishedOn: iso(b.publishedOn),
+      latest: Boolean(b.latest),
+      popular: Boolean(b.popular),
+      views: b.views ?? 0,
+      status: b.status || 'Draft',
+      body: (b.body || []).map((sec) => ({
+        h: sec.h || '',
+        p: (sec.p || []).join('\n\n'),
+        list: (sec.list || []).join('\n'),
+      })),
+      updated: dt(b.updatedAt),
+    }),
+    to: (p) => ({
+      title: p.title,
+      slug: p.slug,
+      category: p.category,
+      tag: p.tag,
+      excerpt: p.excerpt,
+      coverUrl: p.cover,
+      readMins: num(p.readMins),
+      author: p.author,
+      publishedOn: when(p.publishedOn),
+      latest: p.latest,
+      popular: p.popular,
+      status: p.status,
+      body: Array.isArray(p.body)
+        ? p.body.map((sec) => ({
+            h: String(sec.h || '').trim(),
+            p: String(sec.p || '')
+              .split(/\n\s*\n/)
+              .map((x) => x.trim())
+              .filter(Boolean),
+            list: String(sec.list || '')
+              .split('\n')
+              .map((x) => x.trim())
+              .filter(Boolean),
+          }))
+        : undefined,
     }),
   },
 };

@@ -347,6 +347,29 @@ export default function Inventory() {
     { name: 'name', label: 'What it is', type: 'text', required: true, placeholder: 'Ayana Resort & Spa' },
     { name: 'category', label: 'Category', type: 'select', options: CATEGORY_KEYS, required: true },
     { name: 'destination', label: 'Destination', type: 'text', placeholder: 'Bali, Indonesia' },
+    /*
+     * Where it is, and where it really is.
+     *
+     * The website drew its map by searching Google for the address, so a
+     * typo in the address put the pin in the wrong place or nowhere. It
+     * uses the pin when there is one, and these are the only two fields
+     * the desk has for correcting a listing it did not create here.
+     */
+    {
+      name: 'address',
+      label: 'Address',
+      type: 'text',
+      full: true,
+      placeholder: 'Plot no. 133, Jambrung, Karjat, Maharashtra 410201',
+    },
+    {
+      name: 'gps',
+      label: 'Map pin',
+      type: 'text',
+      full: true,
+      placeholder: '19.015211, 73.519617',
+      help: 'Latitude, longitude. In Google Maps, right-click the property and click the numbers to copy them. A share link works too.',
+    },
     { name: 'vendor', label: 'Vendor', type: 'select', options: ['', ...(partners || []).map((p) => p.name)] },
     { name: 'units', label: 'Units held', type: 'number', required: true },
     { name: 'baseRate', label: 'Vendor rate (₹)', type: 'number', required: true },

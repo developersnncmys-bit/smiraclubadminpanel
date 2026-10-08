@@ -21,10 +21,12 @@ import * as reportsSeed from '../data/reportsData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
+// v38: the blog is live, so the two invented posts in the seed are gone;
+// a saved v37 snapshot would keep showing them on the new Blog page.
 // v37: the offers, rewards, revenue and automation seeds were removed, so
 // a snapshot saved before that holds rows in a shape those pages no longer
 // read. Bumping the key drops it rather than crashing on it.
-const KEY = 'smira-club-admin:v37';
+const KEY = 'smira-club-admin:v38';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -120,7 +122,9 @@ const seedState = () => ({
   inventory: inventorySeed.inventory,
   partners: partnerSeed.partners,
   lifestyle: extra.lifestyle,
-  automations: autoSeed.rules,
+  // The seeded rules went when the automation seed did; the page reads
+  // whatever the API holds.
+  automations: [],
   notificationRules: extra.notificationRules,
   offers: extra.offers,
   roles: usersSeed.roles,

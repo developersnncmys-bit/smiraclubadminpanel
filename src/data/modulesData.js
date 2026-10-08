@@ -62,10 +62,12 @@ export const forms = [
 export const formLists = ['Default lead list', 'Callback list', 'Membership list', 'Newsletter list'];
 
 // -- Blog -------------------------------------------------------------------
-export const blogs = [
-  { id: 'BLG-01', title: '10 days in Bali on an Indian budget', author: 'Sneha Kulkarni', category: 'Destination guide', published: '28 Jul 2026', views: 4820, status: 'Published' },
-  { id: 'BLG-02', title: 'Schengen visa from Mumbai — the 2026 checklist', author: 'Rhea Dsouza', category: 'Visa & documents', published: '22 Jul 2026', views: 7310, status: 'Published' },
-];
+/**
+ * Nothing. The blog is live: a post written on the Blog page is saved to
+ * the API and read by the website, so invented rows here would show two
+ * articles on this screen that no reader can open.
+ */
+export const blogs = [];
 
 // -- Banners ----------------------------------------------------------------
 export const banners = [

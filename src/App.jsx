@@ -17,6 +17,7 @@ import Payment from './pages/Payment.jsx';
 import Automation from './pages/Automation.jsx';
 import Rewards from './pages/Rewards.jsx';
 import Offers from './pages/Offers.jsx';
+import Blog from './pages/Blog.jsx';
 import Support from './pages/Support.jsx';
 import Users from './pages/Users.jsx';
 import PartnerLogin from './pages/PartnerLogin.jsx';
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="automation" element={<Automation />} />
         <Route path="rewards" element={<Rewards />} />
         <Route path="offers" element={<Offers />} />
+        <Route path="blog" element={<Blog />} />
         <Route path="support" element={<Support />} />
         <Route path="users" element={<Users />} />
       </Route>

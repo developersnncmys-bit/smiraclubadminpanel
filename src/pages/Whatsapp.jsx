@@ -37,9 +37,6 @@ import {
   templateSupports,
   templateExample,
   botSessions,
-  websiteFlow,
-  enquiryFlow,
-  crmTimeline,
   controlCentre,
   staffPerformance,
   inboxStats,
@@ -60,7 +57,6 @@ const SECTIONS = [
   'Campaigns',
   'Templates',
   'Staff',
-  'Integration',
   'Control centre',
 ];
 
@@ -639,32 +635,6 @@ export default function Whatsapp() {
           }))}
         />
       </Block>
-    ),
-
-    Integration: (
-      <>
-        <Block title="Website into WhatsApp" note="Chat on WhatsApp, and the CRM already knows who it is" wide>
-          <Flow steps={websiteFlow} />
-          <p className="eyebrow mt-5">A website enquiry</p>
-          <div className="mt-2">
-            <Flow steps={enquiryFlow} />
-          </div>
-          <p className="mt-4 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-600">
-            From the booking page, what they were looking at is passed into the chat, so nobody has to ask again.
-          </p>
-        </Block>
-
-        <Block title="It all lands in the customer's history" note="One timeline, whatever channel it came through" wide>
-          <ol className="space-y-3 border-l border-ink-900/[0.07] pl-4">
-            {crmTimeline.map((t) => (
-              <li key={t} className="relative">
-                <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-                <p className="text-sm font-semibold text-ink-800">{t}</p>
-              </li>
-            ))}
-          </ol>
-        </Block>
-      </>
     ),
 
     'Control centre': (

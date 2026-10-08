@@ -55,7 +55,6 @@ const SECTIONS = [
   'Performance',
   'Attendance',
   'Approvals',
-  'Login and security',
   'Audit logs',
 ];
 
@@ -70,7 +69,6 @@ const ABOUT = {
   Performance: 'Target, achievement and where everybody ranks',
   Attendance: 'Who turned up, when they signed in, and the work behind it',
   Approvals: 'Everything waiting on a sign-off',
-  'Login and security': 'Sessions, sign-ins and who may get in from where',
   'Audit logs': 'Who did what, and when — the panel keeps all of it',
 };
 
@@ -804,55 +802,6 @@ export default function Users() {
       </>
     ),
 
-    'Login and security': (
-      <>
-        <Block title="Sessions and sign-ins" note="Every login the panel has recorded" wide>
-          <Table minWidth={680}
-            head={['User', 'Last login', 'Login', 'Logout', 'IP', 'Browser or device', 'Failed attempts', 'Active sessions', '2FA', '']}
-            rows={users.map((u) => ({
-              key: u.id,
-              cells: [
-                u.name,
-                <span className="num">{u.account.lastLogin || 'never'}</span>,
-                <span className="num">{u.account.loginTime || '—'}</span>,
-                <span className="num">{u.account.logoutTime || '—'}</span>,
-                <span className="num text-ink-500">{u.account.ip || '—'}</span>,
-                u.account.browser || '—',
-                <span className={`num font-bold ${u.account.failedLogins ? 'text-rose-600' : 'text-ink-400'}`}>
-                  {u.account.failedLogins ?? 0}
-                </span>,
-                <span className="num">{u.account.sessions ?? 0}</span>,
-                <Badge tone={u.account.twoFactor ? 'green' : 'slate'}>{u.account.twoFactor ? 'On' : 'Off'}</Badge>,
-                <span className="flex flex-wrap gap-1.5">
-                  <button className="btn-line btn-sm" onClick={() => act('Reset password', u)}>Reset</button>
-                  <button className="btn-line btn-sm" onClick={() => toast(`${u.name} signed out of every device`)}>
-                    Force logout
-                  </button>
-                  <button className="btn-line-danger btn-sm" onClick={() => act('Disable account', u)}>Disable</button>
-                </span>,
-              ],
-            }))}
-          />
-        </Block>
-
-        <Block title="Who can sign in from where" note="Login permission and device restrictions">
-          <Table minWidth={680}
-            head={['User', 'Username', 'Web', 'Mobile', 'Devices']}
-            rows={users.map((u) => ({
-              key: u.id,
-              cells: [
-                u.name,
-                <span className="text-ink-500">{u.account.username || u.email}</span>,
-                <span className="inline-flex"><Mark on={u.account.webAccess} /></span>,
-                <span className="inline-flex"><Mark on={u.account.mobileAccess} /></span>,
-                u.account.devices || 'No restriction',
-              ],
-            }))}
-          />
-        </Block>
-      </>
-    ),
-
     'Audit logs': (
       <Block title="Everything that has been done" note="Logins, approvals, role changes and edits — newest first" wide>
         <ol className="space-y-3 border-l border-ink-900/[0.07] pl-4">
@@ -893,7 +842,6 @@ export default function Users() {
     Performance: parts.Performance,
     Attendance: parts['Attendance and activity'],
     Approvals: parts.Approvals,
-    'Login and security': parts['Login and security'],
     'Audit logs': parts['Audit logs'],
   };
 

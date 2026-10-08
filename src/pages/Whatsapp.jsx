@@ -40,7 +40,6 @@ import {
   websiteFlow,
   enquiryFlow,
   crmTimeline,
-  architecture,
   controlCentre,
   staffPerformance,
   inboxStats,
@@ -312,13 +311,6 @@ export default function Whatsapp() {
             <Stat label="Human handover rate" value={`${handoverRate}%`} hint="needed a person" />
             <Stat label="Bot conversion rate" value={`${botConversion}%`} hint="became leads" />
           </div>
-        </Block>
-
-        <Block title="The whole thing, top to bottom" note="Website through to customer service" wide>
-          <Flow steps={architecture} />
-          <p className="mt-3 text-xs text-ink-400">
-            And underneath all of it: the automation engine, analytics, reporting and admin controls.
-          </p>
         </Block>
       </>
     ),

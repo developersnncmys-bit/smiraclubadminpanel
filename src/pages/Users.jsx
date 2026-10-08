@@ -86,9 +86,15 @@ export default function Users() {
   });
 
   /** A user is the team record plus the account the sheet's form collects. */
+  /**
+   * A person, and everything known about their account.
+   *
+   * The server's own fields win; the panel's seed map fills the gaps for
+   * the demo users, which is the only place it has anything to say.
+   */
   const users = team.map((m) => ({
     ...m,
-    account: accounts[m.id] || {},
+    account: { ...(accounts[m.id] || {}), ...(m.account || {}) },
     roleName: m.roleName || roleOf[m.id] || m.role,
   }));
 

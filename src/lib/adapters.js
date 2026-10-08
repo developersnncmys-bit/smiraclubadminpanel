@@ -32,17 +32,27 @@ const dt = (value) => {
     .toLowerCase()}`;
 };
 
+/**
+ * A reference that was not populated is an id, and an id is not a name.
+ *
+ * Every one of these helpers passed a plain string straight through, so
+ * wherever the API returned a reference it had not populated the panel
+ * printed "6a9e67cbf84353e27920996d" where a person's name belongs.
+ */
+/** A reference the API did not populate comes back as a bare id. */
+const isObjectId = (v) => /^[a-f0-9]{24}$/i.test(String(v || ''));
+
 /** A populated reference down to the first name the panel files things under. */
 const who = (ref) => {
   if (!ref) return '—';
-  if (typeof ref === 'string') return ref;
+  if (typeof ref === 'string') return isObjectId(ref) ? '—' : ref;
   return String(ref.name || '').split(' ')[0] || '—';
 };
 
 /** The same reference, but its full name. */
 const fullName = (ref) => {
   if (!ref) return '';
-  if (typeof ref === 'string') return ref;
+  if (typeof ref === 'string') return isObjectId(ref) ? '' : ref;
   return ref.name || '';
 };
 
@@ -131,7 +141,6 @@ export function when(value, now = new Date()) {
   return at.toISOString();
 }
 
-const isObjectId = (v) => /^[a-f0-9]{24}$/i.test(String(v || ''));
 const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
 
 /** "Sneha" or "Sneha Kulkarni" → her id. Anyone we cannot place is left out. */
@@ -203,8 +212,56 @@ export const ADAPTERS = {
       status: u.status,
       live: u.live,
       attendance: u.attendance,
-      activity: u.activity,
-      lastActive: u.lastActiveAt ? dt(u.lastActiveAt) : 'never',
+      /**
+       * What they have done today, from the counters the server keeps.
+       *
+       * This read `u.activity`, which the User model has no field for, so
+       * the column was a dash against everybody. The same for the last
+       * active time, which read `lastActiveAt` where the record keeps
+       * `lastLoginAt`.
+       */
+      activity:
+        u.activity ||
+        [
+          [u.calls, 'call'],
+          [u.presentations, 'presentation'],
+          [u.visits, 'visit'],
+          [u.followUps, 'follow-up'],
+        ]
+          .filter(([n]) => n)
+          .map(([n, word]) => `${n} ${word}${n === 1 ? '' : 's'}`)
+          .join(' · '),
+      lastActive: u.lastLoginAt ? dt(u.lastLoginAt) : 'never',
+
+      /**
+       * Everything the Security and People screens ask about an account.
+       *
+       * These were read from a map in the panel's own seed data, keyed by
+       * the demo ids, so for a real person every one of them was blank —
+       * no joining date, no last login, no address, no device. The record
+       * has all of it.
+       */
+      account: {
+        username: u.email || '',
+        designation: u.designation || '',
+        employment: u.employment || '',
+        joined: d(u.joinedOn),
+        lastLogin: u.lastLoginAt ? dt(u.lastLoginAt) : '',
+        loginTime: u.lastLoginAt ? dt(u.lastLoginAt).split(', ')[1] || '' : '',
+        logoutTime: u.lastLogoutAt ? dt(u.lastLogoutAt).split(', ')[1] || '' : '',
+        ip: u.lastIp || '',
+        browser: u.lastAgent || '',
+        failedLogins: u.failedLogins ?? 0,
+        // Nothing counts concurrent sessions yet; somebody signed in is one.
+        sessions: u.live && u.live !== 'Offline' ? 1 : 0,
+        twoFactor: Boolean(u.twoFactor),
+        webAccess: u.webAccess !== false,
+        mobileAccess: u.mobileAccess !== false,
+        family: (u.family || []).map((f) => (typeof f === 'string' ? f : f?.name)).filter(Boolean),
+        leadSources: u.leadSources || [],
+        products: u.products || [],
+        categories: u.bookingCategories || [],
+      },
       target: u.target ?? 0,
       revenue: u.revenue ?? 0,
       calls: u.calls ?? 0,

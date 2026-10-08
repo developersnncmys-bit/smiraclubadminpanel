@@ -37,7 +37,8 @@ const STEPS = [
  * "Lifestyle" is kept behind the scenes: it is what Luxury Experience used
  * to be called and some partners are still saved under it.
  */
-const PROPERTY_TYPES = [
+/** Every kind of partner we take. The login page offers these too. */
+export const PROPERTY_TYPES = [
   'Hotel', 'Resort', 'Villa', 'Homestay', 'Free Stay',
   'International Trip', 'Group Departure', 'Package',
   'Restaurant', 'Water Park', 'Theme Park', 'Games Zone', 'Spa & Salon',

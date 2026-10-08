@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, KeyRound, Loader2, Smartphone, Handshake, ShieldCheck, UserPlus } from 'lucide-react';
 import Brand from '../components/ui/Brand.jsx';
 import { partnerApi, getPartnerToken, setPartnerToken, partnerLive } from '../lib/partnerApi.js';
-import ListingWizard from '../components/partners/ListingWizard.jsx';
+import ListingWizard, { PROPERTY_TYPES } from '../components/partners/ListingWizard.jsx';
 
 /**
  * Partner sign-in.
@@ -17,10 +17,6 @@ import ListingWizard from '../components/partners/ListingWizard.jsx';
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 45;
 
-/** The partners the live API knows, so a demo has somewhere to start. */
-const DEMO_PARTNERS = [
-  { phone: '+91 98450 11201', label: 'Ayana Resort & Spa' },
-];
 
 
 
@@ -43,7 +39,7 @@ const DEMO_PARTNERS = [
  * and was asked for everything again. It is one form now, the same one
  * the desk uses and the same one the website's application shows.
  */
-function RegisterCard({ form, phone, busy, error, applied, onSignIn, onFinish, onSaveStep }) {
+function RegisterCard({ form, phone, accountType, busy, error, applied, onSignIn, onFinish, onSaveStep }) {
   if (applied) {
     return (
       <div className="pt-2">
@@ -83,7 +79,7 @@ function RegisterCard({ form, phone, busy, error, applied, onSignIn, onFinish, o
       <div className="mt-6">
         <ListingWizard
           partner={{ phone: phone ? `+91 ${phone}` : '' }}
-          initial={{}}
+          initial={{ property: { type: accountType } }}
           onSaveStep={onSaveStep}
           onFinish={onFinish}
           finishLabel="Register property"
@@ -97,12 +93,6 @@ function RegisterCard({ form, phone, busy, error, applied, onSignIn, onFinish, o
         </p>
       )}
 
-      <p className="mt-4 text-center text-xs text-ink-500">
-        Already a partner?{' '}
-        <button type="button" onClick={onSignIn} className="font-semibold text-brand-700 hover:underline">
-          Sign in
-        </button>
-      </p>
     </div>
   );
 }
@@ -124,6 +114,16 @@ export default function PartnerLogin() {
   const boxes = useRef([]);
 
   const registering = mode === 'register';
+
+  /**
+   * What kind of partner this is.
+   *
+   * Asked before either door rather than three steps into the form, so a
+   * restaurant is never shown a hotel's questions on the way in. On the
+   * register side it is what the form starts on; on the sign-in side it is
+   * what the form starts on if the number turns out not to be one of ours.
+   */
+  const [accountType, setAccountType] = useState('');
 
   /**
    * What the five steps have filled in so far.
@@ -219,7 +219,7 @@ export default function PartnerLogin() {
   };
 
   /** Switching doors carries the number across, whichever way it is going. */
-  const swap = (to) => {
+  const swapMode = (to) => {
     if (to === 'register') setForm((f) => ({ ...f, phone: f.phone || phone }));
     else setPhone((p) => p || form.phone);
     setMode(to);
@@ -281,14 +281,67 @@ export default function PartnerLogin() {
             <Handshake size={13} /> Partner portal
           </span>
 
+          {/*
+            Signing in and registering are the two things anybody comes here
+            to do, and both used to be a sentence of small print at the
+            bottom of the other one.
+          */}
+          <div
+            role="tablist"
+            aria-label="Sign in or register"
+            className="mt-5 grid grid-cols-2 gap-1 rounded-xl bg-surface-soft p-1"
+          >
+            {[
+              { key: 'login', label: 'Sign in' },
+              { key: 'register', label: 'Register' },
+            ].map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={mode === t.key}
+                onClick={() => swapMode(t.key)}
+                className={`rounded-lg px-4 py-2.5 text-sm font-bold transition ${
+                  mode === t.key
+                    ? 'bg-white text-ink-900 shadow-card'
+                    : 'text-ink-500 hover:text-ink-800'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <label className="mt-5 block">
+            <span className="mb-1.5 block text-xs font-bold text-ink-700">Account type</span>
+            <select
+              value={accountType}
+              onChange={(e) => setAccountType(e.target.value)}
+              className="input"
+            >
+              <option value="">What do you run?</option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1.5 block text-xs text-ink-500">
+              {registering
+                ? 'The form below asks what this kind of partner needs, and nothing else.'
+                : 'Only needed if you turn out not to be registered yet.'}
+            </span>
+          </label>
+
           {registering ? (
             <RegisterCard
               form={form}
               phone={form.phone}
+              accountType={accountType}
               busy={busy}
               error={error}
               applied={applied}
-              onSignIn={() => swap('login')}
+              onSignIn={() => swapMode('login')}
               onSaveStep={(body) => setDraft((d) => ({ ...(d || {}), ...body }))}
               onFinish={register}
             />
@@ -334,7 +387,7 @@ export default function PartnerLogin() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => swap('register')}
+                    onClick={() => swapMode('register')}
                     className="btn-action btn-sm mt-2.5"
                   >
                     <UserPlus size={14} /> Register
@@ -347,38 +400,7 @@ export default function PartnerLogin() {
                 {busy ? 'Sending code…' : 'Send code'}
               </button>
 
-              <p className="mt-4 text-center text-xs text-ink-500">
-                Not registered yet?{' '}
-                <button
-                  type="button"
-                  onClick={() => swap('register')}
-                  className="font-semibold text-brand-700 hover:underline"
-                >
-                  Register your property
-                </button>
-              </p>
 
-              <div className="mt-6 rounded-xl bg-surface-soft p-3.5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">
-                  Demo partners
-                </p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {DEMO_PARTNERS.map((p) => (
-                    <button
-                      key={p.phone}
-                      type="button"
-                      onClick={() => {
-                        setPhone(p.phone.replace(/\D/g, '').slice(-10));
-                        setError('');
-                      }}
-                      className="rounded-lg bg-white px-2.5 py-1.5 text-left text-xs font-semibold text-ink-700 shadow-card transition hover:text-brand-700"
-                    >
-                      <span className="num block">{p.phone}</span>
-                      <span className="block text-[10px] font-medium text-ink-400">{p.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </form>
           ) : (
             <form onSubmit={verify} noValidate>

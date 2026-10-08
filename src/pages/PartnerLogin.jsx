@@ -268,10 +268,17 @@ export default function PartnerLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-gradient-to-br from-brand-50 via-white to-surface-soft px-4 py-10">
-      {/* Signing in is one field and stays narrow; registering is the five
-          steps and needs the room, so the card widens for it. */}
-      <div className={`w-full ${registering ? 'max-w-[1100px]' : 'max-w-[440px]'}`}>
+    <div
+      className={`flex min-h-screen items-start justify-center bg-gradient-to-br from-brand-50 via-white to-surface-soft py-10 ${
+        registering ? 'px-4 sm:px-6 lg:px-10' : 'px-4'
+      }`}
+    >
+      {/*
+        Signing in is one field and stays narrow. Registering is five steps
+        of a long form, and a 1100px column on a 1900px screen wastes the
+        room the form wants while making every row of it needlessly tall.
+      */}
+      <div className={`w-full ${registering ? '' : 'max-w-[440px]'}`}>
         <div className="mb-7 flex justify-center">
           <Brand className="h-12" />
         </div>
@@ -313,7 +320,7 @@ export default function PartnerLogin() {
           </div>
 
           <label className="mt-5 block">
-            <span className="mb-1.5 block text-xs font-bold text-ink-700">Account type</span>
+            <span className="mb-1.5 block text-xs font-bold text-ink-700">Property type</span>
             <select
               value={accountType}
               onChange={(e) => setAccountType(e.target.value)}
@@ -328,7 +335,7 @@ export default function PartnerLogin() {
             </select>
             <span className="mt-1.5 block text-xs text-ink-500">
               {registering
-                ? 'The form below asks what this kind of partner needs, and nothing else.'
+                ? 'The form below asks what this kind of property needs, and nothing else.'
                 : 'Only needed if you turn out not to be registered yet.'}
             </span>
           </label>

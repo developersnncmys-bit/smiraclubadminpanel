@@ -163,6 +163,15 @@ function Switch({ on }) {
   );
 }
 
+/**
+ * How long a member has to claim the gifts their plan comes with.
+ *
+ * It runs from the day they join, so it is the same six days for
+ * everybody and a different date for each of them. The desk used to type
+ * one date against the plan, which was right for whoever joined that
+ * week and wrong for everybody else.
+ */
+const GIFT_DAYS = 6;
 export default function Memberships({ embedded = false }) {
   const {
     memberships,
@@ -590,21 +599,10 @@ export default function Memberships({ embedded = false }) {
                     </span>
                   </label>
 
-                  <label className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-brand-800">
-                    <span className="shrink-0">Offer ends</span>
-                    <input
-                      type="date"
-                      value={plan.giftsEndOn || ''}
-                      onChange={(e) =>
-                        update('memberships', plan.id, { giftsEndOn: e.target.value }, {
-                          message: e.target.value
-                            ? `Gifts on ${plan.name} run to ${e.target.value}`
-                            : `Gifts on ${plan.name} have no end date`,
-                        })
-                      }
-                      className="input border-brand-600/20 bg-white py-1 text-xs"
-                    />
-                  </label>
+                  <p className="mt-2 text-[11px] font-semibold text-brand-800/70">
+                    Claimed within {GIFT_DAYS} days of joining, counted from each
+                    member&rsquo;s own start date.
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">

@@ -551,7 +551,6 @@ export const ADAPTERS = {
       },
       gifts: p.gifts || [],
       // ISO, because this one goes straight into a date input.
-      giftsEndOn: p.giftsEndOn ? String(p.giftsEndOn).slice(0, 10) : '',
       giftChoices: p.giftChoices ?? 0,
       features: p.features || [],
       published: p.published,
@@ -584,7 +583,6 @@ export const ADAPTERS = {
       sharing: p.sharing ? { price: num(p.sharing.price) ?? 0, label: p.sharing.label } : undefined,
       gifts: p.gifts,
       // An empty box clears the deadline rather than being ignored.
-      giftsEndOn: has(p, 'giftsEndOn') ? (p.giftsEndOn ? when(p.giftsEndOn) : null) : undefined,
       giftChoices: num(p.giftChoices),
       features: p.features,
       published: p.published,

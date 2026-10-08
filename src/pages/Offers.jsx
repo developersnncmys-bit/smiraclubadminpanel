@@ -39,7 +39,6 @@ import {
   notifications,
   fraudControls,
   minimumMargin,
-  connectedModules,
   topDestinations,
 } from '../data/offersData.js';
 import Table from '../components/ui/Table.jsx';
@@ -303,17 +302,6 @@ export default function Offers() {
           </div>
         </Block>
 
-        <Block title="An offer is a business rule, not a banner" note="It knows all of this before it ever appears" wide>
-          <Flow steps={['Who gets it', 'What they get', 'When they get it', 'Where they can use it', 'How many times', 'What it costs us', 'What it brings back']} />
-          <p className="eyebrow mt-5">It talks to</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {connectedModules.map((m) => (
-              <span key={m} className="chip text-ink-600">
-                {m}
-              </span>
-            ))}
-          </div>
-        </Block>
       </>
     ),
 

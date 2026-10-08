@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   UserPlus, ShieldCheck, Users as UsersIcon, UserCheck, Sparkles, Search,
-  Zap, KeyRound, Check, X, ChevronRight, Download,
+  Zap, KeyRound, Check, X, Download,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -20,7 +20,7 @@ import { inr, shortInr } from '../data/mockData.js';
 import {
   liveStates, permissionLevels, dataScopes, approvalRights, permissionModules,
   moduleAccess, roleOf, accounts, visibilityRules, hierarchy, approvalFlows,
-  roleDashboards, auditLog, userFilters, userQuickActions, modulePurpose,
+  roleDashboards, auditLog, userFilters, userQuickActions,
 } from '../data/usersData.js';
 import Table from '../components/ui/Table.jsx';
 import Paged from '../components/ui/Pagination.jsx';
@@ -36,7 +36,43 @@ import Paged from '../components/ui/Pagination.jsx';
  * Nothing was removed in the regrouping. Every block that existed still
  * renders, under whichever of the four questions it answers.
  */
-const SECTIONS = ['People', 'Roles and access', 'Reporting and approvals', 'Security'];
+/**
+  * One subject per view.
+  *
+  * There were four: People held who can sign in, the teams, what
+  * everyone is carrying and who turned up — four long tables down one
+  * page, and no way to look at any one of them on its own. These are the
+  * sections the client's own sheet lists, so each view answers one
+  * question and the page ends.
+  */
+const SECTIONS = [
+  'Users',
+  'Teams',
+  'Roles',
+  'Permissions',
+  'Data and approvals',
+  'Reporting line',
+  'Performance',
+  'Attendance',
+  'Approvals',
+  'Login and security',
+  'Audit logs',
+];
+
+/** A line under each view's heading, so nobody has to guess what it is. */
+const ABOUT = {
+  Users: 'Everyone who can sign in, and what they did today',
+  Teams: 'Who sits in which desk, and what that desk has brought in',
+  Roles: 'The roles that exist, and the dashboard each one opens on',
+  Permissions: 'What every role may do, screen by screen',
+  'Data and approvals': 'Whose records a role can see, and what it may sign off',
+  'Reporting line': 'Who reports to whom, and what each manager carries',
+  Performance: 'Target, achievement and where everybody ranks',
+  Attendance: 'Who turned up, when they signed in, and the work behind it',
+  Approvals: 'Everything waiting on a sign-off',
+  'Login and security': 'Sessions, sign-ins and who may get in from where',
+  'Audit logs': 'Who did what, and when — the panel keeps all of it',
+};
 
 /** The table every section here builds with, so they all read the same. */
 /** A tick or a cross, for the permission grid. */
@@ -75,7 +111,7 @@ export default function Users() {
     });
   };
 
-  const [section, setSection] = useState('People');
+  const [section, setSection] = useState(SECTIONS[0]);
   const [viewing, setViewing] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
@@ -275,36 +311,23 @@ export default function Users() {
 
   const parts = {
     Reference: (
-      <>
-        <Block title="What this module controls" note="The sheet's own list, and where each one lives">
-          <ul className="grid gap-x-6 sm:grid-cols-2">
-            {modulePurpose.map((p) => (
-              <li key={p} className="flex items-start gap-2 border-b border-ink-900/[0.07] py-2 text-sm text-ink-600">
-                <ChevronRight size={14} className="mt-0.5 shrink-0 text-brand-500" />
-                {p}
-              </li>
-            ))}
-          </ul>
-        </Block>
-
-        <Block title="Nobody gets the same dashboard" note="What each role opens on">
-          <ul className="space-y-3">
-            {roleDashboards.map((d) => (
-              <li key={d.role} className="rounded-xl border border-ink-900/[0.07] p-3.5">
-                <p className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-ink-900">{d.role}</span>
-                  <Badge tone="teal">{d.name}</Badge>
-                </p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {d.tiles.map((t) => (
-                    <span key={t} className="chip text-ink-500">{t}</span>
-                  ))}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Block>
-      </>
+      <Block title="Nobody gets the same dashboard" note="What each role opens on">
+        <ul className="space-y-3">
+          {roleDashboards.map((d) => (
+            <li key={d.role} className="rounded-xl border border-ink-900/[0.07] p-3.5">
+              <p className="flex flex-wrap items-center gap-2">
+                <span className="font-bold text-ink-900">{d.role}</span>
+                <Badge tone="teal">{d.name}</Badge>
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {d.tiles.map((t) => (
+                  <span key={t} className="chip text-ink-500">{t}</span>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Block>
     ),
 
     Users: (
@@ -856,34 +879,22 @@ export default function Users() {
    * lives under Teams, Hierarchy or Access control.
    */
   const body = {
-    People: (
-      <>
-        {parts.Users}
-        {parts.Teams}
-        {parts.Performance}
-        {parts['Attendance and activity']}
-      </>
-    ),
-    'Roles and access': (
+    Users: parts.Users,
+    Teams: parts.Teams,
+    Roles: (
       <>
         {parts.Roles}
-        {parts['Permission matrix']}
-        {parts['Access control']}
         {parts.Reference}
       </>
     ),
-    'Reporting and approvals': (
-      <>
-        {parts['Reporting hierarchy']}
-        {parts.Approvals}
-      </>
-    ),
-    Security: (
-      <>
-        {parts['Login and security']}
-        {parts['Audit logs']}
-      </>
-    ),
+    Permissions: parts['Permission matrix'],
+    'Data and approvals': parts['Access control'],
+    'Reporting line': parts['Reporting hierarchy'],
+    Performance: parts.Performance,
+    Attendance: parts['Attendance and activity'],
+    Approvals: parts.Approvals,
+    'Login and security': parts['Login and security'],
+    'Audit logs': parts['Audit logs'],
   };
 
   return (
@@ -931,7 +942,10 @@ export default function Users() {
 
       <SectionTabs className="mt-6" items={SECTIONS} value={section} onChange={setSection} />
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-2">{body[section]}</div>
+      {/* What this view is, so nobody has to open it to find out. */}
+      <p className="mt-4 text-sm text-ink-500">{ABOUT[section]}</p>
+
+      <div className="mt-3 grid gap-5 xl:grid-cols-2">{body[section]}</div>
 
       {viewing && (
         <UserProfile

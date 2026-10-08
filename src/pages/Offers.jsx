@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import {
+  ArrowDown,
+  ArrowUp,
   Megaphone,
   Plus,
   Tag,
   Trash2,
-  GripVertical,
   Eye,
   MousePointerClick,
   ShieldAlert,
@@ -22,8 +23,9 @@ import { inr, shortInr } from '../data/mockData.js';
 import Block from '../components/ui/Block.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
+import ImagesField from '../components/partners/ImagesField.jsx';
+import { api } from '../lib/api.js';
 import {
-  homepageSections,
   distribution,
   tierAccess,
   lifestyleCategories,
@@ -59,6 +61,41 @@ const SECTIONS = [
   'Redemptions',
   'Fraud controls',
 ];
+
+/** The tabs the website filters the strip by. "All" is not a home. */
+const CARD_TABS = ['Weekend', 'Seasonal', 'Salon & Spa'];
+
+/**
+ * The colours a card can be, and the swatch that shows each one.
+ *
+ * A name rather than a colour picker: the gradients are compiled into
+ * the website's stylesheet, so one typed here on Tuesday would not exist
+ * in the build it has to draw in.
+ */
+const CARD_TONES = [
+  { key: 'indigo', label: 'Indigo', swatch: 'linear-gradient(to right, #2b1e63, #3d2a86)' },
+  { key: 'blue', label: 'Blue', swatch: 'linear-gradient(to right, #0f3f77, #1c62b0)' },
+  { key: 'plum', label: 'Plum', swatch: 'linear-gradient(to right, #5b2333, #8c3b52)' },
+  { key: 'forest', label: 'Forest', swatch: 'linear-gradient(to right, #14532d, #1f7a43)' },
+  { key: 'ember', label: 'Ember', swatch: 'linear-gradient(to right, #7c2d12, #b45309)' },
+  { key: 'slate', label: 'Slate', swatch: 'linear-gradient(to right, #1f2937, #475569)' },
+];
+
+const swatchFor = (key) => CARD_TONES.find((t) => t.key === key)?.swatch || CARD_TONES[0].swatch;
+
+/** The placeholder for the two bullet points, one per line. */
+const POINTS_HINT = ['Complimentary stays', 'Pay only for food'].join(String.fromCharCode(10));
+
+const EMPTY_CARD = {
+  tab: 'Weekend',
+  badge: '',
+  title: '',
+  points: '',
+  href: '/offers',
+  cover: '',
+  tone: 'indigo',
+  status: 'Hidden',
+};
 
 function Flow({ steps, at = -1 }) {
   return (
@@ -99,9 +136,21 @@ export default function Offers() {
    * nought whatever the desk had running. It reads the Offers collection
    * now — the same rows the website checks a coupon against.
    */
-  const { toast, create, update, remove, offers = [], live: online } = useApp();
+  const { toast, create, update, remove, updateMany, db, offers = [], live: online } = useApp();
   const [section, setSection] = useState('Dashboard');
   const [saving, setSaving] = useState(false);
+
+  /*
+   * The Grab Offers strip on the website's home page.
+   *
+   * This view used to list ten invented section names with buttons that
+   * raised a toast and changed nothing. These are the actual cards, and
+   * what is saved here is what the home page draws.
+   */
+  const strip = db.homeOffers || [];
+  const [cardEditing, setCardEditing] = useState(null);
+  const [card, setCard] = useState({ ...EMPTY_CARD });
+  const setCardField = (k) => (e) => setCard((c) => ({ ...c, [k]: e.target.value }));
 
   /**
    * A new offer, in the shape the server keeps one.
@@ -166,6 +215,71 @@ export default function Offers() {
     });
     setSaving(false);
     setDraft((o) => ({ ...o, name: '', code: '', description: '' }));
+  };
+
+  /* -- The Grab Offers strip ------------------------------------------ */
+
+  /** A cover photograph, kept in our own store rather than linked to. */
+  const uploadCover = async (body) => {
+    const res = await api.post('/uploads', body);
+    return res.data;
+  };
+
+  const blankCard = () => {
+    setCardEditing(null);
+    setCard({ ...EMPTY_CARD });
+  };
+
+  const openCard = (c) => {
+    setCardEditing(c);
+    setCard({ ...EMPTY_CARD, ...c });
+  };
+
+  const saveCard = (status) => {
+    const title = card.title.trim();
+    if (!title) return toast('Give the card a headline', 'danger');
+    if (status === 'Live' && !card.cover) return toast('A live card needs a photograph', 'danger');
+
+    const body = {
+      ...card,
+      title,
+      badge: card.badge.trim(),
+      href: card.href.trim() || '/offers',
+      status,
+    };
+
+    setSaving(true);
+    if (cardEditing) update('homeOffers', cardEditing.id, body);
+    else create('homeOffers', body);
+    setSaving(false);
+    blankCard();
+  };
+
+  /** Show or hide one without opening it. */
+  const flipCard = (c) =>
+    update('homeOffers', c.id, { status: c.status === 'Live' ? 'Hidden' : 'Live' }, {
+      message: `${c.title} ${c.status === 'Live' ? 'hidden' : 'published'}`,
+    });
+
+  const dropCard = (c) => {
+    if (!window.confirm(`Delete "${c.title}"? It comes off the home page.`)) return;
+    remove('homeOffers', c.id);
+  };
+
+  /**
+   * Move one up or down the strip.
+   *
+   * Both cards are written, because an order is a pair of positions and
+   * saving only the one that moved leaves two cards claiming the same
+   * place — which the website then breaks ties on by creation date.
+   */
+  const moveCard = (c, by) => {
+    const at = strip.findIndex((x) => x.id === c.id);
+    const to = at + by;
+    if (at < 0 || to < 0 || to >= strip.length) return;
+    const other = strip[to];
+    update('homeOffers', c.id, { order: other.order }, { silent: true });
+    update('homeOffers', other.id, { order: c.order }, { message: 'Strip reordered' });
   };
 
   const live = offers.filter((o) => o.status === 'Live');
@@ -306,33 +420,203 @@ export default function Offers() {
     ),
 
     Homepage: (
-      <Block
-        title="Homepage offer control"
-        note="Drag, reorder, publish — this is what the website shows"
-        wide
-        action={
-          <button className="btn-line btn-sm" onClick={() => toast('Homepage published')}>
-            <Send size={14} /> Publish
-          </button>
-        }
-      >
-        <ul className="space-y-2">
-          {homepageSections.map((s, i) => (
-            <li key={s.name} className="flex items-center gap-3 rounded-xl border border-ink-900/[0.07] px-4 py-2.5">
-              <GripVertical size={15} className="shrink-0 text-ink-300" />
-              <span className="num w-6 shrink-0 text-sm font-bold text-ink-400">{i + 1}</span>
-              <span className="min-w-0 flex-1 text-sm font-semibold text-ink-800">{s.name}</span>
-              <span className="num text-xs text-ink-500">{s.offers} offers</span>
-              <Badge tone={s.live ? 'green' : 'slate'} dot>
-                {s.live ? 'Live' : 'Hidden'}
-              </Badge>
-              <button className="btn-line btn-sm" onClick={() => toast(`${s.name} ${s.live ? 'hidden' : 'published'}`)}>
-                {s.live ? 'Hide' : 'Show'}
+      <>
+        <Block
+          title="Grab Offers on the home page"
+          note={
+            online
+              ? 'These are the cards the website draws, in this order'
+              : 'Not signed in, so nothing here reaches the website'
+          }
+          wide
+          action={
+            <button className="btn-action btn-sm" onClick={blankCard}>
+              <Plus size={14} /> Add a card
+            </button>
+          }
+        >
+          {strip.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-ink-900/15 px-4 py-8 text-center text-sm text-ink-500">
+              No cards yet, so the website is showing the four it ships with. Add one and
+              the strip becomes yours.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {strip.map((c, i) => (
+                <li
+                  key={c.id}
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-ink-900/[0.07] px-4 py-2.5"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-9 w-9 shrink-0 rounded-lg"
+                    style={{ backgroundImage: swatchFor(c.tone) }}
+                  />
+                  <span className="num w-6 shrink-0 text-sm font-bold text-ink-400">{i + 1}</span>
+
+                  <span className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => openCard(c)}
+                      className="block text-left text-sm font-semibold text-ink-800 hover:text-brand-700"
+                    >
+                      {c.title}
+                    </button>
+                    <span className="block text-xs text-ink-400">
+                      {c.tab}
+                      {c.badge ? ` · ${c.badge}` : null} · goes to {c.href}
+                    </span>
+                  </span>
+
+                  <Badge tone={c.status === 'Live' ? 'green' : 'slate'} dot>
+                    {c.status}
+                  </Badge>
+
+                  <span className="flex items-center gap-1">
+                    <button
+                      className="btn-line btn-sm"
+                      title="Move up"
+                      disabled={i === 0}
+                      onClick={() => moveCard(c, -1)}
+                    >
+                      <ArrowUp size={14} />
+                    </button>
+                    <button
+                      className="btn-line btn-sm"
+                      title="Move down"
+                      disabled={i === strip.length - 1}
+                      onClick={() => moveCard(c, 1)}
+                    >
+                      <ArrowDown size={14} />
+                    </button>
+                    <button className="btn-line btn-sm" onClick={() => flipCard(c)}>
+                      {c.status === 'Live' ? 'Hide' : 'Show'}
+                    </button>
+                    <button
+                      type="button"
+                      title="Delete this card"
+                      onClick={() => dropCard(c)}
+                      className="rounded-lg p-1.5 text-ink-400 transition hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Block>
+
+        <Block
+          title={cardEditing ? `Editing "${cardEditing.title}"` : 'A new card'}
+          note="The badge, the headline and two things worth knowing"
+          wide
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              {cardEditing && (
+                <button className="btn-line btn-sm" onClick={blankCard}>
+                  New card instead
+                </button>
+              )}
+              <button className="btn-line btn-sm" onClick={() => saveCard('Hidden')} disabled={saving}>
+                Save hidden
               </button>
-            </li>
-          ))}
-        </ul>
-      </Block>
+              <button className="btn-action btn-sm" onClick={() => saveCard('Live')} disabled={saving}>
+                <Send size={14} /> {saving ? 'Saving…' : 'Put it live'}
+              </button>
+            </div>
+          }
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Which tab</label>
+              <select className="input" value={card.tab} onChange={setCardField('tab')}>
+                {CARD_TABS.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Badge</label>
+              <input
+                className="input"
+                placeholder="Weekend getaway"
+                value={card.badge}
+                onChange={setCardField('badge')}
+              />
+              <p className="mt-1 text-xs text-ink-500">The small label in the corner.</p>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="label">Headline</label>
+              <input
+                className="input"
+                placeholder="Perfect escapes for your weekend"
+                value={card.title}
+                onChange={setCardField('title')}
+              />
+            </div>
+
+            <div>
+              <label className="label">What it gives</label>
+              <textarea
+                className="input min-h-[80px]"
+                placeholder={POINTS_HINT}
+                value={card.points}
+                onChange={setCardField('points')}
+              />
+              <p className="mt-1 text-xs text-ink-500">One per line. The design draws two.</p>
+            </div>
+            <div>
+              <label className="label">Where it goes</label>
+              <input
+                className="input"
+                placeholder="/free-stay"
+                value={card.href}
+                onChange={setCardField('href')}
+              />
+              <p className="mt-1 text-xs text-ink-500">A path on the website, such as /packages.</p>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="label">Colour</label>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {CARD_TONES.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setCard((c) => ({ ...c, tone: t.key }))}
+                    aria-pressed={card.tone === t.key}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                      card.tone === t.key
+                        ? 'border-brand-600 bg-brand-50 text-brand-700'
+                        : 'border-ink-900/10 text-ink-600 hover:bg-surface-soft'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="h-5 w-8 rounded"
+                      style={{ backgroundImage: t.swatch }}
+                    />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="label">Photograph</label>
+              <ImagesField
+                value={card.cover ? [card.cover] : []}
+                onChange={(list) => setCard((c) => ({ ...c, cover: list[list.length - 1] || '' }))}
+                upload={uploadCover}
+                label="Grab Offers card"
+                hint="One landscape photograph. It sits to the right of the words and fades into the colour."
+              />
+            </div>
+          </div>
+        </Block>
+      </>
     ),
 
     Offers: (

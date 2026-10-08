@@ -21,12 +21,14 @@ import * as reportsSeed from '../data/reportsData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
+// v39: homeOffers is a new collection, so a v38 snapshot has no key for
+// it and the Homepage view reads undefined.
 // v38: the blog is live, so the two invented posts in the seed are gone;
 // a saved v37 snapshot would keep showing them on the new Blog page.
 // v37: the offers, rewards, revenue and automation seeds were removed, so
 // a snapshot saved before that holds rows in a shape those pages no longer
 // read. Bumping the key drops it rather than crashing on it.
-const KEY = 'smira-club-admin:v38';
+const KEY = 'smira-club-admin:v39';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 
@@ -53,6 +55,7 @@ const PREFIX = {
   automations: 'AUT',
   notificationRules: 'NTF',
   offers: 'OFR',
+  homeOffers: 'HOF',
   roles: 'ROL',
   referrals: 'REF',
   forms: 'FRM',
@@ -89,6 +92,7 @@ export const SINGULAR = {
   automations: 'Automation',
   notificationRules: 'Notification rule',
   offers: 'Offer',
+  homeOffers: 'Homepage offer',
   roles: 'Role',
   referrals: 'Referral',
   forms: 'Form',
@@ -127,6 +131,9 @@ const seedState = () => ({
   automations: [],
   notificationRules: extra.notificationRules,
   offers: extra.offers,
+  // The Grab Offers strip is live; the website keeps its own cards for
+  // when the desk has arranged none.
+  homeOffers: [],
   roles: usersSeed.roles,
   approvals: usersSeed.pendingApprovals,
   conversations: waSeed.conversations,

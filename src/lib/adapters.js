@@ -70,6 +70,8 @@ const iso = (value) => {
 };
 
 /** What every adapted record carries, whatever collection it came from. */
+const NEWLINE = String.fromCharCode(10);
+
 const base = (doc) => ({ ...doc, _id: doc._id, id: doc.code || doc._id });
 
 // -- Going the other way: screen values into server values -------------------
@@ -1219,6 +1221,44 @@ export const ADAPTERS = {
               .filter(Boolean),
           }))
         : undefined,
+    }),
+  },
+
+  /**
+   * The Grab Offers strip on the website's home page.
+   *
+   * A banner, not a coupon — see the model. The two bullet points are
+   * one per line in the panel and an array on the server, the same way
+   * a blog post's list is.
+   */
+  homeOffers: {
+    path: '/home-offers',
+    from: (o) => ({
+      ...base(o),
+      tab: o.tab,
+      badge: o.badge || '',
+      title: o.title,
+      points: (o.points || []).join(NEWLINE),
+      href: o.href || '/offers',
+      cover: o.imageUrl || '',
+      tone: o.tone || 'indigo',
+      order: o.order ?? 0,
+      status: o.status || 'Hidden',
+      updated: dt(o.updatedAt),
+    }),
+    to: (p) => ({
+      tab: p.tab,
+      badge: p.badge,
+      title: p.title,
+      points:
+        p.points === undefined
+          ? undefined
+          : String(p.points).split(NEWLINE).map((x) => x.trim()).filter(Boolean),
+      href: p.href,
+      imageUrl: p.cover,
+      tone: p.tone,
+      order: num(p.order),
+      status: p.status,
     }),
   },
 };

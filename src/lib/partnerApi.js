@@ -91,6 +91,11 @@ export const partnerApi = {
   /** 'login' only finds a partner we hold; 'register' only makes a new one. */
   requestOtp: (phone, mode = 'login') => request('/otp/request', { method: 'POST', body: { phone, mode } }),
   verifyOtp: (phone, code, mode = 'login') => request('/otp/verify', { method: 'POST', body: { phone, code, mode } }),
+
+  /** The short registration form, and the email-and-password door. */
+  register: (body) => request('/register', { method: 'POST', body }),
+  login: (email, password) => request('/login', { method: 'POST', body: { email, password } }),
+  setPassword: (password) => request('/password', { method: 'POST', body: { password } }),
   /**
    * A scan or a photograph of a document. It does not go through
    * `request` because uploads live outside the portal's own routes — the

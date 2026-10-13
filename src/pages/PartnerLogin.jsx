@@ -323,7 +323,7 @@ export default function PartnerLogin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-surface-soft px-4 py-8 sm:px-6 lg:px-10">
-      <div className={`mx-auto w-full ${registering ? 'max-w-[980px]' : 'max-w-[440px]'}`}>
+      <div className="mx-auto w-full max-w-[720px]">
         <div className="mb-6 flex justify-center">
           <Brand className="h-11" />
         </div>
@@ -519,9 +519,9 @@ export default function PartnerLogin() {
             </form>
           ) : (
             /* -- Sign in ------------------------------------------------ */
-            <div className="mt-5">
+            <div className="mx-auto mt-5 max-w-[420px]">
               {/* Two ways in: a code to the phone, or an email and a password. */}
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   { key: 'otp', label: 'Mobile code', icon: Smartphone },
                   { key: 'password', label: 'Email & password', icon: Lock },
@@ -535,7 +535,7 @@ export default function PartnerLogin() {
                       setError('');
                       setStep('phone');
                     }}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                    className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition ${
                       door === d.key
                         ? 'border-brand-600 bg-brand-50 text-brand-700'
                         : 'border-ink-900/10 text-ink-500 hover:text-ink-800'

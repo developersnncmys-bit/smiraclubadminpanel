@@ -107,6 +107,92 @@ const EMPTY = {
 const isEmail = (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v || '').trim());
 const isPhone = (v) => /^[6-9]\d{9}$/.test(String(v || '').replace(/\D/g, ''));
 
+
+/** The four steps, from registering to taking bookings. */
+function Steps({ compact }) {
+  return (
+    <ol className={compact ? 'grid gap-2.5 sm:grid-cols-2' : 'space-y-3.5'}>
+      {HOW_IT_WORKS.map((step, i) => (
+        <li key={step.title} className={compact ? 'card p-3.5' : 'flex items-start gap-3'}>
+          <span
+            className={
+              compact
+                ? 'grid h-6 w-6 place-items-center rounded-full bg-brand-50 text-[11px] font-extrabold text-brand-700'
+                : 'grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-sm font-extrabold text-brand-600 shadow-card'
+            }
+          >
+            {i + 1}
+          </span>
+          <span className={compact ? 'block' : 'min-w-0'}>
+            <span className={`block font-bold text-ink-900 ${compact ? 'mt-2 text-[13px]' : 'text-sm'}`}>
+              {step.title}
+            </span>
+            <span className={`mt-0.5 block leading-snug text-ink-500 ${compact ? 'text-[12px]' : 'text-[13px]'}`}>
+              {step.body}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** The five questions a partner would otherwise have to ask. */
+function Faqs({ open, onToggle }) {
+  return (
+    <ul className="space-y-2">
+      {FAQS.map((f, i) => {
+        const on = open === i;
+        return (
+          <li key={f.q} className="overflow-hidden rounded-xl border border-ink-900/[0.07] bg-white/70">
+            <button
+              type="button"
+              aria-expanded={on}
+              onClick={() => onToggle(on ? null : i)}
+              className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
+            >
+              <span className="text-[13px] font-bold text-ink-900">{f.q}</span>
+              <ChevronDown size={15} className={`shrink-0 text-ink-400 transition ${on ? 'rotate-180' : ''}`} />
+            </button>
+            {on && <p className="px-3.5 pb-3 text-[13px] leading-relaxed text-ink-600">{f.a}</p>}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Three ways to reach a person, stacked so nothing is cut off. */
+function Contact() {
+  const ways = [
+    { icon: Phone, label: 'Call', value: '+91 98200 11223', href: 'tel:+919820011223' },
+    { icon: MessageCircle, label: 'WhatsApp', value: 'Message the desk', href: 'https://wa.me/919820011223' },
+    { icon: Mail, label: 'Email', value: 'partners@smiraclub.com', href: 'mailto:partners@smiraclub.com' },
+  ];
+  return (
+    <ul className="space-y-2">
+      {ways.map((c) => (
+        <li key={c.label}>
+          <a
+            href={c.href}
+            target={c.href.startsWith('http') ? '_blank' : undefined}
+            rel={c.href.startsWith('http') ? 'noreferrer' : undefined}
+            className="flex items-center gap-2.5 rounded-xl border border-ink-900/[0.07] bg-white/70 p-3 transition hover:bg-white"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
+              <c.icon size={15} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[11px] text-ink-400">{c.label}</span>
+              <span className="block truncate text-[13px] font-bold text-ink-900">{c.value}</span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function PartnerLogin() {
   const navigate = useNavigate();
 
@@ -328,7 +414,7 @@ export default function PartnerLogin() {
           The pitch, where a desktop has the room for it. A partner
           deciding whether to bother reads this before the form.
         */}
-        <section className="hidden lg:block lg:sticky lg:top-10">
+        <section className="hidden lg:block">
           <Brand className="h-14" />
 
           <h1 className="mt-8 max-w-lg text-3xl font-extrabold leading-tight tracking-tight text-ink-900">
@@ -339,19 +425,24 @@ export default function PartnerLogin() {
             and tell us about the property afterwards.
           </p>
 
-          <ol className="mt-8 space-y-3.5">
-            {HOW_IT_WORKS.map((step, i) => (
-              <li key={step.title} className="flex items-start gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-sm font-extrabold text-brand-600 shadow-card">
-                  {i + 1}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold text-ink-900">{step.title}</span>
-                  <span className="mt-0.5 block text-[13px] leading-snug text-ink-500">{step.body}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
+          <div className="mt-8">
+            <Steps />
+          </div>
+
+          <div className="mt-9">
+            <h2 className="mb-3 font-display text-base font-extrabold text-ink-900">
+              Frequently asked questions
+            </h2>
+            <Faqs open={openFaq} onToggle={setOpenFaq} />
+          </div>
+
+          <div className="mt-8">
+            <h2 className="mb-1 font-display text-base font-extrabold text-ink-900">Contact us</h2>
+            <p className="mb-3 text-[13px] text-ink-500">
+              Our partnerships desk, 10am to 7pm, Monday to Saturday.
+            </p>
+            <Contact />
+          </div>
         </section>
 
         {/* The form itself. */}
@@ -739,101 +830,38 @@ export default function PartnerLogin() {
           )}
           </div>
 
-          {/* The same four steps on a phone, where the left column is not. */}
-          <section className="mt-6 lg:hidden">
-            <h2 className="text-center font-display text-base font-extrabold text-ink-900">How it works</h2>
-            <ol className="mt-3 grid gap-2.5 sm:grid-cols-2">
-              {HOW_IT_WORKS.map((step, i) => (
-                <li key={step.title} className="card p-3.5">
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-50 text-[11px] font-extrabold text-brand-700">
-                    {i + 1}
-                  </span>
-                  <p className="mt-2 text-[13px] font-bold text-ink-900">{step.title}</p>
-                  <p className="mt-0.5 text-[12px] leading-snug text-ink-500">{step.body}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
+          {/* A phone has one column, so all three sit under the card. */}
+          <div className="mt-6 space-y-7 lg:hidden">
+            <section>
+              <h2 className="mb-3 text-center font-display text-base font-extrabold text-ink-900">
+                How it works
+              </h2>
+              <Steps compact />
+            </section>
+
+            <section>
+              <h2 className="mb-3 text-center font-display text-base font-extrabold text-ink-900">
+                Frequently asked questions
+              </h2>
+              <Faqs open={openFaq} onToggle={setOpenFaq} />
+            </section>
+
+            <section>
+              <h2 className="mb-1 text-center font-display text-base font-extrabold text-ink-900">
+                Contact us
+              </h2>
+              <p className="mb-3 text-center text-[13px] text-ink-500">
+                Our partnerships desk, 10am to 7pm, Monday to Saturday.
+              </p>
+              <Contact />
+            </section>
+          </div>
         </section>
       </div>
 
       {/* -- Below both columns, the width of the page ------------------- */}
       <div className="mx-auto max-w-[1240px] px-5 pb-12">
-        {/* -- Questions, before they have to ask ------------------------- */}
-        <section>
-          <h2 className="text-center font-display text-lg font-extrabold text-ink-900">
-            Frequently asked questions
-          </h2>
-          <ul className="mx-auto mt-4 max-w-[640px] space-y-2">
-            {FAQS.map((f, i) => {
-              const open = openFaq === i;
-              return (
-                <li key={f.q} className="card overflow-hidden">
-                  <button
-                    type="button"
-                    aria-expanded={open}
-                    onClick={() => setOpenFaq(open ? null : i)}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-                  >
-                    <span className="text-sm font-bold text-ink-900">{f.q}</span>
-                    <ChevronDown
-                      size={16}
-                      className={`shrink-0 text-ink-400 transition ${open ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                  {open && <p className="px-4 pb-3.5 text-sm leading-relaxed text-ink-600">{f.a}</p>}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
-        {/* -- And a way to reach a person -------------------------------- */}
-        <section className="mt-8">
-          <h2 className="text-center font-display text-lg font-extrabold text-ink-900">Contact us</h2>
-          <p className="mt-1 text-center text-sm text-ink-500">
-            Our partnerships desk, 10am to 7pm, Monday to Saturday.
-          </p>
-          <div className="mx-auto mt-4 grid max-w-[640px] gap-3 sm:grid-cols-3">
-            <a href="tel:+919820011223" className="card flex items-center gap-2.5 p-3.5 transition hover:shadow-lift">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
-                <Phone size={16} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs text-ink-400">Call</span>
-                <span className="block truncate text-sm font-bold text-ink-900">+91 98200 11223</span>
-              </span>
-            </a>
-            <a
-              href="https://wa.me/919820011223"
-              target="_blank"
-              rel="noreferrer"
-              className="card flex items-center gap-2.5 p-3.5 transition hover:shadow-lift"
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
-                <MessageCircle size={16} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs text-ink-400">WhatsApp</span>
-                <span className="block truncate text-sm font-bold text-ink-900">Message the desk</span>
-              </span>
-            </a>
-            <a
-              href="mailto:partners@smiraclub.com"
-              className="card flex items-center gap-2.5 p-3.5 transition hover:shadow-lift"
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
-                <Mail size={16} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs text-ink-400">Email</span>
-                <span className="block truncate text-sm font-bold text-ink-900">partners@smiraclub.com</span>
-              </span>
-            </a>
-          </div>
-        </section>
-
-        <p className="mt-8 text-center text-xs text-ink-500">
+        <p className="text-center text-xs text-ink-500">
           Smira staff?{' '}
           <Link to="/login" className="font-semibold text-brand-700 hover:underline">
             Sign in to the admin panel

@@ -322,13 +322,45 @@ export default function PartnerLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-surface-soft px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto w-full max-w-[720px]">
-        <div className="mb-6 flex justify-center">
-          <Brand className="h-11" />
-        </div>
+    <div className="min-h-screen bg-surface-base bg-app-aurora">
+      <div className="mx-auto grid max-w-[1240px] items-start gap-10 px-5 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
+        {/*
+          The pitch, where a desktop has the room for it. A partner
+          deciding whether to bother reads this before the form.
+        */}
+        <section className="hidden lg:block lg:sticky lg:top-10">
+          <Brand className="h-14" />
 
-        <div className="card p-5 sm:p-6">
+          <h1 className="mt-8 max-w-lg text-3xl font-extrabold leading-tight tracking-tight text-ink-900">
+            List your property. Take bookings from Smira members.
+          </h1>
+          <p className="mt-3 max-w-md text-[15px] leading-relaxed text-ink-600">
+            Nothing to list, and a commission only on bookings you confirm. Register in two minutes
+            and tell us about the property afterwards.
+          </p>
+
+          <ol className="mt-8 space-y-3.5">
+            {HOW_IT_WORKS.map((step, i) => (
+              <li key={step.title} className="flex items-start gap-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-sm font-extrabold text-brand-600 shadow-card">
+                  {i + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-ink-900">{step.title}</span>
+                  <span className="mt-0.5 block text-[13px] leading-snug text-ink-500">{step.body}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* The form itself. */}
+        <section className="w-full">
+          <div className="mb-6 flex justify-center lg:hidden">
+            <Brand className="h-11" />
+          </div>
+
+          <div className="card p-5 sm:p-6">
           <span className="chip bg-brand-50 text-brand-700">
             <Handshake size={13} /> Partner portal
           </span>
@@ -705,26 +737,30 @@ export default function PartnerLogin() {
               )}
             </div>
           )}
-        </div>
+          </div>
 
-        {/* -- How it works ------------------------------------------------ */}
-        <section className="mt-8">
-          <h2 className="text-center font-display text-lg font-extrabold text-ink-900">How it works</h2>
-          <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {HOW_IT_WORKS.map((s, i) => (
-              <li key={s.title} className="card p-4">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-50 text-xs font-extrabold text-brand-700">
-                  {i + 1}
-                </span>
-                <p className="mt-2.5 text-sm font-bold text-ink-900">{s.title}</p>
-                <p className="mt-1 text-xs leading-snug text-ink-500">{s.body}</p>
-              </li>
-            ))}
-          </ol>
+          {/* The same four steps on a phone, where the left column is not. */}
+          <section className="mt-6 lg:hidden">
+            <h2 className="text-center font-display text-base font-extrabold text-ink-900">How it works</h2>
+            <ol className="mt-3 grid gap-2.5 sm:grid-cols-2">
+              {HOW_IT_WORKS.map((step, i) => (
+                <li key={step.title} className="card p-3.5">
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-50 text-[11px] font-extrabold text-brand-700">
+                    {i + 1}
+                  </span>
+                  <p className="mt-2 text-[13px] font-bold text-ink-900">{step.title}</p>
+                  <p className="mt-0.5 text-[12px] leading-snug text-ink-500">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
         </section>
+      </div>
 
+      {/* -- Below both columns, the width of the page ------------------- */}
+      <div className="mx-auto max-w-[1240px] px-5 pb-12">
         {/* -- Questions, before they have to ask ------------------------- */}
-        <section className="mt-8">
+        <section>
           <h2 className="text-center font-display text-lg font-extrabold text-ink-900">
             Frequently asked questions
           </h2>

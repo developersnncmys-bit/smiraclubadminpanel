@@ -6,6 +6,7 @@ import { partnerApi } from '../../lib/partnerApi.js';
 import { api } from '../../lib/api.js';
 import FileField from './FileField.jsx';
 import ImagesField from './ImagesField.jsx';
+import RateCalendar from './RateCalendar.jsx';
 import { checkPartnerForm, flatten, firstBadStep } from '../../lib/partnerForm.js';
 
 /**
@@ -372,6 +373,15 @@ export default function ListingWizard({
   const [rooms, setRooms] = useState(
     initial.rooms?.length ? initial.rooms.map((r) => ({ ...EMPTY_ROOM, ...r })) : [{ ...EMPTY_ROOM }]
   );
+  /**
+   * What a night costs, date by date.
+   *
+   * Only the dates the property has actually set are kept, so an empty
+   * calendar means "the standard tariff, every night" rather than a
+   * year of rows saying the same number.
+   */
+  const [calendar, setCalendar] = useState(initial.calendar || []);
+
   const [propertyPhotos, setPropertyPhotos] = useState(initial.photos?.property || []);
   const [roomPhotos, setRoomPhotos] = useState(initial.photos?.rooms || []);
   const [amenities, setAmenities] = useState(initial.amenities || []);
@@ -468,6 +478,7 @@ export default function ListingWizard({
               extraBed: Boolean(r.extraBed),
             })),
           photos: { property: propertyPhotos, rooms: roomPhotos },
+          calendar,
         };
       case 3:
         return {
@@ -745,6 +756,21 @@ export default function ListingWizard({
               Drive to get one, so in practice this box stayed empty and the
               listing reached the website with no pictures.
             */}
+            {/*
+              What a night costs, before the pictures of it. One tariff
+              made a Saturday in December cost what a Tuesday in June
+              costs, and that was the number a member was quoted
+              whatever dates they picked.
+            */}
+            <Group
+              title="What a night costs"
+              note="Set the dates that differ. Anything you leave is sold at the standard tariff."
+            >
+              <div className="sm:col-span-2">
+                <RateCalendar value={calendar} onChange={setCalendar} tariff={pricing.standardTariff} />
+              </div>
+            </Group>
+
             <Group title="Photographs" note="These are what a member sees first. The first one leads the listing.">
               <Field label="Property photos" required error={errors.propertyPhotos} hint="Exterior, lobby, reception, restaurant, swimming pool, facilities, other areas" wide>
                 <ImagesField

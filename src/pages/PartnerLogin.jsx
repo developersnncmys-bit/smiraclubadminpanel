@@ -41,7 +41,10 @@ const PASSWORD_MIN = 8;
 const SITE = import.meta.env?.VITE_WEBSITE_URL || 'https://smiraclubwebsite.vercel.app';
 
 /** The categories the desk files a partner under. */
-const CATEGORIES = ['Hotel', 'Villa', 'Package', 'Lifestyle', 'Transport', 'Restaurant', 'Activity', 'Spa'];
+const CATEGORIES = [
+  'Hotel', 'Villa', 'Package', 'Lifestyle', 'Transport',
+  'Restaurant', 'Activity', 'Spa', 'Travel agent',
+];
 
 const HOW_IT_WORKS = [
   { title: 'Register your business', body: 'Name, number and where you are. Two minutes, and the account is yours.' },
@@ -94,6 +97,7 @@ function Field({ label, hint, required, error, children }) {
 const EMPTY = {
   name: '',
   ownerName: '',
+  brand: '',
   phone: '',
   email: '',
   category: 'Hotel',
@@ -369,6 +373,7 @@ export default function PartnerLogin() {
       const res = await partnerApi.register({
         name: form.name.trim(),
         ownerName: form.ownerName.trim(),
+        brand: form.brand.trim(),
         phone: `+91 ${form.phone.replace(/\D/g, '').slice(-10)}`,
         email: form.email.trim(),
         category: form.category,
@@ -496,6 +501,13 @@ export default function PartnerLogin() {
                 </Field>
                 <Field label="Owner name" required error={errors.ownerName}>
                   <input className="input" value={form.ownerName} onChange={set('ownerName')} placeholder="Full name" />
+                </Field>
+
+                <Field
+                  label="Brand or channel"
+                  hint="Optional — if you sell under a name that is not the one above."
+                >
+                  <input className="input" value={form.brand} onChange={set('brand')} placeholder="The brand you trade as" />
                 </Field>
 
                 <Field label="Business category" required>

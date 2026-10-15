@@ -146,6 +146,15 @@ const ACCOUNT_TYPES = ['Hotel / Property', 'Channel manager'];
 const OWNERSHIP = ['Self owned', 'Company owned', 'Family owned', 'Lease', 'Other'];
 const MEAL_PLANS = ['EP — Room only', 'CP — Breakfast', 'MAP — Breakfast + Dinner', 'AP — All meals'];
 
+/**
+ * What a free stay can be sold on.
+ *
+ * The room is given and the food is paid for, so the only two plans
+ * that mean anything are room-only and breakfast-with-dinner. A free
+ * stay on AP would be the whole holiday free, which is not the offer.
+ */
+const FREE_STAY_MEAL_PLANS = ['EP — Room only', 'MAP — Breakfast + Dinner'];
+
 const POPULAR = [
   'Wi-Fi', 'Swimming Pool', 'Parking', 'Restaurant', 'Breakfast', 'Room Service', 'AC', 'TV',
   'Gym', 'Spa', 'Kids Play Area', 'Conference Room', 'Pet Friendly',
@@ -351,6 +360,9 @@ export default function ListingWizard({
    */
   const kind = profileOf(property.type);
 
+  /** A free stay gives the room and charges for the food. */
+  const freeStay = property.type === 'Free Stay';
+
   /**
    * Where a document goes.
    *
@@ -426,7 +438,7 @@ export default function ListingWizard({
     setDetails({ ...details, [key]: String(text).split('\n').map((x) => x.trim()).filter(Boolean) });
   const [pricing, setPricing] = useState({
     standardTariff: '', partnerRate: '', weekdayRate: '', weekendRate: '', extraAdultRate: '', childRate: '',
-    mealPlans: [], ...initial.pricing,
+    mealPlans: [], vegMealRate: '', nonVegMealRate: '', ...initial.pricing,
   });
   const [inventory, setInventory] = useState({
     totalRooms: '', availableRooms: '', closedDates: '', blackoutDates: '', ...initial.inventory,
@@ -506,6 +518,8 @@ export default function ListingWizard({
             extraAdultRate: n(pricing.extraAdultRate),
             childRate: n(pricing.childRate),
             mealPlans: pricing.mealPlans || [],
+            vegMealRate: n(pricing.vegMealRate),
+            nonVegMealRate: n(pricing.nonVegMealRate),
           },
           inventory: {
             ...inventory,
@@ -1009,8 +1023,35 @@ export default function ListingWizard({
             </Group>
 
             {kind.meals && (
-              <Group title="Meal plan">
-                <Checks options={MEAL_PLANS} value={pricing.mealPlans} onChange={(v) => setPricing({ ...pricing, mealPlans: v })} />
+              <Group
+                title="Meal plan"
+                note={
+                  freeStay
+                    ? 'The room is free and the food is not, so these are the two that apply.'
+                    : undefined
+                }
+              >
+                <Checks
+                  options={freeStay ? FREE_STAY_MEAL_PLANS : MEAL_PLANS}
+                  value={pricing.mealPlans}
+                  onChange={(v) => setPricing({ ...pricing, mealPlans: v })}
+                />
+              </Group>
+            )}
+
+            {/*
+              What a member actually pays on a free stay. The room is the
+              part that is free; this is the part that is not, and until
+              now nobody was asked for it.
+            */}
+            {freeStay && (
+              <Group title="What the food costs" note="Per person per day, in rupees.">
+                <Field label="Vegetarian" required error={errors.vegMealRate}>
+                  <input {...pri('vegMealRate')} type="number" min="0" placeholder="800" />
+                </Field>
+                <Field label="Non-vegetarian" required error={errors.nonVegMealRate}>
+                  <input {...pri('nonVegMealRate')} type="number" min="0" placeholder="1100" />
+                </Field>
               </Group>
             )}
 

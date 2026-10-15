@@ -503,20 +503,27 @@ export default function PartnerLogin() {
                   <input className="input" value={form.ownerName} onChange={set('ownerName')} placeholder="Full name" />
                 </Field>
 
-                <Field
-                  label="Brand or channel"
-                  hint="Optional — if you sell under a name that is not the one above."
-                >
-                  <input className="input" value={form.brand} onChange={set('brand')} placeholder="The brand you trade as" />
-                </Field>
+                {/* What the business is, and the name it trades under if that differs. */}
+                <div>
+                  <Field label="Business category" required>
+                    <select className="input" value={form.category} onChange={set('category')}>
+                      {CATEGORIES.map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+                  </Field>
 
-                <Field label="Business category" required>
-                  <select className="input" value={form.category} onChange={set('category')}>
-                    {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </Field>
+                  <div className="mt-3">
+                    <Field label="Brand or channel" hint="Optional.">
+                      <input
+                        className="input"
+                        value={form.brand}
+                        onChange={set('brand')}
+                        placeholder="The name you trade as"
+                      />
+                    </Field>
+                  </div>
+                </div>
                 <Field label="Email address" required error={errors.email} hint="You can sign in with this.">
                   <input
                     className="input"

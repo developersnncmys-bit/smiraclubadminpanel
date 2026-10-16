@@ -95,8 +95,12 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 }
 
 export const api = {
-  /** Lists come back paged; the panel wants the lot, so ask for a big page. */
-  list: (path, query = '') => request(`${path}${query || '?limit=200'}`),
+  /**
+   * The panel's screens are whole-collection views, so they ask for the
+   * whole collection. A page of 200 meant a desk with more records than
+   * that was working on a slice of its own data without being told.
+   */
+  list: (path, query = '') => request(`${path}${query || '?limit=all'}`),
   get: (path) => request(path),
   post: (path, body) => request(path, { method: 'POST', body }),
   patch: (path, body) => request(path, { method: 'PATCH', body }),

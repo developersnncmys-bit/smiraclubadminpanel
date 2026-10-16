@@ -64,9 +64,11 @@ export default function DataTable({
     });
   }, [rows, query, active, searchKeys, externalFilter]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  // A page size of 0 is 'All' — one page, every row on it.
+  const perPage = pageSize || Math.max(1, filtered.length);
+  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   const current = Math.min(page, pages);
-  const slice = filtered.slice((current - 1) * pageSize, current * pageSize);
+  const slice = filtered.slice((current - 1) * perPage, current * perPage);
 
   const clearFilter = (key) => {
     setActive((prev) => ({ ...prev, [key]: '' }));
@@ -387,15 +389,15 @@ export default function DataTable({
             }}
             className="rounded-lg border border-ink-900/10 bg-white px-2 py-1 text-sm font-semibold text-ink-700 outline-none"
           >
-            {[8, 10, 25, 50].map((n) => (
+            {[8, 10, 25, 50, 100, 0].map((n) => (
               <option key={n} value={n}>
-                {n}
+                {n || 'All'}
               </option>
             ))}
           </select>
           <span className="ml-2">
-            {filtered.length === 0 ? 0 : (current - 1) * pageSize + 1}–
-            {Math.min(current * pageSize, filtered.length)} of {filtered.length}
+            {filtered.length === 0 ? 0 : (current - 1) * perPage + 1}–
+            {Math.min(current * perPage, filtered.length)} of {filtered.length}
           </span>
         </div>
 

@@ -86,6 +86,21 @@ const swatchFor = (key) => CARD_TONES.find((t) => t.key === key)?.swatch || CARD
 /** The placeholder for the two bullet points, one per line. */
 const POINTS_HINT = ['Complimentary stays', 'Pay only for food'].join(String.fromCharCode(10));
 
+/** A new slide, before anybody has typed into it. */
+const EMPTY_BANNER = {
+  eyebrow: '',
+  headline: 'Up to',
+  figure: '',
+  unit: '',
+  suffix: '',
+  copy: '',
+  ctaLabel: 'Book now',
+  ctaHref: '/membership',
+  cover: '',
+  alt: '',
+  status: 'Hidden',
+};
+
 const EMPTY_CARD = {
   tab: 'Weekend',
   badge: '',
@@ -215,6 +230,66 @@ export default function Offers() {
     });
     setSaving(false);
     setDraft((o) => ({ ...o, name: '', code: '', description: '' }));
+  };
+
+  /* -- The banner carousel -------------------------------------------- */
+
+  const banners = db.homeBanners || [];
+  const [bannerEditing, setBannerEditing] = useState(null);
+  const [banner, setBanner] = useState({ ...EMPTY_BANNER });
+  const setBannerField = (k) => (e) => setBanner((b) => ({ ...b, [k]: e.target.value }));
+
+  const blankBanner = () => {
+    setBannerEditing(null);
+    setBanner({ ...EMPTY_BANNER });
+  };
+
+  const openBanner = (b) => {
+    setBannerEditing(b);
+    setBanner({ ...EMPTY_BANNER, ...b });
+  };
+
+  const saveBanner = (status) => {
+    const figure = String(banner.figure).trim();
+    if (!figure) return toast('The big number is the banner — give it one', 'danger');
+    if (status === 'Live' && !banner.cover) return toast('A live banner needs a photograph', 'danger');
+
+    const body = {
+      ...banner,
+      figure,
+      eyebrow: banner.eyebrow.trim(),
+      headline: banner.headline.trim(),
+      copy: banner.copy.trim(),
+      ctaLabel: banner.ctaLabel.trim() || 'Book now',
+      ctaHref: banner.ctaHref.trim() || '/membership',
+      status,
+    };
+
+    setSaving(true);
+    if (bannerEditing) update('homeBanners', bannerEditing.id, body);
+    else create('homeBanners', body);
+    setSaving(false);
+    blankBanner();
+  };
+
+  const flipBanner = (b) =>
+    update('homeBanners', b.id, { status: b.status === 'Live' ? 'Hidden' : 'Live' }, {
+      message: (b.figure || 'The banner') + (b.status === 'Live' ? ' hidden' : ' published'),
+    });
+
+  const dropBanner = (b) => {
+    if (!window.confirm('Delete this banner? It comes off the home page.')) return;
+    remove('homeBanners', b.id);
+  };
+
+  /** Both slides are written: an order is a pair of positions. */
+  const moveBanner = (b, by) => {
+    const at = banners.findIndex((x) => x.id === b.id);
+    const to = at + by;
+    if (at < 0 || to < 0 || to >= banners.length) return;
+    const other = banners[to];
+    update('homeBanners', b.id, { order: other.order }, { silent: true });
+    update('homeBanners', other.id, { order: b.order }, { message: 'Carousel reordered' });
   };
 
   /* -- The Grab Offers strip ------------------------------------------ */
@@ -421,6 +496,236 @@ export default function Offers() {
 
     Homepage: (
       <>
+        {/*
+          The banner carousel. It was three slides written into the
+          website, so the first thing anybody sees needed a deploy to
+          change. It is rows now, and this is where they are written.
+        */}
+        <Block
+          title="Banners at the top of the home page"
+          note={
+            online
+              ? "The slides the website rotates, in this order"
+              : "Not signed in, so nothing here reaches the website"
+          }
+          wide
+          action={
+            <button className="btn-action btn-sm" onClick={blankBanner}>
+              <Plus size={14} /> Add a banner
+            </button>
+          }
+        >
+          {banners.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-ink-900/15 px-4 py-8 text-center text-sm text-ink-500">
+              No banners yet, so the website is rotating the three it ships with. Add one and
+              the carousel becomes yours.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {banners.map((b, i) => (
+                <li
+                  key={b.id}
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-ink-900/[0.07] px-4 py-2.5"
+                >
+                  {b.cover ? (
+                    <img src={b.cover} alt="" className="h-9 w-14 shrink-0 rounded-lg object-cover" />
+                  ) : (
+                    <span aria-hidden="true" className="h-9 w-14 shrink-0 rounded-lg bg-surface-soft" />
+                  )}
+                  <span className="num w-6 shrink-0 text-sm font-bold text-ink-400">{i + 1}</span>
+
+                  <span className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => openBanner(b)}
+                      className="block text-left text-sm font-semibold text-ink-800 hover:text-brand-700"
+                    >
+                      {[b.headline, b.figure + b.unit, b.suffix].filter(Boolean).join(" ")}
+                    </button>
+                    <span className="block text-xs text-ink-400">
+                      {b.eyebrow || "No label"} · button goes to {b.ctaHref}
+                    </span>
+                  </span>
+
+                  <Badge tone={b.status === "Live" ? "green" : "slate"} dot>
+                    {b.status}
+                  </Badge>
+
+                  <span className="flex items-center gap-1">
+                    <button
+                      className="btn-line btn-sm"
+                      title="Move up"
+                      disabled={i === 0}
+                      onClick={() => moveBanner(b, -1)}
+                    >
+                      <ArrowUp size={14} />
+                    </button>
+                    <button
+                      className="btn-line btn-sm"
+                      title="Move down"
+                      disabled={i === banners.length - 1}
+                      onClick={() => moveBanner(b, 1)}
+                    >
+                      <ArrowDown size={14} />
+                    </button>
+                    <button className="btn-line btn-sm" onClick={() => flipBanner(b)}>
+                      {b.status === "Live" ? "Hide" : "Show"}
+                    </button>
+                    <button
+                      type="button"
+                      title="Delete this banner"
+                      onClick={() => dropBanner(b)}
+                      className="rounded-lg p-1.5 text-ink-400 transition hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Block>
+
+        <Block
+          title={bannerEditing ? "Editing a banner" : "A new banner"}
+          note="The big number, the words around it and the photograph behind"
+          wide
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              {bannerEditing && (
+                <button className="btn-line btn-sm" onClick={blankBanner}>
+                  New banner instead
+                </button>
+              )}
+              <button className="btn-line btn-sm" onClick={() => saveBanner("Hidden")} disabled={saving}>
+                Save hidden
+              </button>
+              <button className="btn-action btn-sm" onClick={() => saveBanner("Live")} disabled={saving}>
+                <Send size={14} /> {saving ? "Saving…" : "Put it live"}
+              </button>
+            </div>
+          }
+        >
+          {/* What the member reads, drawn roughly as the website draws it. */}
+          <div className="mb-4 rounded-xl bg-ink-900 px-5 py-4 text-white">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber-300">
+              {banner.eyebrow || "Membership benefits"}
+            </p>
+            <p className="mt-1 flex items-baseline gap-2">
+              <span className="text-sm font-semibold">{banner.headline}</span>
+              <span className="num font-display text-3xl font-extrabold leading-none">
+                {banner.figure || "40"}
+              </span>
+              <span className="text-sm font-semibold">{banner.unit}</span>
+              <span className="text-sm font-semibold">{banner.suffix}</span>
+            </p>
+            <p className="mt-1 text-xs text-white/70">{banner.copy || "The line underneath."}</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Label above</label>
+              <input
+                className="input"
+                placeholder="Membership benefits"
+                value={banner.eyebrow}
+                onChange={setBannerField("eyebrow")}
+              />
+              <p className="mt-1 text-xs text-ink-500">The small line in the yellow tag.</p>
+            </div>
+            <div>
+              <label className="label">Words before the number</label>
+              <input
+                className="input"
+                placeholder="Up to"
+                value={banner.headline}
+                onChange={setBannerField("headline")}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 sm:col-span-2">
+              <div>
+                <label className="label">The big number</label>
+                <input
+                  className="input"
+                  placeholder="40"
+                  value={banner.figure}
+                  onChange={setBannerField("figure")}
+                />
+              </div>
+              <div>
+                <label className="label">Tight against it</label>
+                <input
+                  className="input"
+                  placeholder="%"
+                  value={banner.unit}
+                  onChange={setBannerField("unit")}
+                />
+              </div>
+              <div>
+                <label className="label">Words after</label>
+                <input
+                  className="input"
+                  placeholder="off"
+                  value={banner.suffix}
+                  onChange={setBannerField("suffix")}
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="label">The line underneath</label>
+              <input
+                className="input"
+                placeholder="Hotels, Packages, Villas and more at member prices."
+                value={banner.copy}
+                onChange={setBannerField("copy")}
+              />
+            </div>
+
+            <div>
+              <label className="label">Button</label>
+              <input
+                className="input"
+                placeholder="Book now"
+                value={banner.ctaLabel}
+                onChange={setBannerField("ctaLabel")}
+              />
+            </div>
+            <div>
+              <label className="label">Where it goes</label>
+              <input
+                className="input"
+                placeholder="/membership"
+                value={banner.ctaHref}
+                onChange={setBannerField("ctaHref")}
+              />
+              <p className="mt-1 text-xs text-ink-500">A path on the website, such as /free-stay.</p>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="label">Photograph</label>
+              <ImagesField
+                value={banner.cover ? [banner.cover] : []}
+                onChange={(list) => setBanner((b) => ({ ...b, cover: list[list.length - 1] || "" }))}
+                upload={uploadCover}
+                label="Home banner"
+                hint="One wide photograph. The words sit over the left of it, so keep that side calm."
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="label">What the photograph shows</label>
+              <input
+                className="input"
+                placeholder="A lit hotel and pool at dusk"
+                value={banner.alt}
+                onChange={setBannerField("alt")}
+              />
+              <p className="mt-1 text-xs text-ink-500">Read aloud to a member who cannot see it.</p>
+            </div>
+          </div>
+        </Block>
         <Block
           title="Grab Offers on the home page"
           note={

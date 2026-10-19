@@ -1229,6 +1229,47 @@ export const ADAPTERS = {
    * one per line in the panel and an array on the server, the same way
    * a blog post's list is.
    */
+  /**
+   * The banner carousel at the top of the website.
+   *
+   * The figure is its own field because the design draws it enormous
+   * and the words around it small; one sentence could not be drawn
+   * that way, so the panel asks for the parts separately.
+   */
+  homeBanners: {
+    path: '/home-banners',
+    from: (b) => ({
+      ...base(b),
+      eyebrow: b.eyebrow || '',
+      headline: b.headline || '',
+      figure: b.figure || '',
+      unit: b.unit || '',
+      suffix: b.suffix || '',
+      copy: b.copy || '',
+      ctaLabel: b.ctaLabel || 'Book now',
+      ctaHref: b.ctaHref || '/membership',
+      cover: b.imageUrl || '',
+      alt: b.alt || '',
+      order: b.order ?? 0,
+      status: b.status || 'Hidden',
+      updated: dt(b.updatedAt),
+    }),
+    to: (p) => ({
+      eyebrow: p.eyebrow,
+      headline: p.headline,
+      figure: p.figure,
+      unit: p.unit,
+      suffix: p.suffix,
+      copy: p.copy,
+      ctaLabel: p.ctaLabel,
+      ctaHref: p.ctaHref,
+      imageUrl: p.cover,
+      alt: p.alt,
+      order: num(p.order),
+      status: p.status,
+    }),
+  },
+
   homeOffers: {
     path: '/home-offers',
     from: (o) => ({

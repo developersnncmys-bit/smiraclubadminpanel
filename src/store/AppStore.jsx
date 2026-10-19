@@ -21,6 +21,8 @@ import * as reportsSeed from '../data/reportsData.js';
 
 // Bump whenever the seed changes shape or size, so a saved snapshot cannot
 // keep showing records the demo no longer has.
+// v40: homeBanners is a new collection, so a v39 snapshot has no key for
+// it and the Homepage view would list nothing until a hard reload.
 // v39: homeOffers is a new collection, so a v38 snapshot has no key for
 // it and the Homepage view reads undefined.
 // v38: the blog is live, so the two invented posts in the seed are gone;
@@ -28,7 +30,7 @@ import * as reportsSeed from '../data/reportsData.js';
 // v37: the offers, rewards, revenue and automation seeds were removed, so
 // a snapshot saved before that holds rows in a shape those pages no longer
 // read. Bumping the key drops it rather than crashing on it.
-const KEY = 'smira-club-admin:v39';
+const KEY = 'smira-club-admin:v40';
 // Session lives under its own key so "Reset demo data" never signs the user out.
 const AUTH_KEY = 'smira-club-admin:auth';
 

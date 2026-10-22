@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
 import {
   Smartphone,
@@ -15,14 +15,6 @@ import Brand from '../components/ui/Brand.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { isLive } from '../lib/api.js';
 
-/** The seeded staff the live API knows, owner first. */
-const DEMO_ACCOUNTS = [
-  { id: 'owner', phone: '+91 98190 55127', label: 'Owner — every screen' },
-  { id: 'branch', phone: '+91 98211 44556', label: 'Branch manager' },
-  { id: 'expert', phone: '+91 90045 22119', label: 'Travel expert' },
-  { id: 'finance', phone: '+91 99872 40556', label: 'Finance' },
-];
-
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
@@ -35,7 +27,7 @@ const highlights = [
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { auth, signIn, requestOtp, signInWithOtp, toast, team, settings } = useApp();
+  const { auth, signIn, requestOtp, signInWithOtp, toast, settings } = useApp();
 
   // With a server configured the desk signs in properly; without one the
   // panel keeps its one-tap demo so it still opens on a laptop with nothing
@@ -56,22 +48,6 @@ export default function Login() {
   const redirectTo = location.state?.from || '/';
   const validPhone = /^[6-9]\d{9}$/.test(phone);
   const code = otp.join('');
-
-  /**
-   * Numbers that will actually get somebody in.
-   *
-   * These came from `team`, which is empty on this screen when the panel is
-   * talking to the API — nothing is fetched until somebody has signed in — so
-   * the box rendered with no numbers at all, and the only number left on the
-   * page was the support line in the footer. People typed that.
-   *
-   * Against the API the list is the seeded staff, owner first because that is
-   * the account that opens every screen. Offline it is still the local team.
-   */
-  const knownNumbers = useMemo(
-    () => (isLive ? DEMO_ACCOUNTS : team.filter((t) => t.status === 'Active').slice(0, 3)),
-    [team]
-  );
 
   useEffect(() => {
     phoneRef.current?.focus();
@@ -277,34 +253,10 @@ export default function Login() {
                   {busy ? 'Sending OTP…' : 'Send OTP'}
                 </button>
 
-                <div className="mt-6 rounded-xl bg-surface-soft p-3.5">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">
-                    Demo numbers
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {knownNumbers.map((t) => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => {
-                          setPhone(t.phone.replace(/\D/g, '').slice(-10));
-                          setError('');
-                        }}
-                        className="rounded-lg bg-white px-2.5 py-1.5 text-left text-xs font-semibold text-ink-700 shadow-card transition hover:text-brand-700"
-                      >
-                        <span className="num block">{t.phone}</span>
-                        {t.label && (
-                          <span className="block text-[10px] font-medium text-ink-400">{t.label}</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-[11px] text-ink-500">
-                    {isLive
-                      ? 'Only registered staff numbers can sign in. The owner account opens every screen.'
-                      : 'Any valid 10-digit number works in this demo.'}
-                  </p>
-                </div>
+                <p className="mt-4 text-[11.5px] leading-snug text-ink-500">
+                  Only numbers registered to staff can sign in. If yours is not
+                  recognised, ask the owner to add it in Users &amp; Roles.
+                </p>
               </form>
             ) : (
               <form onSubmit={verify} noValidate>

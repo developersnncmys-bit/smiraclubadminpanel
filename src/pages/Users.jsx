@@ -370,7 +370,7 @@ export default function Users() {
         }
       >
         <Table minWidth={680}
-          head={['User', 'Role', 'Department', 'Branch', 'Reports to', 'Joined', 'Status', "Today's activity", 'Last active']}
+          head={['User', 'Role', 'Department', 'Branch', 'Reports to', 'Joined', 'Status', 'Signs in with', 'Last active']}
           empty="Nobody matches this cut."
           onRow={(id) => setViewing(users.find((u) => u.id === id))}
           rows={shown.map((u) => {
@@ -394,7 +394,17 @@ export default function Users() {
                   <span className={`h-2 w-2 rounded-full ${state?.dot || 'bg-ink-300'}`} />
                   <Badge tone={u.status === 'Active' ? 'green' : 'slate'}>{u.status}</Badge>
                 </span>,
-                u.activity || '—',
+                /*
+                  The number a code is texted to, and whether it would be.
+                  This column used to print the same invented day's work
+                  against everybody — seed counters that nothing updates.
+                */
+                <span>
+                  <span className="num block text-ink-800">{u.phone || '—'}</span>
+                  {u.phone && !u.account.mobileAccess && (
+                    <span className="block text-xs text-ink-400">cannot sign in</span>
+                  )}
+                </span>,
                 <span className="text-ink-500">{u.lastActive || '—'}</span>,
               ],
             };

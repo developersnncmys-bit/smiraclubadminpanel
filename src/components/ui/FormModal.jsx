@@ -47,8 +47,19 @@ export default function FormModal({
     const next = {};
     fields.forEach((f) => {
       const text = String(values[f.name] ?? '').trim();
-      if (f.required && text === '') next[f.name] = 'Required';
-      else if (f.minLength && text && text.length < f.minLength) next[f.name] = `At least ${f.minLength} characters`;
+      if (f.required && text === '') next[f.name] = `${f.label} is required`;
+      // Left empty, or the dash a record shows for "not given": nothing to check.
+      else if (!text || text === '—') return;
+      else if (f.minLength && text.length < f.minLength) next[f.name] = `At least ${f.minLength} characters`;
+      else if (f.type === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(text)) next[f.name] = 'Enter a valid email, like name@example.com';
+      // An Indian mobile, where a field asks for one: ten digits starting 6–9,
+      // with or without +91. Opt-in, so a landline elsewhere is not refused.
+      else if (f.mobile && !/^[6-9]\d{9}$/.test(text.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, ''))) {
+        next[f.name] = 'Enter a 10-digit mobile number';
+      } else if (f.validate) {
+        const problem = f.validate(text, values);
+        if (problem) next[f.name] = problem;
+      }
     });
     if (Object.keys(next).length) {
       setErrors(next);
@@ -83,6 +94,11 @@ export default function FormModal({
         </>
       }
     >
+      {Object.values(errors).some(Boolean) && (
+        <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+          Fix the {Object.values(errors).filter(Boolean).length === 1 ? 'field' : 'fields'} marked in red before saving.
+        </p>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         {fields.map((f) => (
           <div key={f.name} className={f.full ? 'sm:col-span-2' : ''}>
@@ -152,7 +168,7 @@ export default function FormModal({
               <input
                 id={f.name}
                 type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
-                className="input"
+                className={`input ${errors[f.name] ? 'border-rose-400 ring-1 ring-rose-300' : ''}`}
                 placeholder={f.placeholder}
                 min={f.type === 'number' ? (f.min ?? 0) : undefined}
                 step={f.type === 'number' ? f.step : undefined}

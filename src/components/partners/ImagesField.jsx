@@ -16,7 +16,7 @@ const MAX_FILES = 24;
  * The value stays a list of addresses, which is what the website reads, so
  * anything pasted in before still works. These just happen to be ours.
  */
-export default function ImagesField({ value = [], onChange, upload, label, hint }) {
+export default function ImagesField({ value = [], onChange, upload, label, hint, size }) {
   const [busy, setBusy] = useState(0);
   const [failed, setFailed] = useState('');
   const box = useRef(null);
@@ -87,7 +87,9 @@ export default function ImagesField({ value = [], onChange, upload, label, hint 
       >
         {busy > 0 ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />}
         {busy > 0 ? `Sending ${busy}…` : value.length ? 'Add more photographs' : 'Choose photographs'}
-        <span className="ml-auto text-[11px] font-medium text-ink-400">
+        <span className="ml-auto text-right text-[11px] font-medium text-ink-400">
+          {/* The size a photograph should be, where the person choosing it is looking. */}
+          {size && <span className="mr-1 font-bold text-brand-700">Size {size} ·</span>}
           {value.length}/{MAX_FILES} · JPG or PNG, up to 15 MB each
         </span>
       </button>

@@ -748,6 +748,7 @@ export default function Offers() {
                 onChange={(list) => setBanner((b) => ({ ...b, cover: list[list.length - 1] || "" }))}
                 upload={uploadCover}
                 label="Home banner"
+                size={`${BANNER_SIZE.w} × ${BANNER_SIZE.h} px`}
                 hint={`Banner size: ${BANNER_SIZE.w} × ${BANNER_SIZE.h} px (landscape, JPG or WebP, under 500 KB). The words sit over the left of it, so keep that side calm; phones crop the edges, so keep the subject near the middle.`}
               />
               <BannerSizeCheck src={banner.cover} />

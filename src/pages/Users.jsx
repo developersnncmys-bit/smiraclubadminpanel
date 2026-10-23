@@ -233,11 +233,27 @@ export default function Users() {
     }
   };
 
+  /** Somebody who already has this value, so the server's refusal is caught before it is sent. */
+  const taken = (key, value) =>
+    users.find((u) => String(u[key] || '').trim().toLowerCase() === String(value).trim().toLowerCase());
+  const lastTen = (v) => String(v || '').replace(/\D/g, '').slice(-10);
+  const takenPhone = (value) => users.find((u) => lastTen(u.phone) && lastTen(u.phone) === lastTen(value));
+
   const addFields = [
-    { name: 'name', label: 'Full name', type: 'text', required: true },
-    { name: 'empId', label: 'Employee ID', type: 'text', required: true },
-    { name: 'phone', label: 'Mobile', type: 'tel', required: true },
-    { name: 'email', label: 'Email', type: 'email', required: true },
+    { name: 'name', label: 'Full name', type: 'text', required: true, minLength: 2, placeholder: 'Priya Sharma' },
+    {
+      name: 'empId', label: 'Employee ID', type: 'text', required: true, placeholder: 'EMP-102',
+      validate: (v) => (taken('empId', v) ? `${v} is already given to ${taken('empId', v).name}` : ''),
+    },
+    {
+      name: 'phone', label: 'Mobile', type: 'tel', required: true, mobile: true, placeholder: '98765 43210',
+      help: 'They sign in with this number',
+      validate: (v) => (takenPhone(v) ? `This number belongs to ${takenPhone(v).name}` : ''),
+    },
+    {
+      name: 'email', label: 'Email', type: 'email', required: true, placeholder: 'priya@smiraclub.com',
+      validate: (v) => (taken('email', v) ? `This email belongs to ${taken('email', v).name}` : ''),
+    },
     { name: 'joined', label: 'Date of joining', type: 'date' },
     { name: 'department', label: 'Department', type: 'select', options: list('department') },
     { name: 'designation', label: 'Designation', type: 'text' },

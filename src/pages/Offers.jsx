@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -100,6 +100,42 @@ const EMPTY_BANNER = {
   alt: '',
   status: 'Hidden',
 };
+
+/**
+ * The size a home banner photograph should be.
+ *
+ * The website draws it full width and 200, 380, 500 and 560 px tall as the
+ * screen grows, cropping to fill. 1920 × 600 is sharp on a wide desktop and
+ * still has the middle a phone keeps.
+ */
+const BANNER_SIZE = { w: 1920, h: 600 };
+
+/** The photograph's real size, and a word if it will look soft or cropped. */
+function BannerSizeCheck({ src }) {
+  const [size, setSize] = useState(null);
+  useEffect(() => {
+    setSize(null);
+    if (!src) return undefined;
+    let alive = true;
+    const img = new Image();
+    img.onload = () => alive && setSize({ w: img.naturalWidth, h: img.naturalHeight });
+    img.src = src;
+    return () => {
+      alive = false;
+    };
+  }, [src]);
+
+  if (!size) return null;
+  const ratio = size.w / size.h;
+  const small = size.w < BANNER_SIZE.w * 0.75;
+  const shape = ratio < 2.2 ? 'too tall — the top and bottom will be cut off' : ratio > 4.5 ? 'very wide — the sides will be cut off' : '';
+  const problem = [small && 'smaller than recommended, so it may look blurry', shape].filter(Boolean).join('; ');
+  return (
+    <p className={`mt-1 text-xs font-semibold ${problem ? 'text-amber-600' : 'text-emerald-600'}`}>
+      This photo is {size.w} × {size.h} px{problem ? ` — ${problem}. Use ${BANNER_SIZE.w} × ${BANNER_SIZE.h} px.` : ' — good size.'}
+    </p>
+  );
+}
 
 const EMPTY_CARD = {
   tab: 'Weekend',
@@ -704,14 +740,17 @@ export default function Offers() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="label">Photograph</label>
+              <label className="label">
+                Photograph <span className="font-normal text-ink-500">· {BANNER_SIZE.w} × {BANNER_SIZE.h} px</span>
+              </label>
               <ImagesField
                 value={banner.cover ? [banner.cover] : []}
                 onChange={(list) => setBanner((b) => ({ ...b, cover: list[list.length - 1] || "" }))}
                 upload={uploadCover}
                 label="Home banner"
-                hint="One wide photograph. The words sit over the left of it, so keep that side calm."
+                hint={`Banner size: ${BANNER_SIZE.w} × ${BANNER_SIZE.h} px (landscape, JPG or WebP, under 500 KB). The words sit over the left of it, so keep that side calm; phones crop the edges, so keep the subject near the middle.`}
               />
+              <BannerSizeCheck src={banner.cover} />
             </div>
 
             <div className="sm:col-span-2">

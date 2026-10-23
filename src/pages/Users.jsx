@@ -238,18 +238,18 @@ export default function Users() {
     { name: 'empId', label: 'Employee ID', type: 'text', required: true },
     { name: 'phone', label: 'Mobile', type: 'tel', required: true },
     { name: 'email', label: 'Email', type: 'email', required: true },
-    { name: 'joined', label: 'Date of joining', type: 'text' },
+    { name: 'joined', label: 'Date of joining', type: 'date' },
     { name: 'department', label: 'Department', type: 'select', options: list('department') },
     { name: 'designation', label: 'Designation', type: 'text' },
     { name: 'branch', label: 'Branch', type: 'select', options: list('branch') },
-    { name: 'manager', label: 'Reporting manager', type: 'select', options: users.map((u) => u.name) },
-    { name: 'roleName', label: 'Role', type: 'select', options: roles.map((r) => r.name) },
+    { name: 'manager', label: 'Reporting manager', type: 'select', options: ['—', ...users.map((u) => u.name)] },
+    { name: 'roleName', label: 'Role', type: 'select', options: roles.map((r) => r.name), required: true },
     { name: 'employment', label: 'Employment status', type: 'select', options: ['Permanent', 'Probation', 'Contract', 'Intern'] },
     { name: 'aadhaar', label: 'Aadhaar', type: 'text' },
     { name: 'familyCount', label: 'Family members', type: 'number' },
     { name: 'familyNames', label: 'Family member names', type: 'text', full: true },
     { name: 'username', label: 'Username or email to sign in with', type: 'text' },
-    { name: 'password', label: 'Password', type: 'text' },
+    { name: 'password', label: 'Password', type: 'text', required: true, minLength: 8, help: 'At least 8 characters' },
     { name: 'twoFactor', label: 'Two-factor authentication', type: 'select', options: ['On', 'Off'] },
     { name: 'access', label: 'Login permission', type: 'select', options: ['Web and mobile', 'Web only', 'Mobile only', 'No access'] },
     { name: 'devices', label: 'Device restrictions', type: 'text', full: true },
@@ -260,6 +260,12 @@ export default function Users() {
     { name: 'categories', label: 'Booking categories', type: 'text' },
   ];
 
+  /** A default only if the dropdown holds it, or the box shows one value and submits another. */
+  const pick = (name, preferred) => {
+    const options = addFields.find((f) => f.name === name)?.options || [];
+    return { [name]: options.includes(preferred) ? preferred : options[0] ?? '' };
+  };
+
   const addUser = (values) => {
     const id = create('team', {
       name: values.name,
@@ -268,8 +274,9 @@ export default function Users() {
       roleName: values.roleName,
       department: values.department,
       branch: values.branch,
-      manager: values.manager,
+      manager: values.manager && values.manager !== '—' ? values.manager : undefined,
       email: values.email,
+      password: values.password,
       phone: values.phone,
       status: 'Active',
       live: 'Offline',
@@ -299,8 +306,10 @@ export default function Users() {
         categories: values.categories ? String(values.categories).split(',').map((x) => x.trim()) : [],
       },
     });
+    // The store says when it is saved, or why it was not — saying "can sign
+    // in" here, before the server had answered, promised something the panel
+    // then quietly took back.
     setAddOpen(false);
-    toast(`${values.name} can sign in as ${values.roleName}`);
     return id;
   };
 
@@ -924,7 +933,10 @@ export default function Users() {
         subtitle="Their details, how they sign in, and what they are given to work"
         fields={addFields}
         initial={{
-          department: 'Sales desk', branch: 'Mumbai', roleName: 'Travel expert',
+          ...pick('department', 'Sales desk'),
+          ...pick('branch', 'Mumbai'),
+          ...pick('roleName', 'Travel expert'),
+          manager: '—',
           employment: 'Probation', twoFactor: 'Off', access: 'Web and mobile',
         }}
         submitLabel="Create user"

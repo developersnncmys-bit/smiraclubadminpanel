@@ -281,21 +281,49 @@ export const ADAPTERS = {
       productivity: u.productivity ?? 0,
       joined: d(u.joinedOn),
     }),
-    to: (p) => ({
-      name: p.name,
-      empId: p.empId,
-      email: p.email,
-      phone: p.phone,
-      designation: p.role || p.designation,
-      department: p.department,
-      branch: p.branch,
-      status: p.status,
-      live: p.live,
-      target: p.target,
-      revenue: p.revenue,
-      ...(p.roleId ? { role: p.roleId } : {}),
-      ...(p.password ? { password: p.password } : {}),
-    }),
+    /**
+     * The server will not make a user without a password and a role id, and
+     * the Add user form only knows the role by name — so it was refused
+     * every time. The role is looked up by name, the manager by name, and
+     * the rest of what the form collects goes with it rather than staying
+     * in the browser.
+     */
+    to: (p, ctx = {}) => {
+      const a = p.account || {};
+      const roleId =
+        p.roleId ||
+        (p.roleName ? (ctx.roles || []).find((r) => same(r.name, p.roleName))?._id : undefined);
+      const list = (v) => (Array.isArray(v) && v.length ? v : undefined);
+      return {
+        name: p.name,
+        empId: p.empId,
+        email: p.email,
+        phone: p.phone,
+        designation: a.designation || p.role || p.designation,
+        department: p.department,
+        branch: p.branch,
+        status: p.status,
+        live: p.live,
+        target: p.target,
+        revenue: p.revenue,
+        manager: p.manager !== undefined ? userId(p.manager, ctx) : undefined,
+        joinedOn: a.joined ? when(a.joined) : undefined,
+        employment: a.employment,
+        aadhaar: a.aadhaar && a.aadhaar !== '—' ? a.aadhaar : undefined,
+        family: list(a.family)?.map((name) => ({ name })),
+        twoFactor: a.twoFactor,
+        webAccess: a.webAccess,
+        mobileAccess: a.mobileAccess,
+        deviceNote: a.devices && a.devices !== 'No restriction' ? a.devices : undefined,
+        leadSources: list(a.leadSources),
+        territory: a.territory && a.territory !== '—' ? a.territory : undefined,
+        segment: a.segment && a.segment !== '—' ? a.segment : undefined,
+        products: list(a.products),
+        bookingCategories: list(a.categories),
+        ...(roleId ? { role: roleId } : {}),
+        ...(p.password ? { password: p.password } : {}),
+      };
+    },
   },
 
   /**

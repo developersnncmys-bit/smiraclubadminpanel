@@ -12,6 +12,18 @@ import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor, fallbackPathFor } 
 import * as reportsSeed from '../data/reportsData.js';
 
 /**
+ * Why the server said no, in words somebody can act on.
+ *
+ * "Some fields are not right" on its own told the desk nothing — the row
+ * disappeared and nobody knew which field. The server sends the list, so say it.
+ */
+function whyNot(err, fallback) {
+  const fields = (err?.details || []).map((d) => d.message).filter(Boolean);
+  if (fields.length) return `${err.message || fallback}: ${fields.join(', ')}`;
+  return err?.message || fallback;
+}
+
+/**
  * Single client-side store for the whole panel.
  *
  * Every screen reads and writes through here, so buttons genuinely mutate
@@ -220,6 +232,7 @@ export function AppProvider({ children }) {
     memberships: dbRef.current.memberships || [],
     enquiries: dbRef.current.enquiries || [],
     partners: dbRef.current.partners || [],
+    roles: dbRef.current.roles || [],
   });
   const [toasts, setToasts] = useState([]);
 
@@ -392,7 +405,9 @@ export function AppProvider({ children }) {
       const id = item.id || nextId(collection);
 
       // Show it straight away, then let the server confirm the real record.
-      setDb((d) => ({ ...d, [collection]: [{ ...item, id }, ...d[collection]] }));
+      // A password goes to the server only, never into a row on screen.
+      const { password: _password, ...shown } = item;
+      setDb((d) => ({ ...d, [collection]: [{ ...shown, id }, ...d[collection]] }));
       if (!silent) toast(`${SINGULAR[collection]} ${id} created`);
 
       const what = SINGULAR[collection] || 'Record';
@@ -416,7 +431,7 @@ export function AppProvider({ children }) {
           .catch((err) => {
             // Put the optimistic row back where it came from.
             setDb((d) => ({ ...d, [collection]: d[collection].filter((r) => r.id !== id) }));
-            toast(err.message || 'That could not be saved', 'danger');
+            toast(whyNot(err, `That ${what.toLowerCase()} could not be saved`), 'danger');
           });
       }
 
@@ -448,7 +463,7 @@ export function AppProvider({ children }) {
               ...d,
               [collection]: d[collection].map((r) => (r.id === id ? before : r)),
             }));
-            toast(err.message || 'That change did not save', 'danger');
+            toast(whyNot(err, 'That change did not save'), 'danger');
           });
         } else if (!silent) {
           // Nothing the server holds changed — a screen-only field.

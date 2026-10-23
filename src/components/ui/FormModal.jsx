@@ -46,7 +46,9 @@ export default function FormModal({
   const submit = () => {
     const next = {};
     fields.forEach((f) => {
-      if (f.required && String(values[f.name] ?? '').trim() === '') next[f.name] = 'Required';
+      const text = String(values[f.name] ?? '').trim();
+      if (f.required && text === '') next[f.name] = 'Required';
+      else if (f.minLength && text && text.length < f.minLength) next[f.name] = `At least ${f.minLength} characters`;
     });
     if (Object.keys(next).length) {
       setErrors(next);

@@ -18,7 +18,7 @@ npm run build    # production bundle in dist/
 The panel talks to the Smira API, set in `.env`:
 
 ```
-VITE_API_URL=https://smiraclubbackend.vercel.app/api
+VITE_API_URL=https://api.smiraclub.com/api
 ```
 
 Sign in with a mobile number and the six-digit code.

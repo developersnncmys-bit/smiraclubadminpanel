@@ -19,7 +19,7 @@
 const ENV = (typeof import.meta !== 'undefined' && import.meta.env) || {};
 
 /** Where the API lives when nothing says otherwise. */
-const DEFAULT_API = 'https://smiraclubbackend.vercel.app/api';
+const DEFAULT_API = 'https://api.smiraclub.com/api';
 
 const configured = String(ENV.VITE_API_URL ?? '').trim();
 

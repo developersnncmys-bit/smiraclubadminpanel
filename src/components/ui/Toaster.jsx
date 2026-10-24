@@ -11,7 +11,7 @@ export default function Toaster() {
   const { toasts, dismissToast } = useApp();
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col gap-2.5">
+    <div className="pointer-events-none fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-[60] flex sm:inset-x-auto sm:right-5 sm:w-[360px] lg:bottom-5 flex-col gap-2.5">
       {toasts.map((t) => {
         const skin = skins[t.tone] || skins.success;
         const Icon = skin.icon;

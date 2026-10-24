@@ -172,13 +172,13 @@ export default function Header({ onOpenMobile }) {
   return (
     <header className="z-30 shrink-0 bg-white">
       {/* Row 1 — brand, section tabs, tools */}
-      <div className="flex items-center gap-3 border-b border-ink-900/[0.07] px-4 sm:px-5">
+      <div className="flex items-center gap-2 border-b border-ink-900/[0.07] px-3 sm:gap-3 sm:px-5">
         <button onClick={onOpenMobile} className="icon-btn my-2.5 h-9 w-9 lg:hidden">
           <Menu size={18} />
         </button>
 
         <NavLink to="/" className="my-2.5 flex shrink-0 items-center" aria-label="Smira Club — dashboard">
-          <Brand className="h-10 sm:h-11" />
+          <Brand className="h-9 sm:h-11" />
         </NavLink>
 
         <div className="ml-auto flex items-center gap-2 py-2">
@@ -278,7 +278,7 @@ export default function Header({ onOpenMobile }) {
             </select>
           </label>
 
-          <button className="icon-btn h-9 w-9" onClick={refresh} title="Refresh data">
+          <button className="icon-btn hidden h-9 w-9 sm:grid" onClick={refresh} title="Refresh data">
             <RefreshCw size={16} />
           </button>
 
@@ -293,7 +293,7 @@ export default function Header({ onOpenMobile }) {
             </button>
 
             {searchOpen && (
-              <div className="absolute right-0 top-11 z-40 w-[min(380px,90vw)] overflow-hidden rounded-xl bg-white shadow-lift ring-1 ring-ink-900/[0.07]">
+              <div className="fixed inset-x-3 top-[60px] z-40 sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-[380px] overflow-hidden rounded-xl bg-white shadow-lift ring-1 ring-ink-900/[0.07]">
                 <div className="relative border-b border-ink-900/[0.07]">
                   <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
                   <input
@@ -361,7 +361,7 @@ export default function Header({ onOpenMobile }) {
             </button>
 
             {bellOpen && (
-              <div className="absolute right-0 top-11 z-30 w-[320px] overflow-hidden rounded-xl bg-white shadow-lift ring-1 ring-ink-900/[0.07]">
+              <div className="fixed inset-x-3 top-[60px] z-40 sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-[320px] overflow-hidden rounded-xl bg-white shadow-lift ring-1 ring-ink-900/[0.07]">
                 <div className="flex items-center justify-between border-b border-ink-900/[0.07] px-4 py-3">
                   <p className="text-sm font-bold text-ink-900">Notifications</p>
                   <button

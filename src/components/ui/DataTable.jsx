@@ -42,7 +42,10 @@ export default function DataTable({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [selected, setSelected] = useState([]);
-  const [view, setView] = useState(defaultView);
+  // A phone opens on cards: a table wider than the screen is a sideways scroll.
+  const [view, setView] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches ? 'cards' : defaultView
+  );
 
   // Rows can disappear after a delete — drop them from the selection too.
   useEffect(() => {
@@ -150,8 +153,8 @@ export default function DataTable({
           ))}
         </div>
 
-        <button className="btn-line py-2" onClick={() => downloadCsv(exportName, filtered, columns)}>
-          <Download size={15} /> Export
+        <button className="btn-line py-2" onClick={() => downloadCsv(exportName, filtered, columns)} title="Export">
+          <Download size={15} /> <span className="hidden sm:inline">Export</span>
         </button>
       </div>
 
@@ -267,7 +270,7 @@ export default function DataTable({
       )}
 
       {view === 'cards' ? (
-        <div className="grid gap-4 p-4 sm:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-4 2xl:grid-cols-3">
           {slice.map((row) => {
             const [lead, ...rest] = columns.filter((c) => c.key !== 'actions');
             const actions = columns.find((c) => c.key === 'actions');
@@ -378,7 +381,7 @@ export default function DataTable({
       )}
 
       {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-900/[0.07] bg-surface-soft/40 px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-900/[0.07] bg-surface-soft/40 px-3 py-3 sm:px-5">
         <div className="flex items-center gap-2 text-sm text-ink-500">
           <span>Rows</span>
           <select

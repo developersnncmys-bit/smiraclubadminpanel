@@ -29,12 +29,13 @@ export default function KpiRow({ items, cols = 4 }) {
   }[cols] || 'sm:grid-cols-2 xl:grid-cols-4';
 
   return (
-    <div className={`grid gap-2.5 ${grid}`}>
+    // Two to a row on a phone, the way a mobile CRM shows its numbers.
+    <div className={`grid grid-cols-2 gap-2 sm:gap-2.5 ${grid}`}>
       {items.map((k) => {
         const skin = SKIN[k.tone] || PLAIN;
         const pct = k.progress == null ? null : Math.max(0, Math.min(100, Math.round(k.progress)));
         return (
-          <div key={k.label} className="card card-hover px-3.5 py-3">
+          <div key={k.label} className="card card-hover min-w-0 px-3 py-2.5 sm:px-3.5 sm:py-3">
             {/* The label owns its line, so it never loses room to the number */}
             <div className="flex items-center gap-2">
               {k.icon && (

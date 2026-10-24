@@ -167,6 +167,36 @@
   }
 }
 
+/* -- Phones ---------------------------------------------------------------- */
+@media (max-width: 639px) {
+  /* Under 16px, iOS zooms the whole page the moment a field is tapped. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* The full-screen record panels (lead, booking, member…): their header
+     carries a title and a row of buttons, which wraps here instead of
+     running off the right edge. */
+  .fixed.inset-0 > aside > header {
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+    row-gap: 0.5rem;
+  }
+
+  /* A finger needs a bigger target than a cursor does. */
+  .icon-btn {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+
+  /* A table that is still a table scrolls sideways smoothly, not the page. */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Slim, unobtrusive scrollbars */
 * {
   scrollbar-width: thin;

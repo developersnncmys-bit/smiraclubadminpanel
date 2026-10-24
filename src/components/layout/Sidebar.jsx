@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { X, LifeBuoy } from 'lucide-react';
+import { X, LifeBuoy, CalendarRange, UsersRound, RefreshCw } from 'lucide-react';
 import { navFor } from '../../data/nav.js';
 import { useApp } from '../../store/AppStore.jsx';
 
@@ -96,6 +96,51 @@ function SupportButton({ onDone }) {
   );
 }
 
+const PRESETS = ['Today', 'Last 7 days', 'Last 30 days', 'This quarter', 'This year'];
+
+/**
+ * The header's date range, team filter and refresh, for a phone.
+ *
+ * The header has no room for them below a wide screen, which left a phone
+ * with no way to change what every page shows. A custom range is still set
+ * from a computer; here it is kept and offered, not lost.
+ */
+function MobileFilters() {
+  const { range, setRange, owner, setOwner, team, refresh } = useApp();
+  const select =
+    'w-full appearance-none rounded-lg border border-ink-900/10 bg-white py-2 pl-8 pr-2 text-sm font-semibold text-ink-700 outline-none';
+  return (
+    <div className="space-y-2 border-b border-ink-900/[0.07] px-4 py-3">
+      <p className="eyebrow">Showing</p>
+      <label className="relative block">
+        <CalendarRange size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
+        <select value={range} onChange={(e) => setRange(e.target.value)} className={select} aria-label="Date range">
+          {!PRESETS.includes(range) && <option>{range}</option>}
+          {PRESETS.map((o) => (
+            <option key={o}>{o}</option>
+          ))}
+        </select>
+      </label>
+      <div className="flex gap-2">
+        <label className="relative block min-w-0 flex-1">
+          <UsersRound size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <select value={owner} onChange={(e) => setOwner(e.target.value)} className={select} aria-label="Team member">
+            <option>All team members</option>
+            {team
+              .filter((t) => t.bookings > 0)
+              .map((t) => (
+                <option key={t.id}>{t.name}</option>
+              ))}
+          </select>
+        </label>
+        <button type="button" className="icon-btn h-[38px] w-[38px]" onClick={refresh} title="Refresh data">
+          <RefreshCw size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Sidebar({ mobileOpen, onCloseMobile }) {
   const { enquiries, tasks, memberSignups, auth } = useApp();
 
@@ -122,7 +167,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
           }`}
         />
         <aside
-          className={`absolute inset-y-0 left-0 flex w-[272px] flex-col bg-white shadow-lift transition-transform duration-300 ${
+          className={`absolute inset-y-0 left-0 flex w-[86vw] max-w-[300px] flex-col bg-white shadow-lift transition-transform duration-300 ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
@@ -132,6 +177,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }) {
               <X size={17} />
             </button>
           </div>
+          <MobileFilters />
           <NavList counts={counts} groups={navFor(auth)} onNavigate={onCloseMobile} />
           <SupportButton onDone={onCloseMobile} />
         </aside>

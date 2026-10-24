@@ -25,7 +25,56 @@ export default function Table({
 
   return (
     <>
-      <div className="overflow-x-auto">
+      {/*
+        On a phone each row is a card: the first cell as its title, every
+        other cell under its column's name. A table six hundred pixels wide
+        on a screen of three hundred and sixty was a sideways scroll nobody
+        could read. Same cells, same clicks — only the arrangement changes.
+      */}
+      <ul className="space-y-2 md:hidden">
+        {paged.pageRows.map((r) => {
+          const [first, ...rest] = r.cells;
+          return (
+            <li
+              key={r.key}
+              className={`rounded-xl border border-ink-900/[0.07] bg-white p-3 shadow-xs ${onRow ? 'cursor-pointer active:bg-surface-soft' : ''}`}
+              onClick={onRow ? () => onRow(r.key) : undefined}
+            >
+              <div className="text-sm font-bold text-ink-900">{first}</div>
+              {rest.length > 0 && (
+                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-ink-900/[0.06] pt-2">
+                  {rest.map((c, i) =>
+                    c === null || c === undefined || c === '' ? null : (
+                      <div key={i} className={`min-w-0 ${head[i + 1] ? '' : 'col-span-2'}`}>
+                        {head[i + 1] && <dt className="truncate text-[10px] font-bold uppercase tracking-wide text-ink-400">{head[i + 1]}</dt>}
+                        <dd className="break-words text-[13px] text-ink-700">{c}</dd>
+                      </div>
+                    )
+                  )}
+                </dl>
+              )}
+            </li>
+          );
+        })}
+        {rows.length === 0 && <li className="py-6 text-center text-sm text-ink-500">{empty}</li>}
+        {foot && (
+          <li className="rounded-xl border-2 border-ink-900/[0.12] bg-surface-soft p-3">
+            <div className="text-sm font-extrabold text-ink-900">{foot[0]}</div>
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
+              {foot.slice(1).map((c, i) =>
+                c === null || c === undefined || c === '' ? null : (
+                  <div key={i} className="min-w-0">
+                    {head[i + 1] && <dt className="truncate text-[10px] font-bold uppercase tracking-wide text-ink-400">{head[i + 1]}</dt>}
+                    <dd className="num text-[13px] font-bold text-ink-900">{c}</dd>
+                  </div>
+                )
+              )}
+            </dl>
+          </li>
+        )}
+      </ul>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-sm" style={{ minWidth: `${minWidth}px` }}>
           <thead>
             <tr className="border-b border-ink-900/[0.07] text-left">

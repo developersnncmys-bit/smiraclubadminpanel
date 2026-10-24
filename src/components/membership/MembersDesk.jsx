@@ -256,7 +256,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
             <Paged items={members}>
               {(shown) => (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[780px] text-sm">
+                  <table className="stack-mobile w-full min-w-[780px] text-sm">
                     <thead>
                       <tr className="border-b border-ink-900/[0.07] text-left">
                         {['Member', 'Last booking', 'Last contact', 'Benefits used', 'Benefits left', 'Membership ends', 'Satisfaction', 'Risk'].map((h) => (
@@ -432,7 +432,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
             <Paged items={rewards}>
               {(shown) => (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[860px] text-sm">
+                  <table className="stack-mobile w-full min-w-[860px] text-sm">
                     <thead>
                       <tr className="border-b border-ink-900/[0.07] text-left">
                         {['Member', 'Gift', 'Type', 'Eligibility', 'Assigned', 'Due', 'Field officer', 'Proof', 'Stage'].map((h) => (
@@ -536,7 +536,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
             <div className="mt-4 overflow-x-auto">
               <Paged items={members}>
                 {(shown) => (
-                  <table className="w-full min-w-[720px] text-sm">
+                  <table className="stack-mobile w-full min-w-[720px] text-sm">
                     <thead>
                       <tr className="border-b border-ink-900/[0.07] text-left">
                         {['Member', 'Referral code', 'Referrals', 'Qualified', 'Converted', 'Earned', 'Redeemed', 'Pending'].map((h) => (
@@ -590,7 +590,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
             <div className="mt-4 overflow-x-auto">
               <Paged items={members}>
                 {(shown) => (
-                  <table className="w-full min-w-[820px] text-sm">
+                  <table className="stack-mobile w-full min-w-[820px] text-sm">
                     <thead>
                       <tr className="border-b border-ink-900/[0.07] text-left">
                         {['Member', 'Expiry', 'Eligibility', 'Benefits consumed', 'Renewal offer', 'Probability', 'Assigned', 'Last contact', 'Next follow-up'].map((h) => (

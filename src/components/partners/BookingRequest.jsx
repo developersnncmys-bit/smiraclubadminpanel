@@ -112,7 +112,7 @@ export default function BookingRequest({ request: r, open, onClose, onMessage, o
         </div>
 
         {/* -- The money -------------------------------------------------- */}
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
           <Stat label="Booking amount" value={inr(r.amount)} tone="text-brand-700" />
           <Stat label="Smira commission" value={inr(r.commission)} tone="text-emerald-600" />
           <Stat label="Partner payout" value={inr(r.payout)} />

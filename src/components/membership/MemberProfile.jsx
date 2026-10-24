@@ -124,14 +124,14 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
             <section className="card p-5">
               <h3 className="font-display text-base font-extrabold text-ink-900">Membership</h3>
               <p className="mt-0.5 text-sm text-ink-500">{standing?.note || 'Not started yet'}</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
                 <Stat label="Plan" value={m.plan} />
                 <Stat label="Activated" value={m.startedOn || '—'} />
                 <Stat label="Expires" value={m.expiresOn || '—'} />
                 <Stat label="Members covered" value={m.members} />
               </div>
               {plan && (
-                <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
                   <Stat label="Duration" value={plan.duration || '12 months'} />
                   <Stat label="Rooms" value={plan.rooms ?? '—'} />
                   <Stat label="Free stay nights" value={plan.freeStay?.nights ?? 0} />
@@ -163,7 +163,7 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
                   );
                 })}
               </ul>
-              <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
                 <Stat label="Contacted" value={m.activation?.contacted ? 'Yes' : 'No'} />
                 <Stat label="Explained" value={m.activation?.explained ? 'Yes' : 'No'} />
                 <Stat label="Documents" value={m.activation?.documents ? 'Verified' : 'Pending'} />
@@ -202,7 +202,7 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
                   <li className="px-4 py-6 text-center text-sm text-ink-500">No benefits allocated yet.</li>
                 )}
               </ul>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
                 <Stat label="Upcoming bookings" value={theirTrips.filter((b) => b.status !== 'Cancelled').length} />
                 <Stat label="Cancelled bookings" value={theirTrips.filter((b) => b.status === 'Cancelled').length} />
                 <Stat label="Saving so far" value={inr(m.saving || 0)} tone="text-brand-700" />
@@ -212,7 +212,7 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
             {/* Money */}
             <section className="card p-5">
               <h3 className="font-display text-base font-extrabold text-ink-900">Payment</h3>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
                 <Stat label="Membership amount" value={inr(m.amount || 0)} />
                 <Stat label="Paid" value={inr(m.paid || 0)} tone="text-emerald-600" />
                 <Stat

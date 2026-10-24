@@ -1,19 +1,22 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header.jsx';
 import Sidebar from './Sidebar.jsx';
 import MobileTabBar from './MobileTabBar.jsx';
 import Toaster from '../ui/Toaster.jsx';
 import SavedDialog from '../ui/SavedDialog.jsx';
+import useStackLabels from '../../lib/useStackLabels.js';
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { pathname } = useLocation();
+  const shell = useRef(null);
+  useStackLabels(shell);
 
   return (
     // One header across the top, the section rail down the left.
     // 100dvh, not 100vh: a phone's address bar would otherwise hide the bottom bar.
-    <div className="flex h-[100dvh] flex-col bg-surface-base bg-app-aurora">
+    <div ref={shell} className="flex h-[100dvh] flex-col bg-surface-base bg-app-aurora">
       <Header onOpenMobile={() => setMobileOpen(true)} />
 
       <div className="flex min-h-0 flex-1">

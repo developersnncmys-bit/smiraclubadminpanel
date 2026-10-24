@@ -221,7 +221,7 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
               {tab === 'Overview' && (
                 <div className="space-y-5">
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
                     <Stat label="Total bookings" value={p.bookings} />
                     <Stat label="Confirmed" value={p.confirmed} tone="text-emerald-600" />
                     <Stat label="Cancelled" value={p.cancelled} tone="text-rose-600" />
@@ -281,7 +281,7 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
               )}
 
               {tab === 'Inventory' && (
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
                   <Stat label="Rooms or units" value={p.rooms || '—'} />
                   <Stat label="Booked through us" value={p.bookings} />
                   <Stat label="Available now" value={Math.max(0, (p.rooms || 0) - theirRequests.length)} />
@@ -367,7 +367,7 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
 
               {tab === 'Finance' && (
                 <div className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
                     <Stat label="Booking value" value={inr(p.revenue)} />
                     <Stat label="Our commission" value={inr(p.commissionEarned)} tone="text-emerald-600" />
                     <Stat label="Payable" value={inr(p.payable)} tone={p.payable ? 'text-amber-600' : 'text-ink-900'} />

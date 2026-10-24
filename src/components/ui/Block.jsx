@@ -5,7 +5,7 @@
  */
 export default function Block({ title, note, wide, action, children, className = '' }) {
   return (
-    <section className={`card p-5 ${wide ? 'xl:col-span-2' : ''} ${className}`}>
+    <section className={`card p-3.5 sm:p-5 ${wide ? 'xl:col-span-2' : ''} ${className}`}>
       {(title || action) && (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

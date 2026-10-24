@@ -251,7 +251,7 @@ export default function ReviewQueue({ partners, onOpen }) {
   return (
     <>
       <Block title="Partner flow" note="Submit → admin review → approved or needs changes → contract → live" wide>
-        <ol className="grid gap-2 sm:grid-cols-3 xl:grid-cols-5">
+        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
           {counts.map((s) => (
             <li
               key={s.key}

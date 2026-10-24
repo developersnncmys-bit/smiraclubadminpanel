@@ -302,11 +302,11 @@ export default function Partners() {
         note="Category, where they are, what they bring and how fast they answer"
         wide
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+            <div className="relative col-span-2 sm:col-span-1">
               <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
               <input
-                className="input h-9 w-44 py-0 pl-9 text-sm"
+                className="input h-9 w-full py-0 pl-9 text-sm sm:w-44"
                 placeholder="Search partners…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -330,7 +330,7 @@ export default function Partners() {
         <Paged items={rows}>
           {(shown) => (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[880px] text-sm">
+              <table className="stack-mobile w-full min-w-[880px] text-sm">
                 <thead>
                   <tr className="border-b border-ink-900/[0.07] text-left">
                     {['Partner', 'Category', 'Location', 'Status', 'Bookings', 'Revenue', 'Rating', 'Response', 'Score', 'Action'].map((h) => (
@@ -404,7 +404,7 @@ export default function Partners() {
     Bookings: (
       <>
         <Block title="Booking pipeline" note="Where every partner request sits" wide>
-          <ul className="grid gap-2 sm:grid-cols-4 xl:grid-cols-7">
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
             {partnerPipeline.map((s) => (
               <li key={s} className="rounded-xl bg-surface-soft px-4 py-3">
                 <p className="text-xs font-bold text-ink-700">{s}</p>
@@ -421,7 +421,7 @@ export default function Partners() {
           <Paged items={sentToPartners}>
             {(shown) => (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[980px] text-sm">
+                <table className="stack-mobile w-full min-w-[980px] text-sm">
                   <thead>
                     <tr className="border-b border-ink-900/[0.07] text-left">
                       {['Booking', 'Customer', 'Membership', 'Partner', 'Service', 'Stay', 'Guests', 'Amount', 'Commission', 'Payout', 'Stage'].map((h) => (
@@ -523,7 +523,7 @@ export default function Partners() {
           <Paged items={partners}>
             {(shown) => (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-sm">
+                <table className="stack-mobile w-full min-w-[900px] text-sm">
                   <thead>
                     <tr className="border-b border-ink-900/[0.07] text-left">
                       {['Partner', 'Bookings', 'Confirmed', 'Cancelled', 'Failed', 'Revenue', 'Commission', 'Response', 'Rating', 'Repeat', 'Cancellation rate', 'Score'].map((h) => (
@@ -587,7 +587,7 @@ export default function Partners() {
     Finance: (
       <>
         <Block title="Finance dashboard" note="What was booked, what we keep and what they are owed" wide>
-          <div className="grid gap-3 sm:grid-cols-4 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4 xl:grid-cols-6">
             <Stat label="Total booking value" value={inr(bookingValue)} tone="text-brand-700" />
             <Stat label="Smira commission" value={inr(commission)} tone="text-emerald-600" />
             <Stat label="Partner payable" value={inr(payable)} tone={payable ? 'text-amber-600' : 'text-ink-900'} />
@@ -623,7 +623,7 @@ export default function Partners() {
           <Paged items={seedSettlements}>
             {(shown) => (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[820px] text-sm">
+                <table className="stack-mobile w-full min-w-[820px] text-sm">
                   <thead>
                     <tr className="border-b border-ink-900/[0.07] text-left">
                       {['Settlement', 'Partner', 'Period', 'Booking value', 'Commission', 'Tax', 'Adjustment', 'Payable', 'Stage', 'Paid on'].map((h) => (

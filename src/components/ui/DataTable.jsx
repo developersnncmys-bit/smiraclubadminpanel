@@ -270,7 +270,7 @@ export default function DataTable({
       )}
 
       {view === 'cards' ? (
-        <div className="grid gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-4 2xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-4 2xl:grid-cols-3">
           {slice.map((row) => {
             const [lead, ...rest] = columns.filter((c) => c.key !== 'actions');
             const actions = columns.find((c) => c.key === 'actions');
@@ -278,7 +278,7 @@ export default function DataTable({
               <article
                 key={row.id}
                 onClick={() => onRowClick?.(row)}
-                className={`card flex flex-col p-4 ${onRowClick ? 'card-hover cursor-pointer' : ''}`}
+                className={`card flex min-w-0 flex-col p-4 ${onRowClick ? 'card-hover cursor-pointer' : ''}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">{lead?.render ? lead.render(row) : row[lead?.key]}</div>

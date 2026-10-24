@@ -197,6 +197,94 @@
   }
 }
 
+/*
+  A table marked .stack-mobile becomes a stack of cards on a phone: the first
+  cell is the card's title, every other cell sits under its column's name
+  (copied onto it as data-label by useStackLabels). Same rows, same clicks —
+  only the arrangement changes, and from 768px up it is the table again.
+*/
+@media (max-width: 767px) {
+  table.stack-mobile {
+    display: block;
+    min-width: 0 !important;
+    width: 100%;
+  }
+  table.stack-mobile thead {
+    display: none;
+  }
+  table.stack-mobile tbody,
+  table.stack-mobile tfoot {
+    display: block;
+  }
+  table.stack-mobile tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid rgba(11, 21, 36, 0.08) !important;
+    border-radius: 0.875rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(11, 21, 36, 0.05);
+  }
+  table.stack-mobile tfoot tr {
+    background: #eef2f7;
+    border-width: 2px !important;
+  }
+  table.stack-mobile td {
+    display: block;
+    min-width: 0;
+    padding: 0 !important;
+    text-align: left !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+  }
+  table.stack-mobile td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.125rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #96a2b4;
+  }
+  /* The title of the card: full width, no label, a hairline under it. */
+  table.stack-mobile td:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 1px solid rgba(11, 21, 36, 0.06);
+    font-size: 14px;
+  }
+  table.stack-mobile td:first-child::before,
+  table.stack-mobile td:not([data-label])::before,
+  table.stack-mobile td[data-label='']::before {
+    display: none;
+  }
+  /* Buttons, unlabelled cells and "nothing here" rows take the whole width. */
+  table.stack-mobile td[colspan],
+  table.stack-mobile td[data-label=''],
+  table.stack-mobile td[data-label='Action'],
+  table.stack-mobile td[data-label='Actions'] {
+    grid-column: 1 / -1;
+  }
+  table.stack-mobile td[colspan] {
+    border-bottom: 0;
+    text-align: center !important;
+  }
+  /* A cell that only held a checkbox needs no room of its own. */
+  table.stack-mobile td:has(> input[type='checkbox']:only-child) {
+    position: absolute;
+    right: 0.75rem;
+    top: 0.75rem;
+    border: 0;
+  }
+  table.stack-mobile tr:has(> td > input[type='checkbox']:only-child) {
+    position: relative;
+  }
+}
+
 /* Slim, unobtrusive scrollbars */
 * {
   scrollbar-width: thin;

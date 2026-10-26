@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   UserPlus, ShieldCheck, Users as UsersIcon, UserCheck, Sparkles, Search,
-  Zap, KeyRound, Check, X, Download,
+  Zap, KeyRound, Check, X, Download, Pencil,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -113,6 +113,12 @@ export default function Users() {
   const [viewing, setViewing] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
+  /** The role being edited in the builder; null when it is creating one. */
+  const [editingRole, setEditingRole] = useState(null);
+  const openRole = (role = null) => {
+    setEditingRole(role);
+    setRoleOpen(true);
+  };
   const [query, setQuery] = useState('');
   const [cut, setCut] = useState({
     branch: 'All', department: 'All', role: 'All', manager: 'All',
@@ -491,13 +497,13 @@ export default function Users() {
         note="What each one is for, how far it can see, and what it may sign off"
         wide
         action={
-          <button className="btn-action btn-sm" onClick={() => setRoleOpen(true)}>
+          <button className="btn-action btn-sm" onClick={() => openRole()}>
             <ShieldCheck size={14} /> Create role
           </button>
         }
       >
-        <Table minWidth={680}
-          head={['Role', 'Department', 'Reports to', 'Dashboard', 'People', 'Data access', 'Can approve', 'Modules']}
+        <Table minWidth={760}
+          head={['Role', 'Department', 'Reports to', 'Dashboard', 'People', 'Data access', 'Can approve', 'Modules', '']}
           rows={roles.map((r) => {
             const people = users.filter((u) => u.roleName === r.name).length;
             return {
@@ -511,6 +517,14 @@ export default function Users() {
                 <Badge tone={r.scope === 'All' ? 'violet' : r.scope === 'Own' ? 'slate' : 'sky'}>{r.scope}</Badge>,
                 (r.approvals || []).length ? (r.approvals || []).join(', ') : <span className="text-ink-400">nothing</span>,
                 <span className="num text-ink-500">{(r.modules || []).length} of {permissionModules.length}</span>,
+                <button
+                  type="button"
+                  className="btn-line btn-sm"
+                  onClick={() => openRole(r)}
+                  title={`Edit ${r.name}`}
+                >
+                  <Pencil size={13} /> Edit
+                </button>,
               ],
             };
           })}
@@ -883,7 +897,7 @@ export default function Users() {
   return (
     <>
       <PageHeader title="Users and roles" subtitle="Who works here, what they may open, who signs their work off, and how they get in">
-        <button className="btn-line" onClick={() => setRoleOpen(true)}>
+        <button className="btn-line" onClick={() => openRole()}>
           <ShieldCheck size={16} /> Create role
         </button>
         <button className="btn-action" onClick={() => setAddOpen(true)}>
@@ -960,12 +974,22 @@ export default function Users() {
 
       {roleOpen && (
         <RoleBuilder
-          onClose={() => setRoleOpen(false)}
-          onSave={(role) => {
-            create('roles', role);
+          role={editingRole}
+          roleNames={roles.map((r) => r.name)}
+          onClose={() => {
             setRoleOpen(false);
+            setEditingRole(null);
+          }}
+          onSave={(role) => {
+            if (editingRole) {
+              update('roles', editingRole.id, role, { message: `${role.name} saved` });
+            } else {
+              create('roles', role);
+              toast(`${role.name} can now be given to a user`);
+            }
+            setRoleOpen(false);
+            setEditingRole(null);
             setSection('Roles');
-            toast(`${role.name} can now be given to a user`);
           }}
         />
       )}

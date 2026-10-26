@@ -195,6 +195,15 @@ const months = (v) => {
 /** An invoice status as the server names it. Overdue is worked out from the due date. */
 const INVOICE_STATUS = { Partial: 'Partially paid', Overdue: 'Pending' };
 
+/** A role's permissions and data scope: the server's word, and the screen's. */
+const PERMISSION_LABEL = {
+  view: 'View', create: 'Create', edit: 'Edit', delete: 'Delete', approve: 'Approve',
+  financial: 'Financial access', export: 'Export', assign: 'Assign',
+};
+const PERMISSION_VALUE = Object.fromEntries(Object.entries(PERMISSION_LABEL).map(([k, v]) => [v, k]));
+const SCOPE_LABEL = { own: 'Own', team: 'Own team', branch: 'Own branch', all: 'All' };
+const SCOPE_VALUE = Object.fromEntries(Object.entries(SCOPE_LABEL).map(([k, v]) => [v, k]));
+
 // -- One entry per collection the panel shares with the API -----------------
 
 export const ADAPTERS = {
@@ -345,7 +354,10 @@ export const ADAPTERS = {
       dashboard: r.dashboard || '',
       modules: r.modules || [],
       permissions: r.permissions || [],
-      scope: r.scope || 'own',
+      // The screens speak "View" and "Own team"; the server stores "view"
+      // and "team". Read into the screen's words, write back in the server's.
+      can: (r.permissions || []).map((x) => PERMISSION_LABEL[x]).filter(Boolean),
+      scope: SCOPE_LABEL[r.scope] || 'Own',
       approvals: r.approvals || [],
       superAdmin: Boolean(r.superAdmin),
       description: r.description || '',
@@ -357,8 +369,15 @@ export const ADAPTERS = {
       reportsTo: r.reportsTo,
       dashboard: r.dashboard,
       modules: r.modules,
-      permissions: r.permissions,
-      scope: r.scope,
+      /*
+       * The role builder ticks "what it may do" as `can`, in the screen's
+       * words. Sent as they were, "View" and "Own team" are not values the
+       * server accepts, so creating or editing a role was refused.
+       */
+      permissions: r.can
+        ? r.can.map((x) => PERMISSION_VALUE[x]).filter(Boolean)
+        : r.permissions,
+      scope: r.scope === undefined ? undefined : SCOPE_VALUE[r.scope] || r.scope,
       approvals: r.approvals,
       description: r.description,
       // Not the screen's to grant: one role skips every check and it is

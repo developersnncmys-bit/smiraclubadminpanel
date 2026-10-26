@@ -33,17 +33,38 @@ function Pick({ on, onToggle, children }) {
  * and what it opens on, tick the modules it may reach, choose how far it can
  * see, and pick what it is allowed to sign off.
  */
-export default function RoleBuilder({ onClose, onSave }) {
-  const [form, setForm] = useState({
-    name: '',
-    department: 'Sales',
-    reportsTo: 'Business head',
-    dashboard: 'My sales dashboard',
-    scope: 'Own',
-    modules: ['CRM'],
-    can: ['View'],
-    approvals: [],
-  });
+export default function RoleBuilder({ role, roleNames, onClose, onSave }) {
+  const editing = Boolean(role);
+  // Editing starts from the role as it stands; creating, from a sales role.
+  const [form, setForm] = useState(() =>
+    editing
+      ? {
+          name: role.name || '',
+          department: role.department || '',
+          reportsTo: role.reportsTo || '—',
+          dashboard: role.dashboard || 'My sales dashboard',
+          scope: role.scope || 'Own',
+          modules: [...(role.modules || [])],
+          can: [...(role.can || [])],
+          approvals: [...(role.approvals || [])],
+        }
+      : {
+          name: '',
+          department: 'Sales',
+          reportsTo: 'Business head',
+          dashboard: 'My sales dashboard',
+          scope: 'Own',
+          modules: ['CRM'],
+          can: ['View'],
+          approvals: [],
+        }
+  );
+
+  // Who a role can report to: the roles that exist, never itself. The value
+  // it already holds stays in the list even if that role has since gone.
+  const bosses = [...new Set([...(roleNames || roles.map((r) => r.name)), form.reportsTo])]
+    .filter((n) => n && n !== '—' && n !== role?.name);
+  const dashboards = [...new Set([...roleDashboards.map((d) => d.name), form.dashboard])].filter(Boolean);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
   const toggle = (key, value) =>
@@ -61,13 +82,17 @@ export default function RoleBuilder({ onClose, onSave }) {
     <Modal
       open
       onClose={onClose}
-      title="Create a role"
-      subtitle="What it is called, what it opens, how far it sees and what it may approve"
+      title={editing ? `Edit ${role.name}` : 'Create a role'}
+      subtitle={
+        editing
+          ? 'Changes apply to everyone who holds this role, the next time they load the panel'
+          : 'What it is called, what it opens, how far it sees and what it may approve'
+      }
       size="xl"
       footer={
         <div className="flex items-center gap-2">
           <button className="btn-action" disabled={!form.name.trim()} onClick={save}>
-            Create role
+            {editing ? 'Save changes' : 'Create role'}
           </button>
           <button className="btn-line" onClick={onClose}>Cancel</button>
         </div>
@@ -96,13 +121,13 @@ export default function RoleBuilder({ onClose, onSave }) {
           <span className="label">Reports to</span>
           <select className="input" value={form.reportsTo} onChange={(e) => set('reportsTo', e.target.value)}>
             <option value="—">Nobody</option>
-            {roles.map((r) => <option key={r.id}>{r.name}</option>)}
+            {bosses.map((n) => <option key={n}>{n}</option>)}
           </select>
         </label>
         <label className="block">
           <span className="label">Dashboard access</span>
           <select className="input" value={form.dashboard} onChange={(e) => set('dashboard', e.target.value)}>
-            {[...new Set(roleDashboards.map((d) => d.name))].map((d) => <option key={d}>{d}</option>)}
+            {dashboards.map((d) => <option key={d}>{d}</option>)}
           </select>
         </label>
       </div>

@@ -467,7 +467,10 @@ export const ADAPTERS = {
       lostReason: p.lostReason,
       notes: p.notes,
       tags: p.tags,
-      trip: p.trip,
+      // The form's dates read "02 Sep 2026"; the record keeps real dates.
+      trip: p.trip
+        ? { ...p.trip, checkIn: when(p.trip.checkIn) ?? null, checkOut: when(p.trip.checkOut) ?? null }
+        : undefined,
       travelDate: has(p, 'travelDate') ? when(p.travelDate) : undefined,
       nextFollowUpAt: has(p, 'nextFollowUp') ? when(p.nextFollowUp) : undefined,
       lastContactAt: has(p, 'lastContact') ? when(p.lastContact) : undefined,

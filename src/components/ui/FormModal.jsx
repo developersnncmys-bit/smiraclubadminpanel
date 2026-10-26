@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Modal from './Modal.jsx';
 import { toISODate, formatDate } from '../../data/mockData.js';
 
 /**
  * Schema-driven add/edit dialog shared by every record page.
  *
- * fields: [{ name, label, type, options?, required?, full?, placeholder?, help? }]
- * type: text | number | select | date | textarea | tel | email
+ * fields: [{ name, label, type, options?, required?, full?, placeholder?, help?, section? }]
+ * type: text | number | select | date | textarea | tel | email | multi | toggle
+ *
+ * `multi` is a row of chips, any number on, and gives back an array;
+ * `toggle` is one yes/no box and gives back true or false. A field with a
+ * `section` different from the one before it starts a new heading.
  */
 export default function FormModal({
   open,
@@ -26,9 +30,13 @@ export default function FormModal({
     if (open) {
       const defaults = {};
       fields.forEach((f) => {
-        if (initial[f.name] !== undefined) defaults[f.name] = initial[f.name];
+        if (initial[f.name] !== undefined && initial[f.name] !== '') defaults[f.name] = initial[f.name];
         else if (f.type === 'select') defaults[f.name] = f.options?.[0] ?? '';
-        else defaults[f.name] = '';
+        else if (f.type === 'multi') defaults[f.name] = [];
+        else if (f.type === 'toggle') defaults[f.name] = false;
+        else defaults[f.name] = initial[f.name] ?? '';
+        if (f.type === 'multi' && !Array.isArray(defaults[f.name])) defaults[f.name] = [];
+        if (f.type === 'toggle') defaults[f.name] = Boolean(defaults[f.name]);
         // The picker only understands ISO, records keep "02 Sep 2026".
         if (f.type === 'date') defaults[f.name] = toISODate(defaults[f.name]);
       });
@@ -100,14 +108,57 @@ export default function FormModal({
         </p>
       )}
       <div className="grid gap-5 sm:grid-cols-2">
-        {fields.map((f) => (
-          <div key={f.name} className={f.full ? 'sm:col-span-2' : ''}>
-            <label className="label" htmlFor={f.name}>
-              {f.label}
-              {f.required && <span className="ml-1 text-coral">*</span>}
-            </label>
+        {fields.map((f, i) => (
+          <Fragment key={f.name}>
+          {/* A new heading, across both columns, wherever the section changes. */}
+          {f.section && f.section !== fields[i - 1]?.section && (
+            <p className={`eyebrow border-b border-ink-900/[0.07] pb-2 text-brand-700 sm:col-span-2 ${i ? 'mt-3' : ''}`}>
+              {f.section}
+            </p>
+          )}
+          <div className={f.full || f.type === 'multi' ? 'sm:col-span-2' : ''}>
+            {f.type !== 'toggle' && (
+              <label className="label" htmlFor={f.name}>
+                {f.label}
+                {f.required && <span className="ml-1 text-coral">*</span>}
+              </label>
+            )}
 
-            {f.type === 'select' ? (
+            {f.type === 'multi' ? (
+              <div className="flex flex-wrap gap-2" role="group" aria-label={f.label}>
+                {f.options.map((o) => {
+                  const on = (values[f.name] || []).includes(o);
+                  return (
+                    <button
+                      key={o}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() =>
+                        set(f.name, on ? values[f.name].filter((x) => x !== o) : [...(values[f.name] || []), o])
+                      }
+                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                        on
+                          ? 'border-brand-500 bg-brand-50 text-brand-800'
+                          : 'border-ink-900/10 bg-white text-ink-600 hover:border-brand-300'
+                      }`}
+                    >
+                      {o}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : f.type === 'toggle' ? (
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-ink-900/10 bg-white px-3 py-2.5 sm:mt-6">
+                <input
+                  id={f.name}
+                  type="checkbox"
+                  checked={Boolean(values[f.name])}
+                  onChange={(e) => set(f.name, e.target.checked)}
+                  className="h-4 w-4 accent-brand-600"
+                />
+                <span className="text-sm font-semibold text-ink-700">{f.label}</span>
+              </label>
+            ) : f.type === 'select' ? (
               <select
                 id={f.name}
                 className="input"
@@ -183,6 +234,7 @@ export default function FormModal({
               f.help && <p className="mt-1.5 text-xs text-ink-400">{f.help}</p>
             )}
           </div>
+          </Fragment>
         ))}
       </div>
     </Modal>

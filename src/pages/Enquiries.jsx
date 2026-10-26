@@ -23,13 +23,34 @@ import LeadDetails from '../components/sales/LeadDetails.jsx';
 import SalesOverview from '../components/sales/SalesOverview.jsx';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
-import { statusTone, enquiryStatuses, stageProbability, inr, shortInr } from '../data/mockData.js';
+import { statusTone, enquiryStatuses, stageProbability, inr, shortInr, formatDate } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
 import { when } from '../lib/adapters.js';
 import { findMembership, membershipBadge, membershipStanding } from '../lib/membership.js';
 
 const SOURCES = ['Campaign', 'WhatsApp', 'Website', 'Facebook Ads', 'Instagram', 'Google Ads', 'Referral', 'Walk-in', 'Calling data', 'Partner', 'Existing member', 'Other'];
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
+
+/**
+ * The choices on the website's customised tour form, word for word, so a
+ * lead the desk types in reads exactly like one that came from the site.
+ * Keep in step with planTrip and intlForm in the website's lib/content.js.
+ */
+const TRIP = {
+  dateModes: ['Exact Date', 'Flexible Window'],
+  durations: ['3 Nights / 4 Days', '4 Nights / 5 Days', '5 Nights / 6 Days', '7 Nights / 8 Days', '10 Nights / 11 Days'],
+  occasions: ['Birthday', 'Anniversary', 'Honeymoon', 'Family Vacation', 'Other'],
+  hotelPreferences: ['Free Stay', '3 Star', '4 Star', '5 Star', 'Villa', 'Resort', 'Homestay', 'Any'],
+  mealPlans: ['Breakfast & Dinner', 'Breakfast only', 'All meals', 'No meals'],
+  mealTypes: ['Veg', 'Non-Veg', 'Jain', 'Veg & Non-Veg'],
+  extras: ['Room on higher floor', 'Near Beach/Sea View', 'Early Check-In', 'Late Check-Out'],
+  transport: ['Flight', 'Train', 'Bus', 'Cab'],
+  pickupFrom: ['Airport', 'Railway Station', 'Bus Stand', 'Home'],
+  pickupTo: ['Hotel/Resort', 'Villa', 'Homestay', 'Other'],
+  dropFrom: ['Hotel/Resort', 'Villa', 'Homestay'],
+  dropTo: ['Airport', 'Railway Station', 'Bus Stand'],
+  support: ['Visa Assistance', 'Currency Exchange', 'Travel Sim (International)', 'Travel Insurance'],
+};
 const SECTIONS = ['Leads', 'Pipeline', 'Performance', 'Team & sources', 'Today'];
 const PERIODS = ['All', 'Today', 'Yesterday', 'This week', 'This month'];
 
@@ -278,18 +299,52 @@ export default function Enquiries() {
   const owners = ['Unassigned', ...team.map((t) => t.name.split(' ')[0])];
 
   const fields = [
-    { name: 'name', label: 'Client name', type: 'text', required: true },
-    { name: 'phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 ' },
-    { name: 'email', label: 'Email', type: 'email' },
-    { name: 'destination', label: 'Destination', type: 'text', required: true },
-    { name: 'pax', label: 'Travellers', type: 'number', required: true },
-    { name: 'travelDate', label: 'Travel date', type: 'text', placeholder: '18 Sep 2026' },
-    { name: 'budget', label: 'Budget (₹)', type: 'number' },
-    { name: 'status', label: 'Status', type: 'select', options: enquiryStatuses },
-    { name: 'source', label: 'Source', type: 'select', options: SOURCES },
-    { name: 'campaign', label: 'Campaign (if it came from one)', placeholder: 'e.g. Diwali Goa offer' },
-    { name: 'label', label: 'Label', type: 'select', options: LABELS },
-    { name: 'owner', label: 'Assign to', type: 'select', options: owners },
+    { name: 'name', label: 'Client name', type: 'text', required: true, section: 'Client & enquiry' },
+    { name: 'phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 ', section: 'Client & enquiry' },
+    { name: 'email', label: 'Email', type: 'email', section: 'Client & enquiry' },
+    { name: 'destination', label: 'Destination', type: 'text', required: true, section: 'Client & enquiry' },
+    { name: 'trip.hotel', label: 'Hotel or property asked for', type: 'text', placeholder: 'If they named one', section: 'Client & enquiry' },
+    { name: 'pax', label: 'Travellers', type: 'number', required: true, section: 'Client & enquiry' },
+    { name: 'travelDate', label: 'Travel date', type: 'date', section: 'Client & enquiry' },
+    { name: 'budget', label: 'Budget (₹)', type: 'number', section: 'Client & enquiry' },
+    { name: 'status', label: 'Status', type: 'select', options: enquiryStatuses, section: 'Client & enquiry' },
+    { name: 'source', label: 'Source', type: 'select', options: SOURCES, section: 'Client & enquiry' },
+    { name: 'campaign', label: 'Campaign (if it came from one)', placeholder: 'e.g. Diwali Goa offer', section: 'Client & enquiry' },
+    { name: 'label', label: 'Label', type: 'select', options: LABELS, section: 'Client & enquiry' },
+    { name: 'owner', label: 'Assign to', type: 'select', options: owners, section: 'Client & enquiry' },
+
+    /*
+      Everything the website's customised tour form asks, with the same
+      choices, so a lead taken on the phone holds what one from the website
+      holds. They were only on the website's leads before, and the desk had
+      no way to write them down for a caller.
+    */
+    { name: 'trip.dateMode', label: 'Dates are', type: 'select', options: ['', ...TRIP.dateModes], section: 'Trip dates' },
+    { name: 'trip.duration', label: 'Duration', type: 'select', options: ['', ...TRIP.durations], section: 'Trip dates' },
+    { name: 'trip.checkIn', label: 'Check-in', type: 'date', section: 'Trip dates' },
+    { name: 'trip.checkOut', label: 'Check-out', type: 'date', section: 'Trip dates' },
+    { name: 'trip.adults', label: 'Adults', type: 'number', section: 'Trip dates' },
+    { name: 'trip.childAges', label: 'Children’s ages', type: 'text', placeholder: 'e.g. 5, 9', help: 'One age per child, separated by commas', section: 'Trip dates' },
+    { name: 'trip.occasion', label: 'Occasion', type: 'select', options: ['', ...TRIP.occasions], section: 'Trip dates' },
+    { name: 'trip.pets', label: 'Travelling with pets', type: 'toggle', section: 'Trip dates' },
+
+    { name: 'trip.hotelPreference', label: 'Hotel preference', type: 'select', options: ['', ...TRIP.hotelPreferences], section: 'Stay & meals' },
+    { name: 'trip.roomsRequired', label: 'Rooms required', type: 'number', section: 'Stay & meals' },
+    { name: 'trip.mealPlan', label: 'Meal plan', type: 'select', options: ['', ...TRIP.mealPlans], section: 'Stay & meals' },
+    { name: 'trip.mealType', label: 'Meal type', type: 'select', options: ['', ...TRIP.mealTypes], section: 'Stay & meals' },
+    { name: 'trip.extras', label: 'Room requests', type: 'multi', options: TRIP.extras, section: 'Stay & meals' },
+
+    { name: 'trip.transport', label: 'Getting there', type: 'multi', options: TRIP.transport, section: 'Transport' },
+    { name: 'trip.pickupFrom', label: 'Pickup from', type: 'select', options: ['', ...TRIP.pickupFrom], section: 'Transport' },
+    { name: 'trip.pickupTo', label: 'Pickup to', type: 'select', options: ['', ...TRIP.pickupTo], section: 'Transport' },
+    { name: 'trip.dropFrom', label: 'Drop from', type: 'select', options: ['', ...TRIP.dropFrom], section: 'Transport' },
+    { name: 'trip.dropTo', label: 'Drop to', type: 'select', options: ['', ...TRIP.dropTo], section: 'Transport' },
+    { name: 'trip.returnTransfer', label: 'Return transfer too', type: 'toggle', section: 'Transport' },
+    { name: 'trip.sightseeing', label: 'Sightseeing', type: 'textarea', placeholder: 'Places they want to see', full: true, section: 'Transport' },
+
+    { name: 'trip.support', label: 'Support services', type: 'multi', options: TRIP.support, section: 'Support & notes' },
+    { name: 'trip.needs', label: 'Special needs', type: 'textarea', placeholder: 'Wheelchair access, dietary needs…', full: true, section: 'Support & notes' },
+    { name: 'trip.note', label: 'Anything else they said', type: 'textarea', full: true, section: 'Support & notes' },
 
     /*
       How they travel. The website's customised tour form fills most of
@@ -298,9 +353,7 @@ export default function Enquiries() {
       what they spent last time — the website never asks at all.
     */
     { name: 'trip.yearlyTrips', label: 'Trips a year', type: 'select', options: ['', '1', '2', '3', '4', '5 or more'], section: 'How they travel' },
-    { name: 'trip.hotelPreference', label: 'Hotel preference', type: 'select', options: ['', '3 star', '4 star', '5 star', 'Resort', 'Villa', 'Homestay', 'Any'], section: 'How they travel' },
     { name: 'trip.travelPersons', label: 'Travel persons', type: 'number', section: 'How they travel' },
-    { name: 'trip.roomsRequired', label: 'Rooms required', type: 'number', section: 'How they travel' },
     { name: 'trip.lastExpenses', label: 'Last trip spend (₹)', type: 'number', section: 'How they travel', help: 'What they spent on their last holiday — the best guide to what they will spend now.' },
     { name: 'trip.planToTravel', label: 'Plans to travel', type: 'select', options: ['', 'This month', 'Next month', 'In 2–3 months', 'In 6 months', 'Just looking'], section: 'How they travel' },
   ];
@@ -316,6 +369,11 @@ export default function Enquiries() {
       if (k.startsWith('trip.')) trip[k.slice(5)] = v;
       else out[k] = v;
     });
+    // "5, 9" in the box is [5, 9] on the record, and the children are counted from it.
+    if (typeof trip.childAges === 'string') {
+      trip.childAges = trip.childAges.split(/[,\s]+/).map(Number).filter((n) => Number.isFinite(n) && n >= 0 && n <= 21);
+      trip.children = trip.childAges.length;
+    }
     return Object.keys(trip).length ? { ...out, trip } : out;
   };
 
@@ -323,14 +381,17 @@ export default function Enquiries() {
   const flatten = (row) => {
     if (!row) return row;
     const out = { ...row };
-    Object.entries(row.trip || {}).forEach(([k, v]) => { out[`trip.${k}`] = v ?? ''; });
+    Object.entries(row.trip || {}).forEach(([k, v]) => {
+      out[`trip.${k}`] = k === 'childAges' && Array.isArray(v) ? v.join(', ') : v ?? '';
+    });
     return out;
   };
 
   const saveEnquiry = (raw) => {
     const values = nest(raw);
     if (editing) update('enquiries', editing.id, values);
-    else create('enquiries', { ...values, created: '04 Aug 2026' });
+    // Today's date, not the fixed one the demo was written on.
+    else create('enquiries', { ...values, created: formatDate(new Date()) });
   };
 
   const makeQuote = (row) => {

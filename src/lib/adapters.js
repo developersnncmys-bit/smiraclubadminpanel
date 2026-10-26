@@ -315,7 +315,8 @@ export const ADAPTERS = {
         live: p.live,
         target: p.target,
         revenue: p.revenue,
-        manager: p.manager !== undefined ? userId(p.manager, ctx) : undefined,
+        // '' means "reports to nobody", which has to reach the server as null.
+        manager: p.manager === undefined ? undefined : p.manager ? userId(p.manager, ctx) : null,
         joinedOn: a.joined ? when(a.joined) : undefined,
         employment: a.employment,
         aadhaar: a.aadhaar && a.aadhaar !== '—' ? a.aadhaar : undefined,

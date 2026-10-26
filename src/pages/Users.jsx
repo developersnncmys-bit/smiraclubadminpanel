@@ -234,6 +234,9 @@ export default function Users() {
       update('team', u.id, { status: 'Inactive', live: 'Offline' }, { message: `${u.name} can no longer sign in` });
     } else if (label === 'View profile') {
       setViewing(u);
+    } else if (['Change role', 'Assign manager', 'Assign team', 'Edit user'].includes(label)) {
+      // These only said their own name back; they are one form now.
+      setEditingUser(u);
     } else {
       toast(`${label} — ${u.name}`, 'info');
     }
@@ -286,6 +289,79 @@ export default function Users() {
   const pick = (name, preferred) => {
     const options = addFields.find((f) => f.name === name)?.options || [];
     return { [name]: options.includes(preferred) ? preferred : options[0] ?? '' };
+  };
+
+  /**
+   * Editing somebody who already has an account: their details, their role,
+   * who they report to and whether they may sign in. The password is not
+   * here — the server only changes it through its own reset.
+   */
+  const [editingUser, setEditingUser] = useState(null);
+  const notMe = (found) => found && found.id !== editingUser?.id;
+  const editFields = [
+    { name: 'name', label: 'Full name', type: 'text', required: true, minLength: 2 },
+    {
+      name: 'empId', label: 'Employee ID', type: 'text',
+      validate: (v) => (notMe(taken('empId', v)) ? `${v} is already given to ${taken('empId', v).name}` : ''),
+    },
+    {
+      name: 'phone', label: 'Mobile', type: 'tel', required: true, mobile: true,
+      help: 'They sign in with this number',
+      validate: (v) => (notMe(takenPhone(v)) ? `This number belongs to ${takenPhone(v).name}` : ''),
+    },
+    {
+      name: 'email', label: 'Email', type: 'email', required: true,
+      validate: (v) => (notMe(taken('email', v)) ? `This email belongs to ${taken('email', v).name}` : ''),
+    },
+    { name: 'roleName', label: 'Role', type: 'select', options: roles.map((r) => r.name), required: true },
+    { name: 'designation', label: 'Designation', type: 'text' },
+    { name: 'department', label: 'Department', type: 'text' },
+    { name: 'branch', label: 'Branch', type: 'text' },
+    {
+      name: 'manager', label: 'Reporting manager', type: 'select',
+      options: ['—', ...users.filter((x) => x.id !== editingUser?.id).map((x) => x.name)],
+    },
+    { name: 'joined', label: 'Date of joining', type: 'date' },
+    { name: 'employment', label: 'Employment status', type: 'select', options: ['Permanent', 'Probation', 'Contract', 'Intern'] },
+    { name: 'status', label: 'Account', type: 'select', options: ['Active', 'Inactive'], help: 'Inactive cannot sign in' },
+  ];
+
+  const editInitial = (u) => ({
+    name: u.name || '',
+    empId: u.empId || '',
+    phone: u.phone || '',
+    email: u.email || '',
+    roleName: roles.some((r) => r.name === u.roleName) ? u.roleName : roles[0]?.name || '',
+    designation: u.account?.designation || '',
+    department: u.department || '',
+    branch: u.branch || '',
+    manager: u.manager && u.manager !== '—' ? u.manager : '—',
+    joined: u.account?.joined || '',
+    employment: u.account?.employment || 'Probation',
+    status: u.status === 'Inactive' ? 'Inactive' : 'Active',
+  });
+
+  const saveUser = (values) => {
+    const u = editingUser;
+    update('team', u.id, {
+      name: values.name,
+      empId: values.empId,
+      phone: values.phone,
+      email: values.email,
+      roleName: values.roleName,
+      role: values.designation || values.roleName,
+      department: values.department,
+      branch: values.branch,
+      manager: values.manager !== '—' ? values.manager : '',
+      status: values.status,
+      account: {
+        ...u.account,
+        designation: values.designation,
+        employment: values.employment,
+        joined: values.joined || u.account?.joined,
+      },
+    }, { message: `${values.name} saved` });
+    setEditingUser(null);
   };
 
   const addUser = (values) => {
@@ -400,8 +476,8 @@ export default function Users() {
           </div>
         }
       >
-        <Table minWidth={680}
-          head={['User', 'Role', 'Department', 'Branch', 'Reports to', 'Joined', 'Status', 'Signs in with', 'Last active']}
+        <Table minWidth={760}
+          head={['User', 'Role', 'Department', 'Branch', 'Reports to', 'Joined', 'Status', 'Signs in with', 'Last active', '']}
           empty="Nobody matches this cut."
           onRow={(id) => setViewing(users.find((u) => u.id === id))}
           rows={shown.map((u) => {
@@ -437,6 +513,18 @@ export default function Users() {
                   )}
                 </span>,
                 <span className="text-ink-500">{u.lastActive || '—'}</span>,
+                // Its own click: the row itself opens the profile.
+                <button
+                  type="button"
+                  className="btn-line btn-sm"
+                  title={`Edit ${u.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingUser(u);
+                  }}
+                >
+                  <Pencil size={13} /> Edit
+                </button>,
               ],
             };
           })}
@@ -952,6 +1040,19 @@ export default function Users() {
           log={auditLog.filter((l) => l.who === viewing.name)}
           onClose={() => setViewing(null)}
           onAct={(label) => act(label, viewing)}
+        />
+      )}
+
+      {editingUser && (
+        <FormModal
+          open
+          onClose={() => setEditingUser(null)}
+          onSubmit={saveUser}
+          title={`Edit ${editingUser.name}`}
+          subtitle="Their details, their role, who they report to and whether they can sign in"
+          fields={editFields}
+          initial={editInitial(editingUser)}
+          submitLabel="Save changes"
         />
       )}
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   X, Phone, Mail, MessageCircle, Pencil, Share2, FileText, Paperclip, ChevronLeft, ChevronRight, Plus, ArrowRight, Clock, ShoppingCart, CalendarPlus, Crown,
 } from 'lucide-react';
@@ -8,6 +8,7 @@ import { statusTone, enquiryStatuses, inr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
 import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Field from '../ui/Field.jsx';
+import LeadTaskForm from './LeadTaskForm.jsx';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 
@@ -28,13 +29,21 @@ const KINDS = {
  * of what has happened on the right. Opens over the list so the desk never
  * loses its place.
  */
-export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
+export default function LeadDetails({ lead, list, onClose, onJump, onEdit, startOn }) {
   const { activities, tasks, quotations, memberSignups, memberships, logActivity, update, toast } = useApp();
-  const [tab, setTab] = useState('Activities');
+  // "Add task" from the leads list opens here, on the Tasks tab with the form open.
+  const [tab, setTab] = useState(startOn === 'task' ? 'Tasks' : 'Activities');
+  const [taskForm, setTaskForm] = useState(startOn === 'task');
   const [newest, setNewest] = useState(true);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
   const [editing, setEditing] = useState(null); // 'status' | 'label' | 'owner'
+
+  // The panel stays mounted between leads: start each one where it was asked to.
+  useEffect(() => {
+    setTab(startOn === 'task' ? 'Tasks' : 'Activities');
+    setTaskForm(startOn === 'task');
+  }, [lead?.id, startOn]);
 
   if (!lead) return null;
 
@@ -64,7 +73,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
     ...activities.filter((a) => a.lead === lead.id),
   ];
   const ordered = newest ? [...trail].reverse() : trail;
-  const leadTasks = tasks.filter((t) => t.customer === lead.name);
+  // Filed against this lead, or (older tasks) under its person's name.
+  const leadTasks = tasks.filter((t) => (lead._id && t.lead === lead._id) || t.customer === lead.name);
   const notes = trail.filter((a) => a.kind === 'note');
   const leadQuotes = quotations.filter((q) => q.customer === lead.name);
 
@@ -352,25 +362,55 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit }) {
               )}
 
               {tab === 'Tasks' && (
-                <ul className="space-y-2.5">
-                  {leadTasks.map((t) => (
-                    <li key={t.id} className="flex items-start gap-3 rounded-xl bg-surface-soft/60 p-3.5">
-                      <CalendarPlus size={16} className="mt-0.5 shrink-0 text-ink-400" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-ink-900">{t.title}</p>
-                        <p className="text-xs text-ink-500">
-                          {t.owner} · due {t.due}
-                        </p>
-                      </div>
-                      <Badge tone={t.bucket === 'overdue' ? 'rose' : 'sky'} dot>
-                        {t.bucket}
-                      </Badge>
-                    </li>
-                  ))}
-                  {leadTasks.length === 0 && (
-                    <li className="py-10 text-center text-sm text-ink-500">No tasks on this lead.</li>
+                <div className="space-y-3">
+                  {/* Adding a task to this lead: what, when, and who does it. */}
+                  {taskForm ? (
+                    <LeadTaskForm
+                      lead={lead}
+                      onCancel={() => setTaskForm(false)}
+                      onDone={() => setTaskForm(false)}
+                    />
+                  ) : (
+                    <button type="button" className="btn-action btn-sm" onClick={() => setTaskForm(true)}>
+                      <CalendarPlus size={14} /> Add task
+                    </button>
                   )}
-                </ul>
+
+                  <ul className="space-y-2.5">
+                    {leadTasks.map((t) => {
+                      const done = t.status === 'Completed' || t.bucket === 'done';
+                      return (
+                        <li key={t.id} className={`flex items-start gap-3 rounded-xl bg-surface-soft/60 p-3.5 ${done ? 'opacity-60' : ''}`}>
+                          <CalendarPlus size={16} className="mt-0.5 shrink-0 text-ink-400" />
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-sm font-bold text-ink-900 ${done ? 'line-through' : ''}`}>{t.title}</p>
+                            <p className="text-xs text-ink-500">
+                              {t.type ? `${t.type} · ` : ''}{t.owner} · due {t.due}{t.priority === 'High' ? ' · High priority' : ''}
+                            </p>
+                            {t.note && <p className="mt-0.5 text-xs text-ink-600">{t.note}</p>}
+                          </div>
+                          <span className="flex shrink-0 flex-col items-end gap-1.5">
+                            <Badge tone={done ? 'green' : t.bucket === 'overdue' ? 'rose' : 'sky'} dot>
+                              {done ? 'done' : t.bucket || 'upcoming'}
+                            </Badge>
+                            {!done && (
+                              <button
+                                type="button"
+                                className="text-xs font-bold text-brand-700 hover:underline"
+                                onClick={() => update('tasks', t.id, { status: 'Completed', bucket: 'done' }, { message: 'Task done' })}
+                              >
+                                Mark done
+                              </button>
+                            )}
+                          </span>
+                        </li>
+                      );
+                    })}
+                    {leadTasks.length === 0 && !taskForm && (
+                      <li className="py-8 text-center text-sm text-ink-500">No tasks on this lead yet. Add one above.</li>
+                    )}
+                  </ul>
+                </div>
               )}
 
               {tab === 'Notes' && (

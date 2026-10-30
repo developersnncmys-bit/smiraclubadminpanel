@@ -343,7 +343,6 @@ export default function Team() {
     { name: 'department', label: 'Team', type: 'text', placeholder: 'Sales desk' },
     { name: 'empId', label: 'Employee ID', type: 'text', placeholder: 'EMP-111' },
     { name: 'joinedOn', label: 'Joining date', type: 'date' },
-    { name: 'target', label: 'Revenue target (₹)', type: 'number' },
     { name: 'status', label: 'Account', type: 'select', options: ACCOUNT },
 
     { name: 'accountHolder', label: 'Account holder name', type: 'text', section: 'Bank and payroll' },
@@ -369,6 +368,22 @@ export default function Team() {
       required: true,
       full: true,
     },
+  ];
+
+  /**
+   * Inviting a candidate asks only who they are and the job — the rest of
+   * the joining form is theirs to complete once they join, and is there on
+   * Edit. The revenue target is not part of an invitation at all.
+   */
+  const inviteFields = [
+    { name: 'name', label: 'Full name', type: 'text', required: true, section: 'Candidate' },
+    { name: 'phone', label: 'Mobile number', type: 'tel', required: true, section: 'Candidate' },
+    { name: 'email', label: 'Email', type: 'email', required: true, section: 'Candidate' },
+    ...fields.filter((f, i) => {
+      const job = fields.findIndex((x) => x.section === 'The job');
+      const after = fields.findIndex((x, j) => j > job && x.section && x.section !== 'The job');
+      return i >= job && i < after;
+    }).map((f) => ({ ...f, section: 'The job' })),
   ];
 
   const save = (values) => {
@@ -437,7 +452,7 @@ export default function Team() {
             ? editing.empId || editing.id
             : 'Their joining details, so the desk is not chasing them afterwards'
         }
-        fields={fields}
+        fields={editing ? fields : inviteFields}
         initial={editing || { role: 'Travel Consultant', status: 'Invited', live: 'Not logged in', attendance: 'Present' }}
         submitLabel={editing ? 'Save changes' : 'Send invite'}
       />

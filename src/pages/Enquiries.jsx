@@ -150,6 +150,8 @@ export default function Enquiries() {
   const [selected, setSelected] = useState([]);
   const [draft, setDraft] = useState('');
   const [viewing, setViewing] = useState(null);
+  /** Where the lead panel opens: its activity, or straight on adding a task. */
+  const [startOn, setStartOn] = useState('');
   const [section, setSection] = useState('Leads');
   const [stage, setStage] = useState(null);
   const [query, setQuery] = useState('');
@@ -431,7 +433,8 @@ export default function Enquiries() {
     },
     { label: 'Edit', icon: Pencil, onClick: () => { setEditing(r); setFormOpen(true); } },
     { label: 'Assign owner', icon: UserCheck, onClick: () => setAssignFor([r.id]) },
-    { label: 'Schedule follow-up', icon: CalendarClock, onClick: () => act('task', { type: 'Follow-up', title: `Follow up with ${r.name}`, customer: r.name, suggest: `Follow-up — ${r.destination}` }) },
+    // Opens the lead on its Tasks tab with the form ready: what, when, and who does it.
+    { label: 'Add task', icon: CalendarClock, onClick: () => { setStartOn('task'); setViewing(r); } },
     { label: 'Create quotation', icon: FileText, onClick: () => makeQuote(r) },
     { label: 'Delete', icon: Trash2, danger: true, onClick: () => setConfirm([r.id]) },
   ];
@@ -440,7 +443,8 @@ export default function Enquiries() {
     { label: 'Edit', icon: Pencil, onClick: () => { setEditing(r); setFormOpen(true); } },
     { label: 'Assign owner', icon: UserCheck, onClick: () => setAssignFor([r.id]) },
     { label: 'Change status', icon: Tag, onClick: () => setStatusFor([r.id]) },
-    { label: 'Schedule follow-up', icon: CalendarClock, onClick: () => act('task', { type: 'Follow-up', title: `Follow up with ${r.name}`, customer: r.name, suggest: `Follow-up — ${r.destination}` }) },
+    // Opens the lead on its Tasks tab with the form ready: what, when, and who does it.
+    { label: 'Add task', icon: CalendarClock, onClick: () => { setStartOn('task'); setViewing(r); } },
     { label: 'Create quotation', icon: FileText, onClick: () => makeQuote(r) },
     {
       label: 'Send email',
@@ -1083,11 +1087,12 @@ export default function Enquiries() {
       <LeadDetails
         lead={viewing && rows.find((r) => r.id === viewing.id)}
         list={rows}
-        onClose={() => setViewing(null)}
+        startOn={startOn}
+        onClose={() => { setViewing(null); setStartOn(''); }}
         onJump={(step) => {
           const i = rows.findIndex((r) => r.id === viewing.id);
           const next = rows[i + step];
-          if (next) setViewing(next);
+          if (next) { setStartOn(''); setViewing(next); }
         }}
         onEdit={(lead) => {
           setViewing(null);

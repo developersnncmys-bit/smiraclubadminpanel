@@ -496,7 +496,7 @@ export const ADAPTERS = {
       note: t.note,
       created: d(t.createdAt),
     }),
-    to: (p) => ({
+    to: (p, ctx = {}) => ({
       title: p.title,
       type: p.type,
       customerName: p.customer,
@@ -505,7 +505,12 @@ export const ADAPTERS = {
       lastAction: p.lastAction,
       nextAction: p.nextAction,
       note: p.note,
-      ...(p.ownerId ? { owner: p.ownerId } : {}),
+      // When it is due, and the lead it is for — so it lands in the right
+      // bucket (today, overdue) and shows on that lead's Tasks tab.
+      dueAt: p.dueIso || (has(p, 'due') ? when(p.due) : undefined),
+      lead: p.leadId || undefined,
+      ...(p.status === 'Completed' ? { completedAt: new Date().toISOString() } : {}),
+      ...(p.ownerId ? { owner: p.ownerId } : has(p, 'owner') && p.owner ? { owner: userId(p.owner, ctx) } : {}),
     }),
   },
 

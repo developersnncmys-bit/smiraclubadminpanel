@@ -22,6 +22,7 @@ import SectionTabs from '../components/ui/SectionTabs.jsx';
 import LeadDetails from '../components/sales/LeadDetails.jsx';
 import SalesOverview from '../components/sales/SalesOverview.jsx';
 import LeadImport from '../components/sales/LeadImport.jsx';
+import LeadListPicker from '../components/sales/LeadListPicker.jsx';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, stageProbability, inr, shortInr, formatDate } from '../data/mockData.js';
@@ -160,6 +161,11 @@ export default function Enquiries() {
   const [who, setWho] = useState('All');
   const [source, setSource] = useState('All');
   const [priority, setPriority] = useState('All');
+  /** The two lists the old filters had no way to pick: an imported or tagged list, and the unassigned. */
+  const [tag, setTag] = useState(null);
+  const [onlyUnassigned, setUnassigned] = useState(false);
+  /** Cards are drawn thirty at a time; hundreds at once made a phone crawl. */
+  const [shownCount, setShownCount] = useState(30);
   const [action, setAction] = useState(null);
   const act = (kind, context = {}) => setAction({ kind, context });
 
@@ -187,6 +193,8 @@ export default function Enquiries() {
     source !== 'All' && { label: source, clear: () => setSource('All') },
     priority !== 'All' && { label: `${priority} priority`, clear: () => setPriority('All') },
     stage && { label: stage, clear: () => setStage(null) },
+    tag && { label: tag, clear: () => setTag(null) },
+    onlyUnassigned && { label: 'Unassigned', clear: () => setUnassigned(false) },
     query.trim() && { label: `"${query.trim()}"`, clear: () => setQuery('') },
   ].filter(Boolean);
   const clearAll = () => {
@@ -195,6 +203,8 @@ export default function Enquiries() {
     setSource('All');
     setPriority('All');
     setStage(null);
+    setTag(null);
+    setUnassigned(false);
     setQuery('');
   };
 
@@ -232,6 +242,8 @@ export default function Enquiries() {
 
   const matches = (e) => {
     if (stage && e.status !== stage) return false;
+    if (tag && !(e.tags || []).includes(tag)) return false;
+    if (onlyUnassigned && e.owner && e.owner !== 'Unassigned') return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return [e.name, e.phone, e.email, e.destination, e.id, e.owner, e.label].some((v) =>
@@ -239,6 +251,35 @@ export default function Enquiries() {
     );
   };
   const listRows = rows.filter(matches);
+
+  /*
+   * The lead lists: everything the other filters leave (time, consultant,
+   * priority) — but not the source, which is one of the lists — so the
+   * counts in the picker are what each list would show.
+   */
+  const pickerLeads = all.filter(
+    (e) => inPeriod(e.created, period) && (who === 'All' || e.owner === who) && (priority === 'All' || e.priority === priority)
+  );
+  const currentList = onlyUnassigned
+    ? { kind: 'unassigned', label: 'Unassigned' }
+    : stage
+      ? { kind: 'stage', value: stage, label: stage }
+      : source !== 'All'
+        ? { kind: 'source', value: source, label: source }
+        : tag
+          ? { kind: 'tag', value: tag, label: tag }
+          : { kind: 'all', label: 'All leads' };
+  const pickList = (r) => {
+    setStage(r.kind === 'stage' ? r.value : null);
+    setSource(r.kind === 'source' ? r.value : 'All');
+    setTag(r.kind === 'tag' ? r.value : null);
+    setUnassigned(r.kind === 'unassigned');
+    setSelected([]);
+  };
+  // A different list starts from its top.
+  useEffect(() => {
+    setShownCount(30);
+  }, [stage, source, tag, onlyUnassigned, query, period, who, priority]);
 
   // The funnel hands the list a stage; the list says so and can drop it.
   const openStage = (status) => {
@@ -653,7 +694,18 @@ export default function Enquiries() {
       {/* ==================================================================== */}
       {section === 'Leads' && (
         <>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          {/* Which leads: tap the title to pick a list. */}
+          <div className="mt-5">
+            <LeadListPicker
+              leads={pickerLeads}
+              stages={enquiryStatuses}
+              current={currentList}
+              count={listRows.length}
+              onPick={pickList}
+            />
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <div className="relative min-w-[220px] flex-1">
               <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
               <input
@@ -696,8 +748,9 @@ export default function Enquiries() {
           )}
 
           {layout === 'cards' && (
+            <>
             <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-              {listRows.map((r) => {
+              {listRows.slice(0, shownCount).map((r) => {
                 const plan = planOf(r);
                 const standing = membershipBadge(plan);
                 const chance = Math.round((stageProbability[r.status] || 0) * 100);
@@ -848,6 +901,15 @@ export default function Enquiries() {
                 </div>
               )}
             </div>
+            {listRows.length > shownCount && (
+              <div className="mt-4 flex flex-col items-center gap-1.5">
+                <button type="button" className="btn-line" onClick={() => setShownCount((n) => n + 30)}>
+                  Show 30 more
+                </button>
+                <p className="num text-xs text-ink-500">Showing {shownCount} of {listRows.length}</p>
+              </div>
+            )}
+            </>
           )}
 
           {layout === 'table' && (

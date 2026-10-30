@@ -6,7 +6,7 @@ import {
   Search, Download, UserPlus, ArrowRightLeft, CalendarClock, Presentation,
   Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal,
   X, Filter, Zap, Users, Layers, Trophy,
-  IndianRupee, Eye, Mail, Check,
+  IndianRupee, Eye, Mail, Check, FolderInput,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -23,6 +23,8 @@ import LeadDetails from '../components/sales/LeadDetails.jsx';
 import SalesOverview from '../components/sales/SalesOverview.jsx';
 import LeadImport from '../components/sales/LeadImport.jsx';
 import LeadListPicker from '../components/sales/LeadListPicker.jsx';
+import MoveToFolder from '../components/sales/MoveToFolder.jsx';
+import { useLeadFolders } from '../lib/leadFolders.js';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, stageProbability, inr, shortInr, formatDate } from '../data/mockData.js';
@@ -148,6 +150,9 @@ export default function Enquiries() {
   const [sourceFor, setSourceFor] = useState(null);
   const [followUpFor, setFollowUpFor] = useState(null);
   const [waFor, setWaFor] = useState(null);
+  /** The leads being moved into a folder. */
+  const [moveFor, setMoveFor] = useState(null);
+  const { folders: savedFolders, addFolder } = useLeadFolders();
   const [selected, setSelected] = useState([]);
   const [draft, setDraft] = useState('');
   const [viewing, setViewing] = useState(null);
@@ -180,6 +185,24 @@ export default function Enquiries() {
   }, [params, setParams]);
 
   const all = byOwner(enquiries, owner);
+  /** Every folder: the ones made here, and every tag a lead already carries. */
+  const folders = [...new Set([...savedFolders, ...all.flatMap((e) => e.tags || [])])];
+
+  /*
+   * Into a folder. Each lead keeps its other tags; moving from inside a
+   * folder takes it out of that one, so the lead is moved, not copied.
+   */
+  const fileLeads = (ids, into, outOf) => {
+    ids.forEach((id) => {
+      const lead = enquiries.find((e) => e.id === id);
+      if (!lead) return;
+      const kept = (lead.tags || []).filter((t) => t !== outOf && t !== into);
+      update('enquiries', id, { tags: into ? [...kept, into] : kept }, { silent: true });
+    });
+    toast(into ? `${ids.length} lead(s) moved to ${into}` : `${ids.length} lead(s) taken out of ${outOf}`);
+    setMoveFor(null);
+    setSelected([]);
+  };
   const rows = all.filter(
     (e) =>
       inPeriod(e.created, period) &&
@@ -218,6 +241,7 @@ export default function Enquiries() {
     { label: 'Bulk follow-up', icon: CalendarClock, run: (ids) => { setDraft(''); setFollowUpFor(ids); } },
     { label: 'Bulk change stage', icon: Tag, run: (ids) => setStatusFor(ids) },
     { label: 'Bulk change source', icon: Filter, run: (ids) => setSourceFor(ids) },
+    { label: 'Bulk move to folder', icon: FolderInput, run: (ids) => setMoveFor(ids) },
     {
       label: 'Bulk export',
       icon: Download,
@@ -474,6 +498,7 @@ export default function Enquiries() {
     },
     { label: 'Edit', icon: Pencil, onClick: () => { setEditing(r); setFormOpen(true); } },
     { label: 'Assign owner', icon: UserCheck, onClick: () => setAssignFor([r.id]) },
+    { label: 'Move to folder', icon: FolderInput, onClick: () => setMoveFor([r.id]) },
     // Opens the lead on its Tasks tab with the form ready: what, when, and who does it.
     { label: 'Add task', icon: CalendarClock, onClick: () => { setStartOn('task'); setViewing(r); } },
     { label: 'Create quotation', icon: FileText, onClick: () => makeQuote(r) },
@@ -483,6 +508,7 @@ export default function Enquiries() {
   const menuFor = (r) => [
     { label: 'Edit', icon: Pencil, onClick: () => { setEditing(r); setFormOpen(true); } },
     { label: 'Assign owner', icon: UserCheck, onClick: () => setAssignFor([r.id]) },
+    { label: 'Move to folder', icon: FolderInput, onClick: () => setMoveFor([r.id]) },
     { label: 'Change status', icon: Tag, onClick: () => setStatusFor([r.id]) },
     // Opens the lead on its Tasks tab with the form ready: what, when, and who does it.
     { label: 'Add task', icon: CalendarClock, onClick: () => { setStartOn('task'); setViewing(r); } },
@@ -702,6 +728,8 @@ export default function Enquiries() {
               current={currentList}
               count={listRows.length}
               onPick={pickList}
+              folders={folders}
+              onNewFolder={(n) => { addFolder(n); toast(`Folder ${n} created`); }}
             />
           </div>
 
@@ -1004,6 +1032,17 @@ export default function Enquiries() {
           ))}
         </div>
       </Modal>
+
+      <MoveToFolder
+        open={Boolean(moveFor)}
+        count={moveFor?.length || 0}
+        folders={folders}
+        from={tag}
+        onCreate={addFolder}
+        onMove={(f) => fileLeads(moveFor, f, tag)}
+        onRemove={() => fileLeads(moveFor, null, tag)}
+        onClose={() => setMoveFor(null)}
+      />
 
       {/* Change status */}
       <Modal

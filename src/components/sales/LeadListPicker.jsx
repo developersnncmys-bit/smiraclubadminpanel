@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, Search, Check, Inbox, UserX, Tag, Radio, ListChecks } from 'lucide-react';
+import { ChevronDown, Search, Check, Inbox, UserX, Folder, Radio, ListChecks } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
+import { NewFolderField } from './MoveToFolder.jsx';
 
 /**
  * Which leads you are looking at, as one big title — "Ringing (176) ▾" —
  * the way a mobile CRM shows it, with every list a tap away in a sheet:
  * all leads, the unassigned ones, each stage, each source, and each list
- * that was imported or tagged.
+ * folder — an imported list, or one made here with New folder.
  *
  * With hundreds of leads the useful question is never "show me all of
  * them", it is "show me the ones in this state"; the stage menu that did
@@ -16,7 +17,7 @@ import Modal from '../ui/Modal.jsx';
  * `pick` is one of: { kind: 'all' } · { kind: 'unassigned' } ·
  * { kind: 'stage', value } · { kind: 'source', value } · { kind: 'tag', value }
  */
-export default function LeadListPicker({ leads, stages, current, count, onPick }) {
+export default function LeadListPicker({ leads, stages, current, count, onPick, folders = [], onNewFolder }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
 
@@ -33,6 +34,8 @@ export default function LeadListPicker({ leads, stages, current, count, onPick }
     const byStage = tally((l) => l.status);
     const bySource = tally((l) => l.source);
     const byTag = tally((l) => l.tags);
+    // A folder made but not yet filled still shows, at nought.
+    folders.forEach((f) => { if (!byTag.has(f)) byTag.set(f, 0); });
     const unassigned = leads.filter((l) => !l.owner || l.owner === 'Unassigned').length;
     return [
       {
@@ -42,6 +45,13 @@ export default function LeadListPicker({ leads, stages, current, count, onPick }
           { kind: 'unassigned', label: 'Unassigned', count: unassigned, icon: UserX },
         ],
       },
+      // Folders next: they are the lists people make themselves, so they
+      // should not sit under a dozen stages.
+      {
+        title: 'Folders',
+        folders: true,
+        rows: [...byTag.entries()].sort((a, b) => b[1] - a[1]).map(([t, n]) => ({ kind: 'tag', value: t, label: t, count: n, icon: Folder })),
+      },
       {
         title: 'By stage',
         rows: stages.map((s) => ({ kind: 'stage', value: s, label: s, count: byStage.get(s) || 0, icon: ListChecks })),
@@ -50,12 +60,8 @@ export default function LeadListPicker({ leads, stages, current, count, onPick }
         title: 'By source',
         rows: [...bySource.entries()].sort((a, b) => b[1] - a[1]).map(([s, n]) => ({ kind: 'source', value: s, label: s, count: n, icon: Radio })),
       },
-      {
-        title: 'Lists',
-        rows: [...byTag.entries()].sort((a, b) => b[1] - a[1]).map(([t, n]) => ({ kind: 'tag', value: t, label: t, count: n, icon: Tag })),
-      },
-    ].filter((g) => g.rows.length);
-  }, [leads, stages]);
+    ].filter((g) => g.rows.length || g.folders);
+  }, [leads, stages, folders]);
 
   const isOn = (r) => r.kind === current.kind && (r.value ?? null) === (current.value ?? null);
   const needle = q.trim().toLowerCase();
@@ -90,10 +96,15 @@ export default function LeadListPicker({ leads, stages, current, count, onPick }
         <div className="space-y-4">
           {groups.map((g) => {
             const rows = g.rows.filter((r) => !needle || r.label.toLowerCase().includes(needle));
-            if (!rows.length) return null;
+            if (!rows.length && !g.folders) return null;
             return (
               <div key={g.title || 'top'}>
                 {g.title && <p className="eyebrow mb-1.5">{g.title}</p>}
+                {g.folders && onNewFolder && (
+                  <div className="mb-2">
+                    <NewFolderField folders={[...new Set([...folders, ...g.rows.map((r) => r.value)])]} onCreate={onNewFolder} />
+                  </div>
+                )}
                 <ul className="space-y-1.5">
                   {rows.map((r) => {
                     const on = isOn(r);

@@ -21,6 +21,7 @@ import MenuButton from '../components/ui/MenuButton.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import LeadDetails from '../components/sales/LeadDetails.jsx';
 import SalesOverview from '../components/sales/SalesOverview.jsx';
+import LeadImport from '../components/sales/LeadImport.jsx';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, stageProbability, inr, shortInr, formatDate } from '../data/mockData.js';
@@ -1076,43 +1077,8 @@ export default function Enquiries() {
         </p>
       </Modal>
 
-      {/* Import */}
-      <Modal
-        open={importOpen}
-        onClose={() => setImportOpen(false)}
-        title="Import leads"
-        subtitle="Upload a CSV exported from your old CRM"
-        size="md"
-        footer={
-          <>
-            <button className="btn-line" onClick={() => setImportOpen(false)}>Cancel</button>
-            <button
-              className="btn-action"
-              onClick={() => {
-                setImportOpen(false);
-                toast('Import queued — we will email you when it finishes', 'info');
-              }}
-            >
-              Start import
-            </button>
-          </>
-        }
-      >
-        <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink-900/15 px-6 py-10 text-center transition hover:border-brand-400 hover:bg-brand-50/40">
-          <Upload size={26} className="mb-3 text-ink-400" />
-          <span className="text-sm font-bold text-ink-800">Click to choose a CSV file</span>
-          <span className="mt-1 text-xs text-ink-500">Columns: name, phone, email, destination, pax, budget</span>
-          <input
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) toast(`${file.name} ready to import`, 'info');
-            }}
-          />
-        </label>
-      </Modal>
+      {/* Import: a CSV, name and phone required, every other column kept. */}
+      <LeadImport open={importOpen} onClose={() => setImportOpen(false)} existing={enquiries} />
 
       <LeadDetails
         lead={viewing && rows.find((r) => r.id === viewing.id)}

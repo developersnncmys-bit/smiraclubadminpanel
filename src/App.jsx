@@ -20,8 +20,16 @@ import Offers from './pages/Offers.jsx';
 import Blog from './pages/Blog.jsx';
 import Support from './pages/Support.jsx';
 import Users from './pages/Users.jsx';
-import PartnerLogin from './pages/PartnerLogin.jsx';
-import PartnerPortal from './pages/PartnerPortal.jsx';
+
+/** Where partners sign in and register now: their own site, not the staff panel. */
+const PARTNER_SITE =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PARTNER_URL) || 'https://partner.smiraclub.com';
+
+/** An old /partner link, sent on to the partner site. */
+function ToPartnerSite({ path = '' }) {
+  if (typeof window !== 'undefined') window.location.replace(`${PARTNER_SITE}${path}`);
+  return null;
+}
 
 /**
  * The panel holds the sections the client has specified — Team Status,
@@ -33,10 +41,10 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
 
-      {/* Partners sign in here and see only their own dashboard. These sit
-          outside RequireAuth and the staff layout on purpose. */}
-      <Route path="/partner/login" element={<PartnerLogin />} />
-      <Route path="/partner" element={<PartnerPortal />} />
+      {/* The partner sign-in, registration and dashboard moved to
+          partner.smiraclub.com; links already sent out land there. */}
+      <Route path="/partner/login" element={<ToPartnerSite path="/login" />} />
+      <Route path="/partner/*" element={<ToPartnerSite />} />
 
       <Route
         element={

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   UserPlus, ShieldCheck, Users as UsersIcon, UserCheck, Sparkles, Search,
-  Zap, KeyRound, Check, X, Download, Pencil,
+  Zap, KeyRound, Check, X, Download, Pencil, Trash2,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -12,6 +12,7 @@ import KpiRow from '../components/ui/KpiRow.jsx';
 import MenuButton from '../components/ui/MenuButton.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
+import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import UserProfile from '../components/users/UserProfile.jsx';
 import RoleBuilder from '../components/users/RoleBuilder.jsx';
 import { useApp } from '../store/AppStore.jsx';
@@ -89,7 +90,7 @@ function Mark({ on }) {
  */
 export default function Users() {
   const store = useApp();
-  const { team, roles, approvals, enquiries, bookings, memberSignups, create, update, toast } = store;
+  const { team, roles, approvals, enquiries, bookings, memberSignups, create, update, remove, toast } = store;
 
   /**
    * Switch a module on or off for a role.
@@ -297,6 +298,10 @@ export default function Users() {
    * here — the server only changes it through its own reset.
    */
   const [editingUser, setEditingUser] = useState(null);
+  /** The person whose deletion is waiting on a yes. */
+  const [deleting, setDeleting] = useState(null);
+  const lastTenOf = (v) => String(v || '').replace(/\D/g, '').slice(-10);
+  const isMe = (u) => Boolean(store.auth?.phone) && lastTenOf(u.phone) === lastTenOf(store.auth.phone);
   const notMe = (found) => found && found.id !== editingUser?.id;
   const editFields = [
     { name: 'name', label: 'Full name', type: 'text', required: true, minLength: 2 },
@@ -513,18 +518,29 @@ export default function Users() {
                   )}
                 </span>,
                 <span className="text-ink-500">{u.lastActive || '—'}</span>,
-                // Its own click: the row itself opens the profile.
-                <button
-                  type="button"
-                  className="btn-line btn-sm"
-                  title={`Edit ${u.name}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingUser(u);
-                  }}
-                >
-                  <Pencil size={13} /> Edit
-                </button>,
+                // Their own clicks: the row itself opens the profile.
+                <span className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="btn-line btn-sm"
+                    title={`Edit ${u.name}`}
+                    onClick={() => setEditingUser(u)}
+                  >
+                    <Pencil size={13} /> Edit
+                  </button>
+                  {/* Not on your own row: nobody deletes the account they are signed in with. */}
+                  {!isMe(u) && (
+                    <button
+                      type="button"
+                      className="btn-line-danger btn-sm"
+                      title={`Delete ${u.name}`}
+                      aria-label={`Delete ${u.name}`}
+                      onClick={() => setDeleting(u)}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </span>,
               ],
             };
           })}
@@ -1042,6 +1058,23 @@ export default function Users() {
           onAct={(label) => act(label, viewing)}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleting)}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          remove('team', deleting.id);
+          setDeleting(null);
+          if (viewing?.id === deleting.id) setViewing(null);
+        }}
+        title={deleting ? `Delete ${deleting.name}?` : 'Delete user?'}
+        message={
+          deleting
+            ? `${deleting.name} will no longer be able to sign in, and this cannot be undone. Their leads and open tasks become unassigned so someone else can pick them up. To stop them signing in but keep their record, use Edit and set Account to Inactive instead.`
+            : ''
+        }
+        confirmLabel="Delete user"
+      />
 
       {editingUser && (
         <FormModal

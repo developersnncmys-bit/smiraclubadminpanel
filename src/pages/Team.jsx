@@ -421,7 +421,7 @@ export default function Team() {
           <RefreshCw size={16} /> Refresh
         </button>
         <button className="btn-action" onClick={() => { setEditing(null); setFormOpen(true); }}>
-          <UserPlus size={16} /> Invite member
+          <UserPlus size={16} /> Invite candidates
         </button>
       </PageHeader>
 
@@ -431,7 +431,7 @@ export default function Team() {
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditing(null); }}
         onSubmit={save}
-        title={editing ? `Edit ${editing.name}` : 'Invite team member'}
+        title={editing ? `Edit ${editing.name}` : 'Invite a candidate'}
         subtitle={
           editing
             ? editing.empId || editing.id

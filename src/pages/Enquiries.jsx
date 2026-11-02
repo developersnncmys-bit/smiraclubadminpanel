@@ -6,7 +6,7 @@ import {
   Search, Download, UserPlus, ArrowRightLeft, CalendarClock, Presentation,
   Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal,
   X, Filter, Zap, Users, Layers, Trophy,
-  IndianRupee, Eye, Mail, Check, FolderInput,
+  IndianRupee, Eye, Mail, Check, FolderInput, Loader2,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -139,7 +139,7 @@ export default function Enquiries() {
   const store = useApp();
   const {
     enquiries, bookings, invoices, payments, team, memberSignups, memberships,
-    owner, create, update, updateMany, retagLeads, remove, toast,
+    owner, create, update, updateMany, retagLeads, remove, toast, leadsProgress,
   } = store;
 
   const [formOpen, setFormOpen] = useState(false);
@@ -721,6 +721,22 @@ export default function Enquiries() {
       {/* ==================================================================== */}
       {section === 'Leads' && (
         <>
+          {/* While the leads come in, how far along — the list itself changes once, at the end. */}
+          {leadsProgress && (
+            <div className="card mt-5 flex items-center gap-3 px-4 py-3">
+              <Loader2 size={16} className="shrink-0 animate-spin text-brand-600" />
+              <p className="text-sm font-semibold text-ink-800">
+                Loading leads… {leadsProgress.loaded.toLocaleString('en-IN')} of {leadsProgress.total.toLocaleString('en-IN')}
+              </p>
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-soft">
+                <span
+                  className="block h-full rounded-full bg-brand-500 transition-[width]"
+                  style={{ width: `${Math.round((leadsProgress.loaded / leadsProgress.total) * 100)}%` }}
+                />
+              </span>
+            </div>
+          )}
+
           {/* Which leads: tap the title to pick a list. */}
           <div className="mt-5">
             <LeadListPicker

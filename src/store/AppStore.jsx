@@ -194,6 +194,10 @@ function load() {
     if (!raw) return seedState();
     const saved = JSON.parse(raw);
     const base = seedState();
+    // Signed in to the real server: an old copy of the leads (often partial,
+    // since tens of thousands do not fit in the browser) is never shown —
+    // the real list loads instead.
+    if (isLive && getToken()) saved.enquiries = [];
     // Shallow merge so newly added collections still appear for old snapshots.
     return { ...base, ...saved, settings: { ...base.settings, ...(saved.settings || {}) } };
   } catch {
@@ -250,16 +254,20 @@ export function AppProvider({ children }) {
   /** Live once a server is configured and somebody is signed in to it. */
   const [live, setLive] = useState(() => isLive && Boolean(getToken()));
   const [loading, setLoading] = useState(false);
+  /** Leads loading in pages: { loaded, total } until every page is in. */
+  const [leadsProgress, setLeadsProgress] = useState(null);
   const [apiError, setApiError] = useState(null);
   const issued = useRef(new Set());
 
   useEffect(() => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(db));
+      // The leads are left out when live: tens of thousands do not fit, and
+      // writing them on every change made the whole panel lag.
+      localStorage.setItem(KEY, JSON.stringify(live ? { ...db, enquiries: [] } : db));
     } catch {
       /* storage full or blocked — the demo still works in memory */
     }
-  }, [db]);
+  }, [db, live]);
 
   useEffect(() => {
     try {
@@ -291,10 +299,12 @@ export function AppProvider({ children }) {
           const PAGE = 2000;
           // While pages arrive, the list on screen only ever grows: a reload
           // must not drop 33,000 leads back to the first 2,000 for a minute.
-          const grow = (sofar) =>
-            setDb((prev) => ((prev[name] || []).length > sofar.length ? prev : { ...prev, [name]: sofar }));
+          // The list changes once, when every page is in — no 2,000 → 10,000
+          // → 33,000 flicker; the page shows how far along it is meanwhile.
           const first = await api.list(pathFor(name), `?limit=${PAGE}&page=1`);
           let rows = (first.rows || []).map((doc) => fromApi(name, doc));
+          const total = first.total || rows.length;
+          const grow = (sofar) => setLeadsProgress(sofar.length < total ? { loaded: sofar.length, total } : null);
           grow(rows);
           const pages = first.pages || 1;
           for (let p = 2; p <= pages; p += 4) {
@@ -309,6 +319,7 @@ export function AppProvider({ children }) {
           // Every page is in: this is the list now, deletions included.
           const all = rows;
           setDb((prev) => ({ ...prev, [name]: all }));
+          setLeadsProgress(null);
           return [name, rows];
         }
 
@@ -328,6 +339,8 @@ export function AppProvider({ children }) {
         return [name, rows];
       })
     );
+    // Done, or failed part-way: either way nothing is loading any more.
+    setLeadsProgress(null);
 
     const next = {};
     const failed = [];
@@ -1060,6 +1073,7 @@ export function AppProvider({ children }) {
       signOut,
       live,
       loading,
+      leadsProgress,
       apiError,
       pull,
       generateMembershipQuote,
@@ -1095,6 +1109,7 @@ export function AppProvider({ children }) {
       signOut,
       live,
       loading,
+      leadsProgress,
       apiError,
       pull,
       generateMembershipQuote,

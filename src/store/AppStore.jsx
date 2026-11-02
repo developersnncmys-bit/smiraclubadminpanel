@@ -289,9 +289,13 @@ export function AppProvider({ children }) {
         // an old copy). They come in pages, a few at a time, and fill in.
         if (name === 'enquiries') {
           const PAGE = 2000;
+          // While pages arrive, the list on screen only ever grows: a reload
+          // must not drop 33,000 leads back to the first 2,000 for a minute.
+          const grow = (sofar) =>
+            setDb((prev) => ((prev[name] || []).length > sofar.length ? prev : { ...prev, [name]: sofar }));
           const first = await api.list(pathFor(name), `?limit=${PAGE}&page=1`);
           let rows = (first.rows || []).map((doc) => fromApi(name, doc));
-          setDb((prev) => ({ ...prev, [name]: rows }));
+          grow(rows);
           const pages = first.pages || 1;
           for (let p = 2; p <= pages; p += 4) {
             const batch = await Promise.all(
@@ -300,9 +304,11 @@ export function AppProvider({ children }) {
                 .map((n) => api.list(pathFor(name), `?limit=${PAGE}&page=${n}`))
             );
             rows = rows.concat(...batch.map((r) => (r.rows || []).map((doc) => fromApi(name, doc))));
-            const sofar = rows;
-            setDb((prev) => ({ ...prev, [name]: sofar }));
+            grow(rows);
           }
+          // Every page is in: this is the list now, deletions included.
+          const all = rows;
+          setDb((prev) => ({ ...prev, [name]: all }));
           return [name, rows];
         }
 

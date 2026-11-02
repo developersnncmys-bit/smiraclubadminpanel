@@ -21,6 +21,7 @@ import RecordTrail from '../ui/RecordTrail.jsx';
 import { inr, shortInr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
 import { hoursWorked, mapLink, timeOf, useAttendanceDay } from '../../lib/attendance.js';
+import AttendanceEdit from './AttendanceEdit.jsx';
 
 const liveDot = {
   Online: 'bg-emerald-500',
@@ -112,6 +113,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
   const { toast } = useApp();
   const [tab, setTab] = useState('Today');
   const attendance = useAttendanceDay();
+  const [editingDay, setEditingDay] = useState(false);
 
   if (!member) return null;
 
@@ -294,27 +296,37 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
                     ]}
                   />
 
-                  <Group
-                    title="Attendance today"
-                    items={[
-                      ['Check in', d.login || 'Not checked in', d.login ? '' : 'text-amber-600'],
-                      ['Check out', d.logout || '—'],
-                      ['Working from', today?.checkIn ? `${d.mode}${d.source ? ` · ${d.source}` : ''}` : '—'],
-                      ['Check-in place', today?.checkIn ? place(today.checkIn) : '—'],
-                      ...(today?.checkOut ? [['Check-out place', place(today.checkOut)]] : []),
-                      ...(today?.checkIn?.note ? [['Note', today.checkIn.note]] : []),
-                      ['Working hours', d.working || '—'],
-                      ['Break · idle', `${d.breaks || '—'} · ${d.idle || '—'}`],
-                      [
-                        'Late by',
-                        d.lateBy ? `${d.lateBy} min` : 'On time',
-                        d.lateBy ? 'text-amber-600' : 'text-emerald-600',
-                      ],
-                      ['This month', `${d.attendancePct ?? 0}%`],
-                      ['Regularisation', d.regularisation || 'None pending'],
-                      ['Revenue today', m.revenue ? inr(m.revenue) : '—', 'text-brand-700'],
-                    ]}
-                  />
+                  {/* Attendance: status, sign-in, check-in — and the manager's Edit. */}
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <p className="eyebrow">Attendance today</p>
+                      <button type="button" className="btn-line btn-sm" onClick={() => setEditingDay(true)}>
+                        <Pencil size={13} /> Edit attendance
+                      </button>
+                    </div>
+                    <Group
+                      items={[
+                        [
+                          'Status',
+                          <Badge tone={attendanceTone[today?.status] || 'slate'}>{today?.status || 'Not marked'}</Badge>,
+                        ],
+                        ['Login (panel)', today?.firstLoginAt ? timeOf(today.firstLoginAt) : '—'],
+                        ['Logout (panel)', today?.lastLogoutAt ? timeOf(today.lastLogoutAt) : '—'],
+                        ['Check in', d.login || 'Not checked in', d.login ? '' : 'text-amber-600'],
+                        ['Check out', d.logout || '—'],
+                        ['Working hours', d.working || '—'],
+                        ['Working from', today?.checkIn ? `${d.mode}${d.source ? ` · ${d.source}` : ''}` : '—'],
+                        ['Check-in place', today?.checkIn ? place(today.checkIn) : '—'],
+                        ...(today?.checkOut ? [['Check-out place', place(today.checkOut)]] : []),
+                        ...(today?.checkIn?.note ? [['Note', today.checkIn.note]] : []),
+                      ]}
+                    />
+                    {today?.editedAt && (
+                      <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        Changed by <b>{today.editedByName || 'a manager'}</b> at {timeOf(today.editedAt)} — “{today.editReason}”
+                      </p>
+                    )}
+                  </div>
 
                   <Group
                     title="Lead pipeline"
@@ -642,6 +654,8 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
           </div>
         </div>
       </aside>
+
+      <AttendanceEdit open={editingDay} onClose={() => setEditingDay(false)} member={m} row={today} />
     </div>
   );
 }

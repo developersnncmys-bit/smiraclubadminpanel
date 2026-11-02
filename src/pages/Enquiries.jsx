@@ -138,7 +138,7 @@ export default function Enquiries() {
   const store = useApp();
   const {
     enquiries, bookings, invoices, payments, team, memberSignups, memberships,
-    owner, create, update, updateMany, remove, toast,
+    owner, create, update, updateMany, retagLeads, remove, toast,
   } = store;
 
   const [formOpen, setFormOpen] = useState(false);
@@ -193,13 +193,11 @@ export default function Enquiries() {
    * folder takes it out of that one, so the lead is moved, not copied.
    */
   const fileLeads = (ids, into, outOf) => {
-    ids.forEach((id) => {
-      const lead = enquiries.find((e) => e.id === id);
-      if (!lead) return;
-      const kept = (lead.tags || []).filter((t) => t !== outOf && t !== into);
-      update('enquiries', id, { tags: into ? [...kept, into] : kept }, { silent: true });
-    });
-    toast(into ? `${ids.length} lead(s) moved to ${into}` : `${ids.length} lead(s) taken out of ${outOf}`);
+    retagLeads(
+      ids,
+      { add: into || undefined, remove: outOf || undefined },
+      into ? `${ids.length} lead(s) moved to ${into}` : `${ids.length} lead(s) taken out of ${outOf}`
+    );
     setMoveFor(null);
     setSelected([]);
   };
@@ -753,25 +751,48 @@ export default function Enquiries() {
             </div>
           </div>
 
-          {selected.length > 0 && (
-            <div className="card mt-3 flex flex-wrap items-center gap-3 px-4 py-2.5">
-              <p className="num text-sm font-bold text-ink-900">
-                {selected.length} selected
-              </p>
-              <MenuButton
-                label="Bulk actions"
-                icon={Layers}
-                variant="action"
-                width="w-[240px]"
-                items={bulkActions.map((b) => ({ key: b.label, label: b.label, icon: b.icon }))}
-                onSelect={(key) => bulkActions.find((b) => b.label === key)?.run(selected)}
-              />
-              <button className="btn-line btn-sm" onClick={() => setSelected(listRows.map((r) => r.id))}>
-                Select all {listRows.length}
+          {/* Tick the top 10, 20, 50 or 100 of this list in one go, then act
+              on them together — ticking a hundred cards one by one is not work. */}
+          {listRows.length > 0 && (
+            <div className="card mt-3 flex flex-wrap items-center gap-2 px-4 py-2.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-ink-500">Select</span>
+              {[10, 20, 50, 100].filter((n) => n < listRows.length).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`btn-line btn-sm ${selected.length === n ? 'ring-2 ring-brand-300' : ''}`}
+                  onClick={() => {
+                    setSelected(listRows.slice(0, n).map((r) => r.id));
+                    setShownCount((c) => Math.max(c, n));
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={`btn-line btn-sm ${selected.length === listRows.length ? 'ring-2 ring-brand-300' : ''}`}
+                onClick={() => setSelected(listRows.map((r) => r.id))}
+              >
+                All {listRows.length.toLocaleString('en-IN')}
               </button>
-              <button className="btn-line btn-sm ml-auto" onClick={() => setSelected([])}>
-                Clear
-              </button>
+
+              {selected.length > 0 && (
+                <>
+                  <p className="num ml-1 text-sm font-bold text-ink-900">{selected.length.toLocaleString('en-IN')} selected</p>
+                  <MenuButton
+                    label="Bulk actions"
+                    icon={Layers}
+                    variant="action"
+                    width="w-[240px]"
+                    items={bulkActions.map((b) => ({ key: b.label, label: b.label, icon: b.icon }))}
+                    onSelect={(key) => bulkActions.find((b) => b.label === key)?.run(selected)}
+                  />
+                  <button className="btn-line btn-sm ml-auto" onClick={() => setSelected([])}>
+                    Clear
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -1183,7 +1204,14 @@ export default function Enquiries() {
       </Modal>
 
       {/* Import: a CSV, name and phone required, every other column kept. */}
-      <LeadImport open={importOpen} onClose={() => setImportOpen(false)} existing={enquiries} />
+      <LeadImport
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        existing={enquiries}
+        folders={folders}
+        folder={tag}
+        onNewFolder={addFolder}
+      />
 
       <LeadDetails
         lead={viewing && rows.find((r) => r.id === viewing.id)}

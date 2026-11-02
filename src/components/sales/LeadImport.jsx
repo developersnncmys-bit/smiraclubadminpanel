@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Loader2, Folder } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { parseCsv } from '../../lib/csv.js';
 import { api, isLive } from '../../lib/api.js';
@@ -70,7 +70,7 @@ const IMPORT_BATCH = 1000;
 /** Requests at once: quick, without crowding the server. */
 const IMPORT_PARALLEL = 3;
 
-export default function LeadImport({ open, onClose, existing = [] }) {
+export default function LeadImport({ open, onClose, existing = [], folders = [], folder = null, onNewFolder }) {
   const { create, refresh, toast } = useApp();
   const [file, setFile] = useState(null);
   const [plan, setPlan] = useState(null);
@@ -78,6 +78,18 @@ export default function LeadImport({ open, onClose, existing = [] }) {
   const [error, setError] = useState('');
   /** How many rows have gone to the server so far. */
   const [done, setDone] = useState(0);
+  /** The folder the new leads go into — the one open on the page, to start with. */
+  const [into, setInto] = useState('');
+  const [newName, setNewName] = useState('');
+  useEffect(() => {
+    if (open) {
+      setInto(folder || '');
+      setNewName('');
+    }
+  }, [open, folder]);
+  const NEW = '__new__';
+  const target = into === NEW ? newName.trim() : into;
+  const withFolder = (rows) => (target ? rows.map((r) => ({ ...r, tags: [...(r.tags || []), target] })) : rows);
 
   const reset = () => {
     setFile(null);
@@ -138,6 +150,12 @@ export default function LeadImport({ open, onClose, existing = [] }) {
     if (!plan?.ready.length) return;
     setBusy(true);
     setError('');
+    if (into === NEW && !target) {
+      setError('Type a name for the new folder, or choose an existing one.');
+      setBusy(false);
+      return;
+    }
+    if (into === NEW && onNewFolder) onNewFolder(target);
     try {
       if (isLive) {
         // Any size of file: sent in parts so no single request is too big for
@@ -145,7 +163,7 @@ export default function LeadImport({ open, onClose, existing = [] }) {
         // button shows how far it is. The file was de-duplicated above, so
         // parts running side by side cannot add the same number twice.
         const parts = [];
-        for (let at = 0; at < plan.ready.length; at += IMPORT_BATCH) parts.push(plan.ready.slice(at, at + IMPORT_BATCH));
+        for (let at = 0; at < plan.ready.length; at += IMPORT_BATCH) parts.push(withFolder(plan.ready.slice(at, at + IMPORT_BATCH)));
         let added = 0;
         let skipped = 0;
         let sent = 0;
@@ -176,11 +194,11 @@ export default function LeadImport({ open, onClose, existing = [] }) {
         const byNumber = codes.sort((a, b) => Number(a.replace(/\D/g, '')) - Number(b.replace(/\D/g, '')));
         refresh();
         toast(
-          `${added} lead${added === 1 ? '' : 's'} added${byNumber.length ? ` (${byNumber[0]}–${byNumber[byNumber.length - 1]})` : ''}` +
+          `${added} lead${added === 1 ? '' : 's'} added${target ? ` to ${target}` : ''}${byNumber.length ? ` (${byNumber[0]}–${byNumber[byNumber.length - 1]})` : ''}` +
             (skipped ? ` · ${skipped} skipped` : '')
         );
       } else {
-        plan.ready.forEach((lead) =>
+        withFolder(plan.ready).forEach((lead) =>
           create('enquiries', { status: 'New', source: 'Calling data', owner: 'Unassigned', ...lead }, { silent: true })
         );
         toast(`${plan.ready.length} leads added`);
@@ -217,6 +235,30 @@ export default function LeadImport({ open, onClose, existing = [] }) {
         </>
       }
     >
+      {/* Which folder the new leads land in. */}
+      <div className="mb-4">
+        <label className="label flex items-center gap-1.5">
+          <Folder size={14} className="text-brand-600" /> Put into folder
+        </label>
+        <select className="input" value={into} onChange={(e) => setInto(e.target.value)} disabled={busy}>
+          <option value="">No folder (only “Imported”)</option>
+          {folders.map((f) => (
+            <option key={f} value={f}>{f}</option>
+          ))}
+          <option value={NEW}>+ New folder…</option>
+        </select>
+        {into === NEW && (
+          <input
+            className="input mt-2"
+            placeholder="New folder name"
+            maxLength={40}
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            disabled={busy}
+          />
+        )}
+      </div>
+
       <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink-900/15 px-6 py-8 text-center transition hover:border-brand-400 hover:bg-brand-50/40">
         {file ? <FileSpreadsheet size={26} className="mb-3 text-brand-600" /> : <Upload size={26} className="mb-3 text-ink-400" />}
         <span className="text-sm font-bold text-ink-800">{file ? file.name : 'Click to choose a CSV file'}</span>

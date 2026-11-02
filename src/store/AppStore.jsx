@@ -476,18 +476,49 @@ export function AppProvider({ children }) {
     [toast, live, showSaved]
   );
 
+  /*
+   * Leads change in bulk with one request (POST /leads/bulk) — a thousand
+   * PATCHes at once hung the browser. A server without that route yet gets
+   * the old one-per-record way.
+   */
+  const bulkLeads = useCallback(
+    (targets, payload, onePatch) => {
+      const ids = targets.filter((t) => t._id).map((t) => t._id);
+      if (!ids.length) return;
+      const perRecord = () =>
+        Promise.allSettled(targets.filter((t) => t._id).map((t) => api.patch(`/leads/${t._id}`, onePatch(t)))).then((rs) => {
+          const failed = rs.filter((r) => r.status === 'rejected').length;
+          if (failed) {
+            toast(`${failed} of ${targets.length} did not save`, 'danger');
+            pull('enquiries');
+          }
+        });
+      api.post('/leads/bulk', { ids, ...payload }).catch((err) => {
+        if (err?.status === 404) return perRecord();
+        toast(whyNot(err, 'That change did not save'), 'danger');
+        pull('enquiries');
+      });
+    },
+    [toast, pull]
+  );
+
   const updateMany = useCallback(
     (collection, ids, patch, message) => {
-      const targets = (dbRef.current[collection] || []).filter((r) => ids.includes(r.id));
+      const chosen = new Set(ids);
+      const targets = (dbRef.current[collection] || []).filter((r) => chosen.has(r.id));
       setDb((d) => ({
         ...d,
-        [collection]: d[collection].map((r) => (ids.includes(r.id) ? { ...r, ...patch } : r)),
+        [collection]: d[collection].map((r) => (chosen.has(r.id) ? { ...r, ...patch } : r)),
       }));
       toast(message || `${ids.length} ${ids.length === 1 ? 'record' : 'records'} updated`);
 
       if (live && ADAPTERS[collection]) {
         const body = toApi(collection, patch, lookups());
         if (Object.keys(body).length) {
+          if (collection === 'enquiries') {
+            bulkLeads(targets, { set: body }, () => body);
+            return;
+          }
           Promise.allSettled(
             targets.filter((t) => t._id).map((t) => api.patch(`${pathFor(collection)}/${t._id}`, body))
           ).then((rs) => {
@@ -500,7 +531,26 @@ export function AppProvider({ children }) {
         }
       }
     },
-    [toast, live, pull]
+    [toast, live, pull, bulkLeads]
+  );
+
+  /** File leads in a folder (a tag), out of one, or both — a move. */
+  const retagLeads = useCallback(
+    (ids, { add, remove: drop } = {}, message) => {
+      const chosen = new Set(ids);
+      const retag = (tags = []) => {
+        const kept = tags.filter((t) => t !== drop && t !== add);
+        return add ? [...kept, add] : kept;
+      };
+      const targets = (dbRef.current.enquiries || []).filter((r) => chosen.has(r.id));
+      setDb((d) => ({
+        ...d,
+        enquiries: d.enquiries.map((r) => (chosen.has(r.id) ? { ...r, tags: retag(r.tags) } : r)),
+      }));
+      if (message) toast(message);
+      if (live) bulkLeads(targets, { addTag: add || undefined, removeTag: drop || undefined }, (t) => ({ tags: retag(t.tags) }));
+    },
+    [toast, live, bulkLeads]
   );
 
   const remove = useCallback(
@@ -943,6 +993,7 @@ export function AppProvider({ children }) {
       create,
       update,
       updateMany,
+      retagLeads,
       remove,
       duplicate,
       recordPayment,
@@ -979,6 +1030,7 @@ export function AppProvider({ children }) {
       create,
       update,
       updateMany,
+      retagLeads,
       remove,
       duplicate,
       recordPayment,

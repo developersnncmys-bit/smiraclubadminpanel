@@ -293,8 +293,11 @@ export function AppProvider({ children }) {
           if (err.status === 403 && fallback) res = await api.list(fallback);
           else throw err;
         }
-        const rows = res.rows || res.data || [];
-        return [name, rows.map((doc) => fromApi(name, doc))];
+        const rows = (res.rows || res.data || []).map((doc) => fromApi(name, doc));
+        // On screen as soon as it is here: tens of thousands of leads take a
+        // while, and the team, members and the rest should not wait for them.
+        setDb((prev) => ({ ...prev, [name]: rows }));
+        return [name, rows];
       })
     );
 

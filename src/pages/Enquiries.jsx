@@ -254,6 +254,8 @@ export default function Enquiries() {
         toast(`${chosen.length} lead(s) exported`);
       },
     },
+    // Last, and in red: it cannot be undone, so it asks first.
+    { label: 'Bulk delete', icon: Trash2, danger: true, run: (ids) => setConfirm(ids) },
   ];
 
   /** The plan this lead already holds, if any, and how long it has left. */
@@ -978,8 +980,7 @@ export default function Enquiries() {
                 emptyLabel="No enquiries match this view"
                 onRowClick={(r) => setViewing(r)}
                 bulkActions={[
-                  ...bulkActions.map((b) => ({ label: b.label.replace('Bulk ', ''), icon: b.icon, onClick: b.run })),
-                  { label: 'Delete', icon: Trash2, danger: true, onClick: (ids) => setConfirm(ids) },
+                  ...bulkActions.map((b) => ({ label: b.label.replace('Bulk ', ''), icon: b.icon, onClick: b.run, danger: b.danger })),
                 ]}
               />
             </div>
@@ -1023,9 +1024,13 @@ export default function Enquiries() {
       <ConfirmDialog
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
-        onConfirm={() => remove('enquiries', confirm)}
-        title="Delete enquiries?"
-        message={`This removes ${confirm?.length || 0} enquiry record${confirm?.length === 1 ? '' : 's'} from the pipeline. This cannot be undone.`}
+        onConfirm={() => {
+          remove('enquiries', confirm);
+          setSelected([]);
+        }}
+        title={confirm?.length > 1 ? `Delete ${confirm.length.toLocaleString('en-IN')} leads?` : 'Delete this lead?'}
+        message={`This removes ${(confirm?.length || 0).toLocaleString('en-IN')} lead${confirm?.length === 1 ? '' : 's'} from Sales & Leads for good, with their activity. This cannot be undone — export them first if you may need them again.`}
+        confirmLabel={confirm?.length > 1 ? `Delete ${confirm.length.toLocaleString('en-IN')} leads` : 'Delete lead'}
       />
 
       {/* Assign owner */}

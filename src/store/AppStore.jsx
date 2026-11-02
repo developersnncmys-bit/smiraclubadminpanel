@@ -556,10 +556,26 @@ export function AppProvider({ children }) {
   const remove = useCallback(
     (collection, ids) => {
       const list = Array.isArray(ids) ? ids : [ids];
-      const gone = (dbRef.current[collection] || []).filter((r) => list.includes(r.id));
-      setDb((d) => ({ ...d, [collection]: d[collection].filter((r) => !list.includes(r.id)) }));
+      const chosen = new Set(list);
+      const gone = (dbRef.current[collection] || []).filter((r) => chosen.has(r.id));
+      setDb((d) => ({ ...d, [collection]: d[collection].filter((r) => !chosen.has(r.id)) }));
 
-      if (live && ADAPTERS[collection]) {
+      // Many leads go in one request; a server without that route yet gets one per lead.
+      const oneByOne = () =>
+        Promise.allSettled(gone.filter((g) => g._id).map((g) => api.del(`${pathFor(collection)}/${g._id}`))).then((rs) => {
+          const failed = rs.filter((r) => r.status === 'rejected');
+          if (failed.length) {
+            toast(failed[0].reason?.message || 'That could not be deleted', 'danger');
+            pull(collection);
+          }
+        });
+      if (live && collection === 'enquiries' && gone.length > 1) {
+        api.post('/leads/bulk-delete', { ids: gone.filter((g) => g._id).map((g) => g._id) }).catch((err) => {
+          if (err?.status === 404) return oneByOne();
+          toast(whyNot(err, 'Those leads could not be deleted'), 'danger');
+          pull(collection);
+        });
+      } else if (live && ADAPTERS[collection]) {
         Promise.allSettled(
           gone.filter((g) => g._id).map((g) => api.del(`${pathFor(collection)}/${g._id}`))
         ).then((rs) => {

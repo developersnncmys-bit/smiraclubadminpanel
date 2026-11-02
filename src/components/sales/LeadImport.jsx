@@ -65,8 +65,10 @@ export function toLead(cells, { map, extra }) {
   return lead;
 }
 
-/** Rows per request: small enough for the server's size limit, whatever the columns. */
-const IMPORT_BATCH = 250;
+/** Rows per request: well inside the server's size limit for an ordinary sheet. */
+const IMPORT_BATCH = 1000;
+/** Requests at once: quick, without crowding the server. */
+const IMPORT_PARALLEL = 3;
 
 export default function LeadImport({ open, onClose, existing = [] }) {
   const { create, refresh, toast } = useApp();
@@ -138,35 +140,43 @@ export default function LeadImport({ open, onClose, existing = [] }) {
     setError('');
     try {
       if (isLive) {
-        // Any size of file: sent in parts, one after another, so no single
-        // request is too big for the server and the bar shows how far it is.
+        // Any size of file: sent in parts so no single request is too big for
+        // the server, a few parts at a time so it goes quickly, and the
+        // button shows how far it is. The file was de-duplicated above, so
+        // parts running side by side cannot add the same number twice.
+        const parts = [];
+        for (let at = 0; at < plan.ready.length; at += IMPORT_BATCH) parts.push(plan.ready.slice(at, at + IMPORT_BATCH));
         let added = 0;
         let skipped = 0;
-        let first = null;
-        let last = null;
-        for (let at = 0; at < plan.ready.length; at += IMPORT_BATCH) {
-          setDone(at);
-          let res;
-          try {
-            res = await api.post('/leads/import', { rows: plan.ready.slice(at, at + IMPORT_BATCH) });
-          } catch (err) {
+        let sent = 0;
+        const codes = [];
+        for (let i = 0; i < parts.length; i += IMPORT_PARALLEL) {
+          const round = parts.slice(i, i + IMPORT_PARALLEL);
+          const results = await Promise.allSettled(round.map((rows) => api.post('/leads/import', { rows })));
+          results.forEach((r) => {
+            if (r.status !== 'fulfilled') return;
+            const d = r.value.data || {};
+            added += d.added || 0;
+            skipped += d.skipped?.length || 0;
+            if (d.first) codes.push(d.first, d.last);
+          });
+          sent += round.reduce((n, rows) => n + rows.length, 0);
+          setDone(sent);
+          const failed = results.find((r) => r.status === 'rejected');
+          if (failed) {
             // What went in before the failure stays in; say so.
             if (added) refresh();
             throw new Error(
               added
-                ? `${added} leads were added, then it stopped: ${err.message}. Import the same file again to add the rest — the ones already added are skipped.`
-                : err.message
+                ? `${added} leads were added, then it stopped: ${failed.reason?.message}. Import the same file again to add the rest — the ones already added are skipped.`
+                : failed.reason?.message
             );
           }
-          const d = res.data || {};
-          added += d.added || 0;
-          skipped += d.skipped?.length || 0;
-          first = first || d.first;
-          last = d.last || last;
         }
+        const byNumber = codes.sort((a, b) => Number(a.replace(/\D/g, '')) - Number(b.replace(/\D/g, '')));
         refresh();
         toast(
-          `${added} lead${added === 1 ? '' : 's'} added${first ? ` (${first}–${last})` : ''}` +
+          `${added} lead${added === 1 ? '' : 's'} added${byNumber.length ? ` (${byNumber[0]}–${byNumber[byNumber.length - 1]})` : ''}` +
             (skipped ? ` · ${skipped} skipped` : '')
         );
       } else {

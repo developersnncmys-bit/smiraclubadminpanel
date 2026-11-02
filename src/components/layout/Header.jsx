@@ -15,6 +15,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import Brand from '../ui/Brand.jsx';
+import CheckIn from './CheckIn.jsx';
 import { useApp } from '../../store/AppStore.jsx';
 
 const seedNotifications = [
@@ -350,6 +351,9 @@ export default function Header({ onOpenMobile }) {
           </div>
 
           <LiveClock />
+
+          {/* The day's attendance — office or field */}
+          <CheckIn />
 
           {/* Notifications */}
           <div className="relative" ref={bellRef}>

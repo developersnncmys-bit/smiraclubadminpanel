@@ -20,6 +20,7 @@ import DrawerTabs from '../ui/DrawerTabs.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import { inr, shortInr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
+import { hoursWorked, mapLink, timeOf, useAttendanceDay } from '../../lib/attendance.js';
 
 const liveDot = {
   Online: 'bg-emerald-500',
@@ -110,11 +111,37 @@ function Meter({ left, right, pct, tone = 'bg-brand-500' }) {
 export default function MemberDetails({ member, list, rank, workload, tasks, onClose, onJump, onEdit }) {
   const { toast } = useApp();
   const [tab, setTab] = useState('Today');
+  const attendance = useAttendanceDay();
 
   if (!member) return null;
 
   const m = member;
-  const d = m.day || {};
+  /*
+   * Today's attendance, from their check-in — office or field — rather than
+   * from when the laptop last signed in, which a field visit never does.
+   */
+  const today = attendance[String(m._id)] || null;
+  const device = (ua = '') => (/Mobi|Android|iPhone/i.test(ua) ? 'Phone' : ua ? 'Laptop / desktop' : '');
+  const place = (stamp) =>
+    mapLink(stamp) ? (
+      <a href={mapLink(stamp)} target="_blank" rel="noreferrer" className="text-brand-700 underline">
+        See on map{stamp.accuracy ? ` · ±${stamp.accuracy} m` : ''}
+      </a>
+    ) : (
+      '—'
+    );
+  const d = {
+    ...(m.day || {}),
+    ...(today?.checkIn
+      ? {
+          login: timeOf(today.checkIn.at),
+          logout: today.checkOut ? timeOf(today.checkOut.at) : 'Still in',
+          working: hoursWorked(today),
+          mode: today.checkIn.mode,
+          source: device(today.checkIn.device),
+        }
+      : {}),
+  };
   const index = list.findIndex((x) => x.id === m.id);
   const phone = digits(m.phone);
   const score = m.productivity ?? 0;
@@ -270,8 +297,12 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
                   <Group
                     title="Attendance today"
                     items={[
-                      ['Login', d.login || '—'],
-                      ['Logout', d.logout || '—'],
+                      ['Check in', d.login || 'Not checked in', d.login ? '' : 'text-amber-600'],
+                      ['Check out', d.logout || '—'],
+                      ['Working from', today?.checkIn ? `${d.mode}${d.source ? ` · ${d.source}` : ''}` : '—'],
+                      ['Check-in place', today?.checkIn ? place(today.checkIn) : '—'],
+                      ...(today?.checkOut ? [['Check-out place', place(today.checkOut)]] : []),
+                      ...(today?.checkIn?.note ? [['Note', today.checkIn.note]] : []),
                       ['Working hours', d.working || '—'],
                       ['Break · idle', `${d.breaks || '—'} · ${d.idle || '—'}`],
                       [

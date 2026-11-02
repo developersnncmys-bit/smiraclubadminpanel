@@ -29,6 +29,7 @@ import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
 import { statusTone, enquiryStatuses, stageProbability, inr, shortInr, formatDate } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
+import { api } from '../lib/api.js';
 import { when } from '../lib/adapters.js';
 import { findMembership, membershipBadge, membershipStanding } from '../lib/membership.js';
 
@@ -1176,16 +1177,26 @@ export default function Enquiries() {
             <button
               className="btn-action"
               disabled={!draft.trim()}
-              onClick={() => {
-                const chosen = rows.filter((e) => waFor.includes(e.id));
-                const first = chosen[0];
-                if (first) {
-                  window.open(
-                    `https://wa.me/${digits(first.phone)}?text=${encodeURIComponent(draft.trim())}`,
-                    '_blank'
-                  );
+              onClick={async () => {
+                const ids = new Set(waFor);
+                const chosen = enquiries.filter((e) => ids.has(e.id) && e.phone);
+                const text = draft.trim();
+                /*
+                 * From the linked number (WhatsApp → Connect number), one by
+                 * one on the server. Not linked: the first chat opens in
+                 * WhatsApp instead, as before.
+                 */
+                try {
+                  await api.post('/whatsapp/gateway/send-many', {
+                    recipients: chosen.map((e) => ({ phone: e.phone, name: e.name })),
+                    text,
+                  });
+                  updateMany('enquiries', waFor, { lastContact: 'just now' }, `Sending WhatsApp to ${chosen.length} lead(s) — a few seconds apart`);
+                } catch (err) {
+                  const first = chosen[0];
+                  if (first) window.open(`https://wa.me/${digits(first.phone)}?text=${encodeURIComponent(text)}`, '_blank');
+                  toast(`${err.message || 'WhatsApp is not connected'} — opened the first chat in WhatsApp instead`, 'danger');
                 }
-                updateMany('enquiries', waFor, { lastContact: 'just now' }, `WhatsApp queued for ${chosen.length} lead(s)`);
                 setWaFor(null);
                 setSelected([]);
               }}
@@ -1204,7 +1215,8 @@ export default function Enquiries() {
           placeholder="Hi, thanks for your enquiry with Smira Club…"
         />
         <p className="mt-2 text-xs text-ink-500">
-          The first chat opens now; the rest are queued and every lead is marked contacted.
+          Goes out from the WhatsApp number linked under WhatsApp → Connect number, one message every few seconds.
+          Write <b>{'{name}'}</b> to put each person's first name in.
         </p>
       </Modal>
 

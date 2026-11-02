@@ -12,6 +12,7 @@ import {
   Sparkles,
   Zap,
   Megaphone,
+  QrCode,
   Plus,
   Pencil,
 } from 'lucide-react';
@@ -45,10 +46,12 @@ import {
   stepKinds,
 } from '../data/whatsappData.js';
 import FlowBuilder from '../components/whatsapp/FlowBuilder.jsx';
+import ConnectWhatsApp from '../components/whatsapp/ConnectWhatsApp.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import Table from '../components/ui/Table.jsx';
 
 const SECTIONS = [
+  'Connect number',
   'Dashboard',
   'Inbox',
   'Chatbot',
@@ -212,6 +215,8 @@ export default function Whatsapp() {
   };
 
   const body = {
+    // Link the desk's number by QR (OpenWA), so messages go out from it.
+    'Connect number': <ConnectWhatsApp />,
     Dashboard: (
       <>
         <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
@@ -660,6 +665,9 @@ export default function Whatsapp() {
   return (
     <>
       <PageHeader title="WhatsApp" subtitle="The inbox, the bot behind it, and everything it feeds into the CRM">
+        <button className="btn-line" onClick={() => setSection('Connect number')}>
+          <QrCode size={16} /> Connect WhatsApp
+        </button>
         <button className="btn-line" onClick={() => setSection('Templates')}>
           <FileText size={16} /> Templates
         </button>

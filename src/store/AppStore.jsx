@@ -284,6 +284,28 @@ export function AppProvider({ children }) {
 
     const results = await Promise.allSettled(
       wanted.map(async (name) => {
+        // Leads run to tens of thousands: one request for all of them took
+        // minutes and the server gave up, so the screen showed nothing (or
+        // an old copy). They come in pages, a few at a time, and fill in.
+        if (name === 'enquiries') {
+          const PAGE = 2000;
+          const first = await api.list(pathFor(name), `?limit=${PAGE}&page=1`);
+          let rows = (first.rows || []).map((doc) => fromApi(name, doc));
+          setDb((prev) => ({ ...prev, [name]: rows }));
+          const pages = first.pages || 1;
+          for (let p = 2; p <= pages; p += 4) {
+            const batch = await Promise.all(
+              [p, p + 1, p + 2, p + 3]
+                .filter((n) => n <= pages)
+                .map((n) => api.list(pathFor(name), `?limit=${PAGE}&page=${n}`))
+            );
+            rows = rows.concat(...batch.map((r) => (r.rows || []).map((doc) => fromApi(name, doc))));
+            const sofar = rows;
+            setDb((prev) => ({ ...prev, [name]: sofar }));
+          }
+          return [name, rows];
+        }
+
         let res;
         try {
           res = await api.list(pathFor(name));

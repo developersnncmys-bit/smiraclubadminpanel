@@ -258,6 +258,7 @@ export function AppProvider({ children }) {
   const [leadsProgress, setLeadsProgress] = useState(null);
   const [apiError, setApiError] = useState(null);
   const issued = useRef(new Set());
+  const leadsInFlight = useRef(false);
 
   useEffect(() => {
     try {
@@ -287,7 +288,13 @@ export function AppProvider({ children }) {
   const pull = useCallback(async (only) => {
     if (!isLive || !getToken()) return;
     // One collection, a few (a quiet background refresh), or all of them.
-    const wanted = Array.isArray(only) ? only : only ? [only] : LIVE_COLLECTIONS;
+    // The leads take a while; a second load of them while one is running
+    // only piles requests up until nothing else can get through.
+    const wanted = (Array.isArray(only) ? only : only ? [only] : LIVE_COLLECTIONS).filter(
+      (n) => n !== 'enquiries' || !leadsInFlight.current
+    );
+    if (!wanted.length) return {};
+    if (wanted.includes('enquiries')) leadsInFlight.current = true;
     if (!only) setLoading(true);
 
     const results = await Promise.allSettled(
@@ -340,7 +347,10 @@ export function AppProvider({ children }) {
       })
     );
     // Done, or failed part-way: either way nothing is loading any more.
-    setLeadsProgress(null);
+    if (wanted.includes('enquiries')) {
+      leadsInFlight.current = false;
+      setLeadsProgress(null);
+    }
 
     const next = {};
     const failed = [];
@@ -376,9 +386,14 @@ export function AppProvider({ children }) {
    */
   useEffect(() => {
     if (!live) return undefined;
-    const BUSY = ['bookings', 'enquiries', 'memberSignups', 'customers', 'partners', 'tickets'];
+    // The small busy lists every 15 seconds; the leads — tens of thousands,
+    // loaded in pages — every two minutes.
+    const BUSY = ['bookings', 'memberSignups', 'customers', 'partners', 'tickets'];
+    let ticks = 0;
     const tick = () => {
-      if (document.visibilityState === 'visible') pull(BUSY);
+      if (document.visibilityState !== 'visible') return;
+      ticks += 1;
+      pull(ticks % 8 === 0 ? [...BUSY, 'enquiries'] : BUSY);
     };
     const back = () => {
       if (document.visibilityState === 'visible') pull(LIVE_COLLECTIONS);

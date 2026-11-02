@@ -412,7 +412,6 @@ export default function ListingWizard({
     tag: '', rating: '', reviews: '', hours: '',
     layout: '', bedrooms: '', beds: '', baths: '', sleeps: '', extraGuests: '', unitType: '',
     highlight: '', notes: [], freeCancellation: false, taxes: '',
-    host: { title: '', speaks: '', blurb: '' },
     nearby: [], spaces: [], included: [], ruleNotes: [], guidelines: [],
     ...initial.details,
     host: { title: '', speaks: '', blurb: '', ...(initial.details?.host || {}) },

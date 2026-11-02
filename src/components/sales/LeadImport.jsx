@@ -65,18 +65,24 @@ export function toLead(cells, { map, extra }) {
   return lead;
 }
 
+/** Rows per request: small enough for the server's size limit, whatever the columns. */
+const IMPORT_BATCH = 250;
+
 export default function LeadImport({ open, onClose, existing = [] }) {
   const { create, refresh, toast } = useApp();
   const [file, setFile] = useState(null);
   const [plan, setPlan] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** How many rows have gone to the server so far. */
+  const [done, setDone] = useState(0);
 
   const reset = () => {
     setFile(null);
     setPlan(null);
     setError('');
     setBusy(false);
+    setDone(0);
   };
   const close = () => {
     reset();
@@ -132,12 +138,36 @@ export default function LeadImport({ open, onClose, existing = [] }) {
     setError('');
     try {
       if (isLive) {
-        const res = await api.post('/leads/import', { rows: plan.ready });
-        const d = res.data || {};
+        // Any size of file: sent in parts, one after another, so no single
+        // request is too big for the server and the bar shows how far it is.
+        let added = 0;
+        let skipped = 0;
+        let first = null;
+        let last = null;
+        for (let at = 0; at < plan.ready.length; at += IMPORT_BATCH) {
+          setDone(at);
+          let res;
+          try {
+            res = await api.post('/leads/import', { rows: plan.ready.slice(at, at + IMPORT_BATCH) });
+          } catch (err) {
+            // What went in before the failure stays in; say so.
+            if (added) refresh();
+            throw new Error(
+              added
+                ? `${added} leads were added, then it stopped: ${err.message}. Import the same file again to add the rest — the ones already added are skipped.`
+                : err.message
+            );
+          }
+          const d = res.data || {};
+          added += d.added || 0;
+          skipped += d.skipped?.length || 0;
+          first = first || d.first;
+          last = d.last || last;
+        }
         refresh();
         toast(
-          `${d.added} lead${d.added === 1 ? '' : 's'} added${d.first ? ` (${d.first}–${d.last})` : ''}` +
-            (d.skipped?.length ? ` · ${d.skipped.length} skipped` : '')
+          `${added} lead${added === 1 ? '' : 's'} added${first ? ` (${first}–${last})` : ''}` +
+            (skipped ? ` · ${skipped} skipped` : '')
         );
       } else {
         plan.ready.forEach((lead) =>
@@ -168,7 +198,11 @@ export default function LeadImport({ open, onClose, existing = [] }) {
           <button className="btn-line" onClick={close} disabled={busy}>Cancel</button>
           <button className="btn-action" onClick={run} disabled={busy || !plan?.ready.length}>
             {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
-            {plan?.ready.length ? `Import ${plan.ready.length} lead${plan.ready.length === 1 ? '' : 's'}` : 'Start import'}
+            {busy && plan?.ready.length > IMPORT_BATCH
+              ? `Importing ${done.toLocaleString('en-IN')} of ${plan.ready.length.toLocaleString('en-IN')}…`
+              : plan?.ready.length
+                ? `Import ${plan.ready.length.toLocaleString('en-IN')} lead${plan.ready.length === 1 ? '' : 's'}`
+                : 'Start import'}
           </button>
         </>
       }

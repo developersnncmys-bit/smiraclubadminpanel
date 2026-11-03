@@ -17,6 +17,7 @@ import UserProfile from '../components/users/UserProfile.jsx';
 import RoleBuilder from '../components/users/RoleBuilder.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { downloadCsv } from '../lib/csv.js';
+import { api } from '../lib/api.js';
 import { inr, shortInr } from '../data/mockData.js';
 import {
   liveStates, permissionLevels, dataScopes, approvalRights, permissionModules,
@@ -249,6 +250,57 @@ export default function Users() {
   const lastTen = (v) => String(v || '').replace(/\D/g, '').slice(-10);
   const takenPhone = (value) => users.find((u) => lastTen(u.phone) && lastTen(u.phone) === lastTen(value));
 
+  /*
+   * Role and designation are picked from a list, with "Other" for one that
+   * is not there yet: a box opens to type it. A typed role is made on save
+   * (CRM, view only, own records) — open it in Roles to give it more.
+   */
+  const OTHER = 'Other…';
+  const DESIGNATIONS = [
+    'Travel expert', 'Senior travel expert', 'Sales executive', 'Team lead', 'Branch manager',
+    'Operations executive', 'Accounts executive', 'Customer support', 'Field officer', 'Lead generation',
+  ];
+  const designationOptions = [...new Set([...DESIGNATIONS, ...users.map((u) => u.account?.designation).filter(Boolean)])];
+  const designationFields = [
+    { name: 'designation', label: 'Designation', type: 'select', options: ['—', ...designationOptions, OTHER] },
+    {
+      name: 'designationOther', label: 'Type the designation', type: 'text', required: true, minLength: 2,
+      showIf: (v) => v.designation === OTHER,
+    },
+  ];
+  const roleFields = [
+    { name: 'roleName', label: 'Role', type: 'select', options: [...roles.map((r) => r.name), OTHER], required: true },
+    {
+      name: 'roleOther', label: 'Type the new role', type: 'text', required: true, minLength: 2,
+      showIf: (v) => v.roleName === OTHER,
+      help: 'Made with Sales & Leads (view, own leads) — add more in Roles',
+      validate: (t) => (roles.some((r) => r.name.toLowerCase() === t.toLowerCase()) ? `${t} is already in the Role list — pick it there` : ''),
+    },
+  ];
+  /** The form's answers with "Other" swapped for what was typed, and a typed role made. */
+  const resolveOther = async (values) => {
+    const out = { ...values };
+    if (out.designation === OTHER) out.designation = String(out.designationOther || '').trim();
+    if (out.designation === '—') out.designation = '';
+    if (out.roleName === OTHER) {
+      const name = String(out.roleOther || '').trim();
+      const res = await api.post('/roles', {
+        name, modules: ['CRM'], permissions: ['view'], scope: 'own', description: 'Added from Add user',
+      });
+      out.roleName = name;
+      out.roleId = res.data?._id;
+      store.pull?.('roles');
+    }
+    return out;
+  };
+  const withOther = (save) => async (values) => {
+    try {
+      save(await resolveOther(values));
+    } catch (err) {
+      toast(err.message || 'That role could not be made', 'danger');
+    }
+  };
+
   const addFields = [
     { name: 'name', label: 'Full name', type: 'text', required: true, minLength: 2, placeholder: 'Priya Sharma' },
     {
@@ -265,10 +317,10 @@ export default function Users() {
       validate: (v) => (taken('email', v) ? `This email belongs to ${taken('email', v).name}` : ''),
     },
     { name: 'joined', label: 'Date of joining', type: 'date' },
-    { name: 'designation', label: 'Designation', type: 'text' },
+    ...designationFields,
     { name: 'branch', label: 'Branch', type: 'select', options: list('branch') },
     { name: 'manager', label: 'Reporting manager', type: 'select', options: ['—', ...users.map((u) => u.name)] },
-    { name: 'roleName', label: 'Role', type: 'select', options: roles.map((r) => r.name), required: true },
+    ...roleFields,
     { name: 'employment', label: 'Employment status', type: 'select', options: ['Permanent', 'Probation', 'Contract', 'Intern'] },
     { name: 'username', label: 'Username or email to sign in with', type: 'text' },
     { name: 'password', label: 'Password', type: 'text', required: true, minLength: 8, help: 'At least 8 characters' },
@@ -308,8 +360,8 @@ export default function Users() {
       name: 'email', label: 'Email', type: 'email', required: true,
       validate: (v) => (notMe(taken('email', v)) ? `This email belongs to ${taken('email', v).name}` : ''),
     },
-    { name: 'roleName', label: 'Role', type: 'select', options: roles.map((r) => r.name), required: true },
-    { name: 'designation', label: 'Designation', type: 'text' },
+    ...roleFields,
+    ...designationFields,
     { name: 'branch', label: 'Branch', type: 'text' },
     {
       name: 'manager', label: 'Reporting manager', type: 'select',
@@ -343,6 +395,7 @@ export default function Users() {
       phone: values.phone,
       email: values.email,
       roleName: values.roleName,
+      ...(values.roleId ? { roleId: values.roleId } : {}),
       role: values.designation || values.roleName,
       department: values.department,
       branch: values.branch,
@@ -364,6 +417,7 @@ export default function Users() {
       empId: values.empId,
       role: values.designation || values.roleName,
       roleName: values.roleName,
+      ...(values.roleId ? { roleId: values.roleId } : {}),
       department: values.department,
       branch: values.branch,
       manager: values.manager && values.manager !== '—' ? values.manager : undefined,
@@ -1069,7 +1123,7 @@ export default function Users() {
         <FormModal
           open
           onClose={() => setEditingUser(null)}
-          onSubmit={saveUser}
+          onSubmit={withOther(saveUser)}
           title={`Edit ${editingUser.name}`}
           subtitle="Their details, their role, who they report to and whether they can sign in"
           fields={editFields}
@@ -1081,7 +1135,7 @@ export default function Users() {
       <FormModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSubmit={addUser}
+        onSubmit={withOther(addUser)}
         title="Add a user"
         subtitle="Their details, how they sign in, and what they are given to work"
         fields={addFields}

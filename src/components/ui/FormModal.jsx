@@ -53,7 +53,8 @@ export default function FormModal({
 
   const submit = () => {
     const next = {};
-    fields.forEach((f) => {
+    // A field shown only for some answers (`showIf`) is not checked when hidden.
+    fields.filter((f) => !f.showIf || f.showIf(values)).forEach((f) => {
       const text = String(values[f.name] ?? '').trim();
       if (f.required && text === '') next[f.name] = `${f.label} is required`;
       // Left empty, or the dash a record shows for "not given": nothing to check.
@@ -108,7 +109,7 @@ export default function FormModal({
         </p>
       )}
       <div className="grid gap-5 sm:grid-cols-2">
-        {fields.map((f, i) => (
+        {fields.map((f, i) => (f.showIf && !f.showIf(values) ? null : (
           <Fragment key={f.name}>
           {/* A new heading, across both columns, wherever the section changes. */}
           {f.section && f.section !== fields[i - 1]?.section && (
@@ -235,7 +236,7 @@ export default function FormModal({
             )}
           </div>
           </Fragment>
-        ))}
+        )))}
       </div>
     </Modal>
   );

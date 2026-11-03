@@ -10,6 +10,7 @@ import DrawerTabs from '../ui/DrawerTabs.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import { inr, shortInr } from '../../data/mockData.js';
 import { liveStates, permissionModules, permissionLevels } from '../../data/usersData.js';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 
@@ -21,6 +22,8 @@ const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 export default function UserProfile({ user, role, work, log = [], onClose, onAct }) {
   const [tab, setTab] = useState('Profile');
 
+  // Back on a phone closes this, not the page under it.
+  useBackToClose(Boolean(user), onClose);
   if (!user) return null;
 
   const u = user;

@@ -21,6 +21,7 @@ import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 const digits = (value) => String(value || '').replace(/[^\d]/g, '');
 
@@ -56,6 +57,8 @@ export default function BookingDetails({
   onEdit,
   onInvoice,
 }) {
+  // Back on a phone closes this, not the page under it.
+  useBackToClose(Boolean(booking), onClose);
   if (!booking) return null;
 
   const b = booking;

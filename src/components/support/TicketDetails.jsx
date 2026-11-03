@@ -20,6 +20,7 @@ import { inr } from '../../data/mockData.js';
 import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
@@ -42,6 +43,8 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
   });
   const set = (key, value) => setRes((r) => ({ ...r, [key]: value }));
 
+  // Back on a phone closes this, not the page under it.
+  useBackToClose(Boolean(ticket), onClose);
   if (!ticket) return null;
 
   const t = ticket;

@@ -22,6 +22,7 @@ import { inr, shortInr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
 import { hoursWorked, mapLink, timeOf, useAttendanceDay } from '../../lib/attendance.js';
 import AttendanceEdit from './AttendanceEdit.jsx';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 const liveDot = {
   Online: 'bg-emerald-500',
@@ -115,6 +116,8 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
   const attendance = useAttendanceDay();
   const [editingDay, setEditingDay] = useState(false);
 
+  // Back on a phone closes this, not the page under it.
+  useBackToClose(Boolean(member), onClose);
   if (!member) return null;
 
   const m = member;

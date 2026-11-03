@@ -10,6 +10,7 @@ import { useApp } from '../../store/AppStore.jsx';
 import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Field from '../ui/Field.jsx';
 import LeadTaskForm from './LeadTaskForm.jsx';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 
@@ -47,6 +48,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
     setTaskForm(startOn === 'task');
   }, [lead?.id, startOn]);
 
+  // Back on a phone closes this, not the page under it.
+  useBackToClose(Boolean(lead), onClose);
   if (!lead) return null;
 
   const index = list.findIndex((l) => l.id === lead.id);

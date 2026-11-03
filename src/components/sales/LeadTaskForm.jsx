@@ -5,13 +5,38 @@ import { useApp } from '../../store/AppStore.jsx';
 /** What a task can be — the server's own list. */
 const TYPES = ['Call', 'Follow-up', 'WhatsApp', 'Presentation', 'Customer Visit', 'Payment Follow-up', 'Booking Follow-up', 'Send itinerary', 'Documents'];
 
+const pad = (n) => String(n).padStart(2, '0');
+const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
 /** Tomorrow at 11 am, as a datetime-local value — a sensible first guess. */
 const tomorrow11 = () => {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  d.setHours(11, 0, 0, 0);
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${isoDay(d)}T11:00`;
+};
+
+/**
+ * The next fortnight as one-tap days. A customer says "call me Saturday",
+ * not "call me on the 7th", so the days are named.
+ */
+const nextDays = () =>
+  Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return {
+      iso: isoDay(d),
+      name: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-IN', { weekday: 'short' }),
+      date: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+      weekend: d.getDay() === 0 || d.getDay() === 6,
+    };
+  });
+
+/** "Saturday, 7 Nov 2026 · 11:00 am" for what is picked. */
+const spell = (value) => {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })} · ${d
+    .toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
 };
 
 /**
@@ -36,6 +61,9 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
   });
   const [error, setError] = useState('');
   const set = (k) => (e) => { setForm((f) => ({ ...f, [k]: e.target.value })); setError(''); };
+  // A day button keeps the time already chosen.
+  const pickDay = (iso) => setForm((f) => ({ ...f, due: `${iso}T${f.due.split('T')[1] || '11:00'}` }));
+  const days = nextDays();
 
   const save = (e) => {
     e.preventDefault();
@@ -84,7 +112,33 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
         <label className="block">
           <span className="label">Due</span>
           <input type="datetime-local" className={input} value={form.due} onChange={set('due')} />
+          {form.due && <span className="mt-1 block text-xs font-semibold text-brand-700">{spell(form.due)}</span>}
         </label>
+        <div className="sm:col-span-2">
+          <span className="label">Pick a day</span>
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+            {days.map((d) => {
+              const on = form.due.startsWith(d.iso);
+              return (
+                <button
+                  key={d.iso}
+                  type="button"
+                  onClick={() => pickDay(d.iso)}
+                  className={`flex shrink-0 flex-col items-center rounded-lg border px-2.5 py-1.5 text-xs leading-tight transition ${
+                    on
+                      ? 'border-brand-500 bg-brand-600 text-white'
+                      : d.weekend
+                        ? 'border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-400'
+                        : 'border-ink-900/10 bg-white text-ink-700 hover:border-brand-300'
+                  }`}
+                >
+                  <span className="font-bold">{d.name}</span>
+                  <span className={on ? 'text-white/80' : 'text-ink-400'}>{d.date}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <label className="block sm:col-span-2">
           <span className="label">What to do</span>
           <input className={input} value={form.title} onChange={set('title')} placeholder={`e.g. Call ${lead.name.split(' ')[0]} about the Goa quote`} />

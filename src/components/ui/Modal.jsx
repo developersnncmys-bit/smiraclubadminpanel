@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 export default function Modal({ open, onClose, title, subtitle, footer, size = 'lg', children }) {
   useEffect(() => {
@@ -12,6 +13,9 @@ export default function Modal({ open, onClose, title, subtitle, footer, size = '
       document.body.style.overflow = '';
     };
   }, [open, onClose]);
+
+  // Back on a phone closes the dialog, not the page under it.
+  useBackToClose(open, onClose);
 
   if (!open) return null;
 

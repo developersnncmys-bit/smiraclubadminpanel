@@ -17,6 +17,7 @@ import {
   settlementFlow,
   partnerMessageKinds,
 } from '../../data/partnersData.js';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 const digits = (v) => String(v || '').replace(/[^\d]/g, '');
 const TABS = [
@@ -34,6 +35,8 @@ const docTone = { Verified: 'green', Submitted: 'sky', Pending: 'amber', Missing
 export default function PartnerProfile({ partner, list, requests, tickets, settlements, score, onClose, onJump, actions }) {
   const [tab, setTab] = useState('Overview');
 
+  // Back on a phone closes this, not the page under it.
+  useBackToClose(Boolean(partner), onClose);
   if (!partner) return null;
 
   const p = partner;

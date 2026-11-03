@@ -19,6 +19,7 @@ import { membershipStanding } from '../../lib/membership.js';
 import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
+import { useBackToClose } from '../../lib/backToClose.js';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 
@@ -28,6 +29,8 @@ const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
  * have paid, and the trail of everything that has happened.
  */
 export default function MemberProfile({ member, list, plan, bookings = [], onClose, onJump, actions }) {
+  // Back on a phone closes this, not the page under it.
+  useBackToClose(Boolean(member), onClose);
   if (!member) return null;
 
   const m = member;

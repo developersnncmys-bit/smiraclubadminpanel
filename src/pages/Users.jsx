@@ -265,25 +265,15 @@ export default function Users() {
       validate: (v) => (taken('email', v) ? `This email belongs to ${taken('email', v).name}` : ''),
     },
     { name: 'joined', label: 'Date of joining', type: 'date' },
-    { name: 'department', label: 'Department', type: 'select', options: list('department') },
     { name: 'designation', label: 'Designation', type: 'text' },
     { name: 'branch', label: 'Branch', type: 'select', options: list('branch') },
     { name: 'manager', label: 'Reporting manager', type: 'select', options: ['—', ...users.map((u) => u.name)] },
     { name: 'roleName', label: 'Role', type: 'select', options: roles.map((r) => r.name), required: true },
     { name: 'employment', label: 'Employment status', type: 'select', options: ['Permanent', 'Probation', 'Contract', 'Intern'] },
-    { name: 'aadhaar', label: 'Aadhaar', type: 'text' },
-    { name: 'familyCount', label: 'Family members', type: 'number' },
-    { name: 'familyNames', label: 'Family member names', type: 'text', full: true },
     { name: 'username', label: 'Username or email to sign in with', type: 'text' },
     { name: 'password', label: 'Password', type: 'text', required: true, minLength: 8, help: 'At least 8 characters' },
     { name: 'twoFactor', label: 'Two-factor authentication', type: 'select', options: ['On', 'Off'] },
     { name: 'access', label: 'Login permission', type: 'select', options: ['Web and mobile', 'Web only', 'Mobile only', 'No access'] },
-    { name: 'devices', label: 'Device restrictions', type: 'text', full: true },
-    { name: 'leadSources', label: 'Lead sources', type: 'text' },
-    { name: 'territory', label: 'Territory', type: 'text' },
-    { name: 'segment', label: 'Customer segment', type: 'text' },
-    { name: 'products', label: 'Membership products', type: 'text' },
-    { name: 'categories', label: 'Booking categories', type: 'text' },
   ];
 
   /** A default only if the dropdown holds it, or the box shows one value and submits another. */
@@ -320,7 +310,6 @@ export default function Users() {
     },
     { name: 'roleName', label: 'Role', type: 'select', options: roles.map((r) => r.name), required: true },
     { name: 'designation', label: 'Designation', type: 'text' },
-    { name: 'department', label: 'Department', type: 'text' },
     { name: 'branch', label: 'Branch', type: 'text' },
     {
       name: 'manager', label: 'Reporting manager', type: 'select',

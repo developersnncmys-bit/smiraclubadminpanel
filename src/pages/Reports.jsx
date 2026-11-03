@@ -238,7 +238,7 @@ export default function Reports() {
       source: s,
       leads: all.length,
       qualified: all.filter((e) => !['New', 'Lost'].includes(e.status)).length,
-      presentations: all.filter((e) => ['Presentation', 'Visit scheduled', 'Closing', 'Won'].includes(e.status)).length,
+      presentations: all.filter((e) => ['Presentation', 'Presentation done', 'Visit scheduled', 'Closing', 'Won'].includes(e.status)).length,
       sales: w.length,
       revenue,
       conversion: all.length ? Math.round((w.length / all.length) * 100) : 0,

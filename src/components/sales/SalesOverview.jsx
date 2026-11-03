@@ -112,7 +112,7 @@ export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoi
   const won = by((e) => e.status === 'Won');
   const lost = by((e) => e.status === 'Lost');
   const open = by((e) => !['Won', 'Lost'].includes(e.status));
-  const presented = by((e) => ['Presentation', 'Visit scheduled', 'Closing'].includes(e.status));
+  const presented = by((e) => ['Presentation', 'Presentation done', 'Visit scheduled', 'Closing'].includes(e.status));
 
   const owners = ['All', ...new Set(rows.map((e) => e.owner).filter(Boolean))];
   const reasons = [...new Set(lost.map((e) => e.lostReason).filter(Boolean))];
@@ -201,7 +201,7 @@ export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoi
     .map((s) => {
       const all = by((e) => e.source === s);
       const qualified = all.filter((e) => !['New', 'Lost'].includes(e.status)).length;
-      const pres = all.filter((e) => ['Presentation', 'Visit scheduled', 'Closing', 'Won'].includes(e.status)).length;
+      const pres = all.filter((e) => ['Presentation', 'Presentation done', 'Visit scheduled', 'Closing', 'Won'].includes(e.status)).length;
       const w = all.filter((e) => e.status === 'Won');
       return {
         source: s,

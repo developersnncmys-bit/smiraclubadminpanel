@@ -86,11 +86,15 @@ function inPeriod(created, period) {
 /** The colour every stage reads by — the board, the rails and the badges agree. */
 const STAGE = {
   New: { dot: 'bg-sky-500', rail: 'before:bg-sky-500' },
+  Ringing: { dot: 'bg-yellow-400', rail: 'before:bg-yellow-400' },
   Contacted: { dot: 'bg-violet-500', rail: 'before:bg-violet-500' },
   Interested: { dot: 'bg-brand-500', rail: 'before:bg-brand-500' },
+  'Not interested': { dot: 'bg-slate-400', rail: 'before:bg-slate-400' },
   'Details sent': { dot: 'bg-amber-400', rail: 'before:bg-amber-400' },
   Presentation: { dot: 'bg-orange-400', rail: 'before:bg-orange-400' },
+  'Presentation done': { dot: 'bg-teal-500', rail: 'before:bg-teal-500' },
   'Visit scheduled': { dot: 'bg-indigo-500', rail: 'before:bg-indigo-500' },
+  'Future customer': { dot: 'bg-cyan-500', rail: 'before:bg-cyan-500' },
   Closing: { dot: 'bg-emerald-500', rail: 'before:bg-emerald-500' },
   Won: { dot: 'bg-emerald-600', rail: 'before:bg-emerald-600' },
   Lost: { dot: 'bg-rose-400', rail: 'before:bg-rose-400' },
@@ -320,7 +324,7 @@ export default function Enquiries() {
   const value = (list) => list.reduce((s, e) => s + Number(e.budget || 0), 0);
   const open = rows.filter((e) => !['Won', 'Lost'].includes(e.status));
   const won = rows.filter((e) => e.status === 'Won');
-  const presented = rows.filter((e) => ['Presentation', 'Visit scheduled', 'Closing'].includes(e.status));
+  const presented = rows.filter((e) => ['Presentation', 'Presentation done', 'Visit scheduled', 'Closing'].includes(e.status));
   const unassigned = rows.filter((e) => !e.owner || e.owner === 'Unassigned');
   const pending = invoices.reduce((s, i) => s + Math.max(0, Number(i.amount || 0) - Number(i.paid || 0)), 0);
 

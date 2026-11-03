@@ -169,11 +169,15 @@ export const attendanceStates = [
 
 export const enquiryStatuses = [
   'New',
+  'Ringing',
   'Contacted',
   'Interested',
+  'Not interested',
   'Details sent',
   'Presentation',
+  'Presentation done',
   'Visit scheduled',
+  'Future customer',
   'Closing',
   'Won',
   'Lost',
@@ -182,11 +186,15 @@ export const enquiryStatuses = [
 /** How likely each stage is to close — used for the weighted pipeline. */
 export const stageProbability = {
   New: 0.05,
+  Ringing: 0.05,
   Contacted: 0.1,
   Interested: 0.25,
+  'Not interested': 0.02,
   'Details sent': 0.4,
   Presentation: 0.55,
+  'Presentation done': 0.6,
   'Visit scheduled': 0.7,
+  'Future customer': 0.15,
   Closing: 0.85,
   Won: 1,
   Lost: 0,
@@ -225,11 +233,15 @@ export const leadSources = [
 
 export const statusTone = {
   New: 'sky',
+  Ringing: 'amber',
   Contacted: 'violet',
   Interested: 'amber',
+  'Not interested': 'slate',
   'Details sent': 'sky',
   Presentation: 'violet',
+  'Presentation done': 'teal',
   'Visit scheduled': 'teal',
+  'Future customer': 'sky',
   Closing: 'amber',
   Won: 'green',
   Lost: 'rose',

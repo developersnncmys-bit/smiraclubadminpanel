@@ -16,8 +16,6 @@ import {
   Megaphone,
   Newspaper,
   ShieldCheck,
-  PhoneCall,
-  ListChecks,
 } from 'lucide-react';
 
 /**
@@ -31,8 +29,6 @@ export const navGroups = [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/team', label: 'Team Status', icon: UsersRound, module: 'Users' },
       { to: '/enquiries', label: 'Sales & Leads', icon: Users, badgeKey: 'enquiries', module: 'CRM' },
-      { to: '/calls', label: 'Call log', icon: PhoneCall, module: 'CRM' },
-      { to: '/tasks', label: 'Tasks', icon: ListChecks },
       { to: '/bookings', label: 'Booking', icon: CalendarCheck, module: 'Booking' },
       { to: '/customers', label: 'Members', icon: UserRound, badgeKey: 'memberships', module: 'Customer' },
       { to: '/support', label: 'Support / Complaints', icon: Headphones, module: 'Customer' },

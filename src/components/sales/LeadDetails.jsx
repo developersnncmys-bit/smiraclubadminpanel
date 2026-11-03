@@ -4,7 +4,8 @@ import {
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
-import { statusTone, enquiryStatuses, inr } from '../../data/mockData.js';
+import { inr } from '../../data/mockData.js';
+import { useLeadStages, stageTone } from '../../lib/leadStages.js';
 import { useApp } from '../../store/AppStore.jsx';
 import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Field from '../ui/Field.jsx';
@@ -30,6 +31,7 @@ const KINDS = {
  * loses its place.
  */
 export default function LeadDetails({ lead, list, onClose, onJump, onEdit, startOn }) {
+  const enquiryStatuses = useLeadStages();
   const { activities, tasks, quotations, memberSignups, memberships, logActivity, update, toast } = useApp();
   // "Add task" from the leads list opens here, on the Tasks tab with the form open.
   const [tab, setTab] = useState(startOn === 'task' ? 'Tasks' : 'Activities');
@@ -197,7 +199,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                   ))}
                 </div>
               ) : (
-                <Badge tone={statusTone[lead.status]} dot>
+                <Badge tone={stageTone(lead.status)} dot>
                   {lead.status}
                 </Badge>
               )}

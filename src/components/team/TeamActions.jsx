@@ -4,7 +4,8 @@ import Modal from '../ui/Modal.jsx';
 import FormModal from '../ui/FormModal.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import Badge from '../ui/Badge.jsx';
-import { enquiryStatuses, statusTone, leadSources, liveStatuses, inr } from '../../data/mockData.js';
+import { leadSources, liveStatuses, inr } from '../../data/mockData.js';
+import { useLeadStages, stageTone } from '../../lib/leadStages.js';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 const TASK_TYPES = [
@@ -51,7 +52,7 @@ function LeadRow({ lead }) {
           {lead.destination} · {lead.budget ? inr(lead.budget) : 'no budget'} · {lead.owner || 'Unassigned'}
         </span>
       </span>
-      <Badge tone={statusTone[lead.status]}>{lead.status}</Badge>
+      <Badge tone={stageTone(lead.status)}>{lead.status}</Badge>
     </span>
   );
 }
@@ -63,6 +64,7 @@ function LeadRow({ lead }) {
  * from one consultant to another.
  */
 export default function TeamActions({ action, context = {}, onClose, store }) {
+  const enquiryStatuses = useLeadStages();
   const { team, tasks, enquiries, create, update, updateMany, toast } = store;
 
   const consultants = useMemo(() => team.map((m) => firstName(m.name)), [team]);

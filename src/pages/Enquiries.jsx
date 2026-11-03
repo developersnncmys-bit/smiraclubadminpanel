@@ -6,7 +6,7 @@ import {
   Search, Download, UserPlus, ArrowRightLeft, CalendarClock, Presentation,
   Route, ClipboardPlus, Flag, Wallet, Clock, SlidersHorizontal,
   X, Filter, Zap, Users, Layers, Trophy,
-  IndianRupee, Eye, Mail, Check, FolderInput, Loader2,
+  IndianRupee, Eye, Mail, Check, FolderInput, Loader2, Settings2,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
@@ -27,7 +27,9 @@ import MoveToFolder from '../components/sales/MoveToFolder.jsx';
 import { useLeadFolders } from '../lib/leadFolders.js';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
-import { statusTone, enquiryStatuses, stageProbability, inr, shortInr, formatDate } from '../data/mockData.js';
+import { stageProbability, inr, shortInr, formatDate } from '../data/mockData.js';
+import { useLeadStages, stageTone } from '../lib/leadStages.js';
+import LeadStagesEditor from '../components/sales/LeadStagesEditor.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { api } from '../lib/api.js';
 import { when } from '../lib/adapters.js';
@@ -137,6 +139,8 @@ export default function Enquiries() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const store = useApp();
+  const enquiryStatuses = useLeadStages();
+  const [editStages, setEditStages] = useState(false);
   const {
     enquiries, bookings, invoices, payments, team, memberSignups, memberships,
     owner, create, update, updateMany, retagLeads, remove, toast, leadsProgress,
@@ -539,7 +543,7 @@ export default function Enquiries() {
         </div>
       ),
     },
-    { key: 'status', header: 'Status', render: (r) => <Badge tone={statusTone[r.status]} dot>{r.status}</Badge> },
+    { key: 'status', header: 'Status', render: (r) => <Badge tone={stageTone(r.status)} dot>{r.status}</Badge> },
     {
       key: 'destination',
       header: 'Destination',
@@ -855,7 +859,7 @@ export default function Enquiries() {
                           </div>
                         </div>
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                          <Badge tone={statusTone[r.status]} dot>{r.status}</Badge>
+                          <Badge tone={stageTone(r.status)} dot>{r.status}</Badge>
                           {/* Member or not, and whether it still runs — the
                               question the desk asks before it quotes. */}
                           <Badge tone={standing.tone}>
@@ -1106,11 +1110,24 @@ export default function Enquiries() {
               }}
               className="flex w-full items-center gap-3 rounded-xl border border-ink-900/10 px-4 py-3 text-left transition hover:border-brand-400 hover:bg-brand-50"
             >
-              <Badge tone={statusTone[s]} dot>{s}</Badge>
+              <Badge tone={stageTone(s)} dot>{s}</Badge>
             </button>
           ))}
         </div>
+        <button
+          className="btn-line btn-sm mt-4 w-full justify-center"
+          onClick={() => { setStatusFor(null); setEditStages(true); }}
+        >
+          <Settings2 size={14} /> Customize stages
+        </button>
       </Modal>
+
+      <LeadStagesEditor
+        open={editStages}
+        onClose={() => setEditStages(false)}
+        stages={enquiryStatuses}
+        leads={enquiries}
+      />
 
       {/* Bulk change source */}
       <Modal

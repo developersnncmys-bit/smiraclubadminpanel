@@ -9,6 +9,7 @@ import { useLeadStages, stageTone } from '../../lib/leadStages.js';
 import { useApp } from '../../store/AppStore.jsx';
 import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Field from '../ui/Field.jsx';
+import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 import LeadTaskForm from './LeadTaskForm.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
 import { dialable } from '../../lib/phone.js';
@@ -88,14 +89,15 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const held = findMembership(lead, memberSignups, memberships);
   const standing = held ? membershipStanding(held.signup) : null;
 
+  // Each in its own app's colour where there is one, and named underneath.
   const quick = [
-    { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
-    { icon: Mail, tone: 'bg-sky-500', label: 'Email', run: () => { window.location.href = `mailto:${lead.email}`; logActivity(lead.id, `Emailed ${lead.name}`, 'email'); } },
-    { icon: MessageCircle, tone: 'bg-emerald-500', label: 'WhatsApp', run: () => { window.open(`https://wa.me/${digits}`, '_blank'); logActivity(lead.id, 'Messaged on WhatsApp', 'whatsapp'); } },
-    { icon: Paperclip, tone: 'bg-sky-500', label: 'Attach a file', run: () => toast('File attachments come with the storage work', 'info') },
-    { icon: Pencil, tone: 'bg-sky-500', label: 'Edit lead', run: () => onEdit(lead) },
-    { icon: Share2, tone: 'bg-sky-500', label: 'Share lead', run: () => toast(`${lead.name} shared with the team`, 'info') },
-    { icon: FileText, tone: 'bg-sky-500', label: 'Create quotation', run: () => { logActivity(lead.id, 'Quotation drafted', 'note'); toast('Quotation draft started'); } },
+    { icon: Phone, tone: 'bg-[#34C759]', label: 'Call', title: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
+    { icon: Mail, tone: 'bg-[#EA4335]', label: 'Email', title: 'Email', run: () => { window.location.href = `mailto:${lead.email}`; logActivity(lead.id, `Emailed ${lead.name}`, 'email'); } },
+    { icon: WhatsAppIcon, tone: 'bg-[#25D366]', label: 'WhatsApp', title: 'WhatsApp', run: () => { window.open(`https://wa.me/${digits}`, '_blank'); logActivity(lead.id, 'Messaged on WhatsApp', 'whatsapp'); } },
+    { icon: Paperclip, tone: 'bg-slate-500', label: 'Attach', title: 'Attach a file', run: () => toast('File attachments come with the storage work', 'info') },
+    { icon: Pencil, tone: 'bg-sky-600', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
+    { icon: Share2, tone: 'bg-violet-500', label: 'Share', title: 'Share lead', run: () => toast(`${lead.name} shared with the team`, 'info') },
+    { icon: FileText, tone: 'bg-amber-500', label: 'Quotation', title: 'Create quotation', run: () => { logActivity(lead.id, 'Quotation drafted', 'note'); toast('Quotation draft started'); } },
   ];
 
   const setField = (key, value, text) => {
@@ -162,15 +164,18 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 {lead.destination} · {lead.pax} pax
               </p>
 
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {quick.map(({ icon: Icon, tone, label, run }) => (
+              <div className="mt-4 grid grid-cols-4 gap-x-1 gap-y-3">
+                {quick.map(({ icon: Icon, tone, label, title, run }) => (
                   <button
                     key={label}
                     onClick={run}
-                    title={label}
-                    className={`grid h-10 w-10 place-items-center rounded-full text-white transition hover:opacity-90 ${tone}`}
+                    title={title}
+                    className="flex flex-col items-center gap-1 rounded-xl py-1 transition hover:bg-surface-soft"
                   >
-                    <Icon size={16} />
+                    <span className={`grid h-12 w-12 place-items-center rounded-full text-white shadow-sm ${tone}`}>
+                      <Icon size={22} />
+                    </span>
+                    <span className="text-[11px] font-semibold text-ink-700">{label}</span>
                   </button>
                 ))}
               </div>

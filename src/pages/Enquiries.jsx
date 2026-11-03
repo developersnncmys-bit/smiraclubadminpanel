@@ -24,6 +24,7 @@ import SalesOverview from '../components/sales/SalesOverview.jsx';
 import LeadImport from '../components/sales/LeadImport.jsx';
 import LeadListPicker from '../components/sales/LeadListPicker.jsx';
 import MoveToFolder from '../components/sales/MoveToFolder.jsx';
+import ShareLeads from '../components/sales/ShareLeads.jsx';
 import { useLeadFolders } from '../lib/leadFolders.js';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
@@ -156,6 +157,7 @@ export default function Enquiries() {
   const [confirm, setConfirm] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [assignFor, setAssignFor] = useState(null);
+  const [assignMode, setAssignMode] = useState('one');
   const [statusFor, setStatusFor] = useState(null);
   const [sourceFor, setSourceFor] = useState(null);
   const [followUpFor, setFollowUpFor] = useState(null);
@@ -1059,14 +1061,41 @@ export default function Enquiries() {
         confirmLabel={confirm?.length > 1 ? `Delete ${confirm.length.toLocaleString('en-IN')} leads` : 'Delete lead'}
       />
 
-      {/* Assign owner */}
+      {/* Assign owner: to one person, or shared between several */}
       <Modal
         open={Boolean(assignFor)}
         onClose={() => setAssignFor(null)}
         title="Assign owner"
         subtitle={`${assignFor?.length || 0} lead(s) selected`}
-        size="sm"
+        size="md"
       >
+        {(assignFor?.length || 0) > 1 && (
+          <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-surface-soft p-1">
+            {[['one', 'One person'], ['share', 'Share between team']].map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setAssignMode(key)}
+                className={`rounded-lg py-2 text-sm font-bold transition ${assignMode === key ? 'bg-white text-brand-700 shadow-sm' : 'text-ink-500'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+        {assignMode === 'share' && (assignFor?.length || 0) > 1 ? (
+          <ShareLeads
+            ids={assignFor}
+            people={owners.filter((o) => o !== 'Unassigned')}
+            onShare={(given) => {
+              const parts = Object.entries(given).filter(([, list]) => list.length);
+              parts.forEach(([o, list]) => updateMany('enquiries', list, { owner: o }, `${list.length} lead(s) to ${o}`));
+              toast(`Shared: ${parts.map(([o, list]) => `${o} ${list.length}`).join(', ')}`);
+              setAssignFor(null);
+              setSelected([]);
+            }}
+          />
+        ) : (
         <div className="space-y-2">
           {owners.map((o) => (
             <button
@@ -1083,6 +1112,7 @@ export default function Enquiries() {
             </button>
           ))}
         </div>
+        )}
       </Modal>
 
       <MoveToFolder

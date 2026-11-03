@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, CalendarCheck, UserRound, Menu } from 'lucide-react';
 import { useApp } from '../../store/AppStore.jsx';
+import { canOpenModule } from '../../data/nav.js';
 
 /**
  * The bar along the bottom of a phone, the way a mobile CRM is held: the four
@@ -9,13 +10,13 @@ import { useApp } from '../../store/AppStore.jsx';
  */
 const TABS = [
   { to: '/', label: 'Home', icon: LayoutDashboard },
-  { to: '/enquiries', label: 'Leads', icon: Users, badgeKey: 'enquiries' },
-  { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
-  { to: '/customers', label: 'Members', icon: UserRound, badgeKey: 'memberships' },
+  { to: '/enquiries', label: 'Leads', icon: Users, badgeKey: 'enquiries', module: 'CRM' },
+  { to: '/bookings', label: 'Bookings', icon: CalendarCheck, module: 'Booking' },
+  { to: '/customers', label: 'Members', icon: UserRound, badgeKey: 'memberships', module: 'Customer' },
 ];
 
 export default function MobileTabBar({ onMore }) {
-  const { enquiries, memberSignups } = useApp();
+  const { enquiries, memberSignups, auth } = useApp();
   const counts = {
     enquiries: enquiries.filter((e) => ['New', 'Contacted'].includes(e.status)).length,
     memberships: memberSignups.filter((s) => s.status === 'New').length,
@@ -28,7 +29,7 @@ export default function MobileTabBar({ onMore }) {
       className="fixed inset-x-0 bottom-0 z-30 flex border-t border-ink-900/[0.08] bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_20px_-12px_rgba(11,21,36,0.25)] backdrop-blur lg:hidden"
       aria-label="Main sections"
     >
-      {TABS.map(({ to, label, icon: Icon, badgeKey }) => {
+      {TABS.filter((t) => canOpenModule(auth, t.module)).map(({ to, label, icon: Icon, badgeKey }) => {
         const badge = badgeKey ? counts[badgeKey] : 0;
         return (
           <NavLink

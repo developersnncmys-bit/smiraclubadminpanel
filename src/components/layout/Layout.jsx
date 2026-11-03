@@ -1,17 +1,23 @@
 import { useRef, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import Header from './Header.jsx';
 import Sidebar from './Sidebar.jsx';
 import MobileTabBar from './MobileTabBar.jsx';
 import Toaster from '../ui/Toaster.jsx';
 import SavedDialog from '../ui/SavedDialog.jsx';
 import useStackLabels from '../../lib/useStackLabels.js';
+import { useApp } from '../../store/AppStore.jsx';
+import { canOpenPath } from '../../data/nav.js';
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { pathname } = useLocation();
+  const { auth } = useApp();
   const shell = useRef(null);
   useStackLabels(shell);
+
+  // A page this role does not open — typed in, or an old link — goes home.
+  if (!canOpenPath(auth, pathname)) return <Navigate to="/" replace />;
 
   return (
     // One header across the top, the section rail down the left.

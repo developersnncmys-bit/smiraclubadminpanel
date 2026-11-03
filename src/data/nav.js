@@ -57,25 +57,27 @@ export const visibleNavGroups = navGroups
 export const nav = navGroups.flatMap((g) => g.items);
 
 /**
- * The rail for one signed-in person.
+ * The rail for one signed-in person: only the pages their role opens.
  *
- * Every page is on show by default — the panel is demonstrated to clients who
- * want to see the whole system, and a rail that changes shape with whoever
- * signed in makes that impossible. The API still enforces what each role can
- * actually reach, so this is presentation, not permission.
- *
- * Set VITE_STRICT_NAV=true to hide what a role cannot open.
+ * The role's modules (Users & Roles → the role) decide it — a Lead
+ * Generation role with CRM and WhatsApp sees Sales & Leads, Offers, Blog and
+ * WhatsApp, and nothing else. The owner (a super-admin role) sees it all.
+ * The API enforces the same modules, so a hidden page could not load anyway.
  */
-const ENV = (typeof import.meta !== 'undefined' && import.meta.env) || {};
-const STRICT = String(ENV.VITE_STRICT_NAV || '') === 'true';
+export function canOpenModule(auth, module) {
+  if (!module || !auth || auth.superAdmin) return true;
+  const modules = auth.modules || [];
+  return modules.includes(module);
+}
+
+/** Whether this person may open the page at this address. */
+export function canOpenPath(auth, pathname) {
+  const page = nav.find((i) => i.to !== '/' && (pathname === i.to || pathname.startsWith(`${i.to}/`)));
+  return canOpenModule(auth, page?.module);
+}
 
 export function navFor(auth) {
-  if (!STRICT) return visibleNavGroups;
-
-  const modules = auth?.modules;
-  if (!auth || auth.superAdmin || !modules?.length) return visibleNavGroups;
-
   return visibleNavGroups
-    .map((g) => ({ ...g, items: g.items.filter((i) => !i.module || modules.includes(i.module)) }))
+    .map((g) => ({ ...g, items: g.items.filter((i) => canOpenModule(auth, i.module)) }))
     .filter((g) => g.items.length > 0);
 }

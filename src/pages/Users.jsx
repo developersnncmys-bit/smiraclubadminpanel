@@ -513,7 +513,7 @@ export default function Users() {
                 */
                 <span>
                   <span className="num block text-ink-800">{u.phone || '—'}</span>
-                  {u.phone && !u.account.mobileAccess && (
+                  {u.phone && !u.account.mobileAccess && !u.account.webAccess && (
                     <span className="block text-xs text-ink-400">cannot sign in</span>
                   )}
                 </span>,

@@ -54,21 +54,25 @@ export function useAttendanceDay() {
   return byUser;
 }
 
-/** My own day. */
+/** My own day, and the one way of working I am set to (null = any). */
 export function useMyAttendance() {
   const [row, setRow] = useState(null);
+  const [workMode, setWorkMode] = useState(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (!isLive) return undefined;
     const load = () =>
       api
         .get('/attendance/me')
-        .then((r) => setRow(r.data || null))
+        .then((r) => {
+          setRow(r.data || null);
+          setWorkMode(r.workMode || null);
+        })
         .catch(() => {})
         .finally(() => setReady(true));
     load();
     window.addEventListener(EVENT, load);
     return () => window.removeEventListener(EVENT, load);
   }, []);
-  return { row, ready };
+  return { row, workMode, ready };
 }

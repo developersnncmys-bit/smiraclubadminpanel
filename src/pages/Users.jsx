@@ -250,6 +250,11 @@ export default function Users() {
   const lastTen = (v) => String(v || '').replace(/\D/g, '').slice(-10);
   const takenPhone = (value) => users.find((u) => lastTen(u.phone) && lastTen(u.phone) === lastTen(value));
 
+  /** Where somebody works; the server says Field for Field work, '' for any. */
+  const WORK_MODES = ['Office', 'Work from home', 'Field work', 'Any'];
+  const workModeValue = (v) => (v === 'Field work' ? 'Field' : v === 'Any' || !v ? '' : v);
+  const workModeLabel = (v) => (v === 'Field' ? 'Field work' : v || 'Any');
+
   /*
    * Role and designation are picked from a list, with "Other" for one that
    * is not there yet: a box opens to type it. A typed role is made on save
@@ -321,6 +326,10 @@ export default function Users() {
     { name: 'branch', label: 'Branch', type: 'select', options: list('branch') },
     { name: 'manager', label: 'Reporting manager', type: 'select', options: ['—', ...users.map((u) => u.name)] },
     ...roleFields,
+    {
+      name: 'workMode', label: 'Works from', type: 'select', options: WORK_MODES,
+      help: 'Check-in offers only this. "Any" lets them choose each day.',
+    },
     { name: 'employment', label: 'Employment status', type: 'select', options: ['Permanent', 'Probation', 'Contract', 'Intern'] },
     { name: 'username', label: 'Username or email to sign in with', type: 'text' },
     { name: 'password', label: 'Password', type: 'text', required: true, minLength: 8, help: 'At least 8 characters' },
@@ -368,6 +377,10 @@ export default function Users() {
       options: ['—', ...users.filter((x) => x.id !== editingUser?.id).map((x) => x.name)],
     },
     { name: 'joined', label: 'Date of joining', type: 'date' },
+    {
+      name: 'workMode', label: 'Works from', type: 'select', options: WORK_MODES,
+      help: 'Check-in offers only this. "Any" lets them choose each day.',
+    },
     { name: 'employment', label: 'Employment status', type: 'select', options: ['Permanent', 'Probation', 'Contract', 'Intern'] },
     { name: 'status', label: 'Account', type: 'select', options: ['Active', 'Inactive'], help: 'Inactive cannot sign in' },
   ];
@@ -384,6 +397,7 @@ export default function Users() {
     manager: u.manager && u.manager !== '—' ? u.manager : '—',
     joined: u.account?.joined || '',
     employment: u.account?.employment || 'Probation',
+    workMode: workModeLabel(u.account?.workMode),
     status: u.status === 'Inactive' ? 'Inactive' : 'Active',
   });
 
@@ -405,6 +419,7 @@ export default function Users() {
         ...u.account,
         designation: values.designation,
         employment: values.employment,
+        workMode: workModeValue(values.workMode),
         joined: values.joined || u.account?.joined,
       },
     }, { message: `${values.name} saved` });
@@ -436,6 +451,7 @@ export default function Users() {
         joined: values.joined || 'today',
         designation: values.designation || values.roleName,
         employment: values.employment || 'Probation',
+        workMode: workModeValue(values.workMode),
         aadhaar: values.aadhaar || '—',
         family: values.familyNames ? String(values.familyNames).split(',').map((x) => x.trim()) : [],
         username: values.username || values.email,

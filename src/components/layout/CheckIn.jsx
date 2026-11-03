@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Fingerprint, Building2, MapPin, Home, Loader2, LogOut, CheckCircle2 } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { api, isLive } from '../../lib/api.js';
 import { useApp } from '../../store/AppStore.jsx';
+import AttendanceCalendar from '../team/AttendanceCalendar.jsx';
 import { attendanceChanged, hoursWorked, mapLink, timeOf, useMyAttendance, whereAmI } from '../../lib/attendance.js';
 
 const MODES = [
   { key: 'Office', icon: Building2, hint: 'At the Smira office' },
-  { key: 'Field', icon: MapPin, hint: 'Client visit, site, outside — your location is saved' },
+  { key: 'Field', label: 'Field work', icon: MapPin, hint: 'Client visit, site, outside — your location is saved' },
   { key: 'Work from home', icon: Home, hint: 'Working from home today' },
 ];
 
@@ -21,12 +22,18 @@ const MODES = [
  */
 export default function CheckIn() {
   const { toast } = useApp();
-  const { row, ready } = useMyAttendance();
+  const { row, workMode, ready } = useMyAttendance();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState('Office');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [calendar, setCalendar] = useState(false);
+  // Set to one way of working in Users: that is the only choice offered.
+  const modes = workMode ? MODES.filter((m) => m.key === workMode) : MODES;
+  useEffect(() => {
+    if (workMode) setMode(workMode);
+  }, [workMode]);
 
   if (!isLive || !ready) return null;
   const inNow = Boolean(row?.checkIn && !row?.checkOut);
@@ -121,8 +128,8 @@ export default function CheckIn() {
 
         {!row?.checkIn && (
           <div className="space-y-2">
-            <p className="label">Where are you working today?</p>
-            {MODES.map((m) => (
+            <p className="label">{workMode ? 'You check in as' : 'Where are you working today?'}</p>
+            {modes.map((m) => (
               <button
                 key={m.key}
                 type="button"
@@ -133,7 +140,7 @@ export default function CheckIn() {
               >
                 <m.icon size={18} className={mode === m.key ? 'text-brand-600' : 'text-ink-400'} />
                 <span>
-                  <span className="block text-sm font-bold text-ink-900">{m.key}</span>
+                  <span className="block text-sm font-bold text-ink-900">{m.label || m.key}</span>
                   <span className="block text-xs text-ink-500">{m.hint}</span>
                 </span>
               </button>
@@ -149,6 +156,18 @@ export default function CheckIn() {
         )}
 
         {error && <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</p>}
+
+        {/* My month, as a calendar. */}
+        <div className="mt-4 border-t border-ink-900/[0.07] pt-3">
+          <button type="button" className="text-sm font-bold text-brand-700" onClick={() => setCalendar((v) => !v)}>
+            {calendar ? 'Hide my attendance calendar' : 'Show my attendance calendar'}
+          </button>
+          {calendar && (
+            <div className="mt-3">
+              <AttendanceCalendar />
+            </div>
+          )}
+        </div>
       </Modal>
     </>
   );

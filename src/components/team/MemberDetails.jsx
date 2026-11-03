@@ -22,6 +22,7 @@ import { inr, shortInr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
 import { hoursWorked, mapLink, timeOf, useAttendanceDay } from '../../lib/attendance.js';
 import AttendanceEdit from './AttendanceEdit.jsx';
+import AttendanceCalendar from './AttendanceCalendar.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
 
 const liveDot = {
@@ -374,6 +375,13 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
 
               {tab === 'Activity' && (
                 <div className="space-y-5">
+                  {m._id && (
+                    <div>
+                      <p className="eyebrow mb-1.5">Attendance calendar</p>
+                      <AttendanceCalendar userId={m._id} />
+                    </div>
+                  )}
+
                   <Group
                     title="Attendance today"
                     items={[

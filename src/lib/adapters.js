@@ -262,6 +262,7 @@ export const ADAPTERS = {
       account: {
         username: u.email || '',
         designation: u.designation || '',
+        workMode: u.workMode || '',
         employment: u.employment || '',
         joined: d(u.joinedOn),
         lastLogin: u.lastLoginAt ? dt(u.lastLoginAt) : '',
@@ -319,6 +320,8 @@ export const ADAPTERS = {
         manager: p.manager === undefined ? undefined : p.manager ? userId(p.manager, ctx) : null,
         joinedOn: a.joined ? when(a.joined) : undefined,
         employment: a.employment,
+        // '' means "any", which has to reach the server as null.
+        workMode: a.workMode === undefined ? undefined : a.workMode || null,
         aadhaar: a.aadhaar && a.aadhaar !== '—' ? a.aadhaar : undefined,
         family: list(a.family)?.map((name) => ({ name })),
         twoFactor: a.twoFactor,

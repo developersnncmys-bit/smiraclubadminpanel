@@ -20,6 +20,9 @@ import Offers from './pages/Offers.jsx';
 import Blog from './pages/Blog.jsx';
 import Support from './pages/Support.jsx';
 import Users from './pages/Users.jsx';
+import CallLog from './pages/CallLog.jsx';
+import Tasks from './pages/Tasks.jsx';
+import Account from './pages/Account.jsx';
 
 /** Where partners sign in and register now: their own site, not the staff panel. */
 const PARTNER_SITE =
@@ -71,6 +74,9 @@ export default function App() {
         <Route path="blog" element={<Blog />} />
         <Route path="support" element={<Support />} />
         <Route path="users" element={<Users />} />
+        <Route path="calls" element={<CallLog />} />
+        <Route path="tasks" element={<Tasks />} />
+        <Route path="account" element={<Account />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

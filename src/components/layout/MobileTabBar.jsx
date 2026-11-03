@@ -1,25 +1,29 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarCheck, UserRound, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, PhoneCall, ListChecks, UserRound } from 'lucide-react';
 import { useApp } from '../../store/AppStore.jsx';
 import { canOpenModule } from '../../data/nav.js';
 
 /**
- * The bar along the bottom of a phone, the way a mobile CRM is held: the four
- * places the desk lives in under the thumb, and everything else behind More.
- * Only on small screens — the desktop keeps its rail.
+ * The bar along the bottom of a phone, the way a mobile CRM is held:
+ * Dashboard, Call log, Leads, Task and Account under the thumb. Every other
+ * page is behind the menu button at the top. Only on small screens — the
+ * desktop keeps its rail.
  */
 const TABS = [
-  { to: '/', label: 'Home', icon: LayoutDashboard },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/calls', label: 'Call log', icon: PhoneCall, module: 'CRM' },
   { to: '/enquiries', label: 'Leads', icon: Users, badgeKey: 'enquiries', module: 'CRM' },
-  { to: '/bookings', label: 'Bookings', icon: CalendarCheck, module: 'Booking' },
-  { to: '/customers', label: 'Members', icon: UserRound, badgeKey: 'memberships', module: 'Customer' },
+  { to: '/tasks', label: 'Task', icon: ListChecks, badgeKey: 'tasks' },
+  { to: '/account', label: 'Account', icon: UserRound },
 ];
 
-export default function MobileTabBar({ onMore }) {
-  const { enquiries, memberSignups, auth } = useApp();
+export default function MobileTabBar() {
+  const { enquiries, tasks, auth } = useApp();
+  const endOfDay = new Date().setHours(23, 59, 59, 999);
   const counts = {
     enquiries: enquiries.filter((e) => ['New', 'Contacted'].includes(e.status)).length,
-    memberships: memberSignups.filter((s) => s.status === 'New').length,
+    // Open tasks due by tonight.
+    tasks: tasks.filter((t) => !['Completed', 'Cancelled'].includes(t.status) && t.dueAt && new Date(t.dueAt) <= endOfDay).length,
   };
 
   const item = 'relative flex flex-1 flex-col items-center justify-center gap-1 pt-2 pb-1.5 text-[11px] font-bold';
@@ -55,13 +59,6 @@ export default function MobileTabBar({ onMore }) {
           </NavLink>
         );
       })}
-
-      <button type="button" onClick={onMore} className={`${item} text-ink-400`}>
-        <span className="grid h-7 w-12 place-items-center rounded-full">
-          <Menu size={19} strokeWidth={2} />
-        </span>
-        More
-      </button>
     </nav>
   );
 }

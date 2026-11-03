@@ -491,6 +491,8 @@ export const ADAPTERS = {
       owner: who(t.owner),
       ownerId: ref(t.owner),
       due: t.dueAt ? dt(t.dueAt) : '—',
+      dueAt: t.dueAt,
+      lead: ref(t.lead),
       priority: t.priority,
       status: t.status,
       bucket: t.bucket,

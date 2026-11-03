@@ -40,7 +40,7 @@ export default function Layout() {
         </div>
       </div>
 
-      <MobileTabBar onMore={() => setMobileOpen(true)} />
+      <MobileTabBar />
       <Toaster />
       <SavedDialog />
     </div>

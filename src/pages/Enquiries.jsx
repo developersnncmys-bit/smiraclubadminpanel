@@ -196,6 +196,18 @@ export default function Enquiries() {
     }
   }, [params, setParams]);
 
+  // A ?lead=LEAD-123 link (from the call log or a task) opens that lead.
+  useEffect(() => {
+    const id = params.get('lead');
+    if (!id) return;
+    const found = enquiries.find((e) => e.id === id || e._id === id);
+    if (found) {
+      setViewing(found);
+      params.delete('lead');
+      setParams(params, { replace: true });
+    }
+  }, [params, setParams, enquiries]);
+
   const all = byOwner(enquiries, owner);
   /** Every folder: the ones made here, and every tag a lead already carries. */
   const folders = [...new Set([...savedFolders, ...all.flatMap((e) => e.tags || [])])];

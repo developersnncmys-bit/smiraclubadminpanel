@@ -7,6 +7,8 @@ import { Copy, Pencil } from 'lucide-react';
  */
 export default function Field({ label, children, onEdit, onCopy, action }) {
   const tools = onCopy || onEdit || action;
+  // A thumb-sized target; the negative margin keeps the row its height.
+  const tool = '-my-1.5 grid h-9 w-9 place-items-center rounded-lg text-ink-500 transition hover:bg-brand-50 hover:text-brand-700';
 
   return (
     <div className="border-b border-ink-900/[0.07] px-4 py-2.5">
@@ -15,17 +17,17 @@ export default function Field({ label, children, onEdit, onCopy, action }) {
         {tools && (
           <div className="flex items-center gap-1">
             {onCopy && (
-              <button onClick={onCopy} title="Copy" className="text-ink-300 transition hover:text-brand-700">
-                <Copy size={13} />
+              <button onClick={onCopy} title="Copy" className={tool}>
+                <Copy size={18} />
               </button>
             )}
             {onEdit && (
               <button
                 onClick={onEdit}
                 title={`Change ${String(label).toLowerCase()}`}
-                className="text-ink-300 transition hover:text-brand-700"
+                className={tool}
               >
-                <Pencil size={13} />
+                <Pencil size={18} />
               </button>
             )}
             {action}

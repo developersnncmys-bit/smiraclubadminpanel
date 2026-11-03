@@ -35,6 +35,7 @@ import {
   membershipAmount,
   giftKey,
 } from '../data/mockData.js';
+import { dialable } from '../lib/phone.js';
 
 const TIERS = ['Platinum', 'Gold', 'Silver'];
 /** The statuses a membership can be moved between, as the backend accepts them. */
@@ -253,7 +254,7 @@ export default function Customers() {
       header: '',
       render: (r) => (
         <div className="flex justify-end gap-1.5">
-          <a href={`tel:${digits(r.phone)}`} title="Call" className="icon-btn hover:border-emerald-400 hover:text-emerald-600">
+          <a href={`tel:${dialable(digits(r.phone))}`} title="Call" className="icon-btn hover:border-emerald-400 hover:text-emerald-600">
             <Phone size={14} />
           </a>
           <a

@@ -11,6 +11,7 @@ import RecordTrail from '../ui/RecordTrail.jsx';
 import { inr, shortInr } from '../../data/mockData.js';
 import { liveStates, permissionModules, permissionLevels } from '../../data/usersData.js';
 import { useBackToClose } from '../../lib/backToClose.js';
+import { dialable } from '../../lib/phone.js';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 
@@ -62,7 +63,7 @@ export default function UserProfile({ user, role, work, log = [], onClose, onAct
                 <Badge tone="slate">{a.employment || 'Permanent'}</Badge>
               </div>
               <div className="mt-4 flex justify-center gap-2">
-                <a href={`tel:${phone}`} className="icon-btn h-9 w-9" title="Call">
+                <a href={`tel:${dialable(phone)}`} className="icon-btn h-9 w-9" title="Call">
                   <Phone size={15} />
                 </a>
                 <a

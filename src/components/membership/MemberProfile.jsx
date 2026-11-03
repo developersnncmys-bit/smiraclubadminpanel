@@ -20,6 +20,7 @@ import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
+import { dialable } from '../../lib/phone.js';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 
@@ -45,7 +46,7 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
   const allocated = (m.benefits || []).reduce((s, b) => s + Number(b.allocated || 0), 0);
 
   const quick = [
-    { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${phone}`; } },
+    { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${dialable(phone)}`; } },
     { icon: MessageCircle, tone: 'bg-emerald-500', label: 'WhatsApp', run: () => window.open(`https://wa.me/${phone}`, '_blank') },
     { icon: Mail, tone: 'bg-sky-500', label: 'Email', run: () => { window.location.href = `mailto:${m.email}`; } },
     { icon: CheckCircle2, tone: 'bg-brand-600', label: 'Activate membership', run: () => actions.note(`${m.name}'s membership activated`) },

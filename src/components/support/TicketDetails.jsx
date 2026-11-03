@@ -21,6 +21,7 @@ import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
+import { dialable } from '../../lib/phone.js';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 const slaTone = { Within: 'green', Approaching: 'amber', Breached: 'rose' };
@@ -139,7 +140,7 @@ export default function TicketDetails({ ticket, list, customer, bookings = [], o
                 )}
               </div>
               <div className="mt-4 flex justify-center gap-2">
-                <a href={`tel:${phone}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Call">
+                <a href={`tel:${dialable(phone)}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Call">
                   <Phone size={15} />
                 </a>
                 <a

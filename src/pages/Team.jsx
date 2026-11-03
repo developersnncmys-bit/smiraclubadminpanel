@@ -20,6 +20,7 @@ import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr, liveStatuses, attendanceStates } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
 import Paged from '../components/ui/Pagination.jsx';
+import { dialable } from '../lib/phone.js';
 
 const ROLES = ['Owner', 'Senior Travel Consultant', 'Travel Consultant', 'Field Officer', 'Visa & Documentation', 'Accounts'];
 const ACCOUNT = ['Active', 'Invited', 'Disabled'];
@@ -614,7 +615,7 @@ export default function Team() {
 
                     {/* Three actions; the rest live in the drawer */}
                     <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
-                      <a href={`tel:${digits(m.phone)}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
+                      <a href={`tel:${dialable(digits(m.phone))}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
                       <a href={`https://wa.me/${digits(m.phone)}`} target="_blank" rel="noreferrer" className="btn-line btn-sm">
                         <MessageCircle size={13} /> WhatsApp
                       </a>

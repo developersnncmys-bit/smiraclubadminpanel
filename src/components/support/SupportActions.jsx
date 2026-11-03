@@ -4,6 +4,7 @@ import Modal from '../ui/Modal.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import Badge from '../ui/Badge.jsx';
 import { stageTone } from '../../data/supportData.js';
+import { dialable } from '../../lib/phone.js';
 
 const firstName = (name) => String(name || '').split(' ')[0];
 const now = () =>
@@ -327,7 +328,7 @@ export default function SupportActions({ action, tickets, team, onClose, store, 
               <TicketRow t={t} />
               <span className="flex shrink-0 gap-1.5">
                 <a
-                  href={`tel:${String(t.phone).replace(/[^\d]/g, '')}`}
+                  href={`tel:${dialable(String(t.phone).replace(/[^\d]/g, ''))}`}
                   className="btn-action btn-sm"
                   onClick={() => log(t, { who: 'Management', channel: 'Call', text: 'Called the customer' })}
                 >

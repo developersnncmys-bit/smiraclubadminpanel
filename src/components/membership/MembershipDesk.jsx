@@ -20,6 +20,7 @@ import {
 } from '../../data/mockData.js';
 import { daysUntil } from '../../lib/membership.js';
 import Block from '../ui/Block.jsx';
+import { dialable } from '../../lib/phone.js';
 
 /** Label, value, proportional bar. */
 function List({ rows, empty = 'Nothing here yet.' }) {
@@ -377,7 +378,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, onProfi
                 <div className="mt-auto flex flex-wrap gap-1.5 pt-3" onClick={(e) => e.stopPropagation()}>
                   {phone && (
                     <>
-                      <a href={`tel:${phone}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
+                      <a href={`tel:${dialable(phone)}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
                       <a
                         href={`https://wa.me/91${phone}?text=${encodeURIComponent(
                           `Hi ${m.name}, about your Smira Club ${m.plan || 'membership'} (${m.id}).`,

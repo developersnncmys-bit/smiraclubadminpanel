@@ -34,6 +34,7 @@ import { downloadCsv } from '../lib/csv.js';
 import { api } from '../lib/api.js';
 import { when } from '../lib/adapters.js';
 import { findMembership, membershipBadge, membershipStanding } from '../lib/membership.js';
+import { dialable } from '../lib/phone.js';
 
 const SOURCES = ['Campaign', 'WhatsApp', 'Website', 'Facebook Ads', 'Instagram', 'Google Ads', 'Referral', 'Walk-in', 'Calling data', 'Partner', 'Existing member', 'Other'];
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
@@ -492,7 +493,7 @@ export default function Enquiries() {
    * housekeeping — editing, assigning, deleting — which is a different job.
    */
   const actionsFor = (r) => [
-    r.phone && { label: 'Call', icon: Phone, href: `tel:${digits(r.phone)}` },
+    r.phone && { label: 'Call', icon: Phone, href: `tel:${dialable(digits(r.phone))}` },
     r.phone && {
       label: 'WhatsApp',
       icon: MessageCircle,
@@ -580,7 +581,7 @@ export default function Enquiries() {
       header: 'Actions',
       render: (r) => (
         <div className="flex items-center gap-1">
-          <a href={`tel:${digits(r.phone)}`} title="Call" className="icon-btn hover:border-emerald-400 hover:text-emerald-600">
+          <a href={`tel:${dialable(digits(r.phone))}`} title="Call" className="icon-btn hover:border-emerald-400 hover:text-emerald-600">
             <Phone size={14} />
           </a>
           <a

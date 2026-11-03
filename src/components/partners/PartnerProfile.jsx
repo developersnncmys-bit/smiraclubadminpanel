@@ -18,6 +18,7 @@ import {
   partnerMessageKinds,
 } from '../../data/partnersData.js';
 import { useBackToClose } from '../../lib/backToClose.js';
+import { dialable } from '../../lib/phone.js';
 
 const digits = (v) => String(v || '').replace(/[^\d]/g, '');
 const TABS = [
@@ -167,7 +168,7 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
               })()}
 
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <a href={`tel:${digits(p.phone)}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Call">
+                <a href={`tel:${dialable(digits(p.phone))}`} className="icon-btn h-9 w-9 disabled:opacity-40" title="Call">
                   <Phone size={15} />
                 </a>
                 <a href={`https://wa.me/${digits(p.whatsapp)}`} target="_blank" rel="noreferrer" className="icon-btn h-9 w-9 hover:border-emerald-400 hover:text-emerald-600" title="WhatsApp">

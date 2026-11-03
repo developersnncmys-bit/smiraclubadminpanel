@@ -21,6 +21,7 @@ import Stat from '../ui/Stat.jsx';
 import SectionTabs from '../ui/SectionTabs.jsx';
 import KpiRow from '../ui/KpiRow.jsx';
 import Paged from '../../components/ui/Pagination.jsx';
+import { dialable } from '../../lib/phone.js';
 
 const TABS = [
   { key: 'members', label: 'Members', icon: Users },
@@ -221,7 +222,7 @@ export default function MembersDesk({ members, signups, rewards, bookings, onOpe
                     ))}
                   </ul>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <a href={`tel:${String(c.phone).replace(/[^\d]/g, '')}`} className="btn-line btn-sm">
+                    <a href={`tel:${dialable(String(c.phone).replace(/[^\d]/g, ''))}`} className="btn-line btn-sm">
                       <Phone size={13} /> Call
                     </a>
                     <a

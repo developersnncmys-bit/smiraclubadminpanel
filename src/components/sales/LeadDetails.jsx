@@ -11,6 +11,7 @@ import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Field from '../ui/Field.jsx';
 import LeadTaskForm from './LeadTaskForm.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
+import { dialable } from '../../lib/phone.js';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 
@@ -88,7 +89,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const standing = held ? membershipStanding(held.signup) : null;
 
   const quick = [
-    { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${digits}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
+    { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
     { icon: Mail, tone: 'bg-sky-500', label: 'Email', run: () => { window.location.href = `mailto:${lead.email}`; logActivity(lead.id, `Emailed ${lead.name}`, 'email'); } },
     { icon: MessageCircle, tone: 'bg-emerald-500', label: 'WhatsApp', run: () => { window.open(`https://wa.me/${digits}`, '_blank'); logActivity(lead.id, 'Messaged on WhatsApp', 'whatsapp'); } },
     { icon: Paperclip, tone: 'bg-sky-500', label: 'Attach a file', run: () => toast('File attachments come with the storage work', 'info') },

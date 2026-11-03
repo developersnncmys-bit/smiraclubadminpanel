@@ -21,6 +21,7 @@ import {
   shortInr,
 } from '../../data/mockData.js';
 import Paged from '../../components/ui/Pagination.jsx';
+import { dialable } from '../../lib/phone.js';
 
 const confirmTone = {
   'Waiting for hotel': 'amber',
@@ -454,7 +455,7 @@ export default function BookingOverview({ rows, invoices = [], signups = [], onO
                             <button className="btn-line btn-sm" onClick={() => actions.note(`Sent to ${b.hotel}`)}>
                               <Send size={13} /> Send
                             </button>
-                            <a href={`tel:${String(b.vendorContact?.phone || '').replace(/[^\d+]/g, '')}`} className="icon-btn h-8 w-8" title="Call the hotel">
+                            <a href={`tel:${dialable(String(b.vendorContact?.phone || '').replace(/[^\d+]/g, ''))}`} className="icon-btn h-8 w-8" title="Call the hotel">
                               <Phone size={13} />
                             </a>
                             <button className="btn-line btn-sm" onClick={() => actions.note('Confirmation upload comes with the storage work')}>

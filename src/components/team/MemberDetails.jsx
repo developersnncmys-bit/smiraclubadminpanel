@@ -24,6 +24,7 @@ import { hoursWorked, mapLink, timeOf, useAttendanceDay } from '../../lib/attend
 import AttendanceEdit from './AttendanceEdit.jsx';
 import AttendanceCalendar from './AttendanceCalendar.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
+import { dialable } from '../../lib/phone.js';
 
 const liveDot = {
   Online: 'bg-emerald-500',
@@ -163,7 +164,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
     score >= 90 ? 'text-emerald-600' : score >= 75 ? 'text-sky-600' : score >= 60 ? 'text-amber-600' : 'text-rose-600';
 
   const quick = [
-    { icon: Phone, short: 'Call', label: 'Call', run: () => { window.location.href = `tel:${phone}`; } },
+    { icon: Phone, short: 'Call', label: 'Call', run: () => { window.location.href = `tel:${dialable(phone)}`; } },
     { icon: MessageCircle, short: 'WhatsApp', label: 'WhatsApp', run: () => window.open(`https://wa.me/${phone}`, '_blank') },
     { icon: Mail, short: 'Email', label: 'Email', run: () => { window.location.href = `mailto:${m.email}`; } },
     { icon: ClipboardPlus, short: 'Task', label: 'Assign a task', run: () => toast(`Task assigned to ${m.name.split(' ')[0]}`) },

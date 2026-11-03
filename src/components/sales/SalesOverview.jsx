@@ -25,6 +25,7 @@ import {
 } from '../../data/mockData.js';
 import Paged from '../../components/ui/Pagination.jsx';
 import { dailyTrend } from '../../lib/trend.js';
+import { dialable } from '../../lib/phone.js';
 
 const OPEN = enquiryStatuses.filter((s) => !['Won', 'Lost'].includes(s));
 
@@ -706,7 +707,7 @@ export default function SalesOverview({ view = 'Pipeline', rows, bookings, invoi
                     {e.priority || 'Low'}
                   </Badge>
                   <span className="flex shrink-0 gap-1.5">
-                    <a href={`tel:${String(e.phone).replace(/[^\d]/g, '')}`} className="icon-btn h-8 w-8" title="Call">
+                    <a href={`tel:${dialable(String(e.phone).replace(/[^\d]/g, ''))}`} className="icon-btn h-8 w-8" title="Call">
                       <Phone size={13} />
                     </a>
                     <a

@@ -49,6 +49,7 @@ import FlowBuilder from '../components/whatsapp/FlowBuilder.jsx';
 import ConnectWhatsApp from '../components/whatsapp/ConnectWhatsApp.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import Table from '../components/ui/Table.jsx';
+import { dialable } from '../lib/phone.js';
 
 const SECTIONS = [
   'Connect number',
@@ -809,7 +810,7 @@ export default function Whatsapp() {
                   <p className="mt-3 font-display text-base font-extrabold text-ink-900">{open.name}</p>
                   <p className="num text-sm text-ink-500">{open.phone}</p>
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    <a href={`tel:${open.phone.replace(/[^\d]/g, '')}`} className="icon-btn h-9 w-9 disabled:opacity-40">
+                    <a href={`tel:${dialable(open.phone.replace(/[^\d]/g, ''))}`} className="icon-btn h-9 w-9 disabled:opacity-40">
                       <Phone size={15} />
                     </a>
                     <a

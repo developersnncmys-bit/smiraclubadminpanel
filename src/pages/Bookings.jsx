@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { bookingStatusTone, bookingTypes, bookingSources, inr, shortInr } from '../data/mockData.js';
 import { downloadCsv } from '../lib/csv.js';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
+import { dialable } from '../lib/phone.js';
 
 const STATUSES = ['Confirmed', 'Part paid', 'Pending', 'Completed', 'Cancelled'];
 
@@ -630,7 +631,7 @@ export default function Bookings() {
                         icon={Zap}
                         drop="up"
                         items={[
-                          phone && { label: 'Call', icon: Phone, href: `tel:${phone}` },
+                          phone && { label: 'Call', icon: Phone, href: `tel:${dialable(phone)}` },
                           phone && {
                             label: 'WhatsApp',
                             icon: MessageCircle,

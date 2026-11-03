@@ -22,6 +22,7 @@ import Stat from '../ui/Stat.jsx';
 import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
+import { dialable } from '../../lib/phone.js';
 
 const digits = (value) => String(value || '').replace(/[^\d]/g, '');
 
@@ -141,7 +142,7 @@ export default function BookingDetails({
 
               <div className="mt-4 flex justify-center gap-2">
                 <button
-                  onClick={() => { window.location.href = `tel:${phone}`; }}
+                  onClick={() => { window.location.href = `tel:${dialable(phone)}`; }}
                   disabled={!phone}
                   title="Call"
                   className="icon-btn h-9 w-9 disabled:opacity-40"

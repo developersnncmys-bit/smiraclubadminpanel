@@ -6,7 +6,7 @@ import { useApp } from '../../store/AppStore.jsx';
 import { FIXED_STAGES, saveLeadStages, stageTone } from '../../lib/leadStages.js';
 
 /**
- * Move stage → Customize: add, rename, reorder or take out lead stages.
+ * Move status → Customize: add, rename, reorder or take out lead stages.
  *
  * Each row remembers the name it started with, so a renamed stage takes
  * its leads along on save. New, Won and Lost cannot be renamed or taken
@@ -36,8 +36,8 @@ export default function LeadStagesEditor({ open, onClose, stages, leads = [] }) 
   const fixed = (r) => FIXED_STAGES.includes(r.was);
   const names = rows.map((r) => r.name.trim().toLowerCase());
   const problem =
-    rows.some((r) => !r.name.trim()) ? 'A stage needs a name' :
-    names.some((n, i) => names.indexOf(n) !== i) ? 'Two stages have the same name' : '';
+    rows.some((r) => !r.name.trim()) ? 'A status needs a name' :
+    names.some((n, i) => names.indexOf(n) !== i) ? 'Two statuses have the same name' : '';
 
   const edit = (i, name) => setRows((list) => list.map((r, j) => (j === i ? { ...r, name } : r)));
   const move = (i, by) =>
@@ -52,7 +52,7 @@ export default function LeadStagesEditor({ open, onClose, stages, leads = [] }) 
   const drop = (i) => {
     const r = rows[i];
     if (r.was && counts[r.was]) {
-      toast(`"${r.was}" has ${counts[r.was]} lead(s) — move them to another stage first`, 'danger');
+      toast(`"${r.was}" has ${counts[r.was]} lead(s) — move them to another status first`, 'danger');
       return;
     }
     setRows((list) => list.filter((_, j) => j !== i));
@@ -61,7 +61,7 @@ export default function LeadStagesEditor({ open, onClose, stages, leads = [] }) 
     const n = fresh.trim();
     if (!n) return;
     if (names.includes(n.toLowerCase())) {
-      toast('That stage is already there', 'danger');
+      toast('That status is already there', 'danger');
       return;
     }
     // In before Won and Lost.
@@ -77,7 +77,7 @@ export default function LeadStagesEditor({ open, onClose, stages, leads = [] }) 
         .filter((r) => r.was && r.name.trim() !== r.was)
         .map((r) => ({ from: r.was, to: r.name.trim() }));
       const moved = await saveLeadStages(rows.map((r) => r.name.trim()), renames);
-      toast(moved ? `Stages saved · ${moved} lead(s) moved to the new names` : 'Stages saved');
+      toast(moved ? `Statuses saved · ${moved} lead(s) moved to the new names` : 'Statuses saved');
       if (moved) pull?.('enquiries');
       onClose();
     } catch (err) {
@@ -91,14 +91,14 @@ export default function LeadStagesEditor({ open, onClose, stages, leads = [] }) 
     <Modal
       open={open}
       onClose={onClose}
-      title="Customize stages"
-      subtitle="Add, rename or reorder the stages a lead moves through"
+      title="Customize statuses"
+      subtitle="Add, rename or reorder the statuses a lead moves through"
       size="md"
       footer={
         <>
           <button className="btn-line" onClick={onClose}>Cancel</button>
           <button className="btn-action" onClick={save} disabled={saving || Boolean(problem)}>
-            {saving && <Loader2 size={15} className="animate-spin" />} Save stages
+            {saving && <Loader2 size={15} className="animate-spin" />} Save statuses
           </button>
         </>
       }
@@ -140,14 +140,14 @@ export default function LeadStagesEditor({ open, onClose, stages, leads = [] }) 
       <div className="mt-4 flex gap-2">
         <input
           className="input flex-1"
-          placeholder="New stage, e.g. Payment pending"
+          placeholder="New status, e.g. Payment pending"
           value={fresh}
           maxLength={40}
           onChange={(e) => setFresh(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
         />
         <button className="btn-line" onClick={add} disabled={!fresh.trim()}>
-          <Plus size={15} /> Add stage
+          <Plus size={15} /> Add status
         </button>
       </div>
 
@@ -155,7 +155,7 @@ export default function LeadStagesEditor({ open, onClose, stages, leads = [] }) 
         <p className="mt-3 text-xs font-semibold text-rose-600">{problem}</p>
       ) : (
         <p className="mt-3 text-xs text-ink-400">
-          Renaming a stage moves its leads to the new name. New, Won and Lost are fixed.
+          Renaming a status moves its leads to the new name. New, Won and Lost are fixed.
         </p>
       )}
     </Modal>

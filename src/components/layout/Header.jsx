@@ -173,11 +173,11 @@ export default function Header({ onOpenMobile }) {
     <header className="z-30 shrink-0 bg-white">
       {/* Row 1 — brand, section tabs, tools */}
       <div className="flex items-center gap-2 border-b border-ink-900/[0.07] px-3 sm:gap-3 sm:px-5">
-        <NavLink to="/" className="my-2.5 flex shrink-0 items-center" aria-label="Smira Club — dashboard">
-          <Brand className="h-9 sm:h-11" />
+        <NavLink to="/" className="my-2.5 flex min-w-0 shrink items-center" aria-label="Smira Club — dashboard">
+          <Brand className="h-8 max-w-full sm:h-11" />
         </NavLink>
 
-        <div className="ml-auto flex items-center gap-2 py-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 py-2 sm:gap-2">
           {/* Which slice of the business every page should show */}
           <div className="relative hidden xl:block" ref={rangeRef}>
             <CalendarRange size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
@@ -400,8 +400,8 @@ export default function Header({ onOpenMobile }) {
             )}
           </div>
 
-          {/* Account */}
-          <div className="relative" ref={menuRef}>
+          {/* Account — on a phone it is the Account tab at the bottom instead. */}
+          <div className="relative hidden lg:block" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((o) => !o)}
               className="flex items-center gap-2 rounded-lg border border-ink-900/10 bg-white py-1 pl-1 pr-2 text-left shadow-xs transition hover:border-ink-900/20 hover:bg-surface-soft"

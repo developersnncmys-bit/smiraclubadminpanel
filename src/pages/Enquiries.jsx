@@ -967,7 +967,7 @@ export default function Enquiries() {
                       Call, WhatsApp, Details, Payment and Send used to sit
                       here as five buttons in a row. On anything narrower
                       than a wide desktop they wrapped onto a second line
-                      and pushed Move stage — the one thing the desk is on
+                      and pushed Move status — the one thing the desk is on
                       this card to do — below the fold of it.
                     */}
                     <div className="mt-3 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -977,11 +977,10 @@ export default function Enquiries() {
                         drop="up"
                         items={actionsFor(r)}
                       />
-                      {!['Won', 'Lost'].includes(r.status) && (
-                        <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([r.id])}>
-                          <Tag size={13} /> Move stage
-                        </button>
-                      )}
+                      {/* On every lead — a Lost or Won one can be moved back too. */}
+                      <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([r.id])}>
+                        <Tag size={13} /> Move status
+                      </button>
                     </div>
                   </article>
                 );
@@ -1142,7 +1141,7 @@ export default function Enquiries() {
       <Modal
         open={Boolean(statusFor)}
         onClose={() => setStatusFor(null)}
-        title="Move stage"
+        title="Move status"
         subtitle={`${statusFor?.length || 0} lead(s) selected`}
         size="sm"
       >
@@ -1165,7 +1164,7 @@ export default function Enquiries() {
           className="btn-line btn-sm mt-4 w-full justify-center"
           onClick={() => { setStatusFor(null); setEditStages(true); }}
         >
-          <Settings2 size={14} /> Customize stages
+          <Settings2 size={14} /> Customize statuses
         </button>
       </Modal>
 

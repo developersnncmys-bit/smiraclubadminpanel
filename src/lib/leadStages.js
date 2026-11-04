@@ -5,10 +5,10 @@ import { enquiryStatuses, statusTone } from '../data/mockData.js';
 /**
  * Lead stages.
  *
- * The desk can add, rename and reorder stages from Move stage → Customize.
+ * The desk can add, rename and reorder stages from Move status → Customize.
  * The list lives on the server (GET/PUT /leads/stages) and is shared by
  * every page here, so a stage added once shows up in the filters, the
- * board and every Move stage menu at the same moment. New, Won and Lost are
+ * board and every Move status menu at the same moment. New, Won and Lost are
  * fixed: a lead starts at New and the reports count Won and Lost.
  */
 

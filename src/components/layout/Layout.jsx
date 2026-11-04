@@ -24,13 +24,13 @@ export default function Layout() {
     // phone the tab bar along the bottom. Pinned to the screen (fixed, inset
     // 0) so the page never scrolls the frame itself — only the middle
     // scrolls, and the header and tab bar stay where they are.
-    <div ref={shell} className="fixed inset-0 flex flex-col bg-surface-base bg-app-aurora">
+    <div ref={shell} className="fixed inset-0 flex flex-col overflow-x-hidden bg-surface-base bg-app-aurora">
       <Header onOpenMobile={() => setMobileOpen(true)} />
 
       <div className="flex min-h-0 flex-1">
         <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
 
-        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
           <main key={pathname} className="mx-auto max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6 lg:py-8">
             <Outlet />
           </main>

@@ -499,6 +499,26 @@ export function AppProvider({ children }) {
     [nextId, toast, live, showSaved]
   );
 
+  /**
+   * Leads an automation rule changed on the server, read again so the
+   * screen shows what the rule did (a new status, owner or folder). Only
+   * those leads — never the whole list of forty thousand.
+   */
+  const refreshLeads = useCallback(async (serverIds = []) => {
+    const ids = [...new Set(serverIds)].slice(0, 100);
+    if (!ids.length) return;
+    const got = await Promise.allSettled(ids.map((id) => api.get(`/leads/${id}`)));
+    const fresh = new Map(
+      got.filter((r) => r.status === 'fulfilled' && r.value?.data).map((r) => [String(r.value.data._id), fromApi('enquiries', r.value.data)])
+    );
+    if (!fresh.size) return;
+    setDb((d) => ({
+      ...d,
+      enquiries: d.enquiries.map((e) => (e._id && fresh.has(String(e._id)) ? { ...e, ...fresh.get(String(e._id)) } : e)),
+    }));
+    toast(`Automation ran on ${serverIds.length} lead(s)`, 'info');
+  }, [toast]);
+
   const update = useCallback(
     (collection, id, patch, { silent = false, message } = {}) => {
       const before = (dbRef.current[collection] || []).find((r) => r.id === id) || null;
@@ -515,8 +535,9 @@ export function AppProvider({ children }) {
       if (live && ADAPTERS[collection] && before?._id) {
         const body = toApi(collection, patch, lookups());
         if (Object.keys(body).length) {
-          api.patch(`${pathFor(collection)}/${before._id}`, body).then(() => {
+          api.patch(`${pathFor(collection)}/${before._id}`, body).then((res) => {
             if (!silent) sayItSaved();
+            if (collection === 'enquiries' && res?.automated?.length) refreshLeads(res.automated);
           }).catch((err) => {
             setDb((d) => ({
               ...d,
@@ -532,7 +553,7 @@ export function AppProvider({ children }) {
         sayItSaved();
       }
     },
-    [toast, live, showSaved]
+    [toast, live, showSaved, refreshLeads]
   );
 
   /*
@@ -552,13 +573,15 @@ export function AppProvider({ children }) {
             pull('enquiries');
           }
         });
-      api.post('/leads/bulk', { ids, ...payload }).catch((err) => {
+      api.post('/leads/bulk', { ids, ...payload }).then((res) => {
+        if (res?.automated?.length) refreshLeads(res.automated);
+      }).catch((err) => {
         if (err?.status === 404) return perRecord();
         toast(whyNot(err, 'That change did not save'), 'danger');
         pull('enquiries');
       });
     },
-    [toast, pull]
+    [toast, pull, refreshLeads]
   );
 
   const updateMany = useCallback(

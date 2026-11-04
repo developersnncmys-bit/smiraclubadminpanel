@@ -1166,6 +1166,12 @@ export default function Enquiries() {
         >
           <Settings2 size={14} /> Customize statuses
         </button>
+        <button
+          className="mt-2 flex w-full items-center justify-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"
+          onClick={() => { setStatusFor(null); navigate('/automation'); }}
+        >
+          <Zap size={13} /> What happens automatically after a status change
+        </button>
       </Modal>
 
       <LeadStagesEditor

@@ -46,8 +46,10 @@ import {
 } from '../data/automationData.js';
 import Table from '../components/ui/Table.jsx';
 import { useEndpoint } from '../lib/useEndpoint.js';
+import LeadRules from '../components/automation/LeadRules.jsx';
 
 const SECTIONS = [
+  'Lead rules',
   'Dashboard',
   'Builder',
   'Rules',
@@ -91,7 +93,7 @@ export default function Automation() {
    * said nothing had ever run however many rules were firing. It reads
    * the audit trail the server keeps against automation rules.
    */
-  const { data: logged } = useEndpoint('/automation/history?limit=200', { fallback: [] });
+  const { data: logged } = useEndpoint('/automations/history?limit=200', { fallback: [] });
   const history = useMemo(
     () =>
       (logged || []).map((h) => ({
@@ -103,7 +105,7 @@ export default function Automation() {
       })),
     [logged],
   );
-  const [section, setSection] = useState('Dashboard');
+  const [section, setSection] = useState('Lead rules');
   const [stages, setStages] = useState(seedStages);
   const [sequence, setSequence] = useState(seedSequence);
   const [escalations, setEscalations] = useState(seedEscalations);
@@ -180,6 +182,12 @@ export default function Automation() {
   const failed = history.filter((h) => h.status === 'Failed');
 
   const body = {
+    // The rules the server actually runs on leads — first, because they work.
+    'Lead rules': (
+      <div className="xl:col-span-2">
+        <LeadRules />
+      </div>
+    ),
     Dashboard: (
       <>
         <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
@@ -910,7 +918,7 @@ export default function Automation() {
         <button className="btn-line" onClick={() => setSection('Templates')}>
           Templates
         </button>
-        <button className="btn-action" onClick={() => setSection('Builder')}>
+        <button className="btn-action" onClick={() => setSection('Lead rules')}>
           <Plus size={16} /> New rule
         </button>
       </PageHeader>

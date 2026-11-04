@@ -57,7 +57,7 @@ export function usePaged(rows, initialSize = 10) {
  * Draws nothing at all when everything already fits, so a four-row
  * summary does not grow a page control it will never use.
  */
-export function Pagination({ page, setPage, size, setSize, pages, total, from, to, needed }) {
+export function Pagination({ page, setPage, size, setSize, pages, total, from, to, needed, sizes = SIZES }) {
   if (!needed) return null;
 
   const steps = [
@@ -79,7 +79,7 @@ export function Pagination({ page, setPage, size, setSize, pages, total, from, t
               aria-label="Rows per page"
               className="rounded-lg border border-ink-900/10 bg-white px-2 py-1 text-xs font-semibold text-ink-700"
             >
-              {SIZES.map((n) => (
+              {sizes.map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>

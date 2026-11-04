@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Phone, MessageCircle, FileText, Plus, Upload, Pencil,
@@ -32,6 +32,7 @@ import { stageProbability, inr, shortInr, formatDate } from '../data/mockData.js
 import { useLeadStages, stageTone } from '../lib/leadStages.js';
 import LeadStagesEditor from '../components/sales/LeadStagesEditor.jsx';
 import { downloadCsv } from '../lib/csv.js';
+import { usePaged, Pagination } from '../components/ui/Pagination.jsx';
 import { api } from '../lib/api.js';
 import { when } from '../lib/adapters.js';
 import { findMembership, membershipBadge, membershipStanding } from '../lib/membership.js';
@@ -182,7 +183,6 @@ export default function Enquiries() {
   const [tag, setTag] = useState(null);
   const [onlyUnassigned, setUnassigned] = useState(false);
   /** Cards are drawn thirty at a time; hundreds at once made a phone crawl. */
-  const [shownCount, setShownCount] = useState(30);
   const [action, setAction] = useState(null);
   const act = (kind, context = {}) => setAction({ kind, context });
 
@@ -299,6 +299,9 @@ export default function Enquiries() {
     );
   };
   const listRows = rows.filter(matches);
+  // The cards come in pages, ten to start with.
+  const paged = usePaged(listRows, 10);
+  const cardsTop = useRef(null);
 
   /*
    * The lead lists: everything the other filters leave (time, consultant,
@@ -324,10 +327,6 @@ export default function Enquiries() {
     setUnassigned(r.kind === 'unassigned');
     setSelected([]);
   };
-  // A different list starts from its top.
-  useEffect(() => {
-    setShownCount(30);
-  }, [stage, source, tag, onlyUnassigned, query, period, who, priority]);
 
   // The funnel hands the list a stage; the list says so and can drop it.
   const openStage = (status) => {
@@ -796,7 +795,7 @@ export default function Enquiries() {
           {/* Tick the top 10, 20, 50 or 100 of this list in one go, then act
               on them together — ticking a hundred cards one by one is not work. */}
           {listRows.length > 0 && (
-            <div className="card mt-3 flex flex-wrap items-center gap-2 px-4 py-2.5">
+            <div ref={cardsTop} className="card mt-3 flex scroll-mt-4 flex-wrap items-center gap-2 px-4 py-2.5">
               <span className="text-xs font-bold uppercase tracking-wide text-ink-500">Select</span>
               {[10, 20, 50, 100].filter((n) => n < listRows.length).map((n) => (
                 <button
@@ -805,7 +804,9 @@ export default function Enquiries() {
                   className={`btn-line btn-sm ${selected.length === n ? 'ring-2 ring-brand-300' : ''}`}
                   onClick={() => {
                     setSelected(listRows.slice(0, n).map((r) => r.id));
-                    setShownCount((c) => Math.max(c, n));
+                    // Show them all on one page, so what is ticked is on screen.
+                    if (paged.size < n) paged.setSize(n);
+                    paged.setPage(1);
                   }}
                 >
                   {n}
@@ -841,7 +842,7 @@ export default function Enquiries() {
           {layout === 'cards' && (
             <>
             <div className="mt-4 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-              {listRows.slice(0, shownCount).map((r) => {
+              {paged.pageRows.map((r) => {
                 const plan = planOf(r);
                 const standing = membershipBadge(plan);
                 const chance = Math.round((stageProbability[r.status] || 0) * 100);
@@ -991,13 +992,18 @@ export default function Enquiries() {
                 </div>
               )}
             </div>
-            {listRows.length > shownCount && (
-              <div className="mt-4 flex flex-col items-center gap-1.5">
-                <button type="button" className="btn-line" onClick={() => setShownCount((n) => n + 30)}>
-                  Show 30 more
-                </button>
-                <p className="num text-xs text-ink-500">Showing {shownCount} of {listRows.length}</p>
-              </div>
+            {/* Pages of 10, 20, 50 or 100 cards, and back to the top on each page. */}
+            {paged.needed && (
+            <div className="card mt-4 px-4 pb-3">
+              <Pagination
+                {...paged}
+                sizes={[10, 20, 50, 100]}
+                setPage={(n) => {
+                  paged.setPage(n);
+                  cardsTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+              />
+            </div>
             )}
             </>
           )}

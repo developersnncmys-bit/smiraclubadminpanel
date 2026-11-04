@@ -16,6 +16,7 @@ import InlineForm from '../components/ui/InlineForm.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import MemberDetails from '../components/team/MemberDetails.jsx';
 import KpiDetail from '../components/team/KpiDetail.jsx';
+import AttendanceSwitch from '../components/team/AttendanceSwitch.jsx';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr, liveStatuses, attendanceStates } from '../data/mockData.js';
@@ -147,7 +148,16 @@ function Line({ label, value, tone }) {
  */
 export default function Team() {
   const store = useApp();
-  const { team, tasks, enquiries, create, update, remove, toast, refresh } = store;
+  const { tasks, enquiries, create, update, remove, toast, refresh, auth } = store;
+  /*
+   * A manager (a role that sees its team, branch or everyone) sees the whole
+   * desk. Anybody whose role sees only their own work sees only themselves.
+   */
+  const lastTen = (v) => String(v || '').replace(/\D/g, '').slice(-10);
+  const isMe = (m) =>
+    (auth?.id && String(m._id) === String(auth.id)) || (lastTen(auth?.phone) && lastTen(m.phone) === lastTen(auth?.phone));
+  const seesEveryone = Boolean(auth?.superAdmin) || ['team', 'branch', 'all'].includes(auth?.scope);
+  const team = seesEveryone ? store.team : store.team.filter(isMe);
   const navigate = useNavigate();
   const [action, setAction] = useState(null);
   const act = (kind, context = {}) => setAction({ kind, context });
@@ -464,6 +474,11 @@ export default function Team() {
           back to the same lists the moment it closes. */}
       {!formOpen && (
         <>
+        {/* My own attendance: one ON / OFF switch. */}
+        <div className="mb-4">
+          <AttendanceSwitch />
+        </div>
+
         {/* -- The desk bar: pick a status, or start something (columns A, R) -- */}
         <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
           <h2 className="flex items-center gap-2 font-display text-base font-extrabold text-ink-900">

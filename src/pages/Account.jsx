@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { LogOut, Phone, Mail, ShieldCheck, Building2 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
-import CheckIn from '../components/layout/CheckIn.jsx';
+import AttendanceSwitch from '../components/team/AttendanceSwitch.jsx';
 import AttendanceCalendar from '../components/team/AttendanceCalendar.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { isLive } from '../lib/api.js';
@@ -33,10 +33,11 @@ export default function Account() {
         <Avatar name={auth?.name || 'You'} size="lg" className="mx-auto" />
         <p className="mt-3 font-display text-lg font-extrabold text-ink-900">{auth?.name || 'Signed in'}</p>
         <p className="text-sm text-ink-500">{auth?.role}</p>
-        <div className="mt-4 flex justify-center">
-          <CheckIn />
-        </div>
       </section>
+
+      <div className="mt-4">
+        <AttendanceSwitch />
+      </div>
 
       {rows.length > 0 && (
         <section className="card mt-4 divide-y divide-ink-900/[0.06] overflow-hidden">

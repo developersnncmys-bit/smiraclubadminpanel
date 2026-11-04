@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import {
-  Menu,
   Search,
   Bell,
   RefreshCw,
@@ -174,10 +173,6 @@ export default function Header({ onOpenMobile }) {
     <header className="z-30 shrink-0 bg-white">
       {/* Row 1 — brand, section tabs, tools */}
       <div className="flex items-center gap-2 border-b border-ink-900/[0.07] px-3 sm:gap-3 sm:px-5">
-        <button onClick={onOpenMobile} className="icon-btn my-2.5 h-9 w-9 lg:hidden">
-          <Menu size={18} />
-        </button>
-
         <NavLink to="/" className="my-2.5 flex shrink-0 items-center" aria-label="Smira Club — dashboard">
           <Brand className="h-9 sm:h-11" />
         </NavLink>

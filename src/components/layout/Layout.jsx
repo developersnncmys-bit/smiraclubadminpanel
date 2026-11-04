@@ -20,16 +20,17 @@ export default function Layout() {
   if (!canOpenPath(auth, pathname)) return <Navigate to="/" replace />;
 
   return (
-    // One header across the top, the section rail down the left.
-    // 100dvh, not 100vh: a phone's address bar would otherwise hide the bottom bar.
-    <div ref={shell} className="flex h-[100dvh] flex-col bg-surface-base bg-app-aurora">
+    // One header across the top, the section rail down the left, and on a
+    // phone the tab bar along the bottom. Pinned to the screen (fixed, inset
+    // 0) so the page never scrolls the frame itself — only the middle
+    // scrolls, and the header and tab bar stay where they are.
+    <div ref={shell} className="fixed inset-0 flex flex-col bg-surface-base bg-app-aurora">
       <Header onOpenMobile={() => setMobileOpen(true)} />
 
       <div className="flex min-h-0 flex-1">
         <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
 
-        {/* On a phone the bottom bar covers the last few rows, so leave room for it. */}
-        <div className="min-w-0 flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:pb-0">
+        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain">
           <main key={pathname} className="mx-auto max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6 lg:py-8">
             <Outlet />
           </main>
@@ -40,6 +41,7 @@ export default function Layout() {
         </div>
       </div>
 
+      {/* A row of the frame, not floating over the page, so it cannot scroll away. */}
       <MobileTabBar />
       <Toaster />
       <SavedDialog />

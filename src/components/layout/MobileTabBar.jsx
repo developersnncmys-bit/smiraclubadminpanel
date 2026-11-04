@@ -30,7 +30,7 @@ export default function MobileTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-ink-900/[0.08] bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_20px_-12px_rgba(11,21,36,0.25)] backdrop-blur lg:hidden"
+      className="relative z-30 flex shrink-0 border-t border-ink-900/[0.08] bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_20px_-12px_rgba(11,21,36,0.25)] backdrop-blur lg:hidden"
       aria-label="Main sections"
     >
       {TABS.filter((t) => canOpenModule(auth, t.module)).map(({ to, label, icon: Icon, badgeKey }) => {

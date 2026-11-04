@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { LogOut, Phone, Mail, ShieldCheck, Building2 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
@@ -6,14 +6,17 @@ import CheckIn from '../components/layout/CheckIn.jsx';
 import AttendanceCalendar from '../components/team/AttendanceCalendar.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { isLive } from '../lib/api.js';
+import { navFor } from '../data/nav.js';
 
 /**
  * My account, from the phone's bottom bar: who is signed in, today's
- * check-in, my attendance month, and Sign out.
+ * check-in, every page this role opens (the phone has no side menu), my
+ * attendance month, and Sign out.
  */
 export default function Account() {
   const { auth, signOut } = useApp();
   const navigate = useNavigate();
+  const pages = navFor(auth).flatMap((g) => g.items);
 
   const rows = [
     [Phone, 'Mobile', auth?.phone],
@@ -46,6 +49,28 @@ export default function Account() {
           ))}
         </section>
       )}
+
+      {/* Every page this person may open — on a phone this is the menu. */}
+      <section className="card mt-4 p-4">
+        <p className="eyebrow mb-3">All pages</p>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {pages.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-1.5 rounded-xl border px-1 py-3 text-center text-xs font-semibold transition ${
+                  isActive ? 'border-brand-400 bg-brand-50 text-brand-800' : 'border-ink-900/10 bg-white text-ink-700 hover:border-brand-300'
+                }`
+              }
+            >
+              <Icon size={20} className="text-brand-600" />
+              <span className="leading-tight">{label}</span>
+            </NavLink>
+          ))}
+        </div>
+      </section>
 
       {isLive && (
         <section className="card mt-4 p-4">

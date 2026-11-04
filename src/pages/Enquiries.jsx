@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Phone, MessageCircle, FileText, Plus, Upload, Pencil,
   Trash2, UserCheck, Tag, Crown, LayoutGrid, Rows3,
@@ -168,7 +168,29 @@ export default function Enquiries() {
   const { folders: savedFolders, addFolder } = useLeadFolders();
   const [selected, setSelected] = useState([]);
   const [draft, setDraft] = useState('');
-  const [viewing, setViewing] = useState(null);
+  /*
+   * The open lead lives in the address (?lead=LEAD-123). Opening one from
+   * the list adds a step to the history, so the phone's Back closes the lead
+   * and leaves you on Leads — the history-juggling way kept losing the step
+   * and dropped people on the Dashboard. Next/previous lead replaces the
+   * step instead of adding one. A link from Call log or Tasks opens it too.
+   */
+  const location = useLocation();
+  const leadId = params.get('lead');
+  const viewing = leadId ? enquiries.find((e) => e.id === leadId || e._id === leadId) || null : null;
+  const setViewing = (r) => {
+    const next = new URLSearchParams(params);
+    if (r) {
+      next.set('lead', r.id);
+      setParams(next, { replace: Boolean(leadId), state: { leadOpen: true } });
+    } else if (leadId) {
+      if (location.state?.leadOpen) navigate(-1);
+      else {
+        next.delete('lead');
+        setParams(next, { replace: true });
+      }
+    }
+  };
   /** Where the lead panel opens: its activity, or straight on adding a task. */
   const [startOn, setStartOn] = useState('');
   const [section, setSection] = useState('Leads');
@@ -196,17 +218,6 @@ export default function Enquiries() {
     }
   }, [params, setParams]);
 
-  // A ?lead=LEAD-123 link (from the call log or a task) opens that lead.
-  useEffect(() => {
-    const id = params.get('lead');
-    if (!id) return;
-    const found = enquiries.find((e) => e.id === id || e._id === id);
-    if (found) {
-      setViewing(found);
-      params.delete('lead');
-      setParams(params, { replace: true });
-    }
-  }, [params, setParams, enquiries]);
 
   const all = byOwner(enquiries, owner);
   /** Every folder: the ones made here, and every tag a lead already carries. */
@@ -1322,7 +1333,7 @@ export default function Enquiries() {
       />
 
       <LeadDetails
-        lead={viewing && rows.find((r) => r.id === viewing.id)}
+        lead={viewing && (rows.find((r) => r.id === viewing.id) || viewing)}
         list={rows}
         startOn={startOn}
         onClose={() => { setViewing(null); setStartOn(''); }}

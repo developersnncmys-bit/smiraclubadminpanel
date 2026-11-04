@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Check } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import {
-  permissionModules, permissionLevels, dataScopes, approvalRights, roleDashboards, roles,
+  permissionModules, permissionLevels, dataScopes, approvalRights, roleDashboards, roles, modulePages,
 } from '../../data/usersData.js';
 
 /** A tick box, the same one the rest of the panel's dialogs use. */
@@ -132,14 +132,42 @@ export default function RoleBuilder({ role, roleNames, onClose, onSave }) {
         </label>
       </div>
 
-      <p className="eyebrow mt-5">Which modules it may open</p>
-      <div className="mt-2 grid gap-2 sm:grid-cols-3">
-        {permissionModules.map((m) => (
-          <Pick key={m} on={form.modules.includes(m)} onToggle={() => toggle('modules', m)}>{m}</Pick>
-        ))}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
+        <p className="eyebrow">Which pages it can open</p>
+        <span className="flex gap-2">
+          <button type="button" className="text-xs font-bold text-brand-700 hover:underline" onClick={() => set('modules', [...permissionModules])}>All</button>
+          <button type="button" className="text-xs font-bold text-ink-500 hover:underline" onClick={() => set('modules', [])}>None</button>
+        </span>
       </div>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {permissionModules.map((m) => {
+          const on = form.modules.includes(m);
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => toggle('modules', m)}
+              className={`flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition ${
+                on ? 'border-brand-400 bg-brand-50' : 'border-ink-900/[0.07] hover:bg-surface-soft'
+              }`}
+            >
+              <span
+                className={`mt-0.5 grid shrink-0 place-items-center rounded border ${on ? 'border-brand-600 bg-brand-600 text-white' : 'border-ink-900/20 bg-white'}`}
+                style={{ height: 18, width: 18 }}
+              >
+                {on && <Check size={12} strokeWidth={3} />}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-ink-900">{modulePages[m]?.title || m}</span>
+                <span className="block text-xs text-ink-500">{modulePages[m]?.pages}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1.5 text-xs text-ink-400">Dashboard and the user&apos;s own Account are always open.</p>
 
-      <p className="eyebrow mt-5">What it may do</p>
+      <p className="eyebrow mt-5">What it may do on those pages</p>
       <div className="mt-2 grid gap-2 sm:grid-cols-3">
         {permissionLevels.map((p) => (
           <Pick key={p} on={form.can.includes(p)} onToggle={() => toggle('can', p)}>{p}</Pick>
@@ -160,6 +188,15 @@ export default function RoleBuilder({ role, roleNames, onClose, onSave }) {
         ))}
       </div>
 
+      <p className="mt-1.5 text-xs text-ink-400">
+        {{
+          Own: 'Only their own leads and work — on Team Status they see only themselves.',
+          'Own team': 'Their team’s leads and work, and the whole team on Team Status.',
+          'Own branch': 'Everything in their branch.',
+          All: 'Everything, every branch.',
+        }[form.scope]}
+      </p>
+
       <p className="eyebrow mt-5">What it may approve</p>
       <div className="mt-2 grid gap-2 sm:grid-cols-4">
         {approvalRights.map((r) => (
@@ -168,8 +205,9 @@ export default function RoleBuilder({ role, roleNames, onClose, onSave }) {
       </div>
 
       <p className="mt-5 rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-600">
-        {form.name || 'This role'} reports to {form.reportsTo}, opens on {form.dashboard}, can reach{' '}
-        {form.modules.length} module{form.modules.length === 1 ? '' : 's'}, sees {form.scope.toLowerCase()} data, and
+        {form.name || 'This role'} reports to {form.reportsTo}, opens on {form.dashboard}, can open{' '}
+        {form.modules.length ? form.modules.map((m) => modulePages[m]?.title || m).join(', ') : 'only the Dashboard'}, may{' '}
+        {form.can.length ? form.can.join(', ').toLowerCase() : 'only look'}, sees {form.scope.toLowerCase()} data, and
         approves {form.approvals.length ? form.approvals.join(', ').toLowerCase() : 'nothing'}.
       </p>
     </Modal>

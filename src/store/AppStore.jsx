@@ -733,6 +733,22 @@ export function AppProvider({ children }) {
     since: new Date().toISOString(),
   });
 
+  /*
+   * The role is read again each time the panel opens, so a change made in
+   * Users & Roles (a page given or taken away, how far they can see) takes
+   * effect on the next refresh instead of only at the next sign-in.
+   */
+  useEffect(() => {
+    if (!live || !getToken()) return;
+    api
+      .me()
+      .then((r) => {
+        if (r?.data) setAuth((a) => (a ? { ...a, ...sessionFrom(r.data), since: a.since } : a));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live]);
+
   /** Asks the API to text a code to a registered number. */
   const requestOtp = useCallback((phone) => api.requestOtp(phone), []);
 

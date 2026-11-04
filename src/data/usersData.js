@@ -38,7 +38,7 @@ export const dataScopes = ['Own', 'Own team', 'Own branch', 'All'];
 /** What a role may sign off on. */
 export const approvalRights = ['Membership', 'Refund', 'Discount', 'Payment'];
 
-/** The nine modules a role is switched on or off against. */
+/** The modules a role is switched on or off against — the server's own list. */
 export const permissionModules = [
   'CRM',
   'Membership',
@@ -49,7 +49,27 @@ export const permissionModules = [
   'Vendors',
   'WhatsApp',
   'Reports',
+  'Users',
+  'Settings',
 ];
+
+/**
+ * What each module opens, in the panel's own page names — a role is given
+ * pages, and "Vendors" or "Customer" meant nothing to whoever was setting it.
+ */
+export const modulePages = {
+  CRM: { title: 'Sales & Leads', pages: 'Sales & Leads, Offers & Promotions, Blog' },
+  Membership: { title: 'Memberships', pages: 'Membership plans and sign-ups' },
+  Booking: { title: 'Booking', pages: 'Bookings' },
+  Finance: { title: 'Money', pages: 'Revenue, Payment' },
+  Customer: { title: 'Members & support', pages: 'Members, Support / Complaints, Rewards' },
+  Inventory: { title: 'Travel Inventory', pages: 'Hotels, packages and stock' },
+  Vendors: { title: 'Partners', pages: 'Partners and their listings' },
+  WhatsApp: { title: 'WhatsApp', pages: 'WhatsApp inbox and the linked number' },
+  Reports: { title: 'Reports', pages: 'Report & Analytics' },
+  Users: { title: 'Team & admin', pages: 'Team Status, Automation, Users & Roles' },
+  Settings: { title: 'Settings', pages: 'Customize lead statuses, folders' },
+};
 
 /** Every screen the role system controls, and what sits inside it. */
 export const moduleAccess = {

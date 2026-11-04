@@ -11,6 +11,19 @@
 
   body {
     @apply bg-surface-base text-ink-800 font-sans antialiased;
+    /* No double-tap zoom, and no sideways wobble on a phone. */
+    touch-action: manipulation;
+    overflow-x: hidden;
+  }
+
+  /* An iPhone zooms in on any box with text under 16px the moment it is
+     tapped, and does not zoom back. On phones every box is 16px. */
+  @media (max-width: 1023px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 
   h1,

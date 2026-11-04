@@ -13,6 +13,7 @@ import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 import LeadTaskForm from './LeadTaskForm.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
 import { dialable } from '../../lib/phone.js';
+import { api } from '../../lib/api.js';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 
@@ -42,6 +43,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const [newest, setNewest] = useState(true);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
+  const [waText, setWaText] = useState('');
+  const [waSending, setWaSending] = useState(false);
   const [editing, setEditing] = useState(null); // 'status' | 'label' | 'owner'
 
   // The panel stays mounted between leads: start each one where it was asked to.
@@ -82,7 +85,6 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const ordered = newest ? [...trail].reverse() : trail;
   // Filed against this lead, or (older tasks) under its person's name.
   const leadTasks = tasks.filter((t) => (lead._id && t.lead === lead._id) || t.customer === lead.name);
-  const notes = trail.filter((a) => a.kind === 'note');
   const leadQuotes = quotations.filter((q) => q.customer === lead.name);
 
   const digits = String(lead.phone).replace(/[^\d]/g, '');
@@ -115,12 +117,35 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
     toast('Activity added');
   };
 
+  // Activities, WhatsApp, Tasks, Info — notes are in Activities with the rest.
+  const chats = trail.filter((a) => a.kind === 'whatsapp');
   const tabs = [
     { key: 'Activities', count: trail.length },
+    { key: 'WhatsApp', count: chats.length },
     { key: 'Tasks', count: leadTasks.length },
-    { key: 'Notes', count: notes.length },
     { key: 'Info', count: null },
   ];
+
+  /**
+   * A WhatsApp message from the lead's own tab: through the desk's linked
+   * number when it is connected, otherwise WhatsApp opens with the message
+   * typed in. Either way it is logged on the lead.
+   */
+  const sendWhatsApp = async () => {
+    const text = waText.trim();
+    if (!text) return;
+    setWaSending(true);
+    try {
+      await api.post('/whatsapp/gateway/send', { phone: lead.phone, text });
+      toast(`WhatsApp sent to ${lead.name}`);
+    } catch {
+      window.open(`https://wa.me/${digits}?text=${encodeURIComponent(text)}`, '_blank');
+    } finally {
+      logActivity(lead.id, `WhatsApp: ${text}`, 'whatsapp');
+      setWaText('');
+      setWaSending(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -128,10 +153,10 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
 
       <aside className="flex h-full w-full max-w-[1080px] flex-col bg-surface-base shadow-lift">
         {/* Header */}
-        <header className="flex items-center gap-3 border-b border-ink-900/[0.07] bg-white px-5 py-3.5">
-          <h2 className="font-display text-lg font-extrabold text-ink-900">Lead details</h2>
+        <header className="flex items-center gap-2 border-b border-ink-900/[0.07] bg-white px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3.5">
+          <h2 className="truncate font-display text-base font-extrabold text-ink-900 sm:text-lg">Lead details</h2>
           <div className="ml-auto flex items-center gap-2">
-            <span className="num text-sm font-semibold text-ink-500">
+            <span className="num hidden text-sm font-semibold text-ink-500 sm:inline">
               {index + 1} / {list.length}
             </span>
             <button
@@ -154,7 +179,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto overflow-x-hidden p-3 sm:gap-5 sm:p-5 lg:grid-cols-[360px_minmax(0,1fr)]">
           {/* Who they are */}
           <section className="card h-fit overflow-hidden">
             <div className="px-4 pb-4 pt-5 text-center">
@@ -300,12 +325,12 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
 
           {/* What has happened */}
           <section className="card flex min-h-0 flex-col">
-            <div className="flex flex-wrap items-center gap-2 border-b border-ink-900/[0.07] p-3.5">
+            <div className="flex items-center gap-1.5 overflow-x-auto border-b border-ink-900/[0.07] p-2.5 sm:gap-2 sm:p-3.5">
               {tabs.map((t) => (
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`rounded-lg px-3.5 py-2 text-sm font-bold transition ${
+                  className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold transition sm:px-3.5 ${
                     tab === t.key ? 'bg-brand-600 text-white' : 'text-ink-600 hover:bg-surface-soft'
                   }`}
                 >
@@ -313,8 +338,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                   {t.count !== null && ` (${t.count})`}
                 </button>
               ))}
-              <button className="btn-action btn-sm ml-auto" onClick={() => setAdding((a) => !a)}>
-                <Plus size={14} /> Add activity
+              <button className="btn-action btn-sm ml-auto shrink-0 whitespace-nowrap" onClick={() => setAdding((a) => !a)}>
+                <Plus size={14} /> Activity
               </button>
             </div>
 
@@ -334,7 +359,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
               </div>
             )}
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
               {tab === 'Activities' && (
                 <>
                   <button
@@ -424,20 +449,38 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 </div>
               )}
 
-              {tab === 'Notes' && (
-                <ul className="space-y-2.5">
-                  {notes.map((n) => (
-                    <li key={n.id} className="rounded-xl bg-amber-50/70 p-3.5">
-                      <p className="text-sm text-ink-800">{n.text}</p>
-                      <p className="mt-1 text-xs text-ink-500">
-                        {n.who} · {n.at}
-                      </p>
-                    </li>
-                  ))}
-                  {notes.length === 0 && (
-                    <li className="py-10 text-center text-sm text-ink-500">No notes yet.</li>
-                  )}
-                </ul>
+              {tab === 'WhatsApp' && (
+                <div className="flex min-h-full flex-col">
+                  <ul className="flex-1 space-y-2.5">
+                    {chats.map((a) => (
+                      <li key={a.id} className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#DCF8C6] px-3.5 py-2.5">
+                        <p className="whitespace-pre-wrap text-sm text-ink-900">{String(a.text).replace(/^WhatsApp:\s*/, '')}</p>
+                        <p className="mt-1 text-right text-[11px] text-ink-500">{a.who} · {a.at}</p>
+                      </li>
+                    ))}
+                    {chats.length === 0 && (
+                      <li className="py-8 text-center text-sm text-ink-500">No WhatsApp messages with {lead.name} yet.</li>
+                    )}
+                  </ul>
+                  <div className="sticky bottom-0 mt-3 flex items-end gap-2 bg-white pt-2">
+                    <textarea
+                      rows={2}
+                      value={waText}
+                      onChange={(e) => setWaText(e.target.value)}
+                      placeholder={`Message ${lead.name.split(' ')[0]}…`}
+                      className="input min-h-[44px] flex-1 resize-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={sendWhatsApp}
+                      disabled={!waText.trim() || waSending || !lead.phone}
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#25D366] text-white disabled:opacity-50"
+                      title="Send on WhatsApp"
+                    >
+                      <WhatsAppIcon size={20} />
+                    </button>
+                  </div>
+                </div>
               )}
 
               {tab === 'Info' && (
@@ -457,7 +500,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                     ['Quotations', leadQuotes.length ? leadQuotes.map((q) => q.id).join(', ') : 'None'],
                   ].map(([k, v]) => (
                     <div key={k} className="flex items-start gap-4 px-4 py-2.5">
-                      <dt className="w-32 shrink-0 text-xs font-semibold uppercase tracking-wide text-ink-400">
+                      <dt className="w-24 shrink-0 text-xs sm:w-32 font-semibold uppercase tracking-wide text-ink-400">
                         {k}
                       </dt>
                       <dd className="min-w-0 flex-1 text-sm text-ink-800">{v || '—'}</dd>

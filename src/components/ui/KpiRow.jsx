@@ -4,7 +4,8 @@
  * number is really a ratio. Half the height of a full card, so the work on the
  * page starts higher up.
  *
- * items: [{ label, value, hint, tone, icon, progress }]
+ * items: [{ label, value, hint, tone, icon, progress, onClick }]
+ *   onClick  makes the card a button that opens what is behind the number
  *   tone     a text colour class; the icon chip and the bar follow it
  *   progress 0–100; omit it when the number is not a ratio
  */
@@ -33,9 +34,14 @@ export default function KpiRow({ items, cols = 4 }) {
     <div className={`grid grid-cols-2 gap-2 sm:gap-2.5 ${grid}`}>
       {items.map((k) => {
         const skin = SKIN[k.tone] || PLAIN;
+        const Card = k.onClick ? 'button' : 'div';
         const pct = k.progress == null ? null : Math.max(0, Math.min(100, Math.round(k.progress)));
         return (
-          <div key={k.label} className="card card-hover min-w-0 px-3 py-2.5 sm:px-3.5 sm:py-3">
+          <Card
+            key={k.label}
+            {...(k.onClick ? { type: 'button', onClick: k.onClick, title: `See ${k.label.toLowerCase()} by team member` } : {})}
+            className="card card-hover block min-w-0 px-3 py-2.5 text-left sm:px-3.5 sm:py-3"
+          >
             {/* The label owns its line, so it never loses room to the number */}
             <div className="flex items-center gap-2">
               {k.icon && (
@@ -64,7 +70,7 @@ export default function KpiRow({ items, cols = 4 }) {
             )}
 
             {k.hint && <p className="mt-1.5 truncate text-[11px] text-ink-400">{k.hint}</p>}
-          </div>
+          </Card>
         );
       })}
     </div>

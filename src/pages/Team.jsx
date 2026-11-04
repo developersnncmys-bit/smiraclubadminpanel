@@ -15,6 +15,7 @@ import RowMenu from '../components/ui/RowMenu.jsx';
 import InlineForm from '../components/ui/InlineForm.jsx';
 import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import MemberDetails from '../components/team/MemberDetails.jsx';
+import KpiDetail from '../components/team/KpiDetail.jsx';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { inr, shortInr, liveStatuses, attendanceStates } from '../data/mockData.js';
@@ -155,6 +156,7 @@ export default function Team() {
   const [editing, setEditing] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [kpi, setKpi] = useState(null);
   const [query, setQuery] = useState('');
   const [liveFilter, setLiveFilter] = useState('All');
   const [rankBy, setRankBy] = useState('revenue');
@@ -512,12 +514,12 @@ export default function Team() {
           <KpiRow
             cols={6}
             items={[
-              { label: 'Tasks', value: `${tasksDone}/${tasksTotal}`, hint: `${tasksOverdue} overdue`, icon: ListChecks, progress: pct(tasksDone, tasksTotal), tone: tasksOverdue ? 'text-rose-600' : 'text-ink-900' },
-              { label: 'Calls', value: calls, hint: `${connected} connected`, icon: PhoneCall, progress: pct(connected, calls) },
-              { label: 'Follow-ups', value: `${fuDone}/${fuDue}`, hint: `${fuOverdue} overdue`, icon: CalendarClock, progress: pct(fuDone, fuDue), tone: fuOverdue ? 'text-amber-600' : 'text-ink-900' },
-              { label: 'Presentations', value: presDone, hint: `${presConv} converted`, icon: Presentation, progress: pct(presConv, presDone) },
-              { label: 'Closings', value: closings, hint: `${visitsDone} visits completed`, icon: Trophy, tone: 'text-emerald-600' },
-              { label: 'Revenue', value: shortInr(revenue), hint: `of ${shortInr(target)} target`, icon: IndianRupee, progress: achievement, tone: 'text-brand-700' },
+              { onClick: () => setKpi('Tasks'), label: 'Tasks', value: `${tasksDone}/${tasksTotal}`, hint: `${tasksOverdue} overdue`, icon: ListChecks, progress: pct(tasksDone, tasksTotal), tone: tasksOverdue ? 'text-rose-600' : 'text-ink-900' },
+              { onClick: () => setKpi('Calls'), label: 'Calls', value: calls, hint: `${connected} connected`, icon: PhoneCall, progress: pct(connected, calls) },
+              { onClick: () => setKpi('Follow-ups'), label: 'Follow-ups', value: `${fuDone}/${fuDue}`, hint: `${fuOverdue} overdue`, icon: CalendarClock, progress: pct(fuDone, fuDue), tone: fuOverdue ? 'text-amber-600' : 'text-ink-900' },
+              { onClick: () => setKpi('Presentations'), label: 'Presentations', value: presDone, hint: `${presConv} converted`, icon: Presentation, progress: pct(presConv, presDone) },
+              { onClick: () => setKpi('Closings'), label: 'Closings', value: closings, hint: `${visitsDone} visits completed`, icon: Trophy, tone: 'text-emerald-600' },
+              { onClick: () => setKpi('Revenue'), label: 'Revenue', value: shortInr(revenue), hint: `of ${shortInr(target)} target`, icon: IndianRupee, progress: achievement, tone: 'text-brand-700' },
             ]}
           />
         </div>
@@ -1281,6 +1283,15 @@ export default function Team() {
           onClose={() => setAction(null)}
         />
       )}
+
+      {/* What is behind a number in the row of six */}
+      <KpiDetail
+        metric={kpi}
+        team={team}
+        tasks={tasks}
+        onClose={() => setKpi(null)}
+        onOpenMember={(m) => { setKpi(null); setViewing(m); }}
+      />
 
       {/* Employee detail drawer (column T) */}
       {viewing && (

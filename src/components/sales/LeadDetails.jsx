@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  X, Phone, Mail, MessageCircle, Pencil, Share2, FileText, Paperclip, ChevronLeft, ChevronRight, Plus, ArrowRight, Clock, ShoppingCart, CalendarPlus, Crown,
+  X, Phone, Mail, MessageCircle, Pencil, ChevronLeft, ChevronRight, Plus, ArrowRight, Clock, ShoppingCart, CalendarPlus, Crown,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
@@ -44,6 +44,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
   const [waText, setWaText] = useState('');
+  const tabsRef = useRef(null);
   const [waSending, setWaSending] = useState(false);
   const [editing, setEditing] = useState(null); // 'status' | 'label' | 'owner'
 
@@ -91,15 +92,19 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const held = findMembership(lead, memberSignups, memberships);
   const standing = held ? membershipStanding(held.signup) : null;
 
-  // Each in its own app's colour where there is one, and named underneath.
+  // Jump to the tabs (below the card on a phone) and open what was tapped.
+  const openTab = (key, then) => {
+    setTab(key);
+    then?.();
+    setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
+  // The five things the desk does on a lead, named under each icon.
   const quick = [
     { icon: Phone, tone: 'bg-[#34C759]', label: 'Call', title: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
-    { icon: Mail, tone: 'bg-[#EA4335]', label: 'Email', title: 'Email', run: () => { window.location.href = `mailto:${lead.email}`; logActivity(lead.id, `Emailed ${lead.name}`, 'email'); } },
-    { icon: WhatsAppIcon, tone: 'bg-[#25D366]', label: 'WhatsApp', title: 'WhatsApp', run: () => { window.open(`https://wa.me/${digits}`, '_blank'); logActivity(lead.id, 'Messaged on WhatsApp', 'whatsapp'); } },
-    { icon: Paperclip, tone: 'bg-slate-500', label: 'Attach', title: 'Attach a file', run: () => toast('File attachments come with the storage work', 'info') },
+    { icon: WhatsAppIcon, tone: 'bg-[#25D366]', label: 'WhatsApp', title: 'WhatsApp', run: () => openTab('WhatsApp') },
+    { icon: CalendarPlus, tone: 'bg-amber-500', label: 'Task', title: 'Add a task', run: () => openTab('Tasks', () => setTaskForm(true)) },
+    { icon: Plus, tone: 'bg-brand-600', label: 'Activity', title: 'Add an activity', run: () => openTab('Activities', () => setAdding(true)) },
     { icon: Pencil, tone: 'bg-sky-600', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
-    { icon: Share2, tone: 'bg-violet-500', label: 'Share', title: 'Share lead', run: () => toast(`${lead.name} shared with the team`, 'info') },
-    { icon: FileText, tone: 'bg-amber-500', label: 'Quotation', title: 'Create quotation', run: () => { logActivity(lead.id, 'Quotation drafted', 'note'); toast('Quotation draft started'); } },
   ];
 
   const setField = (key, value, text) => {
@@ -189,7 +194,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 {lead.destination} · {lead.pax} pax
               </p>
 
-              <div className="mt-4 grid grid-cols-4 gap-x-1 gap-y-3">
+              <div className="mt-4 grid grid-cols-5 gap-1">
                 {quick.map(({ icon: Icon, tone, label, title, run }) => (
                   <button
                     key={label}
@@ -197,10 +202,10 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                     title={title}
                     className="flex flex-col items-center gap-1 rounded-xl py-1 transition hover:bg-surface-soft"
                   >
-                    <span className={`grid h-12 w-12 place-items-center rounded-full text-white shadow-sm ${tone}`}>
-                      <Icon size={22} />
+                    <span className={`grid h-10 w-10 place-items-center rounded-full text-white shadow-sm ${tone}`}>
+                      <Icon size={18} />
                     </span>
-                    <span className="text-[11px] font-semibold text-ink-700">{label}</span>
+                    <span className="text-[11px] font-semibold leading-tight text-ink-700">{label}</span>
                   </button>
                 ))}
               </div>
@@ -324,7 +329,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
           </section>
 
           {/* What has happened */}
-          <section className="card flex min-h-0 flex-col">
+          <section ref={tabsRef} className="card flex min-h-0 scroll-mt-3 flex-col">
             <div className="flex items-center gap-1.5 overflow-x-auto border-b border-ink-900/[0.07] p-2.5 sm:gap-2 sm:p-3.5">
               {tabs.map((t) => (
                 <button

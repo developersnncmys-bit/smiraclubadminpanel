@@ -6,6 +6,7 @@ import { useApp } from '../../store/AppStore.jsx';
 import { api, isLive } from '../../lib/api.js';
 import { dialable } from '../../lib/phone.js';
 import { REPEATS, TYPES } from './LeadTaskForm.jsx';
+import { useLeadStages } from '../../lib/leadStages.js';
 
 /**
  * Edit Task: one task on a sheet over the page.
@@ -29,7 +30,8 @@ const spell = (day, time) => {
 };
 
 export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
-  const { tasks, team, update, auth, toast, pull } = useApp();
+  const { tasks, team, update, auth, toast, pull, logActivity } = useApp();
+  const stages = useLeadStages();
   // The live row, so a saved note shows straight away.
   const t = (task && tasks.find((x) => x.id === task.id)) || task;
   const [form, setForm] = useState(null);
@@ -47,6 +49,7 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
       repeat: task.repeat || '',
       owner: task.owner || '',
       note: '',
+      leadStatus: lead?.status || '',
       done: ['Completed', 'Cancelled'].includes(task.status) || task.bucket === 'done',
     });
   }, [task]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -67,10 +70,26 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
     if (Number.isNaN(at.getTime())) return toast('Pick a date and time', 'danger');
     setSaving(true);
     try {
-      const text = form.note.trim();
-      if (text && isLive && t._id) await api.post(`/tasks/${t._id}/comments`, { text });
       const member = team.find((m) => m.name === form.owner);
       const nowDone = form.done && !wasDone;
+      const oldAt = new Date(t.dueAt || t.dueIso || 0);
+      const statusChanged = lead && form.leadStatus && form.leadStatus !== lead.status;
+      // What changed, written into the task's notes so the person it is
+      // assigned to and the admin both see who did what.
+      const changes = [
+        statusChanged && `Lead status: ${lead.status} → ${form.leadStatus}`,
+        nowDone && 'Marked as completed',
+        !form.done && wasDone && 'Opened again',
+        Math.abs(at - oldAt) > 59000 && `Time moved to ${spell(form.day, form.time)}`,
+        form.owner !== t.owner && `Assigned to ${form.owner}`,
+        form.type !== t.type && `Type: ${form.type}`,
+      ].filter(Boolean);
+      const text = [form.note.trim(), changes.length ? `(${changes.join(' · ')})` : ''].filter(Boolean).join('\n');
+      if (text && isLive && t._id) await api.post(`/tasks/${t._id}/comments`, { text });
+      if (statusChanged) {
+        update('enquiries', lead.id, { status: form.leadStatus }, { silent: true });
+        logActivity?.(lead.id, `Status updated to ${form.leadStatus} (from task ${t.title})`, 'status');
+      }
       update('tasks', t.id, {
         type: form.type,
         repeat: form.repeat,
@@ -132,6 +151,18 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
       )}
 
       <div className="space-y-3">
+        {lead && (
+          <label className="block">
+            <span className="label">Lead status</span>
+            <select className={input} value={form.leadStatus} onChange={set('leadStatus')}>
+              {[...new Set([form.leadStatus, ...stages].filter(Boolean))].map((x) => <option key={x}>{x}</option>)}
+            </select>
+            {form.leadStatus !== lead.status && (
+              <span className="mt-1 block text-xs font-semibold text-amber-700">Saves to the lead too: {lead.status} → {form.leadStatus}</span>
+            )}
+          </label>
+        )}
+
         <label className="block">
           <span className="label">Task type</span>
           <select className={input} value={form.type} onChange={set('type')}>

@@ -36,7 +36,7 @@ const KINDS = {
  */
 export default function LeadDetails({ lead, list, onClose, onJump, onEdit, startOn }) {
   const enquiryStatuses = useLeadStages();
-  const { activities, tasks, quotations, memberSignups, memberships, logActivity, update, toast } = useApp();
+  const { activities, tasks, team, quotations, memberSignups, memberships, logActivity, update, toast } = useApp();
   // "Add task" from the leads list opens here, on the Tasks tab with the form open.
   const [tab, setTab] = useState(startOn === 'task' ? 'Tasks' : 'Activities');
   const [taskForm, setTaskForm] = useState(startOn === 'task');
@@ -106,6 +106,9 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
     { icon: Plus, tone: 'bg-brand-600', label: 'Activity', title: 'Add an activity', run: () => openTab('Activities', () => setAdding(true)) },
     { icon: Pencil, tone: 'bg-sky-600', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
   ];
+
+  // Who a lead can be given to: everyone on the team who is active.
+  const people = ['Unassigned', ...team.filter((t) => t.status !== 'Inactive').map((t) => t.name)];
 
   const setField = (key, value, text) => {
     update('enquiries', lead.id, { [key]: value }, { silent: true });
@@ -187,9 +190,9 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
         <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto overflow-x-hidden p-3 sm:gap-5 sm:p-5 lg:grid-cols-[360px_minmax(0,1fr)]">
           {/* Who they are */}
           <section className="card h-fit overflow-hidden">
-            <div className="px-4 pb-4 pt-5 text-center">
-              <Avatar name={lead.name} size="lg" className="mx-auto" />
-              <p className="mt-3 font-display text-lg font-extrabold text-ink-900">{lead.name}</p>
+            <div className="px-4 pb-4 pt-4 text-left lg:pt-5 lg:text-center">
+              <Avatar name={lead.name} size="lg" className="mx-auto max-lg:hidden" />
+              <p className="font-display text-xl font-extrabold uppercase leading-tight text-ink-900 lg:mt-3 lg:text-lg lg:normal-case">{lead.name}</p>
               <p className="text-sm text-ink-500">
                 {lead.destination} · {lead.pax} pax
               </p>
@@ -212,15 +215,20 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
 
               <button
                 onClick={() => toast('Add packages and add-ons to this lead', 'info')}
-                className="btn-line mt-4 w-full justify-center"
+                className="btn-line mt-4 hidden w-full justify-center lg:flex"
               >
                 <ShoppingCart size={15} /> Add packages
               </button>
             </div>
 
-            <Field label="Phone" onCopy={() => toast(`${lead.phone} copied`, 'info')}>
-              <span className="num">{lead.phone}</span>
-            </Field>
+            <div className="hidden lg:block">
+              <Field label="Phone" onCopy={() => toast(`${lead.phone} copied`, 'info')}>
+                <span className="num">{lead.phone}</span>
+              </Field>
+            </div>
+
+            {/* Status and label side by side on a phone; the rest is under Info. */}
+            <div className="grid grid-cols-2 lg:block">
 
             <Field label="Status" onEdit={() => setEditing(editing === 'status' ? null : 'status')}>
               {editing === 'status' ? (
@@ -263,6 +271,9 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 <Badge tone="teal">{lead.label || 'None'}</Badge>
               )}
             </Field>
+            </div>
+
+            <div className="hidden lg:block">
 
             <Field label="Membership">
               {held ? (
@@ -308,7 +319,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
             <Field label="Assigned to" onEdit={() => setEditing(editing === 'owner' ? null : 'owner')}>
               {editing === 'owner' ? (
                 <div className="flex flex-wrap gap-1.5">
-                  {['Unassigned', 'Sneha', 'Ritik', 'Kabir'].map((o) => (
+                  {people.map((o) => (
                     <button
                       key={o}
                       onClick={() => setField('owner', o, `Assigned to ${o}`)}
@@ -326,6 +337,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 <span className="font-semibold text-ink-800">{lead.owner}</span>
               )}
             </Field>
+            </div>
           </section>
 
           {/* What has happened */}
@@ -492,6 +504,30 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
               )}
 
               {tab === 'Info' && (
+                <>
+                <div className="mb-3 rounded-xl border border-ink-900/[0.07] px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-ink-400">Assigned to</span>
+                    <button type="button" className="text-xs font-bold text-brand-700" onClick={() => setEditing(editing === 'owner' ? null : 'owner')}>
+                      {editing === 'owner' ? 'Done' : 'Change'}
+                    </button>
+                  </div>
+                  {editing === 'owner' ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {people.map((o) => (
+                        <button
+                          key={o}
+                          onClick={() => setField('owner', o, `Assigned to ${o}`)}
+                          className={`chip ${lead.owner === o ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-600'}`}
+                        >
+                          {o}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={`mt-1 text-sm font-bold ${lead.owner === 'Unassigned' ? 'text-rose-600' : 'text-ink-900'}`}>{lead.owner}</p>
+                  )}
+                </div>
                 <dl className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
                   {[
                     ['Lead ID', lead.id],
@@ -503,8 +539,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                     ['Budget', inr(lead.budget)],
                     ['Source', lead.source],
                     ['Label', lead.label],
-                    ['Owner', lead.owner],
-                    ['Created', lead.created],
+                    ['Membership', held ? `${held.signup.plan}${standing ? ` · ${standing.headline}` : ''}` : 'Not a member'],
+                    ['Date added', lead.created],
                     ['Quotations', leadQuotes.length ? leadQuotes.map((q) => q.id).join(', ') : 'None'],
                   ].map(([k, v]) => (
                     <div key={k} className="flex items-start gap-4 px-4 py-2.5">
@@ -515,6 +551,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                     </div>
                   ))}
                 </dl>
+                </>
               )}
             </div>
           </section>

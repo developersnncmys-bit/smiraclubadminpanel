@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import {
   Search,
@@ -16,12 +16,7 @@ import {
 import Brand from '../ui/Brand.jsx';
 import CheckIn from './CheckIn.jsx';
 import { useApp } from '../../store/AppStore.jsx';
-
-const seedNotifications = [
-  { id: 'n1', title: 'Payment received', body: '₹1,86,000 against INV-4411', when: '1 hr ago', read: false },
-  { id: 'n2', title: 'New enquiry', body: 'Jayashree Patil · Kerala · 4 pax', when: '3 hrs ago', read: false },
-  { id: 'n3', title: 'Visa deadline', body: 'Rahul Menon — Schengen slot pending', when: 'Yesterday', read: true },
-];
+import { markRead, taskFeed } from '../../lib/taskFeed.js';
 
 /** Live wall clock beside the search bar — ticks every second. */
 function LiveClock() {
@@ -101,6 +96,7 @@ export default function Header({ onOpenMobile }) {
     setRange,
     refresh,
     team,
+    tasks,
     settings,
     auth,
     signOut,
@@ -109,7 +105,10 @@ export default function Header({ onOpenMobile }) {
 
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [notifications, setNotifications] = useState(seedNotifications);
+  // Notes and changes on tasks: the person it is assigned to and the admin see them.
+  const [readTick, setReadTick] = useState(0);
+  const notifications = useMemo(() => taskFeed(tasks || [], auth), [tasks, auth, readTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  const readAll = () => { markRead(notifications.map((n) => n.id)); setReadTick((x) => x + 1); };
   const [bellOpen, setBellOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -364,7 +363,7 @@ export default function Header({ onOpenMobile }) {
                 <div className="flex items-center justify-between border-b border-ink-900/[0.07] px-4 py-3">
                   <p className="text-sm font-bold text-ink-900">Notifications</p>
                   <button
-                    onClick={() => setNotifications((n) => n.map((x) => ({ ...x, read: true })))}
+                    onClick={readAll}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"
                   >
                     <CheckCheck size={13} /> Mark all read
@@ -374,13 +373,14 @@ export default function Header({ onOpenMobile }) {
                   {notifications.map((n) => (
                     <li
                       key={n.id}
-                      className={`px-4 py-3 transition hover:bg-surface-soft ${n.read ? 'opacity-60' : ''}`}
+                      onClick={() => { markRead([n.id]); setReadTick((x) => x + 1); setBellOpen(false); navigate(`/tasks?task=${encodeURIComponent(n.task.id)}`); }}
+                      className={`cursor-pointer px-4 py-3 transition hover:bg-surface-soft ${n.read ? 'opacity-60' : ''}`}
                     >
                       <div className="flex items-start gap-2">
                         {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-600" />}
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-ink-900">{n.title}</p>
-                          <p className="text-xs text-ink-500">{n.body}</p>
+                          <p className="line-clamp-3 whitespace-pre-wrap text-xs text-ink-500">{n.body}</p>
                           <p className="mt-0.5 text-[11px] text-ink-400">{n.when}</p>
                         </div>
                       </div>
@@ -391,10 +391,10 @@ export default function Header({ onOpenMobile }) {
                   )}
                 </ul>
                 <button
-                  onClick={() => setNotifications([])}
-                  className="w-full border-t border-ink-900/[0.07] py-2.5 text-xs font-semibold text-ink-500 hover:text-rose-600"
+                  onClick={() => { setBellOpen(false); navigate('/tasks'); }}
+                  className="w-full border-t border-ink-900/[0.07] py-2.5 text-xs font-semibold text-brand-700 hover:underline"
                 >
-                  Clear all
+                  Open Tasks
                 </button>
               </div>
             )}

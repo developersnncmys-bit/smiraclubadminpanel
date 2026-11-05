@@ -1,173 +1,223 @@
-import { useState } from 'react';
-import { CalendarClock, CheckCircle2, ExternalLink, Flag, MessageSquare, Phone, Send, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ExternalLink, Phone, Repeat } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import Badge from '../ui/Badge.jsx';
 import { useApp } from '../../store/AppStore.jsx';
 import { api, isLive } from '../../lib/api.js';
 import { dialable } from '../../lib/phone.js';
+import { REPEATS, TYPES } from './LeadTaskForm.jsx';
 
 /**
- * Everything about one task, on a sheet over the page: the lead it is for,
- * who has to do it, when, the note, and the comments as it goes along.
- * Mark it done, move its time, or add a comment from here.
+ * Edit Task: one task on a sheet over the page.
+ *
+ * Its type, day and time, whether it repeats, who does it, a new note and
+ * "mark as completed" — then Save. Notes written here are kept under
+ * Previous notes with who wrote them and when, so whoever picks the task up
+ * next sees "Ringing", "Call me back" and the rest.
  */
-const priorityTone = { High: 'rose', Medium: 'amber', Low: 'slate' };
 const pad = (n) => String(n).padStart(2, '0');
-const localValue = (iso) => {
-  const d = new Date(iso);
+const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const hhmm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const plusDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return isoDay(d); };
+const noteDay = (iso) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+const noteTime = (iso) => new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+const spell = (day, time) => {
+  const d = new Date(`${day}T${time || '00:00'}`);
   if (Number.isNaN(d.getTime())) return '';
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-const longWhen = (iso) => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
   return `${d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })} · ${d
     .toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
 };
-const shortWhen = (iso) =>
-  new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 
 export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
-  const { tasks, update, auth, toast } = useApp();
-  // The live row, so a comment or a new time shows straight away.
+  const { tasks, team, update, auth, toast, pull } = useApp();
+  // The live row, so a saved note shows straight away.
   const t = (task && tasks.find((x) => x.id === task.id)) || task;
-  const [comment, setComment] = useState('');
-  const [sending, setSending] = useState(false);
-  const [moving, setMoving] = useState(false);
-  const [due, setDue] = useState('');
+  const [form, setForm] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  if (!t) return null;
-  const done = ['Completed', 'Cancelled'].includes(t.status) || t.bucket === 'done';
-  const dueIso = t.dueAt || t.dueIso;
-  const late = !done && dueIso && new Date(dueIso) < new Date();
-  const comments = t.comments || [];
+  useEffect(() => {
+    if (!task) return;
+    const at = new Date(task.dueAt || task.dueIso || Date.now());
+    const day = isoDay(at);
+    setForm({
+      type: task.type || 'Follow-up',
+      when: day === plusDays(0) ? 'Today' : day === plusDays(1) ? 'Tomorrow' : 'Custom',
+      day,
+      time: hhmm(at),
+      repeat: task.repeat || '',
+      owner: task.owner || '',
+      note: '',
+      done: ['Completed', 'Cancelled'].includes(task.status) || task.bucket === 'done',
+    });
+  }, [task]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const addComment = async (e) => {
-    e.preventDefault();
-    const text = comment.trim();
-    if (!text || sending) return;
-    setSending(true);
+  if (!t || !form) return null;
+  const wasDone = ['Completed', 'Cancelled'].includes(t.status) || t.bucket === 'done';
+  const notes = [...(t.comments || [])].reverse();
+  const people = [...new Set([t.owner, ...team.map((m) => m.name)].filter((n) => n && n !== 'Unassigned'))];
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+  const pickWhen = (e) => {
+    const when = e.target.value;
+    setForm((f) => ({ ...f, when, day: when === 'Today' ? plusDays(0) : when === 'Tomorrow' ? plusDays(1) : f.day }));
+  };
+
+  const save = async () => {
+    if (saving) return;
+    const at = new Date(`${form.day}T${form.time || '11:00'}`);
+    if (Number.isNaN(at.getTime())) return toast('Pick a date and time', 'danger');
+    setSaving(true);
     try {
-      if (isLive && t._id) await api.post(`/tasks/${t._id}/comments`, { text });
-      update('tasks', t.id, { comments: [...comments, { text, by: auth?.name || 'You', at: new Date().toISOString() }] }, { silent: true });
-      setComment('');
+      const text = form.note.trim();
+      if (text && isLive && t._id) await api.post(`/tasks/${t._id}/comments`, { text });
+      const member = team.find((m) => m.name === form.owner);
+      const nowDone = form.done && !wasDone;
+      update('tasks', t.id, {
+        type: form.type,
+        repeat: form.repeat,
+        dueIso: at.toISOString(),
+        dueAt: at.toISOString(),
+        due: at.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
+        ...(form.owner !== t.owner ? { owner: form.owner, ownerId: member?._id } : {}),
+        ...(text ? { comments: [...(t.comments || []), { text, by: auth?.name || 'You', at: new Date().toISOString() }] } : {}),
+        ...(nowDone
+          ? { status: 'Completed', bucket: 'done' }
+          : !form.done && wasDone
+            ? { status: 'Pending', bucket: at < new Date() ? 'overdue' : 'today' }
+            : { bucket: wasDone ? 'done' : at < new Date() ? 'overdue' : 'today' }),
+      }, { message: nowDone ? 'Task done' : 'Task saved' });
+      // A repeating task done: the server makes the next one — fetch it.
+      if (nowDone && form.repeat) setTimeout(() => pull?.('tasks'), 1500);
+      onClose();
     } catch (err) {
-      toast(err.message || 'The comment did not save', 'danger');
+      toast(err.message || 'That did not save', 'danger');
     } finally {
-      setSending(false);
+      setSaving(false);
     }
+    return undefined;
   };
 
-  const saveTime = () => {
-    if (!due) return;
-    const at = new Date(due);
-    update('tasks', t.id, {
-      dueIso: at.toISOString(),
-      dueAt: at.toISOString(),
-      due: at.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
-      bucket: at < new Date() ? 'overdue' : 'today',
-      ...(t.status === 'Overdue' ? { status: 'Pending' } : {}),
-    }, { message: 'Task time changed' });
-    setMoving(false);
-  };
-
-  const row = (Icon, label, value) => (
-    <div className="flex items-start gap-3 py-2.5">
-      <Icon size={17} className="mt-0.5 shrink-0 text-ink-400" />
-      <span className="w-24 shrink-0 text-sm text-ink-500">{label}</span>
-      <span className="min-w-0 flex-1 text-sm font-semibold text-ink-900">{value}</span>
-    </div>
-  );
-
+  const input = 'input h-11 py-0 text-sm';
   return (
     <Modal
       open={Boolean(task)}
       onClose={onClose}
-      title={t.title}
-      subtitle={[t.type, t.customer].filter(Boolean).join(' · ')}
+      title="Edit task"
+      subtitle={[t.title, lead?.name || t.customer].filter(Boolean).join(' · ')}
       size="md"
       footer={
         <>
-          {!done && (
-            <button
-              type="button"
-              className="btn-action"
-              onClick={() => { update('tasks', t.id, { status: 'Completed', bucket: 'done' }, { message: 'Task done' }); onClose(); }}
-            >
-              <CheckCircle2 size={16} /> Mark done
-            </button>
-          )}
           {lead && onOpenLead && (
             <button type="button" className="btn-line" onClick={() => onOpenLead(lead)}>
               <ExternalLink size={15} /> Open lead
             </button>
           )}
+          <button type="button" className="btn-action" disabled={saving} onClick={save}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
         </>
       }
     >
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        <Badge tone={done ? 'green' : late ? 'rose' : 'sky'} dot>{done ? 'Done' : late ? 'Overdue' : t.status || 'Pending'}</Badge>
-        {t.priority && <Badge tone={priorityTone[t.priority] || 'slate'}>{t.priority} priority</Badge>}
-      </div>
+      {lead && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl bg-surface-soft/70 px-3 py-2.5">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-ink-900">{lead.name}</p>
+            <p className="truncate text-xs text-ink-500">{[lead.phone, lead.status, lead.owner && `Lead with ${lead.owner}`].filter(Boolean).join(' · ')}</p>
+          </div>
+          {lead.phone && (
+            <a href={`tel:${dialable(lead.phone)}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#34C759] text-white" title={`Call ${lead.name}`}>
+              <Phone size={17} />
+            </a>
+          )}
+        </div>
+      )}
 
-      <div className="divide-y divide-ink-900/[0.06] rounded-xl border border-ink-900/10 px-3">
-        {row(User, 'Assigned to', t.owner || 'Nobody yet')}
-        {row(CalendarClock, 'Due', (
-          <>
-            <span className={late ? 'text-rose-600' : ''}>{longWhen(dueIso)}</span>
-            {!done && !moving && (
-              <button type="button" className="ml-2 text-xs font-bold text-brand-700 underline" onClick={() => { setDue(localValue(dueIso) || ''); setMoving(true); }}>
-                Change
-              </button>
-            )}
-            {moving && (
-              <span className="mt-2 flex gap-2">
-                <input type="datetime-local" className="input h-10 min-w-0 flex-1 py-0 text-sm" value={due} onChange={(e) => setDue(e.target.value)} />
-                <button type="button" className="btn-action btn-sm" onClick={saveTime}>Save</button>
-              </span>
-            )}
-          </>
-        ))}
-        {lead && row(Flag, 'Lead', (
-          <span className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate">{lead.name}{lead.status ? ` · ${lead.status}` : ''}</span>
-            {lead.phone && !done && (
-              <a href={`tel:${dialable(lead.phone)}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#34C759] text-white" title={`Call ${lead.name}`}>
-                <Phone size={16} />
-              </a>
-            )}
-          </span>
-        ))}
-        {t.createdBy && row(User, 'Added by', t.createdBy)}
-      </div>
+      <div className="space-y-3">
+        <label className="block">
+          <span className="label">Task type</span>
+          <select className={input} value={form.type} onChange={set('type')}>
+            {[...new Set([form.type, ...TYPES])].map((x) => <option key={x}>{x}</option>)}
+          </select>
+        </label>
 
-      <div className="mt-4">
-        <p className="eyebrow mb-1.5">Note</p>
-        <p className="whitespace-pre-wrap rounded-xl bg-surface-soft/70 px-3 py-2.5 text-sm text-ink-700">{t.note || 'No note'}</p>
-      </div>
+        <label className="block">
+          <span className="label">Due date</span>
+          <select className={input} value={form.when} onChange={pickWhen}>
+            <option>Today</option>
+            <option>Tomorrow</option>
+            <option value="Custom">Custom date</option>
+          </select>
+        </label>
 
-      <div className="mt-4">
-        <p className="eyebrow mb-1.5 flex items-center gap-1.5"><MessageSquare size={13} /> Comments {comments.length > 0 && `(${comments.length})`}</p>
-        {comments.length === 0 && <p className="text-sm text-ink-500">No comments yet.</p>}
-        <ul className="space-y-2">
-          {comments.map((c, i) => (
-            <li key={i} className="rounded-xl bg-surface-soft/70 px-3 py-2">
-              <p className="whitespace-pre-wrap text-sm text-ink-800">{c.text}</p>
-              <p className="mt-0.5 text-xs text-ink-400">{c.by || '—'}{c.at ? ` · ${shortWhen(c.at)}` : ''}</p>
-            </li>
-          ))}
-        </ul>
-        <form onSubmit={addComment} className="mt-2 flex gap-2">
-          <input
-            className="input h-10 min-w-0 flex-1 py-0 text-sm"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="e.g. Called, no answer — try 5 pm"
+        <div className="grid grid-cols-2 gap-2">
+          {form.when === 'Custom' && (
+            <label className="block">
+              <span className="label">Custom date</span>
+              <input type="date" className={input} value={form.day} onChange={set('day')} />
+            </label>
+          )}
+          <label className={`block ${form.when === 'Custom' ? '' : 'col-span-2'}`}>
+            <span className="label">Time</span>
+            <input type="time" className={input} value={form.time} onChange={set('time')} />
+          </label>
+          <span className="col-span-2 -mt-1 text-xs font-semibold text-brand-700">{spell(form.day, form.time)}</span>
+        </div>
+
+        <label className="block">
+          <span className="label flex items-center gap-1"><Repeat size={12} /> Repeat this task?</span>
+          <select className={input} value={form.repeat} onChange={set('repeat')}>
+            {REPEATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="label">Assign task to</span>
+          <select className={input} value={form.owner} onChange={set('owner')}>
+            {!form.owner && <option value="">Select who does it</option>}
+            {people.map((n) => <option key={n} value={n}>{n === lead?.owner ? `${n} (lead's person)` : n}</option>)}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="label">Note</span>
+          <textarea
+            className="input min-h-[6rem] py-2 text-sm"
+            value={form.note}
+            onChange={set('note')}
+            placeholder="Enter your note — e.g. Ringing, Call me back at 5 pm"
           />
-          <button type="submit" disabled={!comment.trim() || sending} className="btn-action btn-sm shrink-0 disabled:opacity-50" title="Add comment">
-            <Send size={15} />
-          </button>
-        </form>
+        </label>
+
+        <label className="flex items-center gap-2.5 py-1 text-sm font-semibold text-ink-800">
+          <input type="checkbox" className="h-5 w-5 accent-brand-600" checked={form.done} onChange={set('done')} />
+          Mark as completed
+          {form.done && form.repeat && !wasDone && <Badge tone="sky">next one made {form.repeat.toLowerCase()}</Badge>}
+        </label>
+
+        {t.note && (
+          <div>
+            <p className="label">Note when it was added</p>
+            <p className="whitespace-pre-wrap rounded-xl bg-surface-soft/70 px-3 py-2 text-sm text-ink-700">{t.note}</p>
+          </div>
+        )}
+
+        <div>
+          <p className="mb-2 text-sm font-extrabold text-ink-900">Previous notes</p>
+          {notes.length === 0 && <p className="text-sm text-ink-500">No notes yet.</p>}
+          <ul className="space-y-2.5">
+            {notes.map((c, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-500 text-center text-[10px] font-bold leading-tight text-white">
+                  {c.at ? noteDay(c.at) : '—'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="whitespace-pre-wrap rounded-xl bg-surface-soft/80 px-3 py-2 text-sm font-semibold text-ink-800">{c.text}</p>
+                  <p className="mt-0.5 text-right text-[11px] text-ink-400">{c.at ? noteTime(c.at) : ''} by {c.by || '—'}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {t.createdBy && <p className="text-xs text-ink-400">Added by {t.createdBy}</p>}
       </div>
     </Modal>
   );

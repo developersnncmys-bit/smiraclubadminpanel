@@ -3,7 +3,8 @@ import { CalendarPlus, Check, User, X } from 'lucide-react';
 import { useApp } from '../../store/AppStore.jsx';
 
 /** What a task can be — the server's own list. */
-const TYPES = ['Call', 'Follow-up', 'WhatsApp', 'Presentation', 'Customer Visit', 'Payment Follow-up', 'Booking Follow-up', 'Send itinerary', 'Documents'];
+export const REPEATS = [['', 'Does not repeat'], ['Daily', 'Every day'], ['Weekly', 'Every week'], ['Monthly', 'Every month']];
+export const TYPES = ['Call', 'Follow-up', 'WhatsApp', 'Presentation', 'Customer Visit', 'Payment Follow-up', 'Booking Follow-up', 'Send itinerary', 'Documents'];
 
 const pad = (n) => String(n).padStart(2, '0');
 const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -60,6 +61,7 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
     due: tomorrow11(),
     owner: people[0] || '',
     priority: 'Medium',
+    repeat: '',
     note: '',
   });
   const [error, setError] = useState('');
@@ -88,6 +90,7 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
       due: new Date(form.due).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
       dueIso: new Date(form.due).toISOString(),
       priority: form.priority,
+      repeat: form.repeat,
       status: 'Pending',
       note: form.note.trim() || undefined,
       createdBy: auth?.name,
@@ -135,11 +138,22 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
             {TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
         </label>
-        <label className="block">
-          <span className="label">Due</span>
-          <input type="datetime-local" className={input} value={form.due} onChange={set('due')} />
-          {form.due && <span className="mt-1 block text-xs font-semibold text-brand-700">{spell(form.due)}</span>}
-        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block">
+            <span className="label">Date</span>
+            <input type="date" className={input} value={form.due.split('T')[0]} onChange={(e) => e.target.value && pickDay(e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="label">Time</span>
+            <input
+              type="time"
+              className={input}
+              value={form.due.split('T')[1] || ''}
+              onChange={(e) => e.target.value && setForm((f) => ({ ...f, due: `${f.due.split('T')[0]}T${e.target.value}` }))}
+            />
+          </label>
+          {form.due && <span className="col-span-2 -mt-1 block text-xs font-semibold text-brand-700">{spell(form.due)}</span>}
+        </div>
         <div className="sm:col-span-2">
           <span className="label">Pick a day</span>
           <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
@@ -188,6 +202,12 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
           <span className="label">Priority</span>
           <select className={input} value={form.priority} onChange={set('priority')}>
             {['High', 'Medium', 'Low'].map((p) => <option key={p}>{p}</option>)}
+          </select>
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="label">Repeat this task?</span>
+          <select className={input} value={form.repeat} onChange={set('repeat')}>
+            {REPEATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </label>
         <label className="block sm:col-span-2">

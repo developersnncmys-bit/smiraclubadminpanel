@@ -93,7 +93,9 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const standing = held ? membershipStanding(held.signup) : null;
 
   // WhatsApp wants the number with its country code: a 10-digit Indian number gets 91.
-  const waNumber = digits.length === 10 ? `91${digits}` : digits;
+  // A number saved as 0XXXXXXXXXX loses the 0 first.
+  const local = digits.length === 11 && digits.startsWith('0') ? digits.slice(1) : digits;
+  const waNumber = local.length === 10 ? `91${local}` : local;
   // Call, WhatsApp and Edit: square buttons in the app's colours. Tasks and
   // activities are added from their own tabs below.
   const quick = [

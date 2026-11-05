@@ -3,7 +3,6 @@ import { CalendarPlus, Check, User, X } from 'lucide-react';
 import { useApp } from '../../store/AppStore.jsx';
 
 /** What a task can be — the server's own list. */
-export const REPEATS = [['', 'Does not repeat'], ['Daily', 'Every day'], ['Weekly', 'Every week'], ['Monthly', 'Every month']];
 export const TYPES = ['Call', 'Follow-up', 'WhatsApp', 'Presentation', 'Customer Visit', 'Payment Follow-up', 'Booking Follow-up', 'Send itinerary', 'Documents'];
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -20,7 +19,7 @@ const tomorrow11 = () => {
  * The next fortnight as one-tap days. A customer says "call me Saturday",
  * not "call me on the 7th", so the days are named.
  */
-const nextDays = () =>
+export const nextDays = () =>
   Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
@@ -61,7 +60,6 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
     due: tomorrow11(),
     owner: people[0] || '',
     priority: 'Medium',
-    repeat: '',
     note: '',
   });
   const [error, setError] = useState('');
@@ -90,7 +88,6 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
       due: new Date(form.due).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
       dueIso: new Date(form.due).toISOString(),
       priority: form.priority,
-      repeat: form.repeat,
       status: 'Pending',
       note: form.note.trim() || undefined,
       createdBy: auth?.name,
@@ -202,12 +199,6 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
           <span className="label">Priority</span>
           <select className={input} value={form.priority} onChange={set('priority')}>
             {['High', 'Medium', 'Low'].map((p) => <option key={p}>{p}</option>)}
-          </select>
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="label">Repeat this task?</span>
-          <select className={input} value={form.repeat} onChange={set('repeat')}>
-            {REPEATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </label>
         <label className="block sm:col-span-2">

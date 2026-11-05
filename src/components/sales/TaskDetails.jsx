@@ -1,17 +1,16 @@
 import { useEffect, useState } from 'react';
-import { ExternalLink, Phone, Repeat } from 'lucide-react';
+import { ExternalLink, Phone } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
-import Badge from '../ui/Badge.jsx';
 import { useApp } from '../../store/AppStore.jsx';
 import { api, isLive } from '../../lib/api.js';
 import { dialable } from '../../lib/phone.js';
-import { REPEATS, TYPES } from './LeadTaskForm.jsx';
+import { TYPES, nextDays } from './LeadTaskForm.jsx';
 import { useLeadStages } from '../../lib/leadStages.js';
 
 /**
  * Edit Task: one task on a sheet over the page.
  *
- * Its type, day and time, whether it repeats, who does it, a new note and
+ * Its type, day and time, who does it, a new note and
  * "mark as completed" — then Save. Notes written here are kept under
  * Previous notes with who wrote them and when, so whoever picks the task up
  * next sees "Ringing", "Call me back" and the rest.
@@ -19,7 +18,6 @@ import { useLeadStages } from '../../lib/leadStages.js';
 const pad = (n) => String(n).padStart(2, '0');
 const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const hhmm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const plusDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return isoDay(d); };
 const noteDay = (iso) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const noteTime = (iso) => new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
 const spell = (day, time) => {
@@ -43,10 +41,8 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
     const day = isoDay(at);
     setForm({
       type: task.type || 'Follow-up',
-      when: day === plusDays(0) ? 'Today' : day === plusDays(1) ? 'Tomorrow' : 'Custom',
       day,
       time: hhmm(at),
-      repeat: task.repeat || '',
       owner: task.owner || '',
       note: '',
       leadStatus: lead?.status || '',
@@ -59,10 +55,7 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
   const notes = [...(t.comments || [])].reverse();
   const people = [...new Set([t.owner, ...team.map((m) => m.name)].filter((n) => n && n !== 'Unassigned'))];
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
-  const pickWhen = (e) => {
-    const when = e.target.value;
-    setForm((f) => ({ ...f, when, day: when === 'Today' ? plusDays(0) : when === 'Tomorrow' ? plusDays(1) : f.day }));
-  };
+  const days = nextDays();
 
   const save = async () => {
     if (saving) return;
@@ -94,7 +87,6 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
       }
       update('tasks', t.id, {
         type: form.type,
-        repeat: form.repeat,
         dueIso: at.toISOString(),
         dueAt: at.toISOString(),
         due: at.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
@@ -107,7 +99,7 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
             : { bucket: wasDone ? 'done' : at < new Date() ? 'overdue' : 'today' }),
       }, { message: nowDone ? 'Task done' : 'Task saved' });
       // A repeating task done: the server makes the next one — fetch it.
-      if (nowDone && form.repeat) setTimeout(() => pull?.('tasks'), 1500);
+      if (nowDone && t.repeat) setTimeout(() => pull?.('tasks'), 1500);
       onClose();
     } catch (err) {
       toast(err.message || 'That did not save', 'danger');
@@ -172,35 +164,43 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
           </select>
         </label>
 
-        <label className="block">
-          <span className="label">Due date</span>
-          <select className={input} value={form.when} onChange={pickWhen}>
-            <option>Today</option>
-            <option>Tomorrow</option>
-            <option value="Custom">Custom date</option>
-          </select>
-        </label>
+        <div>
+          <span className="label">Pick a day</span>
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+            {days.map((d) => {
+              const on = form.day === d.iso;
+              return (
+                <button
+                  key={d.iso}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, day: d.iso }))}
+                  className={`flex shrink-0 flex-col items-center rounded-lg border px-2.5 py-1.5 text-xs leading-tight transition ${
+                    on
+                      ? 'border-brand-500 bg-brand-600 text-white'
+                      : d.weekend
+                        ? 'border-amber-200 bg-amber-50 text-amber-800'
+                        : 'border-ink-900/10 bg-white text-ink-700'
+                  }`}
+                >
+                  <span className="font-bold">{d.name}</span>
+                  <span className={on ? 'text-white/80' : 'text-ink-400'}>{d.date}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-2">
-          {form.when === 'Custom' && (
-            <label className="block">
-              <span className="label">Custom date</span>
-              <input type="date" className={input} value={form.day} onChange={set('day')} />
-            </label>
-          )}
-          <label className={`block ${form.when === 'Custom' ? '' : 'col-span-2'}`}>
+          <label className="block">
+            <span className="label">Date</span>
+            <input type="date" className={input} value={form.day} onChange={(e) => e.target.value && setForm((f) => ({ ...f, day: e.target.value }))} />
+          </label>
+          <label className="block">
             <span className="label">Time</span>
             <input type="time" className={input} value={form.time} onChange={set('time')} />
           </label>
           <span className="col-span-2 -mt-1 text-xs font-semibold text-brand-700">{spell(form.day, form.time)}</span>
         </div>
-
-        <label className="block">
-          <span className="label flex items-center gap-1"><Repeat size={12} /> Repeat this task?</span>
-          <select className={input} value={form.repeat} onChange={set('repeat')}>
-            {REPEATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-        </label>
 
         <label className="block">
           <span className="label">Assign task to</span>
@@ -223,7 +223,6 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
         <label className="flex items-center gap-2.5 py-1 text-sm font-semibold text-ink-800">
           <input type="checkbox" className="h-5 w-5 accent-brand-600" checked={form.done} onChange={set('done')} />
           Mark as completed
-          {form.done && form.repeat && !wasDone && <Badge tone="sky">next one made {form.repeat.toLowerCase()}</Badge>}
         </label>
 
         {t.note && (

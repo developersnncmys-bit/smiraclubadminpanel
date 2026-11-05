@@ -1361,7 +1361,8 @@ export default function Enquiries() {
           if (next) { setStartOn(''); setViewing(next); }
         }}
         onEdit={(lead) => {
-          setViewing(null);
+          // The form opens over the lead. Closing the lead first took a
+          // Back step, and that Back closed the form as soon as it opened.
           setEditing(lead);
           setFormOpen(true);
         }}

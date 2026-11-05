@@ -106,9 +106,9 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
     return undefined;
   };
 
-  const input = 'input h-10 py-0 text-sm';
+  const input = 'input h-10 min-w-0 w-full py-0 text-sm';
   return (
-    <form onSubmit={save} className="space-y-3 rounded-xl border border-brand-200 bg-brand-50/40 p-3.5">
+    <form onSubmit={save} className="min-w-0 space-y-3 rounded-xl border border-brand-200 bg-brand-50/40 p-3.5">
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-2 text-sm font-bold text-ink-900">
           <CalendarPlus size={16} className="text-brand-600" /> New task for {lead.name}
@@ -128,19 +128,19 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
         </ul>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-2">
         <label className="block">
           <span className="label">Task</span>
           <select className={input} value={form.type} onChange={set('type')}>
             {TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
         </label>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="block">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
+          <label className="block min-w-0">
             <span className="label">Date</span>
             <input type="date" className={input} value={form.due.split('T')[0]} onChange={(e) => e.target.value && pickDay(e.target.value)} />
           </label>
-          <label className="block">
+          <label className="block min-w-0">
             <span className="label">Time</span>
             <input
               type="time"
@@ -151,7 +151,7 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
           </label>
           {form.due && <span className="col-span-2 -mt-1 block text-xs font-semibold text-brand-700">{spell(form.due)}</span>}
         </div>
-        <div className="sm:col-span-2">
+        <div className="min-w-0 sm:col-span-2">
           <span className="label">Pick a day</span>
           <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
             {days.map((d) => {

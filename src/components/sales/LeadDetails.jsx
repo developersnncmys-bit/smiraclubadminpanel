@@ -335,7 +335,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
           </section>
 
           {/* What has happened */}
-          <section ref={tabsRef} className="card flex min-h-0 scroll-mt-3 flex-col">
+          <section ref={tabsRef} className="card flex min-h-0 min-w-0 scroll-mt-3 flex-col overflow-hidden">
             <div className="flex items-center gap-1.5 overflow-x-auto border-b border-ink-900/[0.07] p-2.5 sm:gap-2 sm:p-3.5">
               {tabs.map((t) => (
                 <button
@@ -370,7 +370,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
               </div>
             )}
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
               {tab === 'Activities' && (
                 <>
                   <button

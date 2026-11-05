@@ -109,7 +109,7 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
     return undefined;
   };
 
-  const input = 'input h-11 py-0 text-sm';
+  const input = 'input h-11 min-w-0 w-full py-0 text-sm';
   return (
     <Modal
       open={Boolean(task)}
@@ -191,11 +191,11 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <label className="block">
+          <label className="block min-w-0">
             <span className="label">Date</span>
             <input type="date" className={input} value={form.day} onChange={(e) => e.target.value && setForm((f) => ({ ...f, day: e.target.value }))} />
           </label>
-          <label className="block">
+          <label className="block min-w-0">
             <span className="label">Time</span>
             <input type="time" className={input} value={form.time} onChange={set('time')} />
           </label>

@@ -106,7 +106,7 @@ export default function TeamActions({ action, context = {}, onClose, store }) {
           { name: 'name', label: 'Client name', type: 'text', required: true },
           { name: 'phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 ' },
           { name: 'email', label: 'Email', type: 'email' },
-          { name: 'destination', label: 'Destination', type: 'text', required: true },
+          { name: 'destination', label: 'Destination', type: 'text' },
           { name: 'pax', label: 'Travellers', type: 'number' },
           { name: 'travelDate', label: 'Travel date', type: 'text', placeholder: '18 Sep 2026' },
           { name: 'budget', label: 'Budget (₹)', type: 'number' },

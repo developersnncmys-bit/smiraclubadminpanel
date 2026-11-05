@@ -405,9 +405,9 @@ export default function Enquiries() {
     { name: 'name', label: 'Client name', type: 'text', required: true, section: 'Client & enquiry' },
     { name: 'phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 ', section: 'Client & enquiry' },
     { name: 'email', label: 'Email', type: 'email', section: 'Client & enquiry' },
-    { name: 'destination', label: 'Destination', type: 'text', required: true, section: 'Client & enquiry' },
+    { name: 'destination', label: 'Destination', type: 'text', section: 'Client & enquiry' },
     { name: 'trip.hotel', label: 'Hotel or property asked for', type: 'text', placeholder: 'If they named one', section: 'Client & enquiry' },
-    { name: 'pax', label: 'Travellers', type: 'number', required: true, section: 'Client & enquiry' },
+    { name: 'pax', label: 'Travellers', type: 'number', section: 'Client & enquiry' },
     { name: 'travelDate', label: 'Travel date', type: 'date', section: 'Client & enquiry' },
     { name: 'budget', label: 'Budget (₹)', type: 'number', section: 'Client & enquiry' },
     { name: 'status', label: 'Status', type: 'select', options: enquiryStatuses, section: 'Client & enquiry' },
@@ -701,7 +701,7 @@ export default function Enquiries() {
       </div>
 
       {/* Pick a stage, or start something */}
-      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5">
+      <section className="card flex flex-wrap items-center gap-3 px-5 py-3.5 max-lg:hidden">
         <h2 className="font-display text-base font-extrabold text-ink-900">Pipeline</h2>
 
         <MenuButton
@@ -742,8 +742,9 @@ export default function Enquiries() {
         </p>
       </section>
 
-      <div className="mt-4">
+      <div className="lg:mt-4">
         <KpiRow
+          scroll
           cols={6}
           items={[
             { label: 'Total leads', value: rows.length, hint: `${unassigned.length} unassigned`, icon: Users },
@@ -757,7 +758,7 @@ export default function Enquiries() {
       </div>
 
       <SectionTabs
-        className="mt-6"
+        className="mt-6 max-lg:hidden"
         items={SECTIONS.map((s) => ({ key: s, label: s, count: s === 'Leads' ? listRows.length : null }))}
         value={section}
         onChange={setSection}

@@ -20,7 +20,7 @@ const SKIN = {
 };
 const PLAIN = { chip: 'bg-surface-soft text-ink-500', bar: 'bg-brand-500' };
 
-export default function KpiRow({ items, cols = 4 }) {
+export default function KpiRow({ items, cols = 4, scroll = false }) {
   const grid = {
     3: 'sm:grid-cols-2 xl:grid-cols-3',
     4: 'sm:grid-cols-2 xl:grid-cols-4',
@@ -31,7 +31,11 @@ export default function KpiRow({ items, cols = 4 }) {
 
   return (
     // Two to a row on a phone, the way a mobile CRM shows its numbers.
-    <div className={`grid grid-cols-2 gap-2 sm:gap-2.5 ${grid}`}>
+    // scroll: on a phone, one row that slides sideways instead.
+    <div className={scroll
+      ? `-mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:grid sm:gap-2.5 sm:overflow-visible sm:px-0 sm:pb-0 ${grid}`
+      : `grid grid-cols-2 gap-2 sm:gap-2.5 ${grid}`}
+    >
       {items.map((k) => {
         const skin = SKIN[k.tone] || PLAIN;
         const Card = k.onClick ? 'button' : 'div';
@@ -40,7 +44,7 @@ export default function KpiRow({ items, cols = 4 }) {
           <Card
             key={k.label}
             {...(k.onClick ? { type: 'button', onClick: k.onClick, title: `See ${k.label.toLowerCase()} by team member` } : {})}
-            className="card card-hover block min-w-0 px-3 py-2.5 text-left sm:px-3.5 sm:py-3"
+            className={`card card-hover block min-w-0 px-3 py-2.5 text-left sm:px-3.5 sm:py-3 ${scroll ? 'w-[42%] shrink-0 snap-start sm:w-auto' : ''}`}
           >
             {/* The label owns its line, so it never loses room to the number */}
             <div className="flex items-center gap-2">

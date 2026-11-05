@@ -98,13 +98,15 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
     then?.();
     setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
-  // The five things the desk does on a lead, named under each icon.
+  // WhatsApp wants the number with its country code: a 10-digit Indian number gets 91.
+  const waNumber = digits.length === 10 ? `91${digits}` : digits;
+  // The five things the desk does on a lead: square buttons in the app's colours.
   const quick = [
-    { icon: Phone, tone: 'bg-[#34C759]', label: 'Call', title: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
-    { icon: WhatsAppIcon, tone: 'bg-[#25D366]', label: 'WhatsApp', title: 'WhatsApp', run: () => openTab('WhatsApp') },
-    { icon: CalendarPlus, tone: 'bg-amber-500', label: 'Task', title: 'Add a task', run: () => openTab('Tasks', () => setTaskForm(true)) },
-    { icon: Plus, tone: 'bg-brand-600', label: 'Activity', title: 'Add an activity', run: () => openTab('Activities', () => setAdding(true)) },
-    { icon: Pencil, tone: 'bg-sky-600', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
+    { icon: Phone, tone: 'bg-[#1E88E5]', label: 'Call', title: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
+    { icon: WhatsAppIcon, tone: 'bg-[#25D366]', label: 'WhatsApp', title: 'Open WhatsApp chat', run: () => { window.open(`https://wa.me/${waNumber}`, '_blank'); logActivity(lead.id, `Opened WhatsApp with ${lead.name}`, 'note'); } },
+    { icon: Pencil, tone: 'bg-[#8E44AD]', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
+    { icon: CalendarPlus, tone: 'bg-[#F39C12]', label: 'Task', title: 'Add a task', run: () => openTab('Tasks', () => setTaskForm(true)) },
+    { icon: Plus, tone: 'bg-[#3B82F6]', label: 'Activity', title: 'Add an activity', run: () => openTab('Activities', () => setAdding(true)) },
   ];
 
   // Who a lead can be given to: everyone on the team who is active.
@@ -187,31 +189,16 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto overflow-x-hidden p-3 sm:gap-5 sm:p-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] content-start gap-3 overflow-y-auto overflow-x-hidden p-3 sm:gap-5 sm:p-5 lg:grid-cols-[360px_minmax(0,1fr)] lg:content-stretch">
           {/* Who they are */}
           <section className="card h-fit overflow-hidden">
             <div className="px-4 pb-4 pt-4 text-left lg:pt-5 lg:text-center">
               <Avatar name={lead.name} size="lg" className="mx-auto max-lg:hidden" />
               <p className="font-display text-xl font-extrabold uppercase leading-tight text-ink-900 lg:mt-3 lg:text-lg lg:normal-case">{lead.name}</p>
-              <p className="text-sm text-ink-500">
-                {lead.destination} · {lead.pax} pax
-              </p>
+              {(lead.destination || lead.pax) && (
+                <p className="text-sm text-ink-500">{[lead.destination, lead.pax && `${lead.pax} pax`].filter(Boolean).join(' · ')}</p>
+              )}
 
-              <div className="mt-4 grid grid-cols-5 gap-1">
-                {quick.map(({ icon: Icon, tone, label, title, run }) => (
-                  <button
-                    key={label}
-                    onClick={run}
-                    title={title}
-                    className="flex flex-col items-center gap-1 rounded-xl py-1 transition hover:bg-surface-soft"
-                  >
-                    <span className={`grid h-10 w-10 place-items-center rounded-full text-white shadow-sm ${tone}`}>
-                      <Icon size={18} />
-                    </span>
-                    <span className="text-[11px] font-semibold leading-tight text-ink-700">{label}</span>
-                  </button>
-                ))}
-              </div>
 
               <button
                 onClick={() => toast('Add packages and add-ons to this lead', 'info')}
@@ -271,6 +258,18 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 <Badge tone="teal">{lead.label || 'None'}</Badge>
               )}
             </Field>
+            </div>
+
+            {/* Call, WhatsApp, Edit, Task, Activity */}
+            <div className="grid grid-cols-5 gap-2 border-b border-ink-900/[0.07] px-4 py-3">
+              {quick.map(({ icon: Icon, tone, label, title, run }) => (
+                <button key={label} onClick={run} title={title} className="flex flex-col items-center gap-1">
+                  <span className={`grid aspect-square w-full max-w-[3rem] place-items-center rounded-xl text-white shadow-sm transition active:scale-95 ${tone}`}>
+                    <Icon size={20} />
+                  </span>
+                  <span className="text-[10px] font-semibold leading-tight text-ink-600">{label}</span>
+                </button>
+              ))}
             </div>
 
             <div className="hidden lg:block">

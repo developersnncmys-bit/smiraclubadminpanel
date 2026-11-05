@@ -493,6 +493,10 @@ export const ADAPTERS = {
       due: t.dueAt ? dt(t.dueAt) : '—',
       dueAt: t.dueAt,
       lead: ref(t.lead),
+      // The lead as the server sent it with the task.
+      leadInfo: t.lead && typeof t.lead === 'object'
+        ? { id: t.lead.code || t.lead._id, _id: t.lead._id, name: t.lead.name, phone: t.lead.phone, status: t.lead.status, owner: who(t.lead.owner) }
+        : undefined,
       priority: t.priority,
       status: t.status,
       bucket: t.bucket,

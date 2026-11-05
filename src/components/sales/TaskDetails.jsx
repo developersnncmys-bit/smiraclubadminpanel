@@ -30,7 +30,7 @@ const spell = (day, time) => {
 };
 
 export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
-  const { tasks, team, update, auth, toast, pull, logActivity } = useApp();
+  const { tasks, team, enquiries, update, auth, toast, pull, logActivity } = useApp();
   const stages = useLeadStages();
   // The live row, so a saved note shows straight away.
   const t = (task && tasks.find((x) => x.id === task.id)) || task;
@@ -87,7 +87,9 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
       const text = [form.note.trim(), changes.length ? `(${changes.join(' · ')})` : ''].filter(Boolean).join('\n');
       if (text && isLive && t._id) await api.post(`/tasks/${t._id}/comments`, { text });
       if (statusChanged) {
-        update('enquiries', lead.id, { status: form.leadStatus }, { silent: true });
+        // A lead not loaded on this screen is changed on the server directly.
+        if (!enquiries.some((e) => e.id === lead.id) && isLive && lead._id) await api.patch(`/leads/${lead._id}`, { status: form.leadStatus });
+        else update('enquiries', lead.id, { status: form.leadStatus }, { silent: true });
         logActivity?.(lead.id, `Status updated to ${form.leadStatus} (from task ${t.title})`, 'status');
       }
       update('tasks', t.id, {

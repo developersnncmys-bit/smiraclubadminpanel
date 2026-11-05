@@ -97,6 +97,7 @@ export default function Header({ onOpenMobile }) {
     refresh,
     team,
     tasks,
+    toast,
     settings,
     auth,
     signOut,
@@ -108,6 +109,38 @@ export default function Header({ onOpenMobile }) {
   // Notes and changes on tasks: the person it is assigned to and the admin see them.
   const [readTick, setReadTick] = useState(0);
   const notifications = useMemo(() => taskFeed(tasks || [], auth), [tasks, auth, readTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Something new for me since the last look: say so, and on a phone with
+  // notifications allowed, as a phone notification too.
+  const seen = useRef(null);
+  useEffect(() => {
+    const unreadNow = notifications.filter((n) => !n.read);
+    if (seen.current === null) {
+      seen.current = new Set(unreadNow.map((n) => n.id));
+      return;
+    }
+    const fresh = unreadNow.filter((n) => !seen.current.has(n.id));
+    fresh.forEach((n) => seen.current.add(n.id));
+    if (!fresh.length) return;
+    const first = fresh[0];
+    toast(fresh.length === 1 ? `${first.title}: ${first.body}` : `${fresh.length} new task updates`, 'info');
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        fresh.slice(0, 3).forEach((n) => new Notification(n.title, { body: n.body, tag: n.id, icon: '/icons/apple-touch-icon.png' }));
+      }
+    } catch {
+      /* some phones only allow it from the service worker */
+    }
+  }, [notifications]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Ask once, when the bell is first opened, so tasks can reach the phone.
+  const askToNotify = () => {
+    try {
+      if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    } catch {
+      /* not supported */
+    }
+  };
+
   const readAll = () => { markRead(notifications.map((n) => n.id)); setReadTick((x) => x + 1); };
   const [bellOpen, setBellOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -351,10 +384,12 @@ export default function Header({ onOpenMobile }) {
 
           {/* Notifications */}
           <div className="relative" ref={bellRef}>
-            <button onClick={() => setBellOpen((o) => !o)} className="icon-btn relative h-9 w-9">
+            <button onClick={() => { askToNotify(); setBellOpen((o) => !o); }} className="icon-btn relative h-9 w-9">
               <Bell size={17} />
               {unread > 0 && (
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-coral ring-2 ring-white" />
+                <span className="absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-coral px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                  {unread > 9 ? '9+' : unread}
+                </span>
               )}
             </button>
 

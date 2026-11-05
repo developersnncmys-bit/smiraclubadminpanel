@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Circle, Filter, ListChecks, Pencil, Phone, Plus, Search, X } from 'lucide-react';
+import { Filter, ListChecks, Pencil, Phone, Plus, Search, X } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { dialable } from '../lib/phone.js';
+import { stageTone } from '../lib/leadStages.js';
 import { isMineFor, seesEveryone } from '../lib/taskFeed.js';
 import TaskDetails from '../components/sales/TaskDetails.jsx';
 import LeadTaskForm, { TYPES } from '../components/sales/LeadTaskForm.jsx';
@@ -46,7 +47,7 @@ const isoDay = (v) => {
 };
 
 export default function Tasks() {
-  const { tasks, enquiries, auth, team, update } = useApp();
+  const { tasks, enquiries, auth, team, logActivity } = useApp();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const everyone = seesEveryone(auth);
@@ -60,7 +61,8 @@ export default function Tasks() {
   const [pickQuery, setPickQuery] = useState('');
   const [pickedLead, setPickedLead] = useState(null);
 
-  const leadOf = (t) => enquiries.find((e) => (t.lead && e._id === t.lead) || e.name === t.customer);
+  // The loaded lead if there is one, else the lead the server sent with the task.
+  const leadOf = (t) => enquiries.find((e) => (t.lead && e._id === t.lead) || e.name === t.customer) || t.leadInfo || null;
 
   // From the bell: /tasks?task=TSK-0301 opens that task.
   useEffect(() => {
@@ -215,16 +217,6 @@ export default function Tasks() {
             const last = t.comments?.length ? t.comments[t.comments.length - 1] : null;
             return (
               <div key={t.id} className="card flex gap-3 p-3.5">
-                <button
-                  type="button"
-                  title={done ? 'Done' : 'Mark done'}
-                  disabled={done}
-                  onClick={() => update('tasks', t.id, { status: 'Completed', bucket: 'done' }, { message: 'Task done' })}
-                  className={`mt-0.5 shrink-0 self-start ${done ? 'text-emerald-600' : 'text-ink-300 hover:text-emerald-600'}`}
-                >
-                  {done ? <CheckCircle2 size={24} /> : <Circle size={24} />}
-                </button>
-
                 <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpen(t)}>
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="truncate text-sm font-semibold text-brand-600">{t.type || 'Task'}</span>
@@ -244,22 +236,29 @@ export default function Tasks() {
                       <b>{last.by}:</b> {last.text}
                     </span>
                   )}
-                  <span className="mt-1 flex flex-wrap gap-1">
-                    {t.priority === 'High' && <Badge tone={priorityTone.High}>High</Badge>}
-                    {t.repeat && <Badge tone="sky">Repeats {t.repeat.toLowerCase()}</Badge>}
-                    {lead?.status && <Badge tone="slate">{lead.status}</Badge>}
-                  </span>
+                  {t.repeat && <span className="mt-1 block text-[11px] font-semibold text-sky-700">Repeats {t.repeat.toLowerCase()}</span>}
                 </button>
 
-                <span className="flex shrink-0 flex-col items-center gap-2">
-                  <button type="button" onClick={() => setOpen(t)} className="grid h-9 w-9 place-items-center rounded-full bg-brand-50 text-brand-700" title="Edit task">
-                    <Pencil size={15} />
-                  </button>
-                  {lead?.phone && !done && (
-                    <a href={`tel:${dialable(lead.phone)}`} className="grid h-9 w-9 place-items-center rounded-full bg-[#34C759] text-white" title={`Call ${lead.name}`}>
-                      <Phone size={15} />
-                    </a>
-                  )}
+                {/* Edit and call, then the lead's status and the priority. */}
+                <span className="flex max-w-[8rem] shrink-0 flex-col items-end gap-1.5">
+                  <span className="flex gap-1.5">
+                    <button type="button" onClick={() => setOpen(t)} className="grid h-9 w-9 place-items-center rounded-full bg-brand-50 text-brand-700" title="Edit task">
+                      <Pencil size={15} />
+                    </button>
+                    {lead?.phone && (
+                      <a
+                        href={`tel:${dialable(lead.phone)}`}
+                        onClick={() => lead.id && logActivity?.(lead.id, `Called ${lead.name}`, 'call')}
+                        className="grid h-9 w-9 place-items-center rounded-full bg-[#34C759] text-white"
+                        title={`Call ${lead.name}`}
+                      >
+                        <Phone size={15} />
+                      </a>
+                    )}
+                  </span>
+                  {lead?.status && <Badge tone={stageTone(lead.status)} dot>{lead.status}</Badge>}
+                  {t.priority && t.priority !== 'Medium' && <Badge tone={priorityTone[t.priority] || 'slate'}>{t.priority}</Badge>}
+                  {done && <Badge tone="green">Done</Badge>}
                 </span>
               </div>
             );

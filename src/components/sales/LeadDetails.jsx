@@ -91,7 +91,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const digits = String(lead.phone).replace(/[^\d]/g, '');
   const held = findMembership(lead, memberSignups, memberships);
   const standing = held ? membershipStanding(held.signup) : null;
-  };
+
   // WhatsApp wants the number with its country code: a 10-digit Indian number gets 91.
   const waNumber = digits.length === 10 ? `91${digits}` : digits;
   // Call, WhatsApp and Edit: square buttons in the app's colours. Tasks and

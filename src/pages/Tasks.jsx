@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Filter, ListChecks, Pencil, Phone, Plus, Search, X } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
@@ -47,7 +47,7 @@ const isoDay = (v) => {
 };
 
 export default function Tasks() {
-  const { tasks, enquiries, auth, team, logActivity } = useApp();
+  const { tasks, enquiries, auth, team, logActivity, update, toast } = useApp();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const everyone = seesEveryone(auth);
@@ -60,6 +60,68 @@ export default function Tasks() {
   const [adding, setAdding] = useState(false);
   const [pickQuery, setPickQuery] = useState('');
   const [pickedLead, setPickedLead] = useState(null);
+
+  // Long-press a task to start picking several; then act on them together.
+  const [picked, setPicked] = useState(() => new Set());
+  const [bulk, setBulk] = useState(null); // 'assign' | 'date'
+  const [bulkValue, setBulkValue] = useState('');
+  const pressTimer = useRef(null);
+  const pressed = useRef(false);
+  const picking = picked.size > 0;
+  const togglePick = (id) => setPicked((p) => {
+    const n = new Set(p);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
+    return n;
+  });
+  const pressStart = (id) => {
+    pressed.current = false;
+    clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(() => {
+      pressed.current = true;
+      togglePick(id);
+      navigator.vibrate?.(30);
+    }, 500);
+  };
+  const pressEnd = () => clearTimeout(pressTimer.current);
+  const tapCard = (t) => {
+    if (pressed.current) { pressed.current = false; return; }
+    if (picking) togglePick(t.id);
+    else setOpen(t);
+  };
+  const clearPick = () => { setPicked(new Set()); setBulk(null); setBulkValue(''); };
+  const pickedTasks = () => tasks.filter((t) => picked.has(t.id));
+  const bulkDone = () => {
+    const list = pickedTasks();
+    list.forEach((t) => update('tasks', t.id, { status: 'Completed', bucket: 'done' }, { silent: true }));
+    toast(`${list.length} task(s) marked done`);
+    clearPick();
+  };
+  const bulkAssign = () => {
+    if (!bulkValue) return;
+    const member = team.find((m) => m.name === bulkValue);
+    const list = pickedTasks();
+    list.forEach((t) => update('tasks', t.id, { owner: bulkValue, ownerId: member?._id }, { silent: true }));
+    toast(`${list.length} task(s) given to ${bulkValue}`);
+    clearPick();
+  };
+  const bulkDate = () => {
+    if (!bulkValue) return;
+    const list = pickedTasks();
+    list.forEach((t) => {
+      // The new day, at the time each task already had.
+      const old = new Date(t.dueAt || t.dueIso || Date.now());
+      const at = new Date(`${bulkValue}T${String(old.getHours()).padStart(2, '0')}:${String(old.getMinutes()).padStart(2, '0')}`);
+      update('tasks', t.id, {
+        dueIso: at.toISOString(),
+        dueAt: at.toISOString(),
+        due: at.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
+        bucket: at < new Date() ? 'overdue' : 'today',
+      }, { silent: true });
+    });
+    toast(`${list.length} task(s) moved`);
+    clearPick();
+  };
 
   // The loaded lead if there is one, else the lead the server sent with the task.
   const leadOf = (t) => enquiries.find((e) => (t.lead && e._id === t.lead) || e.name === t.customer) || t.leadInfo || null;
@@ -110,7 +172,7 @@ export default function Tasks() {
   const closeAdd = () => { setAdding(false); setPickedLead(null); setPickQuery(''); };
 
   return (
-    <div className="mx-auto max-w-3xl pb-20">
+    <div className="mx-auto min-w-0 max-w-3xl overflow-x-clip pb-20">
       <PageHeader
         title="Tasks"
         subtitle={`${counts.Today} today · ${counts.Upcoming} upcoming · ${counts.Overdue} overdue`}
@@ -216,11 +278,24 @@ export default function Tasks() {
             const late = group === 'Overdue';
             const last = t.comments?.length ? t.comments[t.comments.length - 1] : null;
             return (
-              <div key={t.id} className="card flex gap-3 p-3.5">
-                <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpen(t)}>
+              <div
+                key={t.id}
+                className={`card flex min-w-0 select-none gap-2.5 overflow-hidden p-3.5 transition ${picked.has(t.id) ? 'bg-brand-50/60 ring-2 ring-brand-500' : ''}`}
+                onTouchStart={() => pressStart(t.id)}
+                onTouchEnd={pressEnd}
+                onTouchMove={pressEnd}
+                onMouseDown={() => pressStart(t.id)}
+                onMouseUp={pressEnd}
+                onMouseLeave={pressEnd}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                {picking && (
+                  <input type="checkbox" readOnly checked={picked.has(t.id)} onClick={() => togglePick(t.id)} className="mt-1 h-5 w-5 shrink-0 accent-brand-600" />
+                )}
+                <button type="button" className="min-w-0 flex-1 text-left" onClick={() => tapCard(t)}>
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="truncate text-sm font-semibold text-brand-600">{t.type || 'Task'}</span>
-                    <span className={`shrink-0 text-xs font-bold ${late ? 'text-rose-600' : 'text-ink-500'}`}>{timing(t)}</span>
+                    <span className={`min-w-0 truncate text-right text-xs font-bold ${late ? 'text-rose-600' : 'text-ink-500'}`}>{timing(t)}</span>
                   </span>
                   <span className={`mt-0.5 block truncate text-sm font-extrabold uppercase ${done ? 'text-ink-400 line-through' : 'text-ink-900'}`}>
                     {lead?.name || t.customer || t.title}
@@ -240,7 +315,7 @@ export default function Tasks() {
                 </button>
 
                 {/* Edit and call, then the lead's status and the priority. */}
-                <span className="flex max-w-[8rem] shrink-0 flex-col items-end gap-1.5">
+                <span className={`flex max-w-[6.5rem] shrink-0 flex-col items-end gap-1.5 ${picking ? 'hidden' : ''}`}>
                   <span className="flex gap-1.5">
                     <button type="button" onClick={() => setOpen(t)} className="grid h-9 w-9 place-items-center rounded-full bg-brand-50 text-brand-700" title="Edit task">
                       <Pencil size={15} />
@@ -266,11 +341,44 @@ export default function Tasks() {
         </div>
       )}
 
+      {/* Picked several: act on them together */}
+      {picking && (
+        <div className="fixed inset-x-3 bottom-24 z-30 rounded-2xl bg-ink-900 p-3 text-white shadow-lift lg:bottom-8 lg:left-auto lg:right-8 lg:w-[420px]">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold">{picked.size} selected</span>
+            <span className="flex gap-4 text-xs font-bold">
+              <button type="button" onClick={() => setPicked(new Set(shown.map((t) => t.id)))}>Select all</button>
+              <button type="button" onClick={clearPick}>Cancel</button>
+            </span>
+          </div>
+          {bulk === 'assign' && (
+            <div className="mt-2 flex gap-2">
+              <select className="input h-10 min-w-0 flex-1 py-0 text-sm text-ink-900" value={bulkValue} onChange={(e) => setBulkValue(e.target.value)}>
+                <option value="">Give to…</option>
+                {names.map((n) => <option key={n}>{n}</option>)}
+              </select>
+              <button type="button" className="btn-action btn-sm" onClick={bulkAssign}>Save</button>
+            </div>
+          )}
+          {bulk === 'date' && (
+            <div className="mt-2 flex gap-2">
+              <input type="date" className="input h-10 min-w-0 flex-1 py-0 text-sm text-ink-900" value={bulkValue} onChange={(e) => setBulkValue(e.target.value)} />
+              <button type="button" className="btn-action btn-sm" onClick={bulkDate}>Save</button>
+            </div>
+          )}
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <button type="button" className="rounded-xl bg-emerald-600 py-2 text-xs font-bold" onClick={bulkDone}>Mark done</button>
+            <button type="button" className={`rounded-xl py-2 text-xs font-bold ${bulk === 'assign' ? 'bg-brand-500' : 'bg-white/15'}`} onClick={() => { setBulk(bulk === 'assign' ? null : 'assign'); setBulkValue(''); }}>Reassign</button>
+            <button type="button" className={`rounded-xl py-2 text-xs font-bold ${bulk === 'date' ? 'bg-brand-500' : 'bg-white/15'}`} onClick={() => { setBulk(bulk === 'date' ? null : 'date'); setBulkValue(''); }}>Change date</button>
+          </div>
+        </div>
+      )}
+
       {/* Add a task to any lead */}
       <button
         type="button"
         onClick={() => setAdding(true)}
-        className="fixed bottom-24 right-5 z-20 grid h-14 w-14 place-items-center rounded-full bg-brand-600 text-white shadow-lift lg:bottom-8"
+        className={`fixed bottom-24 right-5 z-20 h-14 w-14 place-items-center ${picking ? 'hidden' : 'grid'} rounded-full bg-brand-600 text-white shadow-lift lg:bottom-8`}
         title="Add a task"
       >
         <Plus size={26} />

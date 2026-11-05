@@ -8,11 +8,11 @@ export const TYPES = ['Call', 'Follow-up', 'WhatsApp', 'Presentation', 'Customer
 const pad = (n) => String(n).padStart(2, '0');
 const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-/** Tomorrow at 11 am, as a datetime-local value — a sensible first guess. */
-const tomorrow11 = () => {
+/** Right now, rounded up to the next 5 minutes, as a datetime-local value. */
+const rightNow = () => {
   const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return `${isoDay(d)}T11:00`;
+  d.setMinutes(Math.ceil((d.getMinutes() + 1) / 5) * 5, 0, 0);
+  return `${isoDay(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 /**
@@ -57,7 +57,7 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
   const [form, setForm] = useState({
     type: 'Follow-up',
     title: '',
-    due: tomorrow11(),
+    due: rightNow(),
     owner: people[0] || '',
     priority: 'Medium',
     note: '',

@@ -91,22 +91,15 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const digits = String(lead.phone).replace(/[^\d]/g, '');
   const held = findMembership(lead, memberSignups, memberships);
   const standing = held ? membershipStanding(held.signup) : null;
-
-  // Jump to the tabs (below the card on a phone) and open what was tapped.
-  const openTab = (key, then) => {
-    setTab(key);
-    then?.();
-    setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
   // WhatsApp wants the number with its country code: a 10-digit Indian number gets 91.
   const waNumber = digits.length === 10 ? `91${digits}` : digits;
-  // The five things the desk does on a lead: square buttons in the app's colours.
+  // Call, WhatsApp and Edit: square buttons in the app's colours. Tasks and
+  // activities are added from their own tabs below.
   const quick = [
     { icon: Phone, tone: 'bg-[#1E88E5]', label: 'Call', title: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
     { icon: WhatsAppIcon, tone: 'bg-[#25D366]', label: 'WhatsApp', title: 'Open WhatsApp chat', run: () => { window.open(`https://wa.me/${waNumber}`, '_blank'); logActivity(lead.id, `Opened WhatsApp with ${lead.name}`, 'note'); } },
     { icon: Pencil, tone: 'bg-[#8E44AD]', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
-    { icon: CalendarPlus, tone: 'bg-[#F39C12]', label: 'Task', title: 'Add a task', run: () => openTab('Tasks', () => setTaskForm(true)) },
-    { icon: Plus, tone: 'bg-[#3B82F6]', label: 'Activity', title: 'Add an activity', run: () => openTab('Activities', () => setAdding(true)) },
   ];
 
   // Who a lead can be given to: everyone on the team who is active.
@@ -260,11 +253,11 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
             </Field>
             </div>
 
-            {/* Call, WhatsApp, Edit, Task, Activity */}
-            <div className="grid grid-cols-5 gap-2 border-b border-ink-900/[0.07] px-4 py-3">
+            {/* Call, WhatsApp, Edit */}
+            <div className="grid grid-cols-3 gap-3 border-b border-ink-900/[0.07] px-4 py-3">
               {quick.map(({ icon: Icon, tone, label, title, run }) => (
                 <button key={label} onClick={run} title={title} className="flex flex-col items-center gap-1">
-                  <span className={`grid aspect-square w-full max-w-[3rem] place-items-center rounded-xl text-white shadow-sm transition active:scale-95 ${tone}`}>
+                  <span className={`grid aspect-square w-full max-w-[3.25rem] place-items-center rounded-xl text-white shadow-sm transition active:scale-95 ${tone}`}>
                     <Icon size={20} />
                   </span>
                   <span className="text-[10px] font-semibold leading-tight text-ink-600">{label}</span>

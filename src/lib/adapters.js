@@ -450,6 +450,7 @@ export const ADAPTERS = {
         ...(l.trip || {}),
         checkIn: d(l.trip?.checkIn),
         checkOut: d(l.trip?.checkOut),
+        nextTripDate: d(l.trip?.nextTripDate),
       },
       activities: l.activities || [],
     }),
@@ -472,7 +473,7 @@ export const ADAPTERS = {
       tags: p.tags,
       // The form's dates read "02 Sep 2026"; the record keeps real dates.
       trip: p.trip
-        ? { ...p.trip, checkIn: when(p.trip.checkIn) ?? null, checkOut: when(p.trip.checkOut) ?? null }
+        ? { ...p.trip, checkIn: when(p.trip.checkIn) ?? null, checkOut: when(p.trip.checkOut) ?? null, nextTripDate: when(p.trip.nextTripDate) ?? null }
         : undefined,
       travelDate: has(p, 'travelDate') ? when(p.travelDate) : undefined,
       nextFollowUpAt: has(p, 'nextFollowUp') ? when(p.nextFollowUp) : undefined,

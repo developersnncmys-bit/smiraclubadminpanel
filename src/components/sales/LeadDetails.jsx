@@ -522,6 +522,24 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                     <p className={`mt-1 text-sm font-bold ${lead.owner === 'Unassigned' ? 'text-rose-600' : 'text-ink-900'}`}>{lead.owner}</p>
                   )}
                 </div>
+                {/* Travel usage: what the desk asks on the first call. */}
+                <p className="eyebrow mb-1.5">Travel usage</p>
+                <dl className="mb-3 divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
+                  {[
+                    ['Yearly travel frequency', lead.trip?.yearlyTrips],
+                    ['Preferred rooms', lead.trip?.roomsRequired],
+                    ['Family / group size', lead.trip?.travelPersons],
+                    ['Last holiday budget', lead.trip?.lastExpenses ? inr(lead.trip.lastExpenses) : ''],
+                    ['Next holiday destination', lead.trip?.nextDestination],
+                    ['Expected next trip', lead.trip?.nextTripDate],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex items-start gap-4 px-4 py-2.5">
+                      <dt className="w-28 shrink-0 text-xs font-semibold uppercase tracking-wide text-ink-400 sm:w-40">{k}</dt>
+                      <dd className="min-w-0 flex-1 text-sm text-ink-800">{v || v === 0 ? v : '—'}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="eyebrow mb-1.5">Details</p>
                 <dl className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
                   {[
                     ['Lead ID', lead.id],

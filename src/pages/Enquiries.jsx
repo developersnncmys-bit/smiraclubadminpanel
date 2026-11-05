@@ -416,6 +416,14 @@ export default function Enquiries() {
     { name: 'label', label: 'Label', type: 'select', options: LABELS, section: 'Client & enquiry' },
     { name: 'owner', label: 'Assign to', type: 'select', options: owners, section: 'Client & enquiry' },
 
+    // Travel usage: what the desk asks on the first call.
+    { name: 'trip.yearlyTrips', label: 'Yearly travel frequency', type: 'select', options: ['', '1', '2', '3', '4', '5 or more'], section: 'Travel usage' },
+    { name: 'trip.roomsRequired', label: 'Preferred number of rooms', type: 'number', section: 'Travel usage' },
+    { name: 'trip.travelPersons', label: 'Family / group size', type: 'number', section: 'Travel usage' },
+    { name: 'trip.lastExpenses', label: 'Last holiday budget (₹)', type: 'number', section: 'Travel usage', help: 'What they spent on their last holiday — the best guide to what they will spend now.' },
+    { name: 'trip.nextDestination', label: 'Next holiday destination', type: 'text', placeholder: 'e.g. Kerala, Dubai', section: 'Travel usage' },
+    { name: 'trip.nextTripDate', label: 'Expected next trip date', type: 'date', section: 'Travel usage' },
+
     /*
       Everything the website's customised tour form asks, with the same
       choices, so a lead taken on the phone holds what one from the website
@@ -432,7 +440,6 @@ export default function Enquiries() {
     { name: 'trip.pets', label: 'Travelling with pets', type: 'toggle', section: 'Trip dates' },
 
     { name: 'trip.hotelPreference', label: 'Hotel preference', type: 'select', options: ['', ...TRIP.hotelPreferences], section: 'Stay & meals' },
-    { name: 'trip.roomsRequired', label: 'Rooms required', type: 'number', section: 'Stay & meals' },
     { name: 'trip.mealPlan', label: 'Meal plan', type: 'select', options: ['', ...TRIP.mealPlans], section: 'Stay & meals' },
     { name: 'trip.mealType', label: 'Meal type', type: 'select', options: ['', ...TRIP.mealTypes], section: 'Stay & meals' },
     { name: 'trip.extras', label: 'Room requests', type: 'multi', options: TRIP.extras, section: 'Stay & meals' },
@@ -455,10 +462,6 @@ export default function Enquiries() {
       questions on a call, and two of them — how often they travel and
       what they spent last time — the website never asks at all.
     */
-    { name: 'trip.yearlyTrips', label: 'Trips a year', type: 'select', options: ['', '1', '2', '3', '4', '5 or more'], section: 'How they travel' },
-    { name: 'trip.travelPersons', label: 'Travel persons', type: 'number', section: 'How they travel' },
-    { name: 'trip.lastExpenses', label: 'Last trip spend (₹)', type: 'number', section: 'How they travel', help: 'What they spent on their last holiday — the best guide to what they will spend now.' },
-    { name: 'trip.planToTravel', label: 'Plans to travel', type: 'select', options: ['', 'This month', 'Next month', 'In 2–3 months', 'In 6 months', 'Just looking'], section: 'How they travel' },
   ];
 
   /**
@@ -954,11 +957,11 @@ export default function Enquiries() {
                       const t = r.trip || {};
                       const usage = [
                         ['Yearly trips', t.yearlyTrips],
-                        ['Hotel', t.hotelPreference],
-                        ['Travellers', t.travelPersons],
                         ['Rooms', t.roomsRequired],
-                        ['Last spend', t.lastExpenses ? shortInr(t.lastExpenses) : ''],
-                        ['Plans to travel', t.planToTravel],
+                        ['Group size', t.travelPersons],
+                        ['Last budget', t.lastExpenses ? shortInr(t.lastExpenses) : ''],
+                        ['Next destination', t.nextDestination],
+                        ['Next trip', t.nextTripDate],
                       ].filter(([, v]) => v || v === 0);
                       if (!usage.length) return null;
                       return (

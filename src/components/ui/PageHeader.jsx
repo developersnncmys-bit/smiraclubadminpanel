@@ -14,7 +14,7 @@ export default function PageHeader({ eyebrow, title, subtitle, children }) {
           </h1>
           {subtitle && <p className="mt-1 text-sm text-ink-500">{subtitle}</p>}
         </div>
-        {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+        {children && <div className="flex flex-wrap items-center gap-2 max-sm:w-full">{children}</div>}
       </div>
     </div>
   );

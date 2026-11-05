@@ -243,6 +243,7 @@ export default function Enquiries() {
       (source === 'All' || e.source === source) &&
       (priority === 'All' || e.priority === priority)
   );
+  const [showFilters, setShowFilters] = useState(false);
   const activeFilters = [
     period !== 'All' && { label: period, clear: () => setPeriod('All') },
     who !== 'All' && { label: who, clear: () => setWho('All') },
@@ -627,17 +628,30 @@ export default function Enquiries() {
   return (
     <>
       <PageHeader title="Sales & Leads" subtitle={`${rows.length} leads · ${open.length} open · ${unassigned.length} waiting for an owner`}>
-        <button className="btn-line" onClick={exportLeads}><Download size={16} /> Export</button>
-        <button className="btn-line" onClick={() => setImportOpen(true)}><Upload size={16} /> Import</button>
+        <button className="btn-line" onClick={exportLeads} title="Export"><Download size={16} /> <span className="max-sm:hidden">Export</span></button>
+        <button className="btn-line" onClick={() => setImportOpen(true)} title="Import"><Upload size={16} /> <span className="max-sm:hidden">Import</span></button>
         <button className="btn-action" onClick={() => { setEditing(null); setFormOpen(true); }}>
           <Plus size={16} /> Add lead
+        </button>
+        {/* On a phone the filters fold away behind this, at the right corner. */}
+        <button
+          className={`btn-line relative ml-auto lg:hidden ${showFilters ? 'border-brand-500 text-brand-700' : ''}`}
+          onClick={() => setShowFilters((v) => !v)}
+          title="Filters"
+        >
+          <SlidersHorizontal size={16} /> Filter
+          {activeFilters.length > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand-600 px-1 text-[11px] font-bold text-white">
+              {activeFilters.length}
+            </span>
+          )}
         </button>
       </PageHeader>
 
       {/* The filters every section below reads from */}
-      <div className="card mb-4 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-700">
+      <div className={`card mb-4 px-4 py-3 ${!showFilters && activeFilters.length === 0 ? 'max-lg:hidden' : ''}`}>
+        <div className={`flex flex-wrap items-center gap-2 ${showFilters ? 'max-lg:grid max-lg:grid-cols-2' : 'max-lg:hidden'}`}>
+          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-700 max-lg:col-span-2">
             <SlidersHorizontal size={15} className="text-ink-400" /> Filters
           </span>
           <select className="input h-9 w-auto py-0 text-sm" value={period} onChange={(e) => setPeriod(e.target.value)}>
@@ -663,13 +677,13 @@ export default function Enquiries() {
               <option key={o} value={o}>{o}</option>
             ))}
           </select>
-          <span className="num ml-auto text-sm text-ink-500">
+          <span className="num ml-auto text-sm text-ink-500 max-lg:col-span-2">
             {rows.length} of {all.length} leads
           </span>
         </div>
 
         {activeFilters.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-ink-900/[0.07] pt-2.5">
+          <div className={`flex flex-wrap items-center gap-1.5 border-ink-900/[0.07] ${showFilters ? 'mt-2.5 border-t pt-2.5' : 'lg:mt-2.5 lg:border-t lg:pt-2.5'}`}>
             {activeFilters.map((f) => (
               <button
                 key={f.label}

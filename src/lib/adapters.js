@@ -499,6 +499,8 @@ export const ADAPTERS = {
       lastAction: t.lastAction,
       nextAction: t.nextAction,
       note: t.note,
+      comments: (t.comments || []).map((c) => ({ text: c.text, by: c.byName || who(c.by), at: c.at })),
+      createdBy: t.createdByName,
       created: d(t.createdAt),
     }),
     to: (p, ctx = {}) => ({
@@ -510,6 +512,7 @@ export const ADAPTERS = {
       lastAction: p.lastAction,
       nextAction: p.nextAction,
       note: p.note,
+      createdByName: p.createdBy,
       // When it is due, and the lead it is for — so it lands in the right
       // bucket (today, overdue) and shows on that lead's Tasks tab.
       dueAt: p.dueIso || (has(p, 'due') ? when(p.due) : undefined),

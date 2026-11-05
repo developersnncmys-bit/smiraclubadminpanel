@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CalendarPlus, X } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { CalendarPlus, Check, User, X } from 'lucide-react';
 import { useApp } from '../../store/AppStore.jsx';
 
 /** What a task can be — the server's own list. */
@@ -48,9 +48,12 @@ const spell = (value) => {
  * its due time, and shows here.
  */
 export default function LeadTaskForm({ lead, onDone, onCancel }) {
-  const { team, create } = useApp();
-  // The lead's own owner first, then everybody else.
-  const people = [...new Set([lead.owner, ...team.map((t) => t.name)].filter((n) => n && n !== 'Unassigned'))];
+  const { team, create, auth } = useApp();
+  // The lead's own person — the one the task goes to unless changed.
+  const leadPerson = lead.owner && lead.owner !== 'Unassigned'
+    ? team.find((t) => t.name === lead.owner || t.name.split(' ')[0] === lead.owner)?.name || lead.owner
+    : '';
+  const people = [...new Set([leadPerson, ...team.map((t) => t.name)].filter(Boolean))];
   const [form, setForm] = useState({
     type: 'Follow-up',
     title: '',
@@ -60,6 +63,9 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
     note: '',
   });
   const [error, setError] = useState('');
+  // Tasks added in this go, so several can be set one after another.
+  const [added, setAdded] = useState([]);
+  const another = useRef(false);
   const set = (k) => (e) => { setForm((f) => ({ ...f, [k]: e.target.value })); setError(''); };
   // A day button keeps the time already chosen.
   const pickDay = (iso) => setForm((f) => ({ ...f, due: `${iso}T${f.due.split('T')[1] || '11:00'}` }));
@@ -84,9 +90,19 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
       priority: form.priority,
       status: 'Pending',
       note: form.note.trim() || undefined,
+      createdBy: auth?.name,
       bucket: new Date(form.due) < new Date() ? 'overdue' : new Date(form.due).toDateString() === new Date().toDateString() ? 'today' : 'upcoming',
     });
-    onDone?.();
+    setAdded((a) => [...a, `${title} · ${form.owner} · ${spell(form.due)}`]);
+    if (another.current) {
+      // Keep who and the type; clear what to do, and suggest a day later.
+      const next = new Date(form.due);
+      next.setDate(next.getDate() + 1);
+      setForm((f) => ({ ...f, title: '', note: '', due: `${isoDay(next)}T${f.due.split('T')[1] || '11:00'}` }));
+      another.current = false;
+    } else {
+      onDone?.();
+    }
     return undefined;
   };
 
@@ -101,6 +117,16 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
           <X size={16} />
         </button>
       </div>
+
+      {added.length > 0 && (
+        <ul className="space-y-1 rounded-lg bg-emerald-50 px-3 py-2">
+          {added.map((a, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-xs font-semibold text-emerald-800">
+              <Check size={13} className="mt-0.5 shrink-0" /> {a}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="block">
@@ -147,8 +173,16 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
           <span className="label">Assign to</span>
           <select className={input} value={form.owner} onChange={set('owner')}>
             {people.length === 0 && <option value="">No team members yet</option>}
-            {people.map((n) => <option key={n}>{n}</option>)}
+            {people.map((n) => <option key={n} value={n}>{n === leadPerson ? `${n} (lead's person)` : n}</option>)}
           </select>
+          <span className={`mt-1 flex items-center gap-1 text-xs font-semibold ${form.owner === leadPerson ? 'text-emerald-700' : 'text-amber-700'}`}>
+            <User size={12} />
+            {!leadPerson
+              ? 'This lead has nobody yet'
+              : form.owner === leadPerson
+                ? `Goes to ${leadPerson.split(' ')[0]}, who has this lead`
+                : `Lead is with ${leadPerson.split(' ')[0]} — this task goes to ${form.owner.split(' ')[0]}`}
+          </span>
         </label>
         <label className="block">
           <span className="label">Priority</span>
@@ -158,14 +192,15 @@ export default function LeadTaskForm({ lead, onDone, onCancel }) {
         </label>
         <label className="block sm:col-span-2">
           <span className="label">Note (optional)</span>
-          <input className={input} value={form.note} onChange={set('note')} placeholder="Anything they should know" />
+          <textarea className="input min-h-[4.5rem] py-2 text-sm" value={form.note} onChange={set('note')} placeholder="Anything they should know — what the customer said, what to offer" />
         </label>
       </div>
 
       {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
-      <div className="flex gap-2">
-        <button type="submit" className="btn-action btn-sm">Add task</button>
-        <button type="button" className="btn-line btn-sm" onClick={onCancel}>Cancel</button>
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" className="btn-action btn-sm flex-1 sm:flex-none" onClick={() => { another.current = false; }}>Add task</button>
+        <button type="submit" className="btn-line btn-sm flex-1 sm:flex-none" onClick={() => { another.current = true; }}>Add &amp; add another</button>
+        <button type="button" className="btn-ghost btn-sm" onClick={onCancel}>{added.length ? 'Close' : 'Cancel'}</button>
       </div>
     </form>
   );

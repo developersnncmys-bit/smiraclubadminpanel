@@ -5,6 +5,7 @@ import PageHeader from '../components/ui/PageHeader.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import { useApp } from '../store/AppStore.jsx';
 import { dialable } from '../lib/phone.js';
+import TaskDetails from '../components/sales/TaskDetails.jsx';
 
 /**
  * Tasks: the follow-ups set on leads, by when they are due.
@@ -29,6 +30,7 @@ export default function Tasks() {
   const navigate = useNavigate();
   const [mine, setMine] = useState(true);
   const [group, setGroup] = useState('Today');
+  const [open, setOpen] = useState(null);
 
   const me = String(auth?.name || '').toLowerCase();
   const isMine = (t) =>
@@ -103,14 +105,17 @@ export default function Tasks() {
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left"
-                  onClick={() => lead && navigate(`/enquiries?lead=${encodeURIComponent(lead.id)}`)}
+                  onClick={() => setOpen(t)}
                 >
                   <span className={`block truncate font-semibold ${done ? 'text-ink-400 line-through' : 'text-ink-900'}`}>{t.title}</span>
                   <span className="block truncate text-xs text-ink-500">
                     {t.due}
                     {t.type && ` · ${t.type}`}
-                    {!mine && t.owner && ` · ${t.owner}`}
+                    {(lead?.name || t.customer) && ` · ${lead?.name || t.customer}`}
                   </span>
+                  <span className="block truncate text-xs font-semibold text-brand-700">Assigned to {t.owner || 'nobody'}</span>
+                  {t.note && <span className="block truncate text-xs text-ink-600">{t.note}</span>}
+                  {t.comments?.length > 0 && <span className="block text-xs text-ink-400">{t.comments.length} comment(s)</span>}
                 </button>
                 {t.priority && <Badge tone={priorityTone[t.priority] || 'slate'}>{t.priority}</Badge>}
                 {lead?.phone && !done && (
@@ -127,6 +132,13 @@ export default function Tasks() {
           })}
         </div>
       )}
+
+      <TaskDetails
+        task={open}
+        lead={open && leadOf(open)}
+        onClose={() => setOpen(null)}
+        onOpenLead={(lead) => { setOpen(null); navigate(`/enquiries?lead=${encodeURIComponent(lead.id)}`); }}
+      />
     </div>
   );
 }

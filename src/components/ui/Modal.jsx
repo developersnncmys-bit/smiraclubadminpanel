@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useBackToClose } from '../../lib/backToClose.js';
 
@@ -26,7 +27,8 @@ export default function Modal({ open, onClose, title, subtitle, footer, size = '
     screen, with the buttons full width under the thumb — the way a mobile
     CRM asks for anything. From sm up it is the centred dialog it always was.
   */
-  return (
+  // Into the page's end, so a dialog opened from a drawer sits over it, not behind.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-start sm:overflow-y-auto sm:p-6">
       <div className="fixed inset-0 bg-ink-900/45 backdrop-blur-sm" onClick={onClose} />
 
@@ -57,6 +59,7 @@ export default function Modal({ open, onClose, title, subtitle, footer, size = '
           </footer>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

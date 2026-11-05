@@ -11,6 +11,7 @@ import { findMembership, membershipStanding } from '../../lib/membership.js';
 import Field from '../ui/Field.jsx';
 import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 import LeadTaskForm from './LeadTaskForm.jsx';
+import TaskDetails from './TaskDetails.jsx';
 import { dialable } from '../../lib/phone.js';
 import { api } from '../../lib/api.js';
 
@@ -39,6 +40,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   // "Add task" from the leads list opens here, on the Tasks tab with the form open.
   const [tab, setTab] = useState(startOn === 'task' ? 'Tasks' : 'Activities');
   const [taskForm, setTaskForm] = useState(startOn === 'task');
+  const [openTask, setOpenTask] = useState(null);
   const [newest, setNewest] = useState(true);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
@@ -421,13 +423,15 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                       return (
                         <li key={t.id} className={`flex items-start gap-3 rounded-xl bg-surface-soft/60 p-3.5 ${done ? 'opacity-60' : ''}`}>
                           <CalendarPlus size={16} className="mt-0.5 shrink-0 text-ink-400" />
-                          <div className="min-w-0 flex-1">
+                          <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpenTask(t)}>
                             <p className={`text-sm font-bold text-ink-900 ${done ? 'line-through' : ''}`}>{t.title}</p>
                             <p className="text-xs text-ink-500">
-                              {t.type ? `${t.type} · ` : ''}{t.owner} · due {t.due}{t.priority === 'High' ? ' · High priority' : ''}
+                              {t.type ? `${t.type} · ` : ''}due {t.due}{t.priority === 'High' ? ' · High priority' : ''}
                             </p>
-                            {t.note && <p className="mt-0.5 text-xs text-ink-600">{t.note}</p>}
-                          </div>
+                            <p className="mt-0.5 text-xs font-semibold text-brand-700">Assigned to {t.owner || 'nobody'}</p>
+                            {t.note && <p className="mt-0.5 line-clamp-2 text-xs text-ink-600">{t.note}</p>}
+                            {t.comments?.length > 0 && <p className="mt-0.5 text-xs text-ink-400">{t.comments.length} comment(s) · tap to see</p>}
+                          </button>
                           <span className="flex shrink-0 flex-col items-end gap-1.5">
                             <Badge tone={done ? 'green' : t.bucket === 'overdue' ? 'rose' : 'sky'} dot>
                               {done ? 'done' : t.bucket || 'upcoming'}
@@ -449,6 +453,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                       <li className="py-8 text-center text-sm text-ink-500">No tasks on this lead yet. Add one above.</li>
                     )}
                   </ul>
+                  <TaskDetails task={openTask} lead={lead} onClose={() => setOpenTask(null)} />
                 </div>
               )}
 

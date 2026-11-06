@@ -3,6 +3,7 @@ import { ExternalLink, Phone } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { useApp } from '../../store/AppStore.jsx';
 import { api, isLive } from '../../lib/api.js';
+import { toApi } from '../../lib/adapters.js';
 import { dialable } from '../../lib/phone.js';
 import { TYPES, nextDays } from './LeadTaskForm.jsx';
 import { useLeadStages } from '../../lib/leadStages.js';
@@ -18,6 +19,13 @@ import { useLeadStages } from '../../lib/leadStages.js';
 const pad = (n) => String(n).padStart(2, '0');
 const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const hhmm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+/** Today at a time already gone becomes the next 5 minutes from now. */
+const laterToday = (day, time) => {
+  const now = new Date();
+  if (day !== isoDay(now) || new Date(`${day}T${time || '00:00'}`) > now) return time;
+  now.setMinutes(Math.ceil((now.getMinutes() + 1) / 5) * 5, 0, 0);
+  return hhmm(now);
+};
 const noteDay = (iso) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const noteTime = (iso) => new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
 const spell = (day, time) => {
@@ -85,24 +93,36 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
         else update('enquiries', lead.id, { status: form.leadStatus }, { silent: true });
         logActivity?.(lead.id, `Status updated to ${form.leadStatus} (from task ${t.title})`, 'status');
       }
-      update('tasks', t.id, {
+      const patch = {
         type: form.type,
         dueIso: at.toISOString(),
         dueAt: at.toISOString(),
         due: at.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
         ...(form.owner !== t.owner ? { owner: form.owner, ownerId: member?._id } : {}),
-        ...(text ? { comments: [...(t.comments || []), { text, by: auth?.name || 'You', at: new Date().toISOString() }] } : {}),
         ...(nowDone
           ? { status: 'Completed', bucket: 'done' }
           : !form.done && wasDone
             ? { status: 'Pending', bucket: at < new Date() ? 'overdue' : 'today' }
             : { bucket: wasDone ? 'done' : at < new Date() ? 'overdue' : 'today' }),
-      }, { message: nowDone ? 'Task done' : 'Task saved' });
+      };
+      if (isLive && t._id) {
+        // Saved on the server first, and only then closed — so "Task saved"
+        // means it really is, and a refusal says why instead of quietly
+        // putting the old time back.
+        await api.patch(`/tasks/${t._id}`, toApi('tasks', patch));
+        await pull?.('tasks');
+        toast(nowDone ? 'Task done' : 'Task saved');
+      } else {
+        update('tasks', t.id, {
+          ...patch,
+          ...(text ? { comments: [...(t.comments || []), { text, by: auth?.name || 'You', at: new Date().toISOString() }] } : {}),
+        }, { message: nowDone ? 'Task done' : 'Task saved' });
+      }
       // A repeating task done: the server makes the next one — fetch it.
       if (nowDone && t.repeat) setTimeout(() => pull?.('tasks'), 1500);
       onClose();
     } catch (err) {
-      toast(err.message || 'That did not save', 'danger');
+      toast(`Task not saved: ${err.message || 'try again'}`, 'danger');
     } finally {
       setSaving(false);
     }
@@ -173,7 +193,7 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
                 <button
                   key={d.iso}
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, day: d.iso }))}
+                  onClick={() => setForm((f) => ({ ...f, day: d.iso, time: laterToday(d.iso, f.time) }))}
                   className={`flex shrink-0 flex-col items-center rounded-lg border px-2.5 py-1.5 text-xs leading-tight transition ${
                     on
                       ? 'border-brand-500 bg-brand-600 text-white'
@@ -200,6 +220,11 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
             <input type="time" className={input} value={form.time} onChange={set('time')} />
           </label>
           <span className="col-span-2 -mt-1 text-xs font-semibold text-brand-700">{spell(form.day, form.time)}</span>
+          {!form.done && new Date(`${form.day}T${form.time || '00:00'}`) < new Date() && (
+            <span className="col-span-2 rounded-lg bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+              This time has already passed — the task will show as Overdue. Change the time if it is for later today.
+            </span>
+          )}
         </div>
 
         <label className="block">

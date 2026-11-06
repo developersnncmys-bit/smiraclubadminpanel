@@ -36,7 +36,7 @@ const spell = (day, time) => {
 };
 
 export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
-  const { tasks, team, enquiries, update, auth, toast, pull, logActivity } = useApp();
+  const { tasks, team, enquiries, update, auth, toast, pull, logActivity, showSaved } = useApp();
   const stages = useLeadStages();
   // The live row, so a saved note shows straight away.
   const t = (task && tasks.find((x) => x.id === task.id)) || task;
@@ -87,12 +87,6 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
       ].filter(Boolean);
       const text = [form.note.trim(), changes.length ? `(${changes.join(' · ')})` : ''].filter(Boolean).join('\n');
       if (text && isLive && t._id) await api.post(`/tasks/${t._id}/comments`, { text });
-      if (statusChanged) {
-        // A lead not loaded on this screen is changed on the server directly.
-        if (!enquiries.some((e) => e.id === lead.id) && isLive && lead._id) await api.patch(`/leads/${lead._id}`, { status: form.leadStatus });
-        else update('enquiries', lead.id, { status: form.leadStatus }, { silent: true });
-        logActivity?.(lead.id, `Status updated to ${form.leadStatus} (from task ${t.title})`, 'status');
-      }
       const patch = {
         type: form.type,
         dueIso: at.toISOString(),
@@ -111,12 +105,24 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
         // putting the old time back.
         await api.patch(`/tasks/${t._id}`, toApi('tasks', patch));
         await pull?.('tasks');
-        toast(nowDone ? 'Task done' : 'Task saved');
+        // A clear "it is saved" the person cannot miss.
+        showSaved?.(nowDone ? 'Task done' : 'Task saved', `${form.type} · ${spell(form.day, form.time)} · ${form.owner || 'nobody'}`, t.id);
       } else {
         update('tasks', t.id, {
           ...patch,
           ...(text ? { comments: [...(t.comments || []), { text, by: auth?.name || 'You', at: new Date().toISOString() }] } : {}),
         }, { message: nowDone ? 'Task done' : 'Task saved' });
+      }
+      // The lead's status after the task, on its own: if it is refused, the
+      // task is still saved and the reason is shown.
+      if (statusChanged) {
+        try {
+          if (!enquiries.some((e) => e.id === lead.id) && isLive && lead._id) await api.patch(`/leads/${lead._id}`, { status: form.leadStatus });
+          else update('enquiries', lead.id, { status: form.leadStatus }, { silent: true });
+          logActivity?.(lead.id, `Status updated to ${form.leadStatus} (from task ${t.title})`, 'status');
+        } catch (err) {
+          toast(`Task saved, but the lead status did not change: ${err.message}`, 'danger');
+        }
       }
       // A repeating task done: the server makes the next one — fetch it.
       if (nowDone && t.repeat) setTimeout(() => pull?.('tasks'), 1500);

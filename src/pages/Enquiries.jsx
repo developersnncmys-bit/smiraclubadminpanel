@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Phone, MessageCircle, FileText, Plus, Upload, Pencil,
@@ -222,7 +222,32 @@ export default function Enquiries() {
   }, [params, setParams]);
 
 
-  const all = byOwner(enquiries, owner);
+  /*
+   * One lead per phone number. The same person imported twice, or sent in
+   * from the website and typed in by hand, was listed two or three times.
+   * The first one (the oldest) stays; the copies are only hidden, never
+   * deleted, and "Show them" brings them back.
+   */
+  const [showDupes, setShowDupes] = useState(false);
+  const { unique, dupeCount } = useMemo(() => {
+    const seen = new Set();
+    const keep = [];
+    let dupes = 0;
+    const oldestFirst = [...enquiries].sort(
+      (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+    );
+    const kept = new Set();
+    for (const e of oldestFirst) {
+      const key = String(e.phone || '').replace(/\D/g, '').slice(-10);
+      if (key.length === 10 && seen.has(key)) { dupes += 1; continue; }
+      if (key.length === 10) seen.add(key);
+      kept.add(e.id);
+    }
+    // Back in the order the list had.
+    for (const e of enquiries) if (kept.has(e.id)) keep.push(e);
+    return { unique: keep, dupeCount: dupes };
+  }, [enquiries]);
+  const all = byOwner(showDupes ? enquiries : unique, owner);
   /** Every folder: the ones made here, and every tag a lead already carries. */
   const folders = [...new Set([...savedFolders, ...all.flatMap((e) => e.tags || [])])];
 
@@ -657,6 +682,17 @@ export default function Enquiries() {
           )}
         </button>
       </PageHeader>
+
+      {dupeCount > 0 && (
+        <p className="-mt-2 mb-3 text-xs text-ink-500">
+          {showDupes
+            ? `Showing ${dupeCount} duplicate lead(s) with the same phone number. `
+            : `${dupeCount} duplicate lead(s) with the same phone number are hidden — one per number is shown. `}
+          <button type="button" className="font-bold text-brand-700 underline" onClick={() => setShowDupes((v) => !v)}>
+            {showDupes ? 'Hide them' : 'Show them'}
+          </button>
+        </p>
+      )}
 
       {/* The filters every section below reads from */}
       <div className={`card mb-4 px-4 py-3 ${!showFilters && activeFilters.length === 0 ? 'max-lg:hidden' : ''}`}>

@@ -228,7 +228,17 @@ export const ADAPTERS = {
       email: u.email,
       phone: u.phone,
       status: u.status,
-      live: u.live,
+      /*
+       * Online means they used the panel in the last 10 minutes. The stored
+       * state stays as it was when they closed it, so on its own it said
+       * "Online" for days, or "Offline" for somebody at work right now.
+       */
+      live: (() => {
+        const seen = new Date(u.lastActiveAt || 0).getTime();
+        const fresh = seen && Date.now() - seen < 10 * 60 * 1000;
+        if (fresh) return u.live && u.live !== 'Offline' ? u.live : 'Online';
+        return u.live === 'On leave' ? 'On leave' : 'Offline';
+      })(),
       attendance: u.attendance,
       /**
        * What they have done today, from the counters the server keeps.
@@ -249,7 +259,11 @@ export const ADAPTERS = {
           .filter(([n]) => n)
           .map(([n, word]) => `${n} ${word}${n === 1 ? '' : 's'}`)
           .join(' · '),
-      lastActive: u.lastLoginAt ? dt(u.lastLoginAt) : 'never',
+      // The later of the last thing they did and the last time they signed in.
+      lastActive: (() => {
+        const t = Math.max(new Date(u.lastActiveAt || 0).getTime(), new Date(u.lastLoginAt || 0).getTime());
+        return t ? dt(new Date(t)) : 'never';
+      })(),
 
       /**
        * Everything the Security and People screens ask about an account.

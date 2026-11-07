@@ -389,7 +389,7 @@ export function AppProvider({ children }) {
     if (!live) return undefined;
     // The small busy lists every 15 seconds; the leads — tens of thousands,
     // loaded in pages — every two minutes.
-    const BUSY = ['bookings', 'memberSignups', 'customers', 'partners', 'tickets', 'tasks'];
+    const BUSY = ['bookings', 'memberSignups', 'customers', 'partners', 'tickets', 'tasks', 'team'];
     let ticks = 0;
     const tick = () => {
       if (document.visibilityState !== 'visible') return;

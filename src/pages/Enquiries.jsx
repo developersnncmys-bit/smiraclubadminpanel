@@ -35,6 +35,7 @@ import LeadStagesEditor from '../components/sales/LeadStagesEditor.jsx';
 import { downloadCsv } from '../lib/csv.js';
 import { usePaged, Pagination } from '../components/ui/Pagination.jsx';
 import { api } from '../lib/api.js';
+import { fromApi } from '../lib/adapters.js';
 import { when } from '../lib/adapters.js';
 import { findMembership, membershipBadge, membershipStanding } from '../lib/membership.js';
 import { dialable } from '../lib/phone.js';
@@ -180,7 +181,28 @@ export default function Enquiries() {
    */
   const location = useLocation();
   const leadId = params.get('lead');
-  const viewing = leadId ? enquiries.find((e) => e.id === leadId || e._id === leadId) || null : null;
+  /*
+   * A lead opened from a task that is not in the list on this phone yet —
+   * given to this person a minute ago, before the leads refreshed — is
+   * fetched on its own, so "Open lead" always opens it.
+   */
+  const [fetched, setFetched] = useState(null);
+  useEffect(() => {
+    if (!leadId || enquiries.some((e) => e.id === leadId || e._id === leadId)) return;
+    if (fetched && (fetched.id === leadId || fetched._id === leadId)) return;
+    let gone = false;
+    api.list('/leads', `?q=${encodeURIComponent(leadId)}&limit=5`)
+      .then((r) => {
+        const doc = (r.rows || []).find((d) => d.code === leadId || d._id === leadId);
+        if (doc && !gone) setFetched(fromApi('enquiries', doc));
+      })
+      .catch(() => {});
+    return () => { gone = true; };
+  }, [leadId, enquiries, fetched]);
+  const viewing = leadId
+    ? enquiries.find((e) => e.id === leadId || e._id === leadId)
+      || (fetched && (fetched.id === leadId || fetched._id === leadId) ? fetched : null)
+    : null;
   const setViewing = (r) => {
     const next = new URLSearchParams(params);
     if (r) {

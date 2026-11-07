@@ -66,6 +66,9 @@ export const nav = navGroups.flatMap((g) => g.items);
  */
 export function canOpenModule(auth, module) {
   if (!module || !auth || auth.superAdmin) return true;
+  // Page by page, when the role was set up that way: View opens it.
+  const page = auth.access?.[module];
+  if (Array.isArray(page)) return page.includes('view');
   const modules = auth.modules || [];
   return modules.includes(module);
 }

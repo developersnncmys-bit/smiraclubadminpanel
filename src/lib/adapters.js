@@ -358,6 +358,8 @@ export const ADAPTERS = {
       dashboard: r.dashboard || '',
       modules: r.modules || [],
       permissions: r.permissions || [],
+      // Page by page: { CRM: ['view', 'create'], ... }.
+      access: r.access || {},
       // The screens speak "View" and "Own team"; the server stores "view"
       // and "team". Read into the screen's words, write back in the server's.
       can: (r.permissions || []).map((x) => PERMISSION_LABEL[x]).filter(Boolean),
@@ -383,6 +385,7 @@ export const ADAPTERS = {
         : r.permissions,
       scope: r.scope === undefined ? undefined : SCOPE_VALUE[r.scope] || r.scope,
       approvals: r.approvals,
+      access: r.access,
       description: r.description,
       // Not the screen's to grant: one role skips every check and it is
       // set where the database is, not from a form anybody can open.

@@ -9,6 +9,7 @@ import {
   IndianRupee, Eye, Mail, Check, FolderInput, Loader2, Settings2,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import { useCan } from '../lib/access.js';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
@@ -143,6 +144,8 @@ const digits = (phone) => String(phone).replace(/[^\d]/g, '');
  * heavier analysis sits behind its own sections.
  */
 export default function Enquiries() {
+  // What this person's role allows on Sales & Leads: Add, Edit, Delete.
+  const can = useCan();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const store = useApp();
@@ -385,8 +388,8 @@ export default function Enquiries() {
 
   /** The actions the desk starts work with — the same rail as Team Status. */
   const tiles = [
-    { label: 'Add lead', icon: UserPlus, run: () => { setEditing(null); setFormOpen(true); } },
-    { label: 'Import', icon: Upload, run: () => setImportOpen(true) },
+    can('create') && { label: 'Add lead', icon: UserPlus, run: () => { setEditing(null); setFormOpen(true); } },
+    can('create') && { label: 'Import', icon: Upload, run: () => setImportOpen(true) },
     { label: 'Assign lead', icon: UserCheck, run: () => act('assign-lead') },
     { label: 'Reassign', icon: ArrowRightLeft, run: () => act('reassign') },
     { label: 'Follow-up', icon: CalendarClock, run: () => act('task', { type: 'Follow-up', title: 'Schedule a follow-up', suggest: 'Follow-up call' }) },
@@ -632,10 +635,14 @@ export default function Enquiries() {
     <>
       <PageHeader title="Sales & Leads" subtitle={`${rows.length} leads · ${open.length} open · ${unassigned.length} waiting for an owner`}>
         <button className="btn-line" onClick={exportLeads} title="Export"><Download size={16} /> <span className="max-sm:hidden">Export</span></button>
-        <button className="btn-line" onClick={() => setImportOpen(true)} title="Import"><Upload size={16} /> <span className="max-sm:hidden">Import</span></button>
-        <button className="btn-action" onClick={() => { setEditing(null); setFormOpen(true); }}>
-          <Plus size={16} /> Add lead
-        </button>
+        {can('create') && (
+          <>
+            <button className="btn-line" onClick={() => setImportOpen(true)} title="Import"><Upload size={16} /> <span className="max-sm:hidden">Import</span></button>
+            <button className="btn-action" onClick={() => { setEditing(null); setFormOpen(true); }}>
+              <Plus size={16} /> Add lead
+            </button>
+          </>
+        )}
         {/* On a phone the filters fold away behind this, at the right corner. */}
         <button
           className={`btn-line relative ml-auto lg:hidden ${showFilters ? 'border-brand-500 text-brand-700' : ''}`}
@@ -736,8 +743,8 @@ export default function Enquiries() {
           icon={Zap}
           variant="action"
           width="w-[250px]"
-          items={tiles.map((t) => ({ key: t.label, label: t.label, icon: t.icon }))}
-          onSelect={(key) => tiles.find((t) => t.label === key)?.run()}
+          items={tiles.filter(Boolean).map((t) => ({ key: t.label, label: t.label, icon: t.icon }))}
+          onSelect={(key) => tiles.filter(Boolean).find((t) => t.label === key)?.run()}
         />
 
         <p className="num ml-auto text-sm text-ink-500">
@@ -1008,9 +1015,11 @@ export default function Enquiries() {
                         items={actionsFor(r)}
                       />
                       {/* On every lead — a Lost or Won one can be moved back too. */}
-                      <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([r.id])}>
-                        <Tag size={13} /> Move status
-                      </button>
+                      {can('edit') && (
+                        <button className="btn-action btn-sm ml-auto" onClick={() => setStatusFor([r.id])}>
+                          <Tag size={13} /> Move status
+                        </button>
+                      )}
                     </div>
                   </article>
                 );

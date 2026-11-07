@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useCan } from '../../lib/access.js';
 import {
   Search,
   SlidersHorizontal,
@@ -19,6 +20,9 @@ import { downloadCsv } from '../../lib/csv.js';
  * actions, CSV export and pagination. Everything here operates on real state
  * passed down from the page.
  */
+// Bulk buttons a role needs a right for.
+const BULK_NEED = { Delete: 'delete', Edit: 'edit', Assign: 'edit', 'Move status': 'edit' };
+
 export default function DataTable({
   columns,
   rows,
@@ -38,6 +42,7 @@ export default function DataTable({
 }) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState({});
+  const can = useCan();
   const [showPanel, setShowPanel] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
@@ -244,7 +249,7 @@ export default function DataTable({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-600/15 bg-brand-50 px-5 py-2.5 text-sm">
           <span className="font-semibold text-brand-800">{selected.length} selected</span>
           <div className="flex flex-wrap gap-2">
-            {bulkActions.map(({ label, icon: Icon, onClick, danger }) => (
+            {bulkActions.filter((b) => !BULK_NEED[b.label] || can(BULK_NEED[b.label])).map(({ label, icon: Icon, onClick, danger }) => (
               <button
                 key={label}
                 onClick={() => {

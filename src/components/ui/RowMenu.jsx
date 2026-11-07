@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, MoreHorizontal } from 'lucide-react';
+import { useCan } from '../../lib/access.js';
 
 /**
  * A menu of the things you can do to one row.
@@ -27,7 +28,10 @@ export default function RowMenu({ items = [], label, icon: Face, drop = 'down' }
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const shown = items.filter(Boolean);
+  // Edit and Delete only for a role allowed them on this page.
+  const can = useCan();
+  const need = { Edit: 'edit', Delete: 'delete', 'Move status': 'edit', Assign: 'edit' };
+  const shown = items.filter(Boolean).filter((i) => !need[i.label] || can(need[i.label]));
   if (!shown.length) return null;
 
   return (

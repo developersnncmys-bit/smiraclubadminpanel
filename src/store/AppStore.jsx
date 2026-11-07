@@ -9,6 +9,7 @@ import * as autoSeed from '../data/automationData.js';
 import * as inventorySeed from '../data/inventoryData.js';
 import { api, isLive, getToken, setToken } from '../lib/api.js';
 import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor, fallbackPathFor } from '../lib/adapters.js';
+import { canDo, COLLECTION_MODULE } from '../lib/access.js';
 import * as reportsSeed from '../data/reportsData.js';
 
 /**
@@ -459,8 +460,24 @@ export function AppProvider({ children }) {
     setSaved({ title, detail, code });
   }, []);
 
+  /*
+   * The role's View / Add / Edit / Delete, page by page. A button the role
+   * may not use is hidden; this is the backstop for any that is not, so the
+   * screen never shows a change the server is about to refuse.
+   */
+  const authRef = useRef(auth);
+  authRef.current = auth;
+  const denied = useCallback((collection, action) => {
+    const module = COLLECTION_MODULE[collection];
+    if (!module || canDo(authRef.current, module, action)) return false;
+    const words = { create: 'add', edit: 'edit', delete: 'delete' };
+    toast(`Your role cannot ${words[action] || action} here. Ask an admin to allow it in Users & Roles.`, 'danger');
+    return true;
+  }, [toast]);
+
   const create = useCallback(
     (collection, item, { silent = false } = {}) => {
+      if (denied(collection, 'create')) return null;
       const id = item.id || nextId(collection);
 
       // Show it straight away, then let the server confirm the real record.
@@ -496,7 +513,7 @@ export function AppProvider({ children }) {
 
       return id;
     },
-    [nextId, toast, live, showSaved]
+    [nextId, toast, live, showSaved, denied]
   );
 
   /**
@@ -521,6 +538,7 @@ export function AppProvider({ children }) {
 
   const update = useCallback(
     (collection, id, patch, { silent = false, message } = {}) => {
+      if (denied(collection, 'edit')) return;
       const before = (dbRef.current[collection] || []).find((r) => r.id === id) || null;
       setDb((d) => ({
         ...d,
@@ -553,7 +571,7 @@ export function AppProvider({ children }) {
         sayItSaved();
       }
     },
-    [toast, live, showSaved, refreshLeads]
+    [toast, live, showSaved, refreshLeads, denied]
   );
 
   /*
@@ -586,6 +604,7 @@ export function AppProvider({ children }) {
 
   const updateMany = useCallback(
     (collection, ids, patch, message) => {
+      if (denied(collection, 'edit')) return;
       const chosen = new Set(ids);
       const targets = (dbRef.current[collection] || []).filter((r) => chosen.has(r.id));
       setDb((d) => ({
@@ -637,6 +656,7 @@ export function AppProvider({ children }) {
 
   const remove = useCallback(
     (collection, ids) => {
+      if (denied(collection, 'delete')) return;
       const list = Array.isArray(ids) ? ids : [ids];
       const chosen = new Set(list);
       const gone = (dbRef.current[collection] || []).filter((r) => chosen.has(r.id));
@@ -723,6 +743,7 @@ export function AppProvider({ children }) {
     scope: u.role?.scope,
     modules: u.role?.modules || [],
     permissions: u.role?.permissions || [],
+    access: u.role?.access || {},
     superAdmin: Boolean(u.role?.superAdmin),
     initials: (u.name || 'SC')
       .split(' ')
@@ -780,6 +801,7 @@ export function AppProvider({ children }) {
         scope: u.role?.scope,
         modules: u.role?.modules || [],
         permissions: u.role?.permissions || [],
+        access: u.role?.access || {},
         superAdmin: Boolean(u.role?.superAdmin),
         initials: (u.name || 'SC')
           .split(' ')

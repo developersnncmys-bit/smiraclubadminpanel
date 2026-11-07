@@ -14,6 +14,7 @@ import LeadTaskForm from './LeadTaskForm.jsx';
 import TaskDetails from './TaskDetails.jsx';
 import { dialable } from '../../lib/phone.js';
 import { api } from '../../lib/api.js';
+import { useCan } from '../../lib/access.js';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
 
@@ -36,6 +37,7 @@ const KINDS = {
  */
 export default function LeadDetails({ lead, list, onClose, onJump, onEdit, startOn }) {
   const enquiryStatuses = useLeadStages();
+  const canEdit = useCan()('edit', 'CRM');
   const { activities, tasks, team, quotations, memberSignups, memberships, logActivity, update, toast } = useApp();
   // "Add task" from the leads list opens here, on the Tasks tab with the form open.
   const [tab, setTab] = useState(startOn === 'task' ? 'Tasks' : 'Activities');
@@ -101,8 +103,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const quick = [
     { icon: Phone, tone: 'bg-[#1E88E5]', label: 'Call', title: 'Call', run: () => { window.location.href = `tel:${dialable(digits)}`; logActivity(lead.id, `Called ${lead.name}`, 'call'); } },
     { icon: WhatsAppIcon, tone: 'bg-[#25D366]', label: 'WhatsApp', title: 'Open WhatsApp chat', run: () => { window.open(`https://wa.me/${waNumber}`, '_blank'); logActivity(lead.id, `Opened WhatsApp with ${lead.name}`, 'note'); } },
-    { icon: Pencil, tone: 'bg-[#8E44AD]', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
-  ];
+    canEdit && { icon: Pencil, tone: 'bg-[#8E44AD]', label: 'Edit', title: 'Edit lead', run: () => onEdit(lead) },
+  ].filter(Boolean);
 
   // Who a lead can be given to: everyone on the team who is active.
   const people = ['Unassigned', ...team.filter((t) => t.status !== 'Inactive').map((t) => t.name)];
@@ -212,7 +214,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
             {/* Status and label side by side on a phone; the rest is under Info. */}
             <div className="grid grid-cols-2 lg:block">
 
-            <Field label="Status" onEdit={() => setEditing(editing === 'status' ? null : 'status')}>
+            <Field label="Status" onEdit={canEdit ? () => setEditing(editing === 'status' ? null : 'status') : undefined}>
               {editing === 'status' ? (
                 <div className="flex flex-wrap gap-1.5">
                   {enquiryStatuses.map((s) => (
@@ -234,7 +236,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
               )}
             </Field>
 
-            <Field label="Label" onEdit={() => setEditing(editing === 'label' ? null : 'label')}>
+            <Field label="Label" onEdit={canEdit ? () => setEditing(editing === 'label' ? null : 'label') : undefined}>
               {editing === 'label' ? (
                 <div className="flex flex-wrap gap-1.5">
                   {LABELS.map((l) => (
@@ -256,7 +258,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
             </div>
 
             {/* Call, WhatsApp, Edit */}
-            <div className="grid grid-cols-3 gap-3 border-b border-ink-900/[0.07] px-4 py-3">
+            <div className={`grid ${quick.length === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-3 border-b border-ink-900/[0.07] px-4 py-3`}>
               {quick.map(({ icon: Icon, tone, label, title, run }) => (
                 <button key={label} onClick={run} title={title} className="flex flex-col items-center gap-1">
                   <span className={`grid aspect-square w-full max-w-[3.25rem] place-items-center rounded-xl text-white shadow-sm transition active:scale-95 ${tone}`}>
@@ -310,7 +312,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
             <Field label="Date added">{lead.created}</Field>
             <Field label="Lead source">{lead.source}</Field>
 
-            <Field label="Assigned to" onEdit={() => setEditing(editing === 'owner' ? null : 'owner')}>
+            <Field label="Assigned to" onEdit={canEdit ? () => setEditing(editing === 'owner' ? null : 'owner') : undefined}>
               {editing === 'owner' ? (
                 <div className="flex flex-wrap gap-1.5">
                   {people.map((o) => (
@@ -502,7 +504,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 <div className="mb-3 rounded-xl border border-ink-900/[0.07] px-4 py-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold uppercase tracking-wide text-ink-400">Assigned to</span>
-                    <button type="button" className="text-xs font-bold text-brand-700" onClick={() => setEditing(editing === 'owner' ? null : 'owner')}>
+                    <button type="button" className={`text-xs font-bold text-brand-700 ${canEdit ? '' : 'hidden'}`} onClick={() => setEditing(editing === 'owner' ? null : 'owner')}>
                       {editing === 'owner' ? 'Done' : 'Change'}
                     </button>
                   </div>

@@ -28,7 +28,7 @@ const blankStep = (type = 'Create task') => ({
   type,
   value: type === 'Create task' ? { type: 'Follow-up', title: '', priority: 'Medium' } : type === 'Assign to' ? [] : '',
   dueIn: type === 'Create task' ? 24 : undefined,
-  limit: type === 'Assign to' ? 300 : undefined,
+  limits: type === 'Assign to' ? {} : undefined,
 });
 const blank = () => ({ name: '', when: 'Lead status changed', match: { status: '', owner: '', source: '' }, steps: [blankStep()] });
 
@@ -47,8 +47,15 @@ function stepText(step, nameOf) {
   if (step.type === 'Move status') return `move to ${step.value}`;
   if (step.type === 'Assign to') {
     const who = (Array.isArray(step.value) ? step.value : [step.value]).map(nameOf).filter(Boolean);
-    const cap = Number(step.limit) > 0 ? ` (up to ${step.limit} each a day)` : '';
-    return (who.length > 1 ? `share between ${who.join(', ')}` : `assign to ${who[0] || '—'}`) + cap;
+    const ids = Array.isArray(step.value) ? step.value : [step.value];
+    const who2 = ids
+      .map((id) => {
+        const n = nameOf(id);
+        const cap = Number(step.limits?.[id]) || 0;
+        return n ? (cap ? `${n} (${cap}/day)` : n) : null;
+      })
+      .filter(Boolean);
+    return who2.length > 1 ? `share between ${who2.join(', ')}` : `assign to ${who2[0] || who[0] || '—'}`;
   }
   if (step.type === 'Create task') {
     const due = DUE.find(([h]) => h === Number(step.dueIn))?.[1]?.toLowerCase() || `in ${step.dueIn} hours`;
@@ -251,28 +258,6 @@ export default function LeadRules() {
                       Tick one person, or several to take turns: each new lead goes to whoever has been given the fewest leads today —
                       leads you assign by hand count too.
                     </p>
-                    <label className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-700">
-                      Most leads one person gets in a day
-                      <input
-                        type="number"
-                        min="0"
-                        className="input !w-24 !py-1.5"
-                        value={s.limit ?? ''}
-                        onChange={(e) => setStep(i, { limit: e.target.value === '' ? '' : Math.max(0, Number(e.target.value)) })}
-                        placeholder="300"
-                      />
-                      {[50, 100, 200, 300].map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setStep(i, { limit: n })}
-                          className={`rounded-full border px-2.5 py-1 ${Number(s.limit) === n ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-ink-900/10 bg-white text-ink-600'}`}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                      <span className="font-normal text-ink-400">0 or empty = no limit. Once a person has this many, the next one takes over.</span>
-                    </label>
                     <div className="flex flex-wrap gap-1.5">
                       {people.map((p) => {
                         const on = s.value.includes(p._id);
@@ -285,14 +270,52 @@ export default function LeadRules() {
                           >
                             {p.name}
                             {givenToday[p._id] !== undefined && (
-                              <span className={`ml-1 ${Number(s.limit) > 0 && givenToday[p._id] >= Number(s.limit) ? 'text-rose-600' : 'text-ink-400'}`}>
-                                · {givenToday[p._id]}{Number(s.limit) > 0 ? ` / ${s.limit}` : ''} today
-                              </span>
+                              <span className="ml-1 text-ink-400">· {givenToday[p._id]} today</span>
                             )}
                           </button>
                         );
                       })}
                     </div>
+                    {s.value.length > 0 && (
+                      <div className="mt-3 rounded-xl border border-ink-900/10 bg-white p-2.5">
+                        <p className="mb-2 text-xs font-semibold text-ink-700">
+                          How many leads each person gets in a day — type any number. Empty = no limit.
+                        </p>
+                        <div className="space-y-1.5">
+                          {s.value.map((id) => {
+                            const p = people.find((x) => x._id === id);
+                            if (!p) return null;
+                            const cap = Number(s.limits?.[id]) || 0;
+                            const got = givenToday[id] ?? 0;
+                            const full = cap > 0 && got >= cap;
+                            return (
+                              <div key={id} className="flex flex-wrap items-center gap-2 text-sm">
+                                <span className="min-w-[8rem] flex-1 font-semibold text-ink-900">{p.name}</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  inputMode="numeric"
+                                  className="input !w-28 !py-1.5"
+                                  value={s.limits?.[id] ?? ''}
+                                  placeholder="No limit"
+                                  onChange={(e) =>
+                                    setStep(i, {
+                                      limits: { ...(s.limits || {}), [id]: e.target.value === '' ? '' : Math.max(0, Math.floor(Number(e.target.value))) },
+                                    })
+                                  }
+                                />
+                                <span className={`w-28 text-xs font-semibold ${full ? 'text-rose-600' : 'text-ink-500'}`}>
+                                  {cap > 0 ? `${got} / ${cap} today${full ? ' · full' : ''}` : `${got} today`}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <p className="mt-2 text-xs text-ink-400">
+                          When a person reaches their number, the next leads go to the others. When everyone is full, new leads wait unassigned.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 

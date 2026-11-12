@@ -110,8 +110,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const people = ['Unassigned', ...team.filter((t) => t.status !== 'Inactive').map((t) => t.name)];
 
   const setField = (key, value, text) => {
-    update('enquiries', lead.id, { [key]: value }, { silent: true });
-    logActivity(lead.id, text, key === 'owner' ? 'assign' : 'status');
+    update('enquiries', lead.id, { [key]: value }, { silent: true, record: lead });
+    logActivity(lead.id, text, key === 'owner' ? 'assign' : 'status', undefined, lead);
     toast(text);
     setEditing(null);
   };

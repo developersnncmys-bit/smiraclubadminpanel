@@ -537,12 +537,21 @@ export function AppProvider({ children }) {
   }, [toast]);
 
   const update = useCallback(
-    (collection, id, patch, { silent = false, message } = {}) => {
+    (collection, id, patch, { silent = false, message, record } = {}) => {
       if (denied(collection, 'edit')) return;
-      const before = (dbRef.current[collection] || []).find((r) => r.id === id) || null;
+      /*
+       * `record`: the row as the screen has it, for one not in the loaded
+       * list (a lead opened from a task, the bell or a search). It is added
+       * to the list so the change shows, and the change still goes to the
+       * server — before, it went nowhere and the screen said it had.
+       */
+      const found = (dbRef.current[collection] || []).find((r) => r.id === id) || null;
+      const before = found || (record && record.id === id ? record : null);
       setDb((d) => ({
         ...d,
-        [collection]: d[collection].map((r) => (r.id === id ? { ...r, ...patch } : r)),
+        [collection]: found
+          ? d[collection].map((r) => (r.id === id ? { ...r, ...patch } : r))
+          : before ? [...d[collection], { ...before, ...patch }] : d[collection],
       }));
       if (!silent) toast(message || `${SINGULAR[collection]} ${id} updated`);
 
@@ -1024,9 +1033,11 @@ export function AppProvider({ children }) {
 
   /** Adds a line to a lead's activity trail. */
   const logActivity = useCallback(
-    (leadId, text, kind = 'note', meta) => {
+    (leadId, text, kind = 'note', meta, record) => {
       const now = new Date();
-      const lead = (dbRef.current.enquiries || []).find((e) => e.id === leadId);
+      const inList = (dbRef.current.enquiries || []).find((e) => e.id === leadId);
+      const lead = inList || (record && record.id === leadId ? record : null);
+      if (!inList && lead) setDb((d) => (d.enquiries.some((e) => e.id === leadId) ? d : { ...d, enquiries: [...d.enquiries, lead] }));
 
       // Against the server the trail lives on the lead itself.
       if (live && lead?._id) {
@@ -1053,7 +1064,8 @@ export function AppProvider({ children }) {
             const saved = fromApi('enquiries', res.data);
             setDb((d) => ({
               ...d,
-              enquiries: d.enquiries.map((e) => (e.id === leadId ? saved : e)),
+              // Only the trail: a status saved at the same moment must not be undone by an older copy.
+              enquiries: d.enquiries.map((e) => (e.id === leadId ? { ...e, activities: saved.activities, lastContact: saved.lastContact ?? e.lastContact } : e)),
             }));
           })
           .catch((err) => {

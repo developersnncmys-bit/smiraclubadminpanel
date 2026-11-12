@@ -47,6 +47,7 @@ import {
 import Table from '../components/ui/Table.jsx';
 import { useEndpoint } from '../lib/useEndpoint.js';
 import LeadRules from '../components/automation/LeadRules.jsx';
+import { api } from '../lib/api.js';
 
 const SECTIONS = [
   'Lead rules',
@@ -84,7 +85,7 @@ function RuleLine({ label, value, tone = 'bg-surface-soft text-ink-800' }) {
  * happened.
  */
 export default function Automation() {
-  const { automations, create, update, remove, toast } = useApp();
+  const { automations, create, update, remove, toast, pull } = useApp();
 
   /**
    * What the panel actually did on its own.
@@ -160,10 +161,17 @@ export default function Automation() {
     update('automations', r.id, { status: r.status === 'On' ? 'Off' : 'On' }, {
       message: `${r.name} ${r.status === 'On' ? 'switched off' : 'switched on'}`,
     });
-  const runRule = (r) =>
-    update('automations', r.id, { runs: Number(r.runs || 0) + 1, completed: Number(r.completed || 0) + 1, lastRun: 'just now' }, {
-      message: `${r.name} ran once`,
-    });
+  // Run now: a rule that assigns hands out the leads nobody has, up to each person's number.
+  const runRule = async (r) => {
+    try {
+      const res = await api.post(`/automations/${r._id || r.id}/run`, {});
+      toast(res.message || `${r.name} ran once`);
+      pull?.('automations');
+      pull?.('enquiries');
+    } catch (err) {
+      toast(`Did not run: ${err.message}`, 'error');
+    }
+  };
 
   /** Stages can be added, renamed, reordered and removed. */
   const moveStage = (i, by) =>

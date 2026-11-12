@@ -26,6 +26,7 @@ import LeadImport from '../components/sales/LeadImport.jsx';
 import LeadListPicker from '../components/sales/LeadListPicker.jsx';
 import MoveToFolder from '../components/sales/MoveToFolder.jsx';
 import ShareLeads from '../components/sales/ShareLeads.jsx';
+import GiveLeads from '../components/sales/GiveLeads.jsx';
 import { useLeadFolders } from '../lib/leadFolders.js';
 import TeamActions from '../components/team/TeamActions.jsx';
 import { useApp, byOwner } from '../store/AppStore.jsx';
@@ -163,6 +164,7 @@ export default function Enquiries() {
   const [importOpen, setImportOpen] = useState(false);
   const [assignFor, setAssignFor] = useState(null);
   const [assignMode, setAssignMode] = useState('one');
+  const [giveOpen, setGiveOpen] = useState(false);
   const [statusFor, setStatusFor] = useState(null);
   const [sourceFor, setSourceFor] = useState(null);
   const [followUpFor, setFollowUpFor] = useState(null);
@@ -437,6 +439,7 @@ export default function Enquiries() {
   const tiles = [
     can('create') && { label: 'Add lead', icon: UserPlus, run: () => { setEditing(null); setFormOpen(true); } },
     can('create') && { label: 'Import', icon: Upload, run: () => setImportOpen(true) },
+    can('edit') && { label: 'Give leads', icon: UserCheck, run: () => setGiveOpen(true) },
     { label: 'Assign lead', icon: UserCheck, run: () => act('assign-lead') },
     { label: 'Reassign', icon: ArrowRightLeft, run: () => act('reassign') },
     { label: 'Follow-up', icon: CalendarClock, run: () => act('task', { type: 'Follow-up', title: 'Schedule a follow-up', suggest: 'Follow-up call' }) },
@@ -689,6 +692,11 @@ export default function Enquiries() {
               <Plus size={16} /> Add lead
             </button>
           </>
+        )}
+        {can('edit') && (
+          <button className="btn-line" onClick={() => setGiveOpen(true)} title="Give a number of leads to one person">
+            <UserCheck size={16} /> <span className="max-sm:hidden">Give leads</span>
+          </button>
         )}
         {/* On a phone the filters fold away behind this, at the right corner. */}
         <button
@@ -1227,6 +1235,19 @@ export default function Enquiries() {
         </div>
         )}
       </Modal>
+
+      <GiveLeads
+        open={giveOpen}
+        onClose={() => setGiveOpen(false)}
+        people={owners.filter((o) => o !== 'Unassigned')}
+        all={all}
+        onScreen={rows}
+        stages={enquiryStatuses}
+        onGive={(who, ids) => {
+          updateMany('enquiries', ids, { owner: who }, `${ids.length.toLocaleString('en-IN')} lead(s) given to ${who}`);
+          setGiveOpen(false);
+        }}
+      />
 
       <MoveToFolder
         open={Boolean(moveFor)}

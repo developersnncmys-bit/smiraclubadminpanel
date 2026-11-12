@@ -28,6 +28,7 @@ const blankStep = (type = 'Create task') => ({
   type,
   value: type === 'Create task' ? { type: 'Follow-up', title: '', priority: 'Medium' } : type === 'Assign to' ? [] : '',
   dueIn: type === 'Create task' ? 24 : undefined,
+  limit: type === 'Assign to' ? 300 : undefined,
 });
 const blank = () => ({ name: '', when: 'Lead status changed', match: { status: '', owner: '', source: '' }, steps: [blankStep()] });
 
@@ -46,7 +47,8 @@ function stepText(step, nameOf) {
   if (step.type === 'Move status') return `move to ${step.value}`;
   if (step.type === 'Assign to') {
     const who = (Array.isArray(step.value) ? step.value : [step.value]).map(nameOf).filter(Boolean);
-    return who.length > 1 ? `share between ${who.join(', ')}` : `assign to ${who[0] || '—'}`;
+    const cap = Number(step.limit) > 0 ? ` (up to ${step.limit} each a day)` : '';
+    return (who.length > 1 ? `share between ${who.join(', ')}` : `assign to ${who[0] || '—'}`) + cap;
   }
   if (step.type === 'Create task') {
     const due = DUE.find(([h]) => h === Number(step.dueIn))?.[1]?.toLowerCase() || `in ${step.dueIn} hours`;
@@ -249,6 +251,28 @@ export default function LeadRules() {
                       Tick one person, or several to take turns: each new lead goes to whoever has been given the fewest leads today —
                       leads you assign by hand count too.
                     </p>
+                    <label className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-700">
+                      Most leads one person gets in a day
+                      <input
+                        type="number"
+                        min="0"
+                        className="input !w-24 !py-1.5"
+                        value={s.limit ?? ''}
+                        onChange={(e) => setStep(i, { limit: e.target.value === '' ? '' : Math.max(0, Number(e.target.value)) })}
+                        placeholder="300"
+                      />
+                      {[50, 100, 200, 300].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setStep(i, { limit: n })}
+                          className={`rounded-full border px-2.5 py-1 ${Number(s.limit) === n ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-ink-900/10 bg-white text-ink-600'}`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                      <span className="font-normal text-ink-400">0 or empty = no limit. Once a person has this many, the next one takes over.</span>
+                    </label>
                     <div className="flex flex-wrap gap-1.5">
                       {people.map((p) => {
                         const on = s.value.includes(p._id);
@@ -261,7 +285,9 @@ export default function LeadRules() {
                           >
                             {p.name}
                             {givenToday[p._id] !== undefined && (
-                              <span className="ml-1 text-ink-400">· {givenToday[p._id]} today</span>
+                              <span className={`ml-1 ${Number(s.limit) > 0 && givenToday[p._id] >= Number(s.limit) ? 'text-rose-600' : 'text-ink-400'}`}>
+                                · {givenToday[p._id]}{Number(s.limit) > 0 ? ` / ${s.limit}` : ''} today
+                              </span>
                             )}
                           </button>
                         );

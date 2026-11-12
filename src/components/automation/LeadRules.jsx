@@ -67,6 +67,19 @@ export default function LeadRules() {
   const [saving, setSaving] = useState(false);
 
   const people = team.filter((t) => t._id);
+  // Leads each person was given today, so taking turns can be seen working.
+  const [givenToday, setGivenToday] = useState({});
+  const peopleKey = people.map((p) => p._id).join(',');
+  useEffect(() => {
+    if (!isLive || !peopleKey) return undefined;
+    let gone = false;
+    const load = () => api.get(`/leads/given-today?ids=${peopleKey}`)
+      .then((r) => { if (!gone) setGivenToday(r.data || {}); })
+      .catch(() => {});
+    load();
+    const t = setInterval(load, 30000);
+    return () => { gone = true; clearInterval(t); };
+  }, [peopleKey]);
   const nameOf = (id) => people.find((p) => String(p._id) === String(id))?.name || '';
 
   const load = useCallback(() => {
@@ -232,7 +245,10 @@ export default function LeadRules() {
 
                 {s.type === 'Assign to' && (
                   <div>
-                    <p className="mb-1 text-xs text-ink-500">Tick one person, or several to take turns.</p>
+                    <p className="mb-1 text-xs text-ink-500">
+                      Tick one person, or several to take turns: each new lead goes to whoever has been given the fewest leads today —
+                      leads you assign by hand count too.
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {people.map((p) => {
                         const on = s.value.includes(p._id);
@@ -244,6 +260,9 @@ export default function LeadRules() {
                             className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${on ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-ink-900/10 bg-white text-ink-600'}`}
                           >
                             {p.name}
+                            {givenToday[p._id] !== undefined && (
+                              <span className="ml-1 text-ink-400">· {givenToday[p._id]} today</span>
+                            )}
                           </button>
                         );
                       })}

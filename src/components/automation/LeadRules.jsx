@@ -78,12 +78,13 @@ export default function LeadRules() {
   const people = team.filter((t) => t._id);
   // Leads each person was given today, so taking turns can be seen working.
   const [givenToday, setGivenToday] = useState({});
+  const [waiting, setWaiting] = useState(null);
   const peopleKey = people.map((p) => p._id).join(',');
   useEffect(() => {
     if (!isLive || !peopleKey) return undefined;
     let gone = false;
     const load = () => api.get(`/leads/given-today?ids=${peopleKey}`)
-      .then((r) => { if (!gone) setGivenToday(r.data || {}); })
+      .then((r) => { if (!gone) { setGivenToday(r.data || {}); setWaiting(r.waiting ?? null); } })
       .catch(() => {});
     load();
     const t = setInterval(load, 30000);
@@ -255,9 +256,14 @@ export default function LeadRules() {
                 {s.type === 'Assign to' && (
                   <div>
                     <p className="mb-1 text-xs text-ink-500">
-                      Tick one person, or several to take turns: each new lead goes to whoever has been given the fewest leads today —
-                      leads you assign by hand count too.
+                      Tick the people and type how many leads each one gets a day. Every day the panel hands out the leads that have
+                      no person yet — your old data too, not only new leads — until each person has their number. Leads you give by hand count too.
                     </p>
+                    {waiting !== null && (
+                      <p className="mb-2 inline-block rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
+                        {waiting.toLocaleString('en-IN')} leads waiting with no person
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-1.5">
                       {people.map((p) => {
                         const on = s.value.includes(p._id);

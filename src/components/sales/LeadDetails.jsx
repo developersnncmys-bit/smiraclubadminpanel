@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   X, Phone, Mail, MessageCircle, Pencil, ChevronLeft, ChevronRight, Plus, ArrowRight, Clock, ShoppingCart, CalendarPlus, Crown,
+  Check, ChevronDown, User, MapPin, Plane, Hash,
 } from 'lucide-react';
+import Modal from '../ui/Modal.jsx';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { inr } from '../../data/mockData.js';
@@ -214,47 +216,25 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
             {/* Status and label side by side on a phone; the rest is under Info. */}
             <div className="grid grid-cols-2 lg:block">
 
-            <Field label="Status" onEdit={canEdit ? () => setEditing(editing === 'status' ? null : 'status') : undefined}>
-              {editing === 'status' ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {enquiryStatuses.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setField('status', s, `Status updated to ${s}`)}
-                      className={`chip ${
-                        lead.status === s ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-600'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <Badge tone={stageTone(lead.status)} dot>
-                  {lead.status}
-                </Badge>
-              )}
-            </Field>
-
-            <Field label="Label" onEdit={canEdit ? () => setEditing(editing === 'label' ? null : 'label') : undefined}>
-              {editing === 'label' ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {LABELS.map((l) => (
-                    <button
-                      key={l}
-                      onClick={() => setField('label', l, `Label set to ${l}`)}
-                      className={`chip ${
-                        lead.label === l ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-600'
-                      }`}
-                    >
-                      {l}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <Badge tone="teal">{lead.label || 'None'}</Badge>
-              )}
-            </Field>
+            {/* One tap opens one sheet — Move status, Label — like the list's Move status. */}
+            {[
+              ['status', 'Status', <Badge key="s" tone={stageTone(lead.status)} dot>{lead.status}</Badge>],
+              ['label', 'Label', <Badge key="l" tone="teal">{lead.label || 'None'}</Badge>],
+            ].map(([key, label, value]) => (
+              <button
+                key={key}
+                type="button"
+                disabled={!canEdit}
+                onClick={() => setEditing(key)}
+                className="flex min-w-0 flex-col items-start gap-1 border-b border-ink-900/[0.07] px-4 py-2.5 text-left transition enabled:active:bg-surface-soft lg:w-full"
+              >
+                <span className="eyebrow">{label}</span>
+                <span className="flex max-w-full items-center gap-1">
+                  {value}
+                  {canEdit && <ChevronDown size={15} className="shrink-0 text-ink-400" />}
+                </span>
+              </button>
+            ))}
             </div>
 
             {/* Call, WhatsApp, Edit */}
@@ -312,26 +292,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
             <Field label="Date added">{lead.created}</Field>
             <Field label="Lead source">{lead.source}</Field>
 
-            <Field label="Assigned to" onEdit={canEdit ? () => setEditing(editing === 'owner' ? null : 'owner') : undefined}>
-              {editing === 'owner' ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {people.map((o) => (
-                    <button
-                      key={o}
-                      onClick={() => setField('owner', o, `Assigned to ${o}`)}
-                      className={`chip ${
-                        lead.owner === o ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-600'
-                      }`}
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
-              ) : lead.owner === 'Unassigned' ? (
-                <span className="font-semibold text-rose-600">Unassigned</span>
-              ) : (
-                <span className="font-semibold text-ink-800">{lead.owner}</span>
-              )}
+            <Field label="Assigned to" onEdit={canEdit ? () => setEditing('owner') : undefined}>
+              <span className={`font-semibold ${lead.owner === 'Unassigned' ? 'text-rose-600' : 'text-ink-800'}`}>{lead.owner}</span>
             </Field>
             </div>
           </section>
@@ -500,77 +462,114 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
               )}
 
               {tab === 'Info' && (
-                <>
-                <div className="mb-3 rounded-xl border border-ink-900/[0.07] px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-ink-400">Assigned to</span>
-                    <button type="button" className={`text-xs font-bold text-brand-700 ${canEdit ? '' : 'hidden'}`} onClick={() => setEditing(editing === 'owner' ? null : 'owner')}>
-                      {editing === 'owner' ? 'Done' : 'Change'}
-                    </button>
-                  </div>
-                  {editing === 'owner' ? (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {people.map((o) => (
-                        <button
-                          key={o}
-                          onClick={() => setField('owner', o, `Assigned to ${o}`)}
-                          className={`chip ${lead.owner === o ? 'bg-brand-600 text-white' : 'bg-surface-soft text-ink-600'}`}
-                        >
-                          {o}
-                        </button>
-                      ))}
+                <div className="space-y-3">
+                  {/* Who has it */}
+                  <button
+                    type="button"
+                    disabled={!canEdit}
+                    onClick={() => setEditing('owner')}
+                    className="flex w-full items-center gap-3 rounded-2xl border border-ink-900/[0.07] bg-white px-4 py-3 text-left transition enabled:active:bg-surface-soft"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700"><User size={18} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[11px] font-bold uppercase tracking-wide text-ink-400">Assigned to</span>
+                      <span className={`block truncate text-[15px] font-bold ${lead.owner === 'Unassigned' ? 'text-rose-600' : 'text-ink-900'}`}>{lead.owner}</span>
+                    </span>
+                    {canEdit && <span className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">Change</span>}
+                  </button>
+
+                  {[
+                    {
+                      title: 'Contact', icon: Phone,
+                      rows: [['Phone', lead.phone], ['Email', lead.email], ['Lead ID', lead.id], ['Source', lead.source]],
+                    },
+                    {
+                      title: 'Trip', icon: MapPin,
+                      rows: [
+                        ['Destination', lead.destination], ['Travellers', lead.pax],
+                        ['Travel date', lead.travelDate], ['Budget', lead.budget ? inr(lead.budget) : ''],
+                      ],
+                    },
+                    {
+                      title: 'Travel usage', icon: Plane,
+                      rows: [
+                        ['Trips a year', lead.trip?.yearlyTrips], ['Rooms', lead.trip?.roomsRequired],
+                        ['Family / group', lead.trip?.travelPersons], ['Last holiday budget', lead.trip?.lastExpenses ? inr(lead.trip.lastExpenses) : ''],
+                        ['Next destination', lead.trip?.nextDestination], ['Next trip', lead.trip?.nextTripDate],
+                      ],
+                    },
+                    {
+                      title: 'More', icon: Hash,
+                      rows: [
+                        ['Label', lead.label], ['Date added', lead.created],
+                        ['Membership', held ? `${held.signup.plan}${standing ? ` · ${standing.headline}` : ''}` : 'Not a member'],
+                        ['Quotations', leadQuotes.length ? leadQuotes.map((q) => q.id).join(', ') : 'None'],
+                      ],
+                    },
+                  ].map(({ title, icon: Icon, rows }) => (
+                    <div key={title} className="overflow-hidden rounded-2xl border border-ink-900/[0.07] bg-white">
+                      <p className="flex items-center gap-2 border-b border-ink-900/[0.06] bg-surface-soft/60 px-4 py-2 text-xs font-extrabold uppercase tracking-wide text-ink-600">
+                        <Icon size={14} className="text-brand-600" /> {title}
+                      </p>
+                      <dl className="grid grid-cols-2 gap-px bg-ink-900/[0.06]">
+                        {rows.map(([k, v]) => (
+                          <div key={k} className="min-w-0 bg-white px-4 py-2.5">
+                            <dt className="truncate text-[11px] font-semibold text-ink-400">{k}</dt>
+                            <dd className={`mt-0.5 break-words text-sm font-semibold ${v || v === 0 ? 'text-ink-900' : 'text-ink-300'}`}>
+                              {v || v === 0 ? v : '—'}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     </div>
-                  ) : (
-                    <p className={`mt-1 text-sm font-bold ${lead.owner === 'Unassigned' ? 'text-rose-600' : 'text-ink-900'}`}>{lead.owner}</p>
-                  )}
+                  ))}
                 </div>
-                {/* Travel usage: what the desk asks on the first call. */}
-                <p className="eyebrow mb-1.5">Travel usage</p>
-                <dl className="mb-3 divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-                  {[
-                    ['Yearly travel frequency', lead.trip?.yearlyTrips],
-                    ['Preferred rooms', lead.trip?.roomsRequired],
-                    ['Family / group size', lead.trip?.travelPersons],
-                    ['Last holiday budget', lead.trip?.lastExpenses ? inr(lead.trip.lastExpenses) : ''],
-                    ['Next holiday destination', lead.trip?.nextDestination],
-                    ['Expected next trip', lead.trip?.nextTripDate],
-                  ].map(([k, v]) => (
-                    <div key={k} className="flex items-start gap-4 px-4 py-2.5">
-                      <dt className="w-28 shrink-0 text-xs font-semibold uppercase tracking-wide text-ink-400 sm:w-40">{k}</dt>
-                      <dd className="min-w-0 flex-1 text-sm text-ink-800">{v || v === 0 ? v : '—'}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <p className="eyebrow mb-1.5">Details</p>
-                <dl className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-                  {[
-                    ['Lead ID', lead.id],
-                    ['Email', lead.email],
-                    ['Phone', lead.phone],
-                    ['Destination', lead.destination],
-                    ['Travellers', lead.pax],
-                    ['Travel date', lead.travelDate],
-                    ['Budget', inr(lead.budget)],
-                    ['Source', lead.source],
-                    ['Label', lead.label],
-                    ['Membership', held ? `${held.signup.plan}${standing ? ` · ${standing.headline}` : ''}` : 'Not a member'],
-                    ['Date added', lead.created],
-                    ['Quotations', leadQuotes.length ? leadQuotes.map((q) => q.id).join(', ') : 'None'],
-                  ].map(([k, v]) => (
-                    <div key={k} className="flex items-start gap-4 px-4 py-2.5">
-                      <dt className="w-24 shrink-0 text-xs sm:w-32 font-semibold uppercase tracking-wide text-ink-400">
-                        {k}
-                      </dt>
-                      <dd className="min-w-0 flex-1 text-sm text-ink-800">{v || '—'}</dd>
-                    </div>
-                  ))}
-                </dl>
-                </>
               )}
             </div>
           </section>
         </div>
       </aside>
+
+      {/* Move status / Label / Assign — one sheet, one tap. */}
+      <Modal
+        open={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title={editing === 'status' ? 'Move status' : editing === 'label' ? 'Label' : 'Assign to'}
+        subtitle={lead.name}
+        size="sm"
+      >
+        <div className="space-y-2">
+          {(editing === 'status' ? enquiryStatuses : editing === 'label' ? LABELS : people).map((v) => {
+            const field = editing === 'status' ? 'status' : editing === 'label' ? 'label' : 'owner';
+            const on = (lead[field] || '') === v;
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={() =>
+                  on
+                    ? setEditing(null)
+                    : setField(
+                        field,
+                        v,
+                        field === 'status' ? `Status updated to ${v}` : field === 'label' ? `Label set to ${v}` : `Assigned to ${v}`
+                      )
+                }
+                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                  on ? 'border-brand-500 bg-brand-50' : 'border-ink-900/10 hover:border-brand-400 hover:bg-brand-50'
+                }`}
+              >
+                {field === 'status' ? (
+                  <Badge tone={stageTone(v)} dot>{v}</Badge>
+                ) : (
+                  <span className="text-sm font-semibold text-ink-800">{v}</span>
+                )}
+                {on && <Check size={18} className="ml-auto text-brand-600" />}
+              </button>
+            );
+          })}
+        </div>
+      </Modal>
     </div>
   );
 }

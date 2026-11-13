@@ -187,7 +187,8 @@ export default function Offers() {
    * nought whatever the desk had running. It reads the Offers collection
    * now — the same rows the website checks a coupon against.
    */
-  const { toast, create, update, remove, updateMany, db, offers = [], live: online } = useApp();
+  const { toast, create, update, remove, updateMany, db, offers = [], memberships = [], live: online } = useApp();
+  const planName = (code) => memberships.find((p) => p.id === code || p._id === code)?.name || code;
   const [section, setSection] = useState('Dashboard');
   const [saving, setSaving] = useState(false);
 
@@ -220,6 +221,7 @@ export default function Offers() {
     maxDiscount: 0,
     minSpend: 0,
     appliesTo: ['Membership'],
+    plans: [],
     startsOn: '',
     endsOn: '',
     usageLimit: 0,
@@ -1102,6 +1104,33 @@ export default function Offers() {
               </div>
               <p className="mt-1 text-xs text-ink-500">Nothing picked means anywhere.</p>
             </div>
+            {(draft.appliesTo.includes('Membership') || !draft.appliesTo.length) && memberships.length > 0 && (
+              <div className="sm:col-span-2">
+                <label className="label">Which membership plans</label>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {memberships.map((p) => {
+                    const on = draft.plans.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() =>
+                          setDraft((o) => ({ ...o, plans: on ? o.plans.filter((x) => x !== p.id) : [...o.plans, p.id] }))
+                        }
+                        className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
+                          on ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-ink-900/10 text-ink-600 hover:bg-surface-soft'
+                        }`}
+                      >
+                        {p.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1 text-xs text-ink-500">
+                  Nothing picked means every plan. The website shows this coupon as a popup when someone opens these plans.
+                </p>
+              </div>
+            )}
             <div>
               <label className="label">Total redemptions</label>
               <input type="number" min="0" className="input" value={draft.usageLimit} onChange={setNum('usageLimit')} />
@@ -1143,6 +1172,7 @@ export default function Offers() {
             {percent && Number(draft.maxDiscount) > 0 ? ` off, up to ${inr(draft.maxDiscount)},` : ' off'}{' '}
             {Number(draft.minSpend) > 0 ? `on anything over ${inr(draft.minSpend)}` : 'with no minimum'}, for{' '}
             <b>{draft.appliesTo.length ? draft.appliesTo.join(' and ') : 'anything'}</b>
+            {draft.plans.length > 0 && <> — only on <b>{draft.plans.map(planName).join(', ')}</b></>}
             {Number(draft.usageLimit) > 0 ? `, capped at ${draft.usageLimit} uses` : ', uncapped'}
             {draft.endsOn ? `, until ${draft.endsOn}` : ''}.
           </p>
@@ -1159,7 +1189,7 @@ export default function Offers() {
             </p>
           ) : (
             <Table
-              head={['Code', 'Offer', 'Takes off', 'Used', 'Until', 'Status', '']}
+              head={['Code', 'Offer', 'Takes off', 'Plans', 'Used', 'Until', 'Status', '']}
               rows={coupons.map((o) => ({
                 key: o.id,
                 cells: [
@@ -1172,6 +1202,11 @@ export default function Offers() {
                         ? inr(o.value)
                         : o.kind}
                     {o.minSpend ? ` over ${inr(o.minSpend)}` : ''}
+                  </span>,
+                  <span className="text-ink-700">
+                    {o.plans?.length
+                      ? o.plans.map(planName).join(', ')
+                      : !o.appliesTo?.length || o.appliesTo.includes('Membership') ? 'All plans' : '—'}
                   </span>,
                   <span className="num text-ink-700">
                     {o.used || 0}

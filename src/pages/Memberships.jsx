@@ -13,6 +13,7 @@ import {
   UserPlus,
   ShieldCheck,
   IndianRupee,
+  Ticket,
 } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import KpiRow from '../components/ui/KpiRow.jsx';
@@ -175,6 +176,7 @@ const GIFT_DAYS = 6;
 export default function Memberships({ embedded = false }) {
   const {
     memberships,
+    offers = [],
     memberSignups,
     settings,
     create,
@@ -519,6 +521,66 @@ export default function Memberships({ embedded = false }) {
               </div>
 
               <div className="flex flex-1 flex-col border-t border-ink-900/[0.07] px-5 pb-5 pt-4">
+                {/* Coupons for this plan, from Offers & Promotions. Inactive ones do not show on the website. */}
+                {(() => {
+                  const mine = offers.filter(
+                    (o) =>
+                      o.code && !o.flash &&
+                      (!o.appliesTo?.length || o.appliesTo.includes('Membership')) &&
+                      (!o.plans?.length || o.plans.includes(plan.id))
+                  );
+                  return (
+                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-800">
+                          <Ticket size={13} /> Coupons
+                        </p>
+                        <span className="text-xs font-semibold text-amber-700/80">
+                          {mine.filter((o) => o.status === 'Live').length} active
+                        </span>
+                      </div>
+                      {mine.length === 0 ? (
+                        <p className="mt-2 text-xs text-amber-900/70">
+                          None yet. Add one in Offers &amp; Promotions, Coupons, and pick this plan.
+                        </p>
+                      ) : (
+                        <ul className="mt-2 space-y-1.5">
+                          {mine.map((o) => {
+                            const on = o.status === 'Live';
+                            return (
+                              <li key={o.id} className="flex items-center gap-2 rounded-md bg-white px-2 py-1.5">
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-xs font-bold text-ink-900">
+                                    <span className="num">{o.code}</span>
+                                    <span className="ml-1 font-semibold text-ink-500">
+                                      · {o.kind === 'Percent off' ? `${o.value}% off` : o.kind === 'Flat off' ? `${inr(o.value)} off` : o.kind}
+                                    </span>
+                                  </p>
+                                  {!o.plans?.length && <p className="text-[10px] text-ink-400">All plans</p>}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    update('offers', o.id, { status: on ? 'Paused' : 'Live' }, {
+                                      message: `${o.code} ${on ? 'inactive, hidden on the website' : 'active, shows on the website'}`,
+                                    })
+                                  }
+                                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                    on ? 'bg-emerald-100 text-emerald-800' : 'bg-ink-900/[0.06] text-ink-500'
+                                  }`}
+                                  title={on ? 'Tap to make inactive' : 'Tap to make active'}
+                                >
+                                  {on ? '● Active' : '○ Inactive'}
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Gifts the agency actually hands over to members */}
                 <div className="mb-4 rounded-lg bg-brand-50 px-3 py-3">
                   <div className="flex items-center justify-between gap-3">

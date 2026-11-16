@@ -29,12 +29,30 @@ export const mapLink = (s) => (s?.lat != null && s?.lng != null ? `https://www.g
 export const timeOf = (iso) =>
   iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
 
-/** "7h 25m" between check-in and check-out, or until now while still in. */
+const hm = (mins) => `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`;
+
+/** Minutes spent on breaks (Lunch, Tea, Washroom); an open one counts until now. */
+export function breakMinutes(row) {
+  return Math.round((row?.breaks || []).reduce((t, b) => {
+    const end = b.end ? new Date(b.end) : new Date();
+    return t + Math.max(0, end - new Date(b.start));
+  }, 0) / 60000);
+}
+
+/** The break going on right now, if any. */
+export const openBreak = (row) => (row?.breaks || []).find((b) => !b.end) || null;
+
+export const breakText = (row) => {
+  const m = breakMinutes(row);
+  return m ? `${m < 60 ? `${m}m` : hm(m)} break` : '';
+};
+
+/** "7h 25m" between check-in and check-out (or now), less the breaks. */
 export function hoursWorked(row) {
   if (!row?.checkIn?.at) return '';
   const end = row.checkOut?.at ? new Date(row.checkOut.at) : new Date();
-  const mins = Math.max(0, Math.round((end - new Date(row.checkIn.at)) / 60000));
-  return `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`;
+  const mins = Math.max(0, Math.round((end - new Date(row.checkIn.at)) / 60000) - breakMinutes(row));
+  return hm(mins);
 }
 
 /** Everybody's attendance today, keyed by user id. */

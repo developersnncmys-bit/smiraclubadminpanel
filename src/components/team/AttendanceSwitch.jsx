@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Building2, MapPin, Home, Loader2, Power } from 'lucide-react';
 import { api, isLive } from '../../lib/api.js';
 import { useApp } from '../../store/AppStore.jsx';
-import { attendanceChanged, hoursWorked, mapLink, timeOf, useMyAttendance, whereAmI } from '../../lib/attendance.js';
+import { attendanceChanged, breakText, hoursWorked, mapLink, timeOf, useMyAttendance, whereAmI } from '../../lib/attendance.js';
+import BreakButtons from './BreakButtons.jsx';
 
 /**
  * My attendance as one ON / OFF switch.
@@ -79,6 +80,7 @@ export default function AttendanceSwitch() {
                 )}
                 {row.checkOut && <> · Out <b>{timeOf(row.checkOut.at)}</b></>}
                 {' · '}{hoursWorked(row)}
+                {breakText(row) ? ` · ${breakText(row)}` : ''}
               </>
             ) : (
               'Not checked in yet'
@@ -122,6 +124,8 @@ export default function AttendanceSwitch() {
           ))}
         </div>
       )}
+
+      {on && <BreakButtons row={row} />}
 
       {error && <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</p>}
     </section>

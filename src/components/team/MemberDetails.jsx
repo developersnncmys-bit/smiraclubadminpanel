@@ -20,7 +20,7 @@ import DrawerTabs from '../ui/DrawerTabs.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import { inr, shortInr } from '../../data/mockData.js';
 import { useApp } from '../../store/AppStore.jsx';
-import { hoursWorked, mapLink, timeOf, useAttendanceDay } from '../../lib/attendance.js';
+import { breakText, hoursWorked, mapLink, openBreak, timeOf, useAttendanceDay } from '../../lib/attendance.js';
 import AttendanceEdit from './AttendanceEdit.jsx';
 import AttendanceCalendar from './AttendanceCalendar.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
@@ -143,7 +143,7 @@ export default function MemberDetails({ member, list, rank, workload, tasks, onC
       ? {
           login: timeOf(today.checkIn.at),
           logout: today.checkOut ? timeOf(today.checkOut.at) : 'Still in',
-          working: hoursWorked(today),
+          working: [hoursWorked(today), breakText(today) && `(${breakText(today)})`, openBreak(today) && `· on ${openBreak(today).kind} break now`].filter(Boolean).join(' '),
           mode: today.checkIn.mode,
           source: device(today.checkIn.device),
         }

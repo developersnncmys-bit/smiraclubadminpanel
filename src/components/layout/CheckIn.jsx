@@ -4,6 +4,7 @@ import Modal from '../ui/Modal.jsx';
 import { api, isLive } from '../../lib/api.js';
 import { useApp } from '../../store/AppStore.jsx';
 import AttendanceCalendar from '../team/AttendanceCalendar.jsx';
+import BreakButtons from '../team/BreakButtons.jsx';
 import { attendanceChanged, hoursWorked, mapLink, timeOf, useMyAttendance, whereAmI } from '../../lib/attendance.js';
 
 const MODES = [
@@ -125,6 +126,8 @@ export default function CheckIn() {
             <p className="text-xs text-ink-500">Worked {hoursWorked(row)}</p>
           </div>
         )}
+
+        {inNow && <BreakButtons row={row} />}
 
         {!row?.checkIn && (
           <div className="space-y-2">

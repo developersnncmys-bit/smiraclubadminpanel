@@ -30,7 +30,7 @@ const blankStep = (type = 'Create task') => ({
   dueIn: type === 'Create task' ? 24 : undefined,
   limits: type === 'Assign to' ? {} : undefined,
 });
-const blank = () => ({ name: '', when: 'Lead status changed', match: { status: '', owner: '', source: '' }, steps: [blankStep()] });
+const blank = () => ({ name: '', when: 'Lead status changed', match: { status: '', owner: '', source: '', folder: '' }, steps: [blankStep()] });
 
 /** Ready-made rules, one tap to fill the form. */
 const EXAMPLES = [
@@ -79,17 +79,27 @@ export default function LeadRules() {
   // Leads each person was given today, so taking turns can be seen working.
   const [givenToday, setGivenToday] = useState({});
   const [waiting, setWaiting] = useState(null);
+  const [waitingFolders, setWaitingFolders] = useState([]);
   const peopleKey = people.map((p) => p._id).join(',');
+  const fromFolder = form?.match?.folder || '';
   useEffect(() => {
     if (!isLive || !peopleKey) return undefined;
     let gone = false;
-    const load = () => api.get(`/leads/given-today?ids=${peopleKey}`)
-      .then((r) => { if (!gone) { setGivenToday(r.data || {}); setWaiting(r.waiting ?? null); } })
+    const load = () => api.get(`/leads/given-today?ids=${peopleKey}&folder=${encodeURIComponent(fromFolder)}`)
+      .then((r) => {
+        if (gone) return;
+        setGivenToday(r.data || {});
+        setWaiting(r.waiting ?? null);
+        setWaitingFolders(r.folders || []);
+      })
       .catch(() => {});
     load();
     const t = setInterval(load, 30000);
     return () => { gone = true; clearInterval(t); };
-  }, [peopleKey]);
+  }, [peopleKey, fromFolder]);
+  // Folders to take leads from: the saved ones and every tag waiting leads carry.
+  const folderChoices = [...new Set([...folders, ...waitingFolders.map((f) => f.name)])].sort();
+  const waitingIn = (name) => waitingFolders.find((f) => f.name === name)?.waiting || 0;
   const nameOf = (id) => people.find((p) => String(p._id) === String(id))?.name || '';
 
   const load = useCallback(() => {
@@ -188,7 +198,7 @@ export default function LeadRules() {
                   key={e.name}
                   type="button"
                   className="rounded-full border border-ink-900/10 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 hover:border-brand-400"
-                  onClick={() => setForm({ ...blank(), ...JSON.parse(JSON.stringify(e)), match: { status: '', owner: '', source: '', ...e.match } })}
+                  onClick={() => setForm({ ...blank(), ...JSON.parse(JSON.stringify(e)), match: { status: '', owner: '', source: '', folder: '', ...e.match } })}
                 >
                   {e.name}
                 </button>
@@ -259,9 +269,18 @@ export default function LeadRules() {
                       Tick the people and type how many leads each one gets a day. Every day the panel hands out the leads that have
                       no person yet — your old data too, not only new leads — until each person has their number. Leads you give by hand count too.
                     </p>
+                    <label className="mb-2 block">
+                      <span className="label">Take leads from folder</span>
+                      <select className="input" value={form.match.folder || ''} onChange={(e) => setForm({ ...form, match: { ...form.match, folder: e.target.value } })}>
+                        <option value="">All folders (every lead with no person)</option>
+                        {folderChoices.map((f) => (
+                          <option key={f} value={f}>{f} · {waitingIn(f).toLocaleString('en-IN')} waiting</option>
+                        ))}
+                      </select>
+                    </label>
                     {waiting !== null && (
                       <p className="mb-2 inline-block rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
-                        {waiting.toLocaleString('en-IN')} leads waiting with no person
+                        {waiting.toLocaleString('en-IN')} leads waiting with no person{form.match.folder ? ` in "${form.match.folder}"` : ''}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-1.5">
@@ -391,6 +410,7 @@ export default function LeadRules() {
                 <p className="mt-1 text-sm text-ink-600">
                   {whenText(r)}
                   {r.match?.source ? ` from ${r.match.source}` : ''}
+                  {r.match?.folder ? ` · folder "${r.match.folder}"` : ''}
                   {r.when !== 'Lead assigned' && r.match?.owner ? ` (${nameOf(r.match.owner)}'s leads)` : ''}
                   {' → '}
                   <b>{(r.steps || []).map((s) => stepText(s, nameOf)).join(', then ')}</b>

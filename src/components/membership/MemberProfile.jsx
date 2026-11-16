@@ -23,6 +23,9 @@ import { useBackToClose } from '../../lib/backToClose.js';
 import { dialable } from '../../lib/phone.js';
 import { useState } from 'react';
 import ActivateMembership, { awaitingPayment } from './ActivateMembership.jsx';
+import { useApp } from '../../store/AppStore.jsx';
+import { api } from '../../lib/api.js';
+import { Undo2 } from 'lucide-react';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 
@@ -35,7 +38,27 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
   // Back on a phone closes this, not the page under it.
   useBackToClose(Boolean(member), onClose);
   const [paying, setPaying] = useState(null);
+  const [undoing, setUndoing] = useState(false);
+  const app = useApp();
   if (!member) return null;
+
+  // "Payment received" pressed by mistake: back to waiting for payment.
+  const undoPaid = async () => {
+    if (undoing) return;
+    if (!window.confirm(`Undo ${member.name}'s activation? It goes back to "waiting for payment".`)) return;
+    setUndoing(true);
+    try {
+      const res = await api.post(`/memberships/${member._id}/unpaid`, {});
+      await app.pull?.('memberSignups');
+      app.pull?.('enquiries');
+      app.toast(res.message || 'Activation undone');
+      onClose?.();
+    } catch (err) {
+      app.toast(`Not undone: ${err.message}`, 'danger');
+    } finally {
+      setUndoing(false);
+    }
+  };
 
   const m = member;
   const index = list.findIndex((x) => x.id === m.id);
@@ -58,6 +81,9 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
       label: awaitingPayment(m) ? 'Payment received — Activate' : 'Active',
       run: () => (awaitingPayment(m) ? setPaying(m) : actions.note(`${m.name}'s membership is already active`)),
     },
+    ...(!awaitingPayment(m) && Number(m.paid || 0) > 0
+      ? [{ icon: Undo2, tone: 'bg-rose-500', label: 'Undo — payment not received', run: undoPaid }]
+      : []),
     { icon: ArrowUpRight, tone: 'bg-violet-500', label: 'Upgrade plan', run: () => actions.note('Upgrade quote drafted') },
     { icon: CalendarClock, tone: 'bg-amber-500', label: 'Extend membership', run: () => actions.note('Membership extended by 12 months') },
   ];

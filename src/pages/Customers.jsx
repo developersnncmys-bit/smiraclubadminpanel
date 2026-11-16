@@ -316,7 +316,17 @@ export default function Customers() {
 
       {/* Bought on the website, waiting for the desk to see the money and activate. */}
       {(() => {
-        const waiting = memberSignups.filter((m) => awaitingPayment(m) && Number(m.amount || 0) > 0);
+        // One row per person and plan: tapping Pay more than once made copies.
+        const groups = new Map();
+        memberSignups
+          .filter((m) => awaitingPayment(m) && m.status !== 'Cancelled' && Number(m.amount || 0) > 0)
+          .forEach((m) => {
+            const key = `${phoneDigits(m.phone)}|${m.plan}`;
+            const g = groups.get(key);
+            if (!g) groups.set(key, { ...m, tries: 1 });
+            else g.tries += 1;
+          });
+        const waiting = [...groups.values()];
         if (!waiting.length) return null;
         return (
           <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-3 sm:p-4">
@@ -334,6 +344,7 @@ export default function Customers() {
                     <p className="truncate text-xs text-ink-600">
                       {m.plan} · {inr(balanceOf(m))} due · {m.received || ''}
                       {m.paymentRef ? ` · UPI ref ${m.paymentRef}` : m.paidVia ? ` · wants ${m.paidVia}` : ''}
+                      {m.tries > 1 ? ` · tapped Pay ${m.tries} times` : ''}
                     </p>
                   </div>
                   <button type="button" className="btn-action btn-sm shrink-0" onClick={() => setPaying(m)}>

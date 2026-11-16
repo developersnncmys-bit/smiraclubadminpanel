@@ -14,7 +14,8 @@ import { inr } from '../../data/mockData.js';
  * `membership` is a memberSignups row (from the adapters).
  */
 export const balanceOf = (m) => Math.max(0, Number(m?.amount || 0) - Number(m?.paid || 0));
-export const awaitingPayment = (m) => Boolean(m) && m.status !== 'Active' && m.activation?.stage !== 'Activated';
+export const awaitingPayment = (m) =>
+  Boolean(m) && !['Active', 'Cancelled'].includes(m.status) && m.activation?.stage !== 'Activated';
 
 const MODES = ['UPI', 'Card', 'Netbanking', 'Cash', 'Bank transfer'];
 

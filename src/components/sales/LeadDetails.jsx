@@ -4,6 +4,7 @@ import {
   Check, ChevronDown, User, MapPin, Plane, Hash,
 } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
+import ActivateMembership, { awaitingPayment, balanceOf } from '../membership/ActivateMembership.jsx';
 import Badge from '../ui/Badge.jsx';
 import Avatar from '../ui/Avatar.jsx';
 import { inr } from '../../data/mockData.js';
@@ -52,6 +53,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const tabsRef = useRef(null);
   const [waSending, setWaSending] = useState(false);
   const [editing, setEditing] = useState(null); // 'status' | 'label' | 'owner'
+  const [paying, setPaying] = useState(null);
 
   // The panel stays mounted between leads: start each one where it was asked to.
   useEffect(() => {
@@ -198,6 +200,20 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 <p className="text-sm text-ink-500">{[lead.destination, lead.pax && `${lead.pax} pax`].filter(Boolean).join(' · ')}</p>
               )}
 
+
+              {/* A website membership waiting on the money: one button to activate it. */}
+              {held && awaitingPayment(held.signup) && (
+                <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-left">
+                  <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Membership · payment pending</p>
+                  <p className="mt-0.5 text-sm font-semibold text-ink-900">
+                    {held.signup.plan} · {inr(balanceOf(held.signup))} due
+                    {held.signup.paymentRef ? <span className="font-normal text-ink-600"> · UPI ref {held.signup.paymentRef}</span> : null}
+                  </p>
+                  <button type="button" className="btn-action btn-sm mt-2 w-full justify-center" onClick={() => setPaying(held.signup)}>
+                    <Crown size={14} /> Payment received — Activate
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => toast('Add packages and add-ons to this lead', 'info')}
@@ -529,6 +545,8 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
           </section>
         </div>
       </aside>
+
+      <ActivateMembership membership={paying} onClose={() => setPaying(null)} />
 
       {/* Move status / Label / Assign — one sheet, one tap. */}
       <Modal

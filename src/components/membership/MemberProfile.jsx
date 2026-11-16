@@ -21,6 +21,8 @@ import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import { useBackToClose } from '../../lib/backToClose.js';
 import { dialable } from '../../lib/phone.js';
+import { useState } from 'react';
+import ActivateMembership, { awaitingPayment } from './ActivateMembership.jsx';
 
 const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 
@@ -32,6 +34,7 @@ const digits = (phone) => String(phone || '').replace(/[^\d]/g, '');
 export default function MemberProfile({ member, list, plan, bookings = [], onClose, onJump, actions }) {
   // Back on a phone closes this, not the page under it.
   useBackToClose(Boolean(member), onClose);
+  const [paying, setPaying] = useState(null);
   if (!member) return null;
 
   const m = member;
@@ -49,7 +52,12 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
     { icon: Phone, tone: 'bg-sky-500', label: 'Call', run: () => { window.location.href = `tel:${dialable(phone)}`; } },
     { icon: MessageCircle, tone: 'bg-emerald-500', label: 'WhatsApp', run: () => window.open(`https://wa.me/${phone}`, '_blank') },
     { icon: Mail, tone: 'bg-sky-500', label: 'Email', run: () => { window.location.href = `mailto:${m.email}`; } },
-    { icon: CheckCircle2, tone: 'bg-brand-600', label: 'Activate membership', run: () => actions.note(`${m.name}'s membership activated`) },
+    {
+      icon: CheckCircle2,
+      tone: 'bg-brand-600',
+      label: awaitingPayment(m) ? 'Payment received — Activate' : 'Active',
+      run: () => (awaitingPayment(m) ? setPaying(m) : actions.note(`${m.name}'s membership is already active`)),
+    },
     { icon: ArrowUpRight, tone: 'bg-violet-500', label: 'Upgrade plan', run: () => actions.note('Upgrade quote drafted') },
     { icon: CalendarClock, tone: 'bg-amber-500', label: 'Extend membership', run: () => actions.note('Membership extended by 12 months') },
   ];
@@ -260,6 +268,7 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
           </div>
         </div>
       </aside>
+      <ActivateMembership membership={paying} onClose={() => setPaying(null)} />
     </div>
   );
 }

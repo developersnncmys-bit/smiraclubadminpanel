@@ -18,6 +18,7 @@ import PageHeader from '../components/ui/PageHeader.jsx';
 import Memberships from './Memberships.jsx';
 import MembershipDesk from '../components/membership/MembershipDesk.jsx';
 import MemberProfile from '../components/membership/MemberProfile.jsx';
+import ActivateMembership, { awaitingPayment, balanceOf } from '../components/membership/ActivateMembership.jsx';
 import DataTable from '../components/ui/DataTable.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
@@ -125,6 +126,7 @@ export default function Customers() {
   const [view, setView] = useState('table'); // 'table' | 'memberships' | 'plans'
   const [memberOpen, setMemberOpen] = useState(null); // the membership being read
   const [statusFor, setStatusFor] = useState(null); // the membership whose status is being moved
+  const [paying, setPaying] = useState(null); // the membership being marked paid
 
   /**
    * The Membership page is for memberships that have been paid for. A signup
@@ -311,6 +313,39 @@ export default function Customers() {
           </button>
         )}
       </PageHeader>
+
+      {/* Bought on the website, waiting for the desk to see the money and activate. */}
+      {(() => {
+        const waiting = memberSignups.filter((m) => awaitingPayment(m) && Number(m.amount || 0) > 0);
+        if (!waiting.length) return null;
+        return (
+          <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-3 sm:p-4">
+            <p className="text-sm font-extrabold text-amber-900">
+              {waiting.length} membership{waiting.length === 1 ? '' : 's'} waiting for payment
+            </p>
+            <p className="mb-2 text-xs text-amber-800">
+              Bought on the website. Check the money has come in, then press Activate.
+            </p>
+            <div className="space-y-2">
+              {waiting.slice(0, 50).map((m) => (
+                <div key={m.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-ink-900">{m.name} <span className="font-normal text-ink-500">· {m.phone}</span></p>
+                    <p className="truncate text-xs text-ink-600">
+                      {m.plan} · {inr(balanceOf(m))} due · {m.received || ''}
+                      {m.paymentRef ? ` · UPI ref ${m.paymentRef}` : m.paidVia ? ` · wants ${m.paidVia}` : ''}
+                    </p>
+                  </div>
+                  <button type="button" className="btn-action btn-sm shrink-0" onClick={() => setPaying(m)}>
+                    Payment received — Activate
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+      <ActivateMembership membership={paying} onClose={() => setPaying(null)} />
 
       {/* People on the left, the plans they hold on the right */}
       {view !== 'memberships' && (

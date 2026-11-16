@@ -299,7 +299,7 @@ export default function Header({ onOpenMobile }) {
             >
               <option>All team members</option>
               {team
-                .filter((t) => t.bookings > 0)
+                .filter((t) => t.name && t.status !== 'Inactive')
                 .map((t) => (
                   <option key={t.id}>{t.name}</option>
                 ))}

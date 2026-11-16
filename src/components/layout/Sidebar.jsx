@@ -127,7 +127,7 @@ function MobileFilters() {
           <select value={owner} onChange={(e) => setOwner(e.target.value)} className={select} aria-label="Team member">
             <option>All team members</option>
             {team
-              .filter((t) => t.bookings > 0)
+              .filter((t) => t.name && t.status !== 'Inactive')
               .map((t) => (
                 <option key={t.id}>{t.name}</option>
               ))}

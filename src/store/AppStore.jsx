@@ -260,6 +260,17 @@ export function AppProvider({ children }) {
   const [apiError, setApiError] = useState(null);
   const issued = useRef(new Set());
   const leadsInFlight = useRef(false);
+  /*
+   * Lead changes made on this screen, by lead id, with when. The full leads
+   * reload takes a while (tens of thousands, in pages); a status changed
+   * while it ran was overwritten by the older copy when it finished, so the
+   * change looked as though it had not happened. These are laid back on top.
+   */
+  const leadEdits = useRef(new Map());
+  const noteLeadEdit = (id, patch) => {
+    const was = leadEdits.current.get(id);
+    leadEdits.current.set(id, { patch: { ...(was?.patch || {}), ...patch }, at: Date.now() });
+  };
 
   useEffect(() => {
     try {
@@ -305,6 +316,7 @@ export function AppProvider({ children }) {
         // an old copy). They come in pages, a few at a time, and fill in.
         if (name === 'enquiries') {
           const PAGE = 2000;
+          const startedAt = Date.now();
           // While pages arrive, the list on screen only ever grows: a reload
           // must not drop 33,000 leads back to the first 2,000 for a minute.
           // The list changes once, when every page is in — no 2,000 → 10,000
@@ -324,8 +336,13 @@ export function AppProvider({ children }) {
             rows = rows.concat(...batch.map((r) => (r.rows || []).map((doc) => fromApi(name, doc))));
             grow(rows);
           }
-          // Every page is in: this is the list now, deletions included.
-          const all = rows;
+          // Every page is in: this is the list now, deletions included —
+          // with any change made here since the reload began laid on top.
+          const all = rows.map((r) => {
+            const e = leadEdits.current.get(r.id);
+            return e && e.at >= startedAt - 10000 ? { ...r, ...e.patch } : r;
+          });
+          for (const [id, e] of leadEdits.current) if (e.at < startedAt - 10000) leadEdits.current.delete(id);
           setDb((prev) => ({ ...prev, [name]: all }));
           setLeadsProgress(null);
           return [name, rows];
@@ -547,6 +564,7 @@ export function AppProvider({ children }) {
        */
       const found = (dbRef.current[collection] || []).find((r) => r.id === id) || null;
       const before = found || (record && record.id === id ? record : null);
+      if (collection === 'enquiries') noteLeadEdit(id, patch);
       setDb((d) => ({
         ...d,
         [collection]: found
@@ -566,6 +584,7 @@ export function AppProvider({ children }) {
             if (!silent) sayItSaved();
             if (collection === 'enquiries' && res?.automated?.length) refreshLeads(res.automated);
           }).catch((err) => {
+            if (collection === 'enquiries') leadEdits.current.delete(id);
             setDb((d) => ({
               ...d,
               [collection]: d[collection].map((r) => (r.id === id ? before : r)),
@@ -616,6 +635,7 @@ export function AppProvider({ children }) {
       if (denied(collection, 'edit')) return;
       const chosen = new Set(ids);
       const targets = (dbRef.current[collection] || []).filter((r) => chosen.has(r.id));
+      if (collection === 'enquiries') ids.forEach((id) => noteLeadEdit(id, patch));
       setDb((d) => ({
         ...d,
         [collection]: d[collection].map((r) => (chosen.has(r.id) ? { ...r, ...patch } : r)),

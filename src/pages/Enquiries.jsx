@@ -1439,7 +1439,9 @@ export default function Enquiries() {
       />
 
       <LeadDetails
-        lead={viewing && (rows.find((r) => r.id === viewing.id) || viewing)}
+        // From all leads, not the filtered list: a lead moved out of the
+        // status being viewed must still show its new status here.
+        lead={viewing && (enquiries.find((r) => r.id === viewing.id) || rows.find((r) => r.id === viewing.id) || viewing)}
         list={rows}
         startOn={startOn}
         onClose={() => { setViewing(null); setStartOn(''); }}

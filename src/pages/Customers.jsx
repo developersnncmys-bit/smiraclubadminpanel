@@ -137,13 +137,17 @@ export default function Customers() {
     (m.paid ?? 0) > 0 || (!((m.amount ?? 0) > 0) && !['Quoted', 'New'].includes(m.status));
   const paidMemberships = memberSignups.filter(isPaid);
 
+  const live = (s) => Boolean(s) && isPaid(s) && !['Cancelled', 'Expired', 'Suspended'].includes(s.status);
+
   /** The website membership a traveller signed up for, if any. */
   const membershipFor = (customer) => {
     if (!customer) return null;
     const wanted = phoneDigits(customer.phone);
-    const signup = memberSignups.find(
-      (s) => phoneDigits(s.phone) === wanted || (s.email && s.email === customer.email)
+    const mine = memberSignups.filter(
+      (s) => (wanted && phoneDigits(s.phone) === wanted) || (s.email && s.email === customer.email)
     );
+    // The paid, live one wins over an unpaid request made after it.
+    const signup = mine.find(live) || mine.find((s) => s.status !== 'Cancelled') || null;
     if (!signup) return null;
     return { signup, plan: memberships.find((p) => p.id === signup.planId) || null };
   };
@@ -181,7 +185,7 @@ export default function Customers() {
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 truncate font-bold text-ink-900">
                 {r.name}
-                {membership && (
+                {membership && live(membership.signup) && (
                   <span className="chip shrink-0 bg-brand-50 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-brand-700">
                     <Crown size={10} /> Member
                   </span>
@@ -248,7 +252,16 @@ export default function Customers() {
         );
       },
     },
-    { key: 'tier', header: 'Tier', render: (r) => <Badge tone={tierTone[r.tier]}>{r.tier}</Badge> },
+    {
+      key: 'tier',
+      header: 'Tier',
+      render: (r) => {
+        // A paid membership names the tier; otherwise what is on the customer.
+        const m = membershipFor(r);
+        const tier = m && live(m.signup) ? String(m.signup.plan || '').split(' ')[0] || r.tier : r.tier;
+        return tier ? <Badge tone={tierTone[tier]}>{tier}</Badge> : null;
+      },
+    },
     {
       key: 'actions',
       header: '',

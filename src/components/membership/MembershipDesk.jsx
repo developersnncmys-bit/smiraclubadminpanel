@@ -2,8 +2,9 @@ import { useState } from 'react';
 import {
   UserPlus, Crown, CheckCircle2, UserCheck, CalendarClock, ArrowUpRight,
   Gift, Wallet, Search, Users, Clock, IndianRupee,
-  Zap, Phone, Mail, MessageCircle, Tag, UserRound,
+  Zap, Phone, Mail, MessageCircle, Tag, UserRound, Trash2,
 } from 'lucide-react';
+import { useApp } from '../../store/AppStore.jsx';
 import Badge from '../ui/Badge.jsx';
 import KpiRow from '../ui/KpiRow.jsx';
 import MenuButton from '../ui/MenuButton.jsx';
@@ -49,6 +50,12 @@ function List({ rows, empty = 'Nothing here yet.' }) {
  * have actually been used, and where the membership money comes from.
  */
 export default function MembershipDesk({ rows, plans = allPlans, onOpen, onProfile, onStatus, actions, switcher }) {
+  const { remove } = useApp();
+  // Test or wrong entries: gone for good, so it asks first.
+  const deleteMembership = (m) => {
+    if (!window.confirm(`Delete ${m.name}'s ${m.plan || ''} membership${m.memberId ? ` (${m.memberId})` : ''}? This cannot be undone.`)) return;
+    remove('memberSignups', m.id);
+  };
   const [section, setSection] = useState('Members');
   const [status, setStatus] = useState('All');
   const [plan, setPlan] = useState('All');
@@ -312,7 +319,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, onProfi
                       <p className="truncate font-display text-[15px] font-extrabold leading-tight text-ink-900">
                         {m.name}
                       </p>
-                      <p className="num truncate text-xs text-ink-500">{m.id}</p>
+                      <p className="num truncate text-xs font-semibold text-ink-500">{m.memberId || 'Member ID after payment'}</p>
                     </div>
                   </div>
                   <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -322,6 +329,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, onProfi
                         { label: 'Membership', icon: Crown, onClick: () => onOpen(m) },
                         { label: 'Change status', icon: Tag, onClick: () => onStatus?.(m) },
                         { label: 'Record payment', icon: Wallet, onClick: actions.recordPayment },
+                        { label: 'Delete', icon: Trash2, danger: true, onClick: () => deleteMembership(m) },
                       ]}
                     />
                   </div>
@@ -381,7 +389,7 @@ export default function MembershipDesk({ rows, plans = allPlans, onOpen, onProfi
                       <a href={`tel:${dialable(phone)}`} className="btn-line btn-sm"><Phone size={13} /> Call</a>
                       <a
                         href={`https://wa.me/91${phone}?text=${encodeURIComponent(
-                          `Hi ${m.name}, about your Smira Club ${m.plan || 'membership'} (${m.id}).`,
+                          `Hi ${m.name}, about your Smira Club ${m.plan || 'membership'}${m.memberId ? ` (${m.memberId})` : ''}.`,
                         )}`}
                         target="_blank"
                         rel="noreferrer"

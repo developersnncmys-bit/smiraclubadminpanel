@@ -120,7 +120,7 @@ export default function MemberProfile({ member, list, plan, bookings = [], onClo
             <div className="px-4 pb-4 pt-5 text-center">
               <Avatar name={m.name} size="lg" className="mx-auto" />
               <p className="mt-3 font-display text-lg font-extrabold text-ink-900">{m.name}</p>
-              <p className="num text-sm text-ink-500">{m.id}</p>
+              <p className="num text-sm font-semibold text-ink-500">{m.memberId || 'Member ID after payment'}</p>
               <div className="mt-3 flex flex-wrap justify-center gap-2">
                 <Badge tone="teal">
                   <Crown size={11} /> {m.plan}

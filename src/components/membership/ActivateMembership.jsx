@@ -60,7 +60,7 @@ export default function ActivateMembership({ membership, onClose }) {
   const willActivate = Number(amount || 0) >= due;
 
   return (
-    <Modal open={Boolean(m)} onClose={onClose} title="Payment received" subtitle={`${m.name} · ${m.id}`} size="sm">
+    <Modal open={Boolean(m)} onClose={onClose} title="Payment received" subtitle={`${m.name}${m.memberId ? ` · ${m.memberId}` : ''}`} size="sm">
       <div className="space-y-3">
         <div className="flex items-center gap-3 rounded-xl bg-brand-50 px-3 py-2.5">
           <Crown size={18} className="shrink-0 text-brand-700" />

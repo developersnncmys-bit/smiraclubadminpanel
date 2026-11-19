@@ -137,6 +137,12 @@ export default function Customers() {
     (m.paid ?? 0) > 0 || (!((m.amount ?? 0) > 0) && !['Quoted', 'New'].includes(m.status));
   const paidMemberships = memberSignups.filter(isPaid);
 
+  /** "Silver" → "Silver Membership"; a name that already says it is left alone. */
+  const planLabel = (name) => {
+    const n = String(name || '').trim();
+    if (!n) return '';
+    return /membership/i.test(n) ? n : `${n} Membership`;
+  };
   const live = (s) => Boolean(s) && isPaid(s) && !['Cancelled', 'Expired', 'Suspended'].includes(s.status);
 
   /** The website membership a traveller signed up for, if any. */
@@ -187,7 +193,7 @@ export default function Customers() {
                 {r.name}
                 {membership && live(membership.signup) && (
                   <span className="chip shrink-0 bg-brand-50 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-brand-700">
-                    <Crown size={10} /> Member
+                    <Crown size={10} /> {String(membership.signup.plan || '').split(' ')[0]} Member
                   </span>
                 )}
               </p>
@@ -199,23 +205,6 @@ export default function Customers() {
     },
     { key: 'phone', header: 'Phone', render: (r) => <span className="text-ink-600">{r.phone}</span> },
     { key: 'city', header: 'City' },
-    {
-      key: 'dob',
-      header: 'Birthday',
-      csv: (r) => r.dob || '',
-      render: (r) => {
-        const days = daysUntilNext(r.dob);
-        if (!r.dob) return <span className="text-ink-400">—</span>;
-        return (
-          <div>
-            <p className="whitespace-nowrap font-semibold text-ink-800">{formatDate(r.dob)}</p>
-            {days !== null && days <= 30 && (
-              <p className="text-xs font-semibold text-brand-700">{countdown(days)}</p>
-            )}
-          </div>
-        );
-      },
-    },
     { key: 'trips', header: 'Trips', render: (r) => <span className="font-bold text-ink-900 num">{r.trips}</span> },
     {
       key: 'spend',
@@ -223,43 +212,31 @@ export default function Customers() {
       render: (r) => <span className="font-bold text-brand-700 num">{inr(r.spend)}</span>,
     },
     {
-      key: 'gifts',
-      header: 'Gifts',
+      key: 'memberId',
+      header: 'Member ID',
       csv: (r) => {
         const m = membershipFor(r);
-        return m?.plan ? `${(r.giftsGiven || []).length}/${m.plan.gifts?.length || 0}` : '';
+        return m && live(m.signup) ? m.signup.memberId || '' : '';
       },
       render: (r) => {
         const m = membershipFor(r);
-        if (!m?.plan) return <span className="text-ink-400">—</span>;
-        const total = m.plan.gifts?.length || 0;
-        const given = (r.giftsGiven || []).length;
-        const done = total > 0 && given >= total;
-        return (
-          <span
-            className={`chip ${
-              done
-                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15'
-                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/15'
-            }`}
-            title={done ? 'All gifts handed over' : `${total - given} still to give`}
-          >
-            <Gift size={11} />
-            <span className="num">
-              {given}/{total}
-            </span>
-          </span>
-        );
+        if (!m || !live(m.signup)) return <span className="text-ink-400">—</span>;
+        return <span className="whitespace-nowrap font-bold text-ink-900 num">{m.signup.memberId || '—'}</span>;
       },
     },
     {
       key: 'tier',
-      header: 'Tier',
-      render: (r) => {
-        // A paid membership names the tier; otherwise what is on the customer.
+      header: 'Membership',
+      csv: (r) => {
         const m = membershipFor(r);
-        const tier = m && live(m.signup) ? String(m.signup.plan || '').split(' ')[0] || r.tier : r.tier;
-        return tier ? <Badge tone={tierTone[tier]}>{tier}</Badge> : null;
+        return m && live(m.signup) ? planLabel(m.signup.plan) : '';
+      },
+      render: (r) => {
+        // Only a paid membership names one; nobody else holds a tier.
+        const m = membershipFor(r);
+        if (!m || !live(m.signup)) return <span className="text-ink-400">—</span>;
+        const tier = String(m.signup.plan || '').split(' ')[0];
+        return <Badge tone={tierTone[tier]}>{planLabel(m.signup.plan)}</Badge>;
       },
     },
     {
@@ -515,8 +492,13 @@ export default function Customers() {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-brand-600/20 bg-brand-50/60 px-4 py-3">
                   <Crown size={16} className="shrink-0 text-brand-600" />
                   <span className="font-display text-sm font-extrabold text-ink-900">
-                    {membership.signup.plan}
+                    {planLabel(membership.signup.plan)}
                   </span>
+                  {membership.signup.memberId && (
+                    <span className="chip bg-white font-bold text-ink-900 ring-1 ring-brand-600/20">
+                      ID {membership.signup.memberId}
+                    </span>
+                  )}
                   <Badge tone={signupTone[membership.signup.status]} dot>
                     {membership.signup.status}
                   </Badge>

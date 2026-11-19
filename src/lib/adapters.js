@@ -707,6 +707,7 @@ export const ADAPTERS = {
       paidVia: m.paidVia || '',
       payRef: m.payRef || '',
       memberId: m.memberId || '',
+      customerId: ref(m.customer),
       status: m.status,
       expert: who(m.expert),
       expertId: ref(m.expert),

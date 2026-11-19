@@ -143,14 +143,25 @@ export default function Customers() {
     if (!n) return '';
     return /membership/i.test(n) ? n : `${n} Membership`;
   };
-  const live = (s) => Boolean(s) && isPaid(s) && !['Cancelled', 'Expired', 'Suspended'].includes(s.status);
+  /**
+   * Somebody's membership: Active on the desk, activated, or paid for —
+   * whichever way it was recorded. A membership added on the panel as
+   * Active with no payment typed against it is still a membership.
+   */
+  const live = (s) =>
+    Boolean(s) &&
+    !['Cancelled', 'Expired', 'Suspended', 'Quoted'].includes(s.status) &&
+    (['Active', 'Expiring soon'].includes(s.status) || s.activation?.stage === 'Activated' || isPaid(s));
 
   /** The website membership a traveller signed up for, if any. */
   const membershipFor = (customer) => {
     if (!customer) return null;
     const wanted = phoneDigits(customer.phone);
     const mine = memberSignups.filter(
-      (s) => (wanted && phoneDigits(s.phone) === wanted) || (s.email && s.email === customer.email)
+      (s) =>
+        (s.customerId && (s.customerId === customer._id || s.customerId === customer.id)) ||
+        (wanted && phoneDigits(s.phone) === wanted) ||
+        (s.email && customer.email && s.email === customer.email)
     );
     // The paid, live one wins over an unpaid request made after it.
     const signup = mine.find(live) || mine.find((s) => s.status !== 'Cancelled') || null;
@@ -222,6 +233,26 @@ export default function Customers() {
         const m = membershipFor(r);
         if (!m || !live(m.signup)) return <span className="text-ink-400">—</span>;
         return <span className="whitespace-nowrap font-bold text-ink-900 num">{m.signup.memberId || '—'}</span>;
+      },
+    },
+    {
+      key: 'paidAmount',
+      header: 'Amount paid',
+      csv: (r) => {
+        const m = membershipFor(r);
+        return m && live(m.signup) ? Number(m.signup.paid || 0) : '';
+      },
+      render: (r) => {
+        const m = membershipFor(r);
+        if (!m || !live(m.signup)) return <span className="text-ink-400">—</span>;
+        const paid = Number(m.signup.paid || 0);
+        const due = Math.max(0, Number(m.signup.amount || 0) - paid);
+        return (
+          <div className="whitespace-nowrap">
+            <p className="font-bold text-emerald-700 num">{inr(paid)}</p>
+            {due > 0 && <p className="text-xs font-semibold text-amber-700 num">{inr(due)} due</p>}
+          </div>
+        );
       },
     },
     {

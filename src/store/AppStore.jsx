@@ -352,6 +352,7 @@ export function AppProvider({ children }) {
         if (name === 'enquiries') {
           const PAGE = 2000;
           const startedAt = Date.now();
+          leadsSyncedAt.current = startedAt;
           // While pages arrive, the list on screen only ever grows: a reload
           // must not drop 33,000 leads back to the first 2,000 for a minute.
           // The list changes once, when every page is in — no 2,000 → 10,000
@@ -430,30 +431,122 @@ export function AppProvider({ children }) {
     return next;
   }, []);
 
-  // Sign in, refresh, or arrive with a token already in hand.
+  /*
+   * Only what changed.
+   *
+   * The panel used to re-download every busy list every 15 seconds, all
+   * 35,000 leads every two minutes, and everything again each time the
+   * window got focus. Now it asks the server, cheaply, which lists changed
+   * (a count and the newest change per list) and fetches just those; the
+   * leads fetch only the leads changed since last time.
+   */
+  const versions = useRef({}); // path -> "count:newest"
+  const leadsSyncedAt = useRef(0);
+  const askVersions = useCallback(async (names) => {
+    const paths = [...new Set(names.map((n) => pathFor(n)).filter(Boolean))];
+    if (!paths.length) return null;
+    try {
+      const res = await api.get(`/sync/versions?paths=${encodeURIComponent(paths.join(','))}`);
+      return res?.data || null;
+    } catch {
+      return null; // an older server: fall back to fetching
+    }
+  }, []);
+
+  /** Leads changed since the last look, laid over the list (no full reload). */
+  const pullLeadsSince = useCallback(async () => {
+    if (!leadsSyncedAt.current || leadsInFlight.current) return pull('enquiries');
+    const since = new Date(leadsSyncedAt.current - 60000).toISOString();
+    const startedAt = Date.now();
+    try {
+      const res = await api.list(pathFor('enquiries'), `?limit=all&updatedAt[gte]=${encodeURIComponent(since)}`);
+      const fresh = (res.rows || []).map((doc) => fromApi('enquiries', doc));
+      leadsSyncedAt.current = startedAt;
+      if (!fresh.length) return undefined;
+      const byId = new Map(fresh.map((r) => [String(r._id), r]));
+      setDb((d) => {
+        const seen = new Set();
+        const kept = d.enquiries.map((r) => {
+          const f = r._id && byId.get(String(r._id));
+          if (!f) return r;
+          seen.add(String(r._id));
+          const e = leadEdits.current.get(f.id);
+          return e && e.at >= startedAt - 10000 ? { ...f, ...e.patch } : f;
+        });
+        const added = fresh.filter((r) => !seen.has(String(r._id)));
+        return { ...d, enquiries: [...added, ...kept] };
+      });
+    } catch {
+      /* next time */
+    }
+    return undefined;
+  }, [pull]);
+
+  /** Fetch the named lists, but only those the server says have changed. */
+  const pullChanged = useCallback(async (names) => {
+    const v = await askVersions(names);
+    if (!v) return pull(names.filter((n) => n !== 'enquiries'));
+    const changed = [];
+    let leadsChanged = false;
+    let leadsShrank = false;
+    for (const n of names) {
+      const path = pathFor(n);
+      const now = v[path];
+      if (now === undefined) {
+        if (n !== 'enquiries') changed.push(n); // not tracked: fetch as before
+        continue;
+      }
+      const was = versions.current[path];
+      versions.current[path] = now;
+      if (was === now) continue;
+      if (n === 'enquiries') {
+        leadsChanged = true;
+        leadsShrank = was !== undefined && Number(now.split(':')[0]) < Number(was.split(':')[0]);
+      } else changed.push(n);
+    }
+    if (changed.length) pull(changed);
+    if (leadsChanged) {
+      if (leadsShrank) pull('enquiries'); // some were deleted: the whole list once
+      else pullLeadsSince();
+    }
+    return undefined;
+  }, [askVersions, pull, pullLeadsSince]);
+
+  // Sign in, refresh, or arrive with a token already in hand: everything once,
+  // with the server's versions noted first so nothing in between is missed.
   useEffect(() => {
-    if (live) pull();
-  }, [live, pull]);
+    if (!live) return;
+    (async () => {
+      const v = await askVersions(LIVE_COLLECTIONS);
+      if (v) versions.current = { ...v };
+      leadsSyncedAt.current = Date.now();
+      pull();
+    })();
+  }, [live, pull, askVersions]);
 
   /**
    * Keep up with what happens elsewhere — a booking made on the website, a
-   * partner accepting, a colleague changing a status — without a reload.
-   * The busy lists refresh quietly every few seconds while the tab is open,
-   * and everything refreshes when the tab comes back into view.
+   * partner accepting, a colleague changing a status — without a reload:
+   * the busy lists are checked every 15 seconds, the leads every minute,
+   * everything when the tab comes back — and only changed lists download.
    */
   useEffect(() => {
     if (!live) return undefined;
-    // The small busy lists every 15 seconds; the leads — tens of thousands,
-    // loaded in pages — every two minutes.
-    const BUSY = ['bookings', 'memberSignups', 'customers', 'partners', 'tickets', 'tasks', 'team'];
+    const BUSY = ['bookings', 'memberSignups', 'customers', 'partners', 'tickets', 'tasks', 'team', 'conversations'];
     let ticks = 0;
     const tick = () => {
       if (document.visibilityState !== 'visible') return;
       ticks += 1;
-      pull(ticks % 8 === 0 ? [...BUSY, 'enquiries'] : BUSY);
+      pullChanged(ticks % 4 === 0 ? [...BUSY, 'enquiries'] : BUSY);
     };
+    let lastBack = 0;
     const back = () => {
-      if (document.visibilityState === 'visible') pull(LIVE_COLLECTIONS);
+      if (document.visibilityState !== 'visible') return;
+      // Focus and visibility fire together, and focus fires on every click
+      // back into the window: once a minute at most.
+      if (Date.now() - lastBack < 60000) return;
+      lastBack = Date.now();
+      pullChanged(LIVE_COLLECTIONS);
     };
     const timer = setInterval(tick, 15000);
     document.addEventListener('visibilitychange', back);
@@ -463,7 +556,7 @@ export function AppProvider({ children }) {
       document.removeEventListener('visibilitychange', back);
       window.removeEventListener('focus', back);
     };
-  }, [live, pull]);
+  }, [live, pullChanged]);
 
   // The API says the token is no longer good.
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api, isLive } from '../lib/api.js';
 import {
   MessageCircle,
@@ -89,16 +89,11 @@ function Flow({ steps, tone = 'bg-surface-soft text-ink-700' }) {
 export default function Whatsapp() {
   const {
     conversations, botFlows, bookings, invoices, customers, team,
-    create, update, remove, toast, pull,
+    create, update, remove, toast,
   } = useApp();
 
-  // Customer messages arrive through the AdsEra webhook: look for new ones
-  // every 20 seconds while this page is open.
-  useEffect(() => {
-    if (!isLive || !pull) return undefined;
-    const t = setInterval(() => pull('conversations'), 20000);
-    return () => clearInterval(t);
-  }, [pull]);
+  // Customer messages arrive through the AdsEra webhook; the panel's shared
+  // check picks up new ones every 15 seconds (only when something changed).
   const [section, setSection] = useState('Dashboard');
   const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');

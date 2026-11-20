@@ -272,6 +272,41 @@ export function AppProvider({ children }) {
     leadEdits.current.set(id, { patch: { ...(was?.patch || {}), ...patch }, at: Date.now() });
   };
 
+  /*
+   * The same protection for every other list (tasks, bookings, members…).
+   * The background refresh runs every 15 seconds; one that left before a
+   * save reached the server came back with the old list and wiped the new
+   * task or put the old value back — so people pressed Save three or four
+   * times. Changes and new rows made since a refresh left are laid back on
+   * top, and only the most recently started refresh of a list is applied.
+   */
+  const localEdits = useRef({}); // collection -> Map(id -> { at, patch })
+  const localCreates = useRef({}); // collection -> Map(id -> { at, row })
+  const pullStarted = useRef({}); // collection -> time the newest refresh left
+  const mapFor = (store, name) => (store.current[name] = store.current[name] || new Map());
+  const noteEdit = (name, id, patch) => {
+    const m = mapFor(localEdits, name);
+    const was = m.get(id);
+    m.set(id, { patch: { ...(was?.patch || {}), ...patch }, at: Date.now() });
+  };
+  const noteCreate = (name, row) => mapFor(localCreates, name).set(row.id, { at: Date.now(), row });
+  const forgetCreate = (name, id) => mapFor(localCreates, name).delete(id);
+  const withLocal = (name, rows, startedAt) => {
+    const since = startedAt - 10000;
+    const edits = mapFor(localEdits, name);
+    const creates = mapFor(localCreates, name);
+    for (const [id, e] of edits) if (e.at < since) edits.delete(id);
+    for (const [id, c] of creates) if (c.at < since) creates.delete(id);
+    const merged = rows.map((r) => {
+      const e = edits.get(r.id);
+      return e ? { ...r, ...e.patch } : r;
+    });
+    const missing = [...creates.values()]
+      .map((c) => c.row)
+      .filter((row) => !merged.some((r) => r.id === row.id || (row._id && r._id === row._id)));
+    return [...missing, ...merged];
+  };
+
   useEffect(() => {
     try {
       // The leads are left out when live: tens of thousands do not fit, and
@@ -348,6 +383,8 @@ export function AppProvider({ children }) {
           return [name, rows];
         }
 
+        const startedAt = Date.now();
+        pullStarted.current[name] = startedAt;
         let res;
         try {
           res = await api.list(pathFor(name));
@@ -357,7 +394,9 @@ export function AppProvider({ children }) {
           if (err.status === 403 && fallback) res = await api.list(fallback);
           else throw err;
         }
-        const rows = (res.rows || res.data || []).map((doc) => fromApi(name, doc));
+        // A newer refresh of this list has left since: let that one win.
+        if ((pullStarted.current[name] || 0) > startedAt) return [name, null];
+        const rows = withLocal(name, (res.rows || res.data || []).map((doc) => fromApi(name, doc)), startedAt);
         // On screen as soon as it is here: tens of thousands of leads take a
         // while, and the team, members and the rest should not wait for them.
         setDb((prev) => ({ ...prev, [name]: rows }));
@@ -375,7 +414,7 @@ export function AppProvider({ children }) {
     results.forEach((r, i) => {
       const name = wanted[i];
       if (r.status === 'fulfilled') {
-        next[name] = r.value[1];
+        if (r.value[1]) next[name] = r.value[1];
         return;
       }
       // Forbidden is an answer, not a failure: this role cannot open that
@@ -501,6 +540,7 @@ export function AppProvider({ children }) {
       // A password goes to the server only, never into a row on screen.
       const { password: _password, ...shown } = item;
       setDb((d) => ({ ...d, [collection]: [{ ...shown, id }, ...d[collection]] }));
+      if (collection !== 'enquiries') noteCreate(collection, { ...shown, id });
       if (!silent) toast(`${SINGULAR[collection]} ${id} created`);
 
       const what = SINGULAR[collection] || 'Record';
@@ -514,6 +554,10 @@ export function AppProvider({ children }) {
           .post(pathFor(collection), toApi(collection, item, lookups()))
           .then((res) => {
             const row = fromApi(collection, res.data);
+            if (collection !== 'enquiries') {
+              forgetCreate(collection, id);
+              noteCreate(collection, row);
+            }
             setDb((d) => ({
               ...d,
               [collection]: d[collection].map((r) => (r.id === id ? row : r)),
@@ -523,6 +567,7 @@ export function AppProvider({ children }) {
           })
           .catch((err) => {
             // Put the optimistic row back where it came from.
+            forgetCreate(collection, id);
             setDb((d) => ({ ...d, [collection]: d[collection].filter((r) => r.id !== id) }));
             toast(whyNot(err, `That ${what.toLowerCase()} could not be saved`), 'danger');
           });
@@ -565,6 +610,7 @@ export function AppProvider({ children }) {
       const found = (dbRef.current[collection] || []).find((r) => r.id === id) || null;
       const before = found || (record && record.id === id ? record : null);
       if (collection === 'enquiries') noteLeadEdit(id, patch);
+      else noteEdit(collection, id, patch);
       setDb((d) => ({
         ...d,
         [collection]: found
@@ -585,6 +631,7 @@ export function AppProvider({ children }) {
             if (collection === 'enquiries' && res?.automated?.length) refreshLeads(res.automated);
           }).catch((err) => {
             if (collection === 'enquiries') leadEdits.current.delete(id);
+            else mapFor(localEdits, collection).delete(id);
             setDb((d) => ({
               ...d,
               [collection]: d[collection].map((r) => (r.id === id ? before : r)),
@@ -636,6 +683,7 @@ export function AppProvider({ children }) {
       const chosen = new Set(ids);
       const targets = (dbRef.current[collection] || []).filter((r) => chosen.has(r.id));
       if (collection === 'enquiries') ids.forEach((id) => noteLeadEdit(id, patch));
+      else ids.forEach((id) => noteEdit(collection, id, patch));
       setDb((d) => ({
         ...d,
         [collection]: d[collection].map((r) => (chosen.has(r.id) ? { ...r, ...patch } : r)),

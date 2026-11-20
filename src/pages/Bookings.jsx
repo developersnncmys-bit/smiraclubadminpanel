@@ -137,7 +137,24 @@ export default function Bookings() {
       String(v || '').toLowerCase().includes(q)
     );
   };
-  const listRows = rows.filter(matches).map(withDerived);
+  const allListRows = rows.filter(matches).map(withDerived);
+
+  /**
+   * One card per customer: their latest booking, with the others behind a
+   * "+N more" button. A person who booked three trips is one row to work,
+   * not three; nothing is hidden for good.
+   */
+  const [opened, setOpened] = useState({});
+  const personKey = (b) => b.customerId || digitsOf(b.customerPhone) || b.customer || b.id;
+  const stamp = (b) => new Date(b.updatedAt || b.createdAt || 0).getTime() || 0;
+  const byPerson = new Map();
+  [...allListRows].sort((a, b) => stamp(b) - stamp(a)).forEach((b) => {
+    const k = personKey(b);
+    if (!byPerson.has(k)) byPerson.set(k, []);
+    byPerson.get(k).push(b);
+  });
+  const moreFor = (b) => (byPerson.get(personKey(b)) || []).length - 1;
+  const listRows = [...byPerson.entries()].flatMap(([k, list]) => (opened[k] ? list : list.slice(0, 1)));
 
   const exportBookings = () =>
     downloadCsv('smira-club-bookings', rows, [
@@ -512,6 +529,19 @@ export default function Bookings() {
                         <p className="truncate font-display text-[15px] font-extrabold leading-tight text-ink-900">
                           {b.customer}
                         </p>
+                        {moreFor(b) > 0 && byPerson.get(personKey(b))?.[0]?.id === b.id && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const k = personKey(b);
+                              setOpened((o) => ({ ...o, [k]: !o[k] }));
+                            }}
+                            className="mt-0.5 text-[11px] font-bold text-brand-700 hover:underline"
+                          >
+                            {opened[personKey(b)] ? 'Show latest only' : `+${moreFor(b)} more booking${moreFor(b) === 1 ? '' : 's'}`}
+                          </button>
+                        )}
                         <p className="num truncate text-xs text-ink-500">{b.id} · {b.pkg || b.hotel}</p>
                         <p className="num truncate text-xs text-ink-400">
                           {[b.customerCode && `Cust ${b.customerCode}`, lead && `Lead ${lead.id}`, b.customerPhone]

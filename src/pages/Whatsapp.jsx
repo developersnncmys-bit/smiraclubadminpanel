@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api, isLive } from '../lib/api.js';
 import {
   MessageCircle,
   Send,
@@ -88,8 +89,16 @@ function Flow({ steps, tone = 'bg-surface-soft text-ink-700' }) {
 export default function Whatsapp() {
   const {
     conversations, botFlows, bookings, invoices, customers, team,
-    create, update, remove, toast,
+    create, update, remove, toast, pull,
   } = useApp();
+
+  // Customer messages arrive through the AdsEra webhook: look for new ones
+  // every 20 seconds while this page is open.
+  useEffect(() => {
+    if (!isLive || !pull) return undefined;
+    const t = setInterval(() => pull('conversations'), 20000);
+    return () => clearInterval(t);
+  }, [pull]);
   const [section, setSection] = useState('Dashboard');
   const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');
@@ -145,11 +154,29 @@ export default function Whatsapp() {
   const logMessage = (c, entry) =>
     update('conversations', c.id, { messages: [...(c.messages || []), entry], lastAt: 'just now' }, { silent: true });
 
-  const send = () => {
-    if (!draft.trim() || !open) return;
-    logMessage(open, { from: 'me', text: draft.trim(), at: 'just now' });
-    toast(`Sent to ${open.name}`);
-    setDraft('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const send = async () => {
+    if (!draft.trim() || !open || sendingReply) return;
+    const text = draft.trim();
+    // Not on the live API (demo data): keep it on the thread only.
+    if (!isLive || !open._id) {
+      logMessage(open, { from: 'me', text, at: 'just now' });
+      toast(`Sent to ${open.name}`);
+      setDraft('');
+      return;
+    }
+    setSendingReply(true);
+    try {
+      const r = await api.post(`/whatsapp/conversations/${open._id}/reply`, { text });
+      logMessage(open, { from: 'me', text, at: 'just now' });
+      setDraft('');
+      if (r.delivered) toast(`Sent to ${open.name} on WhatsApp`);
+      else toast(r.message ? `Saved, not sent: ${r.message}` : 'Saved in the chat, but WhatsApp did not send it', 'danger');
+    } catch (err) {
+      toast(err.message || 'That message did not go', 'danger');
+    } finally {
+      setSendingReply(false);
+    }
   };
 
   /** What the six chat actions actually do. */

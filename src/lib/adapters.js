@@ -1136,9 +1136,17 @@ export const ADAPTERS = {
       followUp: c.followUpAt ? d(c.followUpAt) : '—',
       tags: c.tags || [],
       note: c.note,
+      leadId: ref(c.lead),
       messages: (c.messages || []).map((m) => ({ ...m, at: dt(m.at) })),
     }),
-    to: (p) => ({ category: p.category, score: p.score, note: p.note, tags: p.tags }),
+    to: (p) => ({
+      category: p.category,
+      score: p.score,
+      note: p.note,
+      tags: p.tags,
+      ...(p.ownerId ? { owner: p.ownerId } : {}),
+      ...(p.leadId ? { lead: p.leadId } : {}),
+    }),
   },
 
   botFlows: {

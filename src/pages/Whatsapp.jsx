@@ -50,6 +50,9 @@ import FlowBuilder from '../components/whatsapp/FlowBuilder.jsx';
 import ConnectWhatsApp from '../components/whatsapp/ConnectWhatsApp.jsx';
 import FormModal from '../components/ui/FormModal.jsx';
 import Table from '../components/ui/Table.jsx';
+import Modal from '../components/ui/Modal.jsx';
+import { Pagination, usePaged } from '../components/ui/Pagination.jsx';
+import LeadTaskForm from '../components/sales/LeadTaskForm.jsx';
 import { dialable } from '../lib/phone.js';
 
 const SECTIONS = [
@@ -88,8 +91,8 @@ function Flow({ steps, tone = 'bg-surface-soft text-ink-700' }) {
  */
 export default function Whatsapp() {
   const {
-    conversations, botFlows, bookings, invoices, customers, team,
-    create, update, remove, toast,
+    conversations, botFlows, bookings, invoices, customers, team, enquiries,
+    create, update, remove, toast, logActivity,
   } = useApp();
 
   // Customer messages arrive through the AdsEra webhook; the panel's shared
@@ -103,6 +106,9 @@ export default function Whatsapp() {
   const [campaigns, setCampaigns] = useState(seedCampaigns);
   const [building, setBuilding] = useState(null);
   const [composing, setComposing] = useState(false);
+  // The chat's Assign and Add task sheets.
+  const [assigning, setAssigning] = useState(false);
+  const [tasking, setTasking] = useState(false);
 
   const open = conversations.find((c) => c.id === openId) || null;
 
@@ -114,6 +120,58 @@ export default function Whatsapp() {
       String(v || '').toLowerCase().includes(q)
     );
   });
+
+  const paged = usePaged(rows, 25);
+
+  /** The lead behind a chat: the one it is linked to, else the same number. */
+  const tenOf = (v) => String(v || '').replace(/\D/g, '').slice(-10);
+  const leadOf = (c) => {
+    if (!c) return null;
+    const list = enquiries || [];
+    if (c.leadId) {
+      const linked = list.find((l) => l._id === c.leadId);
+      if (linked) return linked;
+    }
+    const ten = tenOf(c.phone);
+    return ten.length === 10 ? list.find((l) => tenOf(l.phone) === ten) || null : null;
+  };
+  const openLead = leadOf(open);
+  const ownerOf = (c) => {
+    const l = leadOf(c);
+    return (l?.owner && l.owner !== 'Unassigned' ? l.owner : '') || (c.owner && c.owner !== '—' ? c.owner : '') || 'Unassigned';
+  };
+
+  /** Give this chat — and its lead — to one person. A chat with no lead gets one. */
+  const assignTo = (name) => {
+    if (!open) return;
+    const member = team.find((t) => t.name === name);
+    const lead = leadOf(open);
+    if (lead) {
+      update('enquiries', lead.id, { owner: name, ownerId: member?._id }, { silent: true, record: lead });
+      logActivity(lead.id, `Assigned to ${name} from WhatsApp`, 'assign', undefined, lead);
+    } else {
+      create('enquiries', {
+        name: open.name,
+        phone: open.phone,
+        destination: 'From WhatsApp',
+        pax: 2,
+        budget: 0,
+        status: 'New',
+        source: 'WhatsApp',
+        owner: name,
+        ownerId: member?._id,
+        label: open.score,
+        priority: open.score === 'Hot' ? 'High' : 'Medium',
+      }, { silent: true });
+    }
+    update(
+      'conversations',
+      open.id,
+      { owner: name, ownerId: member?._id, ...(lead?._id ? { leadId: lead._id } : {}) },
+      { message: `${open.name} assigned to ${name}` }
+    );
+    setAssigning(false);
+  };
 
   const conversionRate = inboxStats.leads
     ? Math.round((inboxStats.membershipSales / inboxStats.leads) * 100)
@@ -199,27 +257,11 @@ export default function Whatsapp() {
       return;
     }
     if (label === 'Assign') {
-      const next = team[(team.findIndex((m) => m.name.split(' ')[0] === open.owner) + 1) % team.length];
-      const to = next.name.split(' ')[0];
-      update('conversations', open.id, { owner: to }, { message: `${open.name} moved to ${to}` });
+      setAssigning(true);
       return;
     }
     if (label === 'Create task') {
-      create('tasks', {
-        title: `Follow up with ${open.name} on WhatsApp`,
-        customer: open.name,
-        type: 'WhatsApp',
-        due: open.followUp || 'today',
-        created: 'just now',
-        owner: open.owner,
-        createdBy: 'WhatsApp',
-        bucket: 'today',
-        priority: open.score === 'Hot' ? 'High' : 'Medium',
-        status: 'Pending',
-        lastAction: 'Chat open on WhatsApp',
-        nextAction: 'Reply and book the presentation',
-        note: open.note || '',
-      });
+      setTasking(true);
       return;
     }
     logMessage(open, { from: 'me', text: `${label} sent`, at: 'just now' });
@@ -365,7 +407,7 @@ export default function Whatsapp() {
         }
       >
         <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-          {rows.map((c) => (
+          {paged.pageRows.map((c) => (
             <li key={c.id}>
               <button onClick={() => setOpenId(c.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-soft">
                 <Avatar name={c.name} size="sm" />
@@ -382,7 +424,7 @@ export default function Whatsapp() {
                 </span>
                 <span className="shrink-0 text-right">
                   <span className="num block text-xs text-ink-400">{c.lastAt}</span>
-                  <span className="mt-1 block text-xs text-ink-500">{c.owner}</span>
+                  <span className="mt-1 block text-xs text-ink-500">{ownerOf(c)}</span>
                 </span>
                 {c.unread > 0 && (
                   <span className="num grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500 text-xs font-bold text-white">
@@ -394,6 +436,7 @@ export default function Whatsapp() {
           ))}
           {rows.length === 0 && <li className="px-4 py-6 text-center text-sm text-ink-500">No chats match this view.</li>}
         </ul>
+        <Pagination {...paged} />
         <p className="eyebrow mt-5">Categories</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {conversationCategories.map((c) => (
@@ -816,7 +859,7 @@ export default function Whatsapp() {
                     </button>
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
-                    {['Send template', 'Send brochure', 'Share offer', 'Create lead', 'Assign', 'Create task'].map((a) => (
+                    {['Send template', 'Send brochure', 'Share offer', ...(openLead ? [] : ['Create lead']), 'Assign', 'Create task'].map((a) => (
                       <button key={a} className="chip text-ink-600 hover:text-ink-900" onClick={() => chatAction(a)}>
                         {a}
                       </button>
@@ -843,7 +886,7 @@ export default function Whatsapp() {
                     >
                       <MessageCircle size={15} />
                     </a>
-                    <button onClick={() => toast(`${open.name} assigned`)} className="icon-btn h-9 w-9 disabled:opacity-40">
+                    <button onClick={() => setAssigning(true)} title="Assign" className="icon-btn h-9 w-9 disabled:opacity-40">
                       <UserCheck size={15} />
                     </button>
                   </div>
@@ -853,7 +896,8 @@ export default function Whatsapp() {
                   ['Lead source', open.source],
                   ['Membership status', open.membership || 'Not a member'],
                   ['Membership plan', open.plan || '—'],
-                  ['Assigned to', open.owner],
+                  ['Lead', openLead ? `${openLead.id} · ${openLead.status || 'New'}` : 'No lead yet — Assign makes one'],
+                  ['Assigned to', ownerOf(open)],
                   ['Handled by', open.handledBy],
                   ['Previous bookings', `${contextOf(open).bookings.length} booking(s)`],
                   ['Payment status', contextOf(open).payment],
@@ -883,6 +927,40 @@ export default function Whatsapp() {
           </aside>
         </div>
       )}
+
+      {/* Assign the chat and its lead to one person */}
+      <Modal open={Boolean(open && assigning)} onClose={() => setAssigning(false)} title="Assign to" subtitle={open?.name} size="sm">
+        <div className="space-y-2">
+          {team.filter((t) => t.status !== 'Inactive').map((t) => {
+            const on = open && ownerOf(open) === t.name;
+            return (
+              <button
+                key={t.name}
+                type="button"
+                onClick={() => (on ? setAssigning(false) : assignTo(t.name))}
+                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                  on ? 'border-brand-500 bg-brand-50' : 'border-ink-900/10 hover:border-brand-400 hover:bg-brand-50'
+                }`}
+              >
+                <Avatar name={t.name} size="sm" />
+                <span className="text-sm font-semibold text-ink-800">{t.name}</span>
+                {t.role && <span className="ml-auto text-xs text-ink-400">{t.role}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </Modal>
+
+      {/* A task for this chat's lead */}
+      <Modal open={Boolean(open && tasking)} onClose={() => setTasking(false)} title="Add task" subtitle={open?.name} size="md">
+        {open && tasking && (
+          <LeadTaskForm
+            lead={openLead || { name: open.name, owner: ownerOf(open) }}
+            onDone={() => setTasking(false)}
+            onCancel={() => setTasking(false)}
+          />
+        )}
+      </Modal>
     </>
   );
 }

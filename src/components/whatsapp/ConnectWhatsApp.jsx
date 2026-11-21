@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Smartphone, CheckCircle2, Loader2, Send, AlertTriangle, RefreshCw, ExternalLink } from 'lucide-react';
+import { Smartphone, CheckCircle2, Loader2, Send, AlertTriangle, RefreshCw, ExternalLink, Download } from 'lucide-react';
 import { api, isLive } from '../../lib/api.js';
 import { useApp } from '../../store/AppStore.jsx';
 
@@ -19,7 +19,8 @@ const STEP_TEXT = {
 };
 
 export default function ConnectWhatsApp() {
-  const { toast } = useApp();
+  const { toast, pull } = useApp();
+  const [importing, setImporting] = useState(false);
   const [state, setState] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [test, setTest] = useState({ phone: '', text: 'Hello from Smira Club 👋', template: '', vars: {} });
@@ -43,6 +44,20 @@ export default function ConnectWhatsApp() {
   }, [load]);
 
   const chosen = templates.find((t) => t.id === test.template) || null;
+
+  /** Bring the chats already in AdsEra (last 30 days) into the CRM inbox. */
+  const importChats = async () => {
+    setImporting(true);
+    try {
+      const r = await api.post('/whatsapp/gateway/import', { days: 30 });
+      toast(r.message || 'Chats brought in');
+      pull?.('conversations');
+    } catch (err) {
+      toast(err.message || 'Could not bring the chats in', 'danger');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const sendTest = async () => {
     setSending(true);
@@ -94,6 +109,11 @@ export default function ConnectWhatsApp() {
           <button className="btn-line btn-sm" onClick={() => load()} title="Check again">
             <RefreshCw size={14} /> Refresh
           </button>
+          {connected && (
+            <button className="btn-line btn-sm" onClick={importChats} disabled={importing} title="Bring the chats already in AdsEra into this inbox">
+              {importing ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Import chats
+            </button>
+          )}
           <a className="btn-line btn-sm" href="https://app.adsera.in" target="_blank" rel="noreferrer">
             <ExternalLink size={14} /> Open AdsEra
           </a>

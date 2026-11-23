@@ -7,13 +7,11 @@ import {
   Search,
   X,
   Phone,
-  FileText,
   Tag,
   UserCheck,
   Sparkles,
   Zap,
   Megaphone,
-  QrCode,
   Plus,
   Pencil,
 } from 'lucide-react';
@@ -60,8 +58,6 @@ const SECTIONS = [
   'Dashboard',
   'Inbox',
   'Chatbot',
-  'Lead automation',
-  'Automation rules',
   'Campaigns',
   'Templates',
   'Staff',
@@ -730,17 +726,7 @@ export default function Whatsapp() {
 
   return (
     <>
-      <PageHeader title="WhatsApp" subtitle="The inbox, the bot behind it, and everything it feeds into the CRM">
-        <button className="btn-line" onClick={() => setSection('Connect number')}>
-          <QrCode size={16} /> Connect WhatsApp
-        </button>
-        <button className="btn-line" onClick={() => setSection('Templates')}>
-          <FileText size={16} /> Templates
-        </button>
-        <button className="btn-action" onClick={() => setSection('Campaigns')}>
-          <Megaphone size={16} /> New campaign
-        </button>
-      </PageHeader>
+      <PageHeader title="WhatsApp" subtitle="The inbox, the bot behind it, and everything it feeds into the CRM" />
 
       <SectionTabs
         className="mb-5"

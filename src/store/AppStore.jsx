@@ -8,6 +8,7 @@ import * as waSeed from '../data/whatsappData.js';
 import * as autoSeed from '../data/automationData.js';
 import * as inventorySeed from '../data/inventoryData.js';
 import { api, isLive, getToken, setToken } from '../lib/api.js';
+import { readLeads, writeLeads, clearLeads } from '../lib/leadCache.js';
 import { ADAPTERS, LIVE_COLLECTIONS, fromApi, toApi, pathFor, fallbackPathFor } from '../lib/adapters.js';
 import { canDo, COLLECTION_MODULE } from '../lib/access.js';
 import * as reportsSeed from '../data/reportsData.js';
@@ -252,6 +253,9 @@ export function AppProvider({ children }) {
   const [owner, setOwner] = useState('All team members');
   const [range, setRange] = useState('Last 7 days');
   const [auth, setAuth] = useState(loadAuth);
+  // Whose copy of the leads this browser keeps (each person sees their own).
+  const leadsKey = useRef('');
+  leadsKey.current = `leads:${auth?.id || auth?._id || auth?.phone || auth?.email || 'me'}`;
   /** Live once a server is configured and somebody is signed in to it. */
   const [live, setLive] = useState(() => isLive && Boolean(getToken()));
   const [loading, setLoading] = useState(false);
@@ -362,15 +366,22 @@ export function AppProvider({ children }) {
           const total = first.total || rows.length;
           const grow = (sofar) => setLeadsProgress(sofar.length < total ? { loaded: sofar.length, total } : null);
           grow(rows);
+          // Nothing on screen yet (first visit): show the leads as they come
+          // rather than an empty page for a minute.
+          const empty = !(dbRef.current.enquiries || []).length;
+          if (empty) setDb((prev) => ({ ...prev, [name]: rows }));
           const pages = first.pages || 1;
-          for (let p = 2; p <= pages; p += 4) {
+          // Two pages at a time: four at once filled every connection the
+          // browser has, and a task being saved waited behind them.
+          for (let p = 2; p <= pages; p += 2) {
             const batch = await Promise.all(
-              [p, p + 1, p + 2, p + 3]
+              [p, p + 1]
                 .filter((n) => n <= pages)
                 .map((n) => api.list(pathFor(name), `?limit=${PAGE}&page=${n}`))
             );
             rows = rows.concat(...batch.map((r) => (r.rows || []).map((doc) => fromApi(name, doc))));
             grow(rows);
+            if (empty) setDb((prev) => ({ ...prev, [name]: rows }));
           }
           // Every page is in: this is the list now, deletions included —
           // with any change made here since the reload began laid on top.
@@ -381,7 +392,8 @@ export function AppProvider({ children }) {
           for (const [id, e] of leadEdits.current) if (e.at < startedAt - 10000) leadEdits.current.delete(id);
           setDb((prev) => ({ ...prev, [name]: all }));
           setLeadsProgress(null);
-          return [name, rows];
+          writeLeads(leadsKey.current, all, startedAt);
+          return [name, all];
         }
 
         const startedAt = Date.now();
@@ -517,12 +529,34 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!live) return;
     (async () => {
-      const v = await askVersions(LIVE_COLLECTIONS);
+      const [v, kept] = await Promise.all([askVersions(LIVE_COLLECTIONS), readLeads(leadsKey.current)]);
       if (v) versions.current = { ...v };
-      leadsSyncedAt.current = Date.now();
-      pull();
+      if (!kept || !kept.rows.length) {
+        leadsSyncedAt.current = Date.now();
+        pull();
+        return;
+      }
+      // The leads this browser already has, on screen at once; then only the
+      // leads changed since they were kept. Everything else loads as before.
+      setDb((d) => ({ ...d, enquiries: kept.rows }));
+      leadsSyncedAt.current = kept.at;
+      pull(LIVE_COLLECTIONS.filter((n) => n !== 'enquiries'));
+      await pullLeadsSince();
+      // Some deleted elsewhere (the server has fewer): the full list once,
+      // in the background — the kept copy stays on screen meanwhile.
+      const serverCount = Number(String(v?.[pathFor('enquiries')] || '').split(':')[0]);
+      if (serverCount && serverCount < (dbRef.current.enquiries || []).length) pull('enquiries');
     })();
-  }, [live, pull, askVersions]);
+  }, [live, pull, askVersions, pullLeadsSince]);
+
+  // The kept copy follows the list (a few seconds after it settles).
+  useEffect(() => {
+    if (!live || !db.enquiries.length || leadsInFlight.current) return undefined;
+    const t = setTimeout(() => {
+      if (!leadsInFlight.current) writeLeads(leadsKey.current, dbRef.current.enquiries, leadsSyncedAt.current || Date.now());
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [live, db.enquiries]);
 
   /**
    * Keep up with what happens elsewhere — a booking made on the website, a
@@ -1265,6 +1299,7 @@ export function AppProvider({ children }) {
 
   const signOut = useCallback(() => {
     if (isLive) api.logout();
+    clearLeads();
     setToken(null);
     setLive(false);
     setAuth(null);

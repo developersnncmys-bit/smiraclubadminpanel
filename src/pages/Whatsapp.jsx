@@ -58,6 +58,8 @@ const SECTIONS = [
   'Dashboard',
   'Inbox',
   'Chatbot',
+  'Lead automation',
+  'Automation rules',
   'Campaigns',
   'Templates',
   'Staff',

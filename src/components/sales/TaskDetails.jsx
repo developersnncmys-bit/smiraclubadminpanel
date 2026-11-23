@@ -86,7 +86,6 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
         form.type !== t.type && `Type: ${form.type}`,
       ].filter(Boolean);
       const text = [form.note.trim(), changes.length ? `(${changes.join(' · ')})` : ''].filter(Boolean).join('\n');
-      if (text && isLive && t._id) await api.post(`/tasks/${t._id}/comments`, { text });
       const patch = {
         type: form.type,
         dueIso: at.toISOString(),
@@ -99,25 +98,28 @@ export default function TaskDetails({ task, lead, onClose, onOpenLead }) {
             ? { status: 'Pending', bucket: at < new Date() ? 'overdue' : 'today' }
             : { bucket: wasDone ? 'done' : at < new Date() ? 'overdue' : 'today' }),
       };
-      if (isLive && t._id) {
-        // Saved on the server first, and only then closed — so "Task saved"
-        // means it really is, and a refusal says why instead of quietly
-        // putting the old time back.
-        await api.patch(`/tasks/${t._id}`, toApi('tasks', patch));
-        await pull?.('tasks');
-        // A clear "it is saved" the person cannot miss.
-        showSaved?.(nowDone ? 'Task done' : 'Task saved', `${form.type} · ${spell(form.day, form.time)} · ${form.owner || 'nobody'}`, t.id);
-      } else {
-        update('tasks', t.id, {
-          ...patch,
-          ...(text ? { comments: [...(t.comments || []), { text, by: auth?.name || 'You', at: new Date().toISOString() }] } : {}),
-        }, { message: nowDone ? 'Task done' : 'Task saved' });
+      /*
+       * Saved at once on screen, and sent to the server behind it. Waiting
+       * for the note, the change and a reload of every task one after the
+       * other took several seconds; a refusal still puts the old values back
+       * and says why.
+       */
+      update('tasks', t.id, {
+        ...patch,
+        ...(text ? { comments: [...(t.comments || []), { text, by: auth?.name || 'You', at: new Date().toISOString() }] } : {}),
+      }, { silent: true });
+      if (text && isLive && t._id) {
+        api.post(`/tasks/${t._id}/comments`, { text }).catch((err) => toast(`Task saved, but the note did not: ${err.message || 'try again'}`, 'danger'));
       }
+      showSaved?.(nowDone ? 'Task done' : 'Task saved', `${form.type} · ${spell(form.day, form.time)} · ${form.owner || 'nobody'}`, t.id);
       // The lead's status after the task, on its own: if it is refused, the
       // task is still saved and the reason is shown.
       if (statusChanged) {
         try {
-          if (!enquiries.some((e) => e.id === lead.id) && isLive && lead._id) await api.patch(`/leads/${lead._id}`, { status: form.leadStatus });
+          if (!enquiries.some((e) => e.id === lead.id) && isLive && lead._id) {
+            api.patch(`/leads/${lead._id}`, { status: form.leadStatus })
+              .catch((err) => toast(`Task saved, but the lead status did not change: ${err.message}`, 'danger'));
+          }
           else update('enquiries', lead.id, { status: form.leadStatus }, { silent: true });
           logActivity?.(lead.id, `Status updated to ${form.leadStatus} (from task ${t.title})`, 'status');
         } catch (err) {

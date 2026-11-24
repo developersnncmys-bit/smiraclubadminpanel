@@ -107,6 +107,9 @@ export default function Whatsapp() {
   // The chat's Assign and Add task sheets.
   const [assigning, setAssigning] = useState(false);
   const [tasking, setTasking] = useState(false);
+  // Chats ticked in the inbox, for assigning many at once.
+  const [picked, setPicked] = useState(() => new Set());
+  const [bulk, setBulk] = useState(false);
 
   const open = conversations.find((c) => c.id === openId) || null;
 
@@ -139,18 +142,17 @@ export default function Whatsapp() {
     return (l?.owner && l.owner !== 'Unassigned' ? l.owner : '') || (c.owner && c.owner !== '—' ? c.owner : '') || 'Unassigned';
   };
 
-  /** Give this chat — and its lead — to one person. A chat with no lead gets one. */
-  const assignTo = (name) => {
-    if (!open) return;
+  /** Give one chat — and its lead — to one person. A chat with no lead gets one. */
+  const giveChat = (c, name) => {
     const member = team.find((t) => t.name === name);
-    const lead = leadOf(open);
+    const lead = leadOf(c);
     if (lead) {
       update('enquiries', lead.id, { owner: name, ownerId: member?._id }, { silent: true, record: lead });
       logActivity(lead.id, `Assigned to ${name} from WhatsApp`, 'assign', undefined, lead);
     } else {
       create('enquiries', {
-        name: open.name,
-        phone: open.phone,
+        name: c.name,
+        phone: c.phone,
         destination: 'From WhatsApp',
         pax: 2,
         budget: 0,
@@ -158,18 +160,43 @@ export default function Whatsapp() {
         source: 'WhatsApp',
         owner: name,
         ownerId: member?._id,
-        label: open.score,
-        priority: open.score === 'Hot' ? 'High' : 'Medium',
+        label: c.score,
+        priority: c.score === 'Hot' ? 'High' : 'Medium',
       }, { silent: true });
     }
-    update(
-      'conversations',
-      open.id,
-      { owner: name, ownerId: member?._id, ...(lead?._id ? { leadId: lead._id } : {}) },
-      { message: `${open.name} assigned to ${name}` }
-    );
+    update('conversations', c.id, { owner: name, ownerId: member?._id, ...(lead?._id ? { leadId: lead._id } : {}) }, { silent: true });
+  };
+
+  /** The open chat, or every ticked chat, to one person. */
+  const assignTo = (name) => {
+    if (bulk) {
+      const list = conversations.filter((c) => picked.has(c.id));
+      list.forEach((c) => giveChat(c, name));
+      toast(`${list.length} chat(s) and their leads assigned to ${name}`);
+      setPicked(new Set());
+      setBulk(false);
+    } else if (open) {
+      giveChat(open, name);
+      toast(`${open.name} assigned to ${name}`);
+    }
     setAssigning(false);
   };
+  const togglePick = (id) =>
+    setPicked((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const pageIds = paged.pageRows.map((c) => c.id);
+  const allOnPage = pageIds.length > 0 && pageIds.every((id) => picked.has(id));
+  const pickPage = () =>
+    setPicked((s) => {
+      const n = new Set(s);
+      if (allOnPage) pageIds.forEach((id) => n.delete(id));
+      else pageIds.forEach((id) => n.add(id));
+      return n;
+    });
 
   const conversionRate = inboxStats.leads
     ? Math.round((inboxStats.membershipSales / inboxStats.leads) * 100)
@@ -404,10 +431,28 @@ export default function Whatsapp() {
           </div>
         }
       >
+        <div className="mb-2 flex flex-wrap items-center gap-3 px-1">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink-700">
+            <input type="checkbox" className="h-4 w-4 accent-brand-600" checked={allOnPage} onChange={pickPage} />
+            Select this page
+          </label>
+          {picked.size > 0 && (
+            <>
+              <span className="text-sm text-ink-500">{picked.size} selected</span>
+              <button className="btn-action btn-sm" onClick={() => { setBulk(true); setAssigning(true); }}>
+                <UserCheck size={14} /> Assign selected
+              </button>
+              <button className="btn-ghost btn-sm" onClick={() => setPicked(new Set())}>Clear</button>
+            </>
+          )}
+        </div>
         <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
           {paged.pageRows.map((c) => (
-            <li key={c.id}>
-              <button onClick={() => setOpenId(c.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-soft">
+            <li key={c.id} className={`flex items-center ${picked.has(c.id) ? 'bg-brand-50/60' : ''}`}>
+              <label className="grid shrink-0 cursor-pointer place-items-center self-stretch pl-4 pr-1" onClick={(e) => e.stopPropagation()}>
+                <input type="checkbox" className="h-4 w-4 accent-brand-600" checked={picked.has(c.id)} onChange={() => togglePick(c.id)} />
+              </label>
+              <button onClick={() => setOpenId(c.id)} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left transition hover:bg-surface-soft">
                 <Avatar name={c.name} size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
@@ -917,10 +962,16 @@ export default function Whatsapp() {
       )}
 
       {/* Assign the chat and its lead to one person */}
-      <Modal open={Boolean(open && assigning)} onClose={() => setAssigning(false)} title="Assign to" subtitle={open?.name} size="sm">
+      <Modal
+        open={Boolean(assigning && (bulk || open))}
+        onClose={() => { setAssigning(false); setBulk(false); }}
+        title="Assign to"
+        subtitle={bulk ? `${picked.size} chat(s) and their leads` : open?.name}
+        size="sm"
+      >
         <div className="space-y-2">
           {team.filter((t) => t.status !== 'Inactive').map((t) => {
-            const on = open && ownerOf(open) === t.name;
+            const on = !bulk && open && ownerOf(open) === t.name;
             return (
               <button
                 key={t.name}

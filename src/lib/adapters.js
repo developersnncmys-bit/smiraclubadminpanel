@@ -1137,7 +1137,7 @@ export const ADAPTERS = {
       tags: c.tags || [],
       note: c.note,
       leadId: ref(c.lead),
-      messages: (c.messages || []).map((m) => ({ ...m, at: dt(m.at) })),
+      messages: (c.messages || []).map((m) => ({ ...m, at: dt(m.at), atIso: m.at })),
     }),
     to: (p) => ({
       category: p.category,

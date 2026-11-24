@@ -15,8 +15,8 @@ import Field from '../ui/Field.jsx';
 import WhatsAppIcon from '../ui/WhatsAppIcon.jsx';
 import LeadTaskForm from './LeadTaskForm.jsx';
 import TaskDetails from './TaskDetails.jsx';
+import LeadWhatsApp from './LeadWhatsApp.jsx';
 import { dialable } from '../../lib/phone.js';
-import { api } from '../../lib/api.js';
 import { useCan } from '../../lib/access.js';
 
 const LABELS = ['Honeymoon', 'Family', 'Luxury', 'Group', 'Adventure', 'Beach', 'Couple', 'Shopping'];
@@ -49,9 +49,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
   const [newest, setNewest] = useState(true);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
-  const [waText, setWaText] = useState('');
   const tabsRef = useRef(null);
-  const [waSending, setWaSending] = useState(false);
   const [editing, setEditing] = useState(null); // 'status' | 'label' | 'owner'
   const [paying, setPaying] = useState(null);
 
@@ -143,37 +141,6 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
     { key: 'Tasks', count: leadTasks.length },
     { key: 'Info', count: null },
   ];
-
-  /**
-   * A WhatsApp message from the lead's own tab: through the desk's linked
-   * number when it is connected, otherwise WhatsApp opens with the message
-   * typed in. Either way it is logged on the lead.
-   */
-  const sendWhatsApp = async () => {
-    const text = waText.trim();
-    if (!text) return;
-    setWaSending(true);
-    try {
-      if (thread?._id) {
-        // Straight onto their chat (it shows in the inbox too), out through
-        // the desk's WhatsApp number.
-        const r = await api.post(`/whatsapp/conversations/${thread._id}/reply`, { text });
-        update('conversations', thread.id, { messages: [...threadMessages, { from: 'me', text, at: 'just now' }], lastAt: 'just now' }, { silent: true });
-        if (!r.delivered) throw new Error(r.message || 'WhatsApp did not take the message');
-      } else {
-        await api.post('/whatsapp/gateway/send', { phone: lead.phone, text });
-      }
-      toast(`WhatsApp sent to ${lead.name}`);
-      logActivity(lead.id, `WhatsApp: ${text}`, 'whatsapp');
-      setWaText('');
-    } catch (err) {
-      // WhatsApp only lets a typed message reach someone who wrote in the
-      // last 24 hours; anyone else needs an approved template.
-      toast(`Not sent: ${err.message || 'try again'}. If ${lead.name.split(' ')[0]} has not written in 24 hours, send a template from WhatsApp → Connect number.`, 'danger');
-    } finally {
-      setWaSending(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -460,52 +427,7 @@ export default function LeadDetails({ lead, list, onClose, onJump, onEdit, start
                 </div>
               )}
 
-              {tab === 'WhatsApp' && (
-                <div className="flex min-h-full flex-col">
-                  <ul className="flex-1 space-y-2.5">
-                    {thread && threadMessages.map((m, i) => (
-                      <li
-                        key={`m${i}`}
-                        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
-                          m.from === 'them' ? 'mr-auto rounded-bl-md bg-surface-soft' : 'ml-auto rounded-br-md bg-[#DCF8C6]'
-                        }`}
-                      >
-                        <p className="whitespace-pre-wrap text-sm text-ink-900">{m.text}</p>
-                        <p className={`mt-1 text-[11px] text-ink-500 ${m.from === 'them' ? '' : 'text-right'}`}>
-                          {m.from === 'them' ? lead.name.split(' ')[0] : m.from === 'bot' ? 'Bot' : m.byName || 'Desk'} · {m.at}
-                        </p>
-                      </li>
-                    ))}
-                    {!thread && chats.map((a) => (
-                      <li key={a.id} className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#DCF8C6] px-3.5 py-2.5">
-                        <p className="whitespace-pre-wrap text-sm text-ink-900">{String(a.text).replace(/^WhatsApp:\s*/, '')}</p>
-                        <p className="mt-1 text-right text-[11px] text-ink-500">{a.who} · {a.at}</p>
-                      </li>
-                    ))}
-                    {!thread && chats.length === 0 && (
-                      <li className="py-8 text-center text-sm text-ink-500">No WhatsApp messages with {lead.name} yet.</li>
-                    )}
-                  </ul>
-                  <div className="sticky bottom-0 mt-3 flex items-end gap-2 bg-white pt-2">
-                    <textarea
-                      rows={2}
-                      value={waText}
-                      onChange={(e) => setWaText(e.target.value)}
-                      placeholder={`Message ${lead.name.split(' ')[0]}…`}
-                      className="input min-h-[44px] flex-1 resize-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={sendWhatsApp}
-                      disabled={!waText.trim() || waSending || !lead.phone}
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#25D366] text-white disabled:opacity-50"
-                      title="Send on WhatsApp"
-                    >
-                      <WhatsAppIcon size={20} />
-                    </button>
-                  </div>
-                </div>
-              )}
+              {tab === 'WhatsApp' && <LeadWhatsApp lead={lead} thread={thread} logged={chats} />}
 
               {tab === 'Info' && (
                 <div className="space-y-3">

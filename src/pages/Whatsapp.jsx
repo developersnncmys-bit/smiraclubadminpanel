@@ -874,6 +874,11 @@ export default function Whatsapp() {
                         <span className={`num mt-1 block text-[11px] ${m.from === 'them' ? 'text-ink-400' : 'text-white/60'}`}>
                           {m.at}
                         </span>
+                        {m.failed && (
+                          <span className="mt-1 block rounded bg-white/90 px-1.5 py-0.5 text-[11px] font-semibold text-rose-600">
+                            Not delivered{m.error ? ` — ${m.error}` : ''}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}

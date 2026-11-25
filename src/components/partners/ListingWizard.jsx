@@ -565,7 +565,12 @@ export default function ListingWizard({
   const checkStep = (n) => {
     const found = everything()[n] || {};
     setErrors(found);
-    if (Object.keys(found).length) setError('Some answers are missing on this step.');
+    // Say what is missing, not just that something is — some of these sit
+    // in a box or a tick list that has no line of its own to show it on.
+    if (Object.keys(found).length) {
+      setError('Some answers are missing on this step:');
+      setMissing([...new Set(Object.values(found))]);
+    }
     return Object.keys(found).length === 0;
   };
 
@@ -577,6 +582,7 @@ export default function ListingWizard({
     }
     setErrors({});
     setError('');
+    setMissing([]);
     if (await save(step)) {
       setStep(Math.min(5, step + 1));
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -588,7 +594,8 @@ export default function ListingWizard({
     const bad = firstBadStep(all);
     if (bad !== null) {
       setErrors(flatten(all));
-      setError('Some answers are missing — go back and finish them.');
+      setError('Some answers are missing — go back and finish them:');
+      setMissing([...new Set(Object.values(all[bad] || {}))]);
       setStep(bad);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -795,6 +802,8 @@ export default function ListingWizard({
               </Field>
               <Field
                 label={`${kind.unit} photos`}
+                required
+                error={errors.roomPhotos}
                 hint={kind.nightly ? 'Room, bathroom, view, amenities' : 'Whatever a member would want to see before booking'}
                 wide
               >
@@ -1035,6 +1044,7 @@ export default function ListingWizard({
                   value={pricing.mealPlans}
                   onChange={(v) => setPricing({ ...pricing, mealPlans: v })}
                 />
+                {errors.mealPlans && <p className="text-xs font-semibold text-rose-600 sm:col-span-2">{errors.mealPlans}</p>}
               </Group>
             )}
 
@@ -1055,7 +1065,7 @@ export default function ListingWizard({
             )}
 
             <Group title="Inventory and calendar">
-              <Field label={`Total ${kind.units.toLowerCase()}`}><input {...inv('totalRooms')} type="number" min="0" /></Field>
+              <Field label={`Total ${kind.units.toLowerCase()}`} required error={errors.totalRooms}><input {...inv('totalRooms')} type="number" min="0" /></Field>
               <Field label={`Available ${kind.units.toLowerCase()}`} required error={errors.availableRooms}><input {...inv('availableRooms')} type="number" min="0" /></Field>
               <Field label="Closed dates" required error={errors.closedDates} hint="e.g. 24–26 Dec"><input {...inv('closedDates')} /></Field>
               <Field label="Blackout dates" required error={errors.blackoutDates}><input {...inv('blackoutDates')} /></Field>
@@ -1064,7 +1074,7 @@ export default function ListingWizard({
             <Group title="Policies">
               {kind.times !== 'none' && (
                 <>
-                  <Field label={kind.times === 'stay' ? 'Check-in time' : 'Opens at'}>
+                  <Field label={kind.times === 'stay' ? 'Check-in time' : 'Opens at'} required={kind.times === 'stay'} error={errors.checkIn}>
                     <input {...pol('checkIn')} type="time" />
                   </Field>
                   <Field label={kind.times === 'stay' ? 'Check-out time' : 'Closes at'} required error={errors.checkOut}>
@@ -1102,7 +1112,7 @@ export default function ListingWizard({
             </Group>
 
             <Group title="Documents" note="A scan or a photograph of each — PDF, JPG or PNG.">
-              <Field label="Property registration / ownership proof" wide>
+              <Field label="Property registration / ownership proof" required error={errors.ownershipProof} wide>
                 <FileField
                   label="Ownership proof"
                   value={ownership.documentLinks.ownershipProof}
@@ -1128,7 +1138,7 @@ export default function ListingWizard({
               </Field>
               <Field label="PAN" required error={errors.pan}><input {...own('pan')} className="input uppercase" /></Field>
               <Field label="GST" required error={errors.gst}><input {...own('gst')} className="input uppercase" /></Field>
-              <Field label="TAN" required error={errors.tan} hint="If applicable"><input {...own('tan')} className="input uppercase" /></Field>
+              <Field label="TAN" error={errors.tan} hint="If applicable"><input {...own('tan')} className="input uppercase" /></Field>
             </Group>
 
             {/*
@@ -1144,7 +1154,7 @@ export default function ListingWizard({
               <Field label="Account number" required error={errors.accountNumber}><input {...bnk('accountNumber')} inputMode="numeric" autoComplete="off" /></Field>
               <Field label="IFSC" required error={errors.ifsc}><input {...bnk('ifsc')} className="input uppercase" /></Field>
               <Field label="Branch" required error={errors.branch}><input {...bnk('branch')} /></Field>
-              <Field label="Cancelled cheque / bank proof">
+              <Field label="Cancelled cheque / bank proof" required error={errors.proofLink}>
                 <FileField
                   label="Bank proof"
                   value={bank.proofLink}
@@ -1155,10 +1165,10 @@ export default function ListingWizard({
             </Group>
 
             <Group title="UPI" note="Quicker for small settlements. Either this or the account above, or both.">
-              <Field label="UPI ID" required error={errors.upiId} hint="e.g. yourname@okhdfcbank">
+              <Field label="UPI ID" error={errors.upiId} hint="e.g. yourname@okhdfcbank">
                 <input {...bnk('upiId')} autoComplete="off" spellCheck={false} />
               </Field>
-              <Field label="Name on the UPI account" required error={errors.upiName}><input {...bnk('upiName')} /></Field>
+              <Field label="Name on the UPI account" error={errors.upiName}><input {...bnk('upiName')} /></Field>
               <Field label="How you would rather be paid">
                 <select {...bnk('preferred')}>
                   <option value="">No preference</option>

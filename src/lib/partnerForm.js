@@ -156,12 +156,12 @@ export function checkPartnerForm(form, kind) {
   if (!text(ownership.type)) five.ownershipType = 'How is it owned?';
   if (!isPan(ownership.pan)) five.pan = 'A PAN like ABCDE1234F.';
   if (!isGst(ownership.gst)) five.gst = 'A 15-character GSTIN.';
-  if (!isTan(ownership.tan)) five.tan = 'A TAN like MUMA12345B.';
+  // TAN, a lease and an authorisation letter are "if applicable" on the
+  // form: checked when given, never demanded.
+  if (text(ownership.tan) && !isTan(ownership.tan)) five.tan = 'A TAN like MUMA12345B.';
 
   const links = ownership.documentLinks || {};
   if (!text(links.ownershipProof)) five.ownershipProof = 'Attach proof of ownership.';
-  if (!text(links.leaseAgreement)) five.leaseAgreement = 'Attach the lease agreement.';
-  if (!text(links.authorisation)) five.authorisation = 'Attach the authorisation letter.';
 
   if (text(bank.holder).length < 2) five.holder = "The account holder's name.";
   if (!text(bank.bankName)) five.bankName = 'Which bank?';
@@ -169,9 +169,10 @@ export function checkPartnerForm(form, kind) {
   if (!isIfsc(bank.ifsc)) five.ifsc = 'An IFSC like HDFC0001234.';
   if (!text(bank.branch)) five.branch = 'Which branch?';
   if (!text(bank.proofLink)) five.proofLink = 'Attach a cancelled cheque or passbook.';
-  if (!isUpi(bank.upiId)) five.upiId = 'A UPI id like name@bank.';
-  if (text(bank.upiName).length < 2) five.upiName = 'The name on the UPI account.';
-  if (!text(bank.preferred)) five.preferred = 'How should we pay you?';
+  // UPI is as well as the bank account, not instead of it, and "No
+  // preference" is an answer.
+  if (text(bank.upiId) && !isUpi(bank.upiId)) five.upiId = 'A UPI id like name@bank.';
+  if (text(bank.upiId) && text(bank.upiName).length < 2) five.upiName = 'The name on the UPI account.';
 
   if (!agreed) five.agreed = 'Please accept the partner agreement.';
 

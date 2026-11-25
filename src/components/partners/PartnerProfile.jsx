@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   X, ChevronLeft, ChevronRight, Phone, MessageCircle, Mail,
-  CheckCircle2, Circle, FileText, Star, ShieldCheck, Ban,
+  CheckCircle2, Circle, Star, ShieldCheck, Ban,
   Pencil, BadgeCheck, XCircle,
 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
@@ -12,6 +12,7 @@ import Field from '../ui/Field.jsx';
 import RecordTrail from '../ui/RecordTrail.jsx';
 import DrawerTabs from '../ui/DrawerTabs.jsx';
 import FlashOffers, { deskFlash } from './FlashOffers.jsx';
+import { DetailsTab, DocumentsTab, InventoryTab, RatesTab, AvailabilityTab } from './PartnerListingTabs.jsx';
 import {
   onboardingFlow,
   settlementFlow,
@@ -27,7 +28,6 @@ const TABS = [
   'Bookings', 'Customers', 'Support', 'Finance', 'Communication', 'Activity log',
 ];
 
-const docTone = { Verified: 'green', Submitted: 'sky', Pending: 'amber', Missing: 'rose', Expired: 'rose' };
 
 /**
  * One partner, from the paperwork that got them on board to the money that
@@ -257,52 +257,12 @@ export default function PartnerProfile({ partner, list, requests, tickets, settl
                 </div>
               )}
 
-              {tab === 'Details' && (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Stat label="Approval status" value={p.approval} />
-                  <Stat label="Onboarding stage" value={p.stage} />
-                  <Stat label="Repeat bookings" value={p.repeat} />
-                  <Stat label="Rooms or units held" value={p.rooms || '—'} />
-                </div>
-              )}
-
-              {tab === 'Documents' && (
-                <ul className="divide-y divide-ink-900/[0.07] overflow-hidden rounded-xl border border-ink-900/[0.07]">
-                  {(p.documents || []).map((d) => (
-                    <li key={d.name} className="flex items-center justify-between gap-3 px-4 py-3">
-                      <span className="flex items-center gap-2.5 text-sm text-ink-700">
-                        <FileText size={14} className="shrink-0 text-ink-400" /> {d.name}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <Badge tone={docTone[d.status] || 'slate'}>{d.status}</Badge>
-                        <button className="btn-line btn-sm" onClick={() => actions.requestDocs(p, d.name)}>
-                          Request
-                        </button>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {tab === 'Inventory' && (
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
-                  <Stat label="Rooms or units" value={p.rooms || '—'} />
-                  <Stat label="Booked through us" value={p.bookings} />
-                  <Stat label="Available now" value={Math.max(0, (p.rooms || 0) - theirRequests.length)} />
-                </div>
-              )}
-
-              {tab === 'Rates' && (
-                <p className="rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">{p.ratePlan}</p>
-              )}
-
-              {tab === 'Availability' && (
-                <p className="rounded-xl bg-surface-soft px-4 py-3 text-sm text-ink-700">
-                  {p.rooms
-                    ? `${p.rooms} held on contract · ${theirRequests.length} requests in flight`
-                    : 'Availability is confirmed request by request.'}
-                </p>
-              )}
+              {/* What the partner filled in on the listing form, tab by tab. */}
+              {tab === 'Details' && <DetailsTab p={p} />}
+              {tab === 'Documents' && <DocumentsTab p={p} actions={actions} />}
+              {tab === 'Inventory' && <InventoryTab p={p} inFlight={theirRequests.length} />}
+              {tab === 'Rates' && <RatesTab p={p} />}
+              {tab === 'Availability' && <AvailabilityTab p={p} inFlight={theirRequests.length} />}
 
               {/* A short discount on their own rate, raised from either side
                   of the desk — see FlashOffers for why it needs no approval. */}

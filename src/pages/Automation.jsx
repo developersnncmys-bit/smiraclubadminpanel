@@ -48,11 +48,13 @@ import Table from '../components/ui/Table.jsx';
 import { useEndpoint } from '../lib/useEndpoint.js';
 import LeadRules from '../components/automation/LeadRules.jsx';
 import FollowupDrip from '../components/automation/FollowupDrip.jsx';
+import LeadSources from '../components/automation/LeadSources.jsx';
 import { api } from '../lib/api.js';
 
 const SECTIONS = [
   'Lead rules',
   '6-day follow-up',
+  'Lead sources',
   'Dashboard',
   'Builder',
   'Rules',
@@ -910,6 +912,7 @@ export default function Automation() {
     ),
 
     '6-day follow-up': <FollowupDrip />,
+    'Lead sources': <LeadSources />,
 
     Structure: (
       <Block title="What sits under automation" note="Everything the admin panel holds" wide>

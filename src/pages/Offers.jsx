@@ -25,6 +25,7 @@ import Stat from '../components/ui/Stat.jsx';
 import SectionTabs from '../components/ui/SectionTabs.jsx';
 import ImagesField from '../components/partners/ImagesField.jsx';
 import { api } from '../lib/api.js';
+import { when } from '../lib/adapters.js';
 import {
   distribution,
   tierAccess,
@@ -240,6 +241,22 @@ export default function Offers() {
 
   const percent = draft.kind === 'Percent off';
   const moneyOff = percent || draft.kind === 'Flat off';
+
+  /**
+   * Whether the website shows this code right now, or why not. Dates are
+   * whole days: from the start of the first to the end of the last.
+   */
+  const onWebsite = (o) => {
+    if (o.status !== 'Live') return o.status === 'Paused' ? 'Paused — press Make live' : `${o.status} — press Make live`;
+    const day = (v) => { const t = when(v); return t ? t.slice(0, 10) : ''; };
+    const today = new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10);
+    const start = day(o.startsOn);
+    const end = day(o.endsOn);
+    if (start && start > today) return `Starts ${o.startsOn}`;
+    if (end && end < today) return `Ended ${o.endsOn} — change the end date`;
+    if (o.usageLimit && (o.used || 0) >= o.usageLimit) return 'Used up — raise the limit';
+    return '';
+  };
 
   /** Only the real ones — the seed rows above have no code to type. */
   const coupons = offers.filter((o) => o.code && !o.flash);
@@ -1213,9 +1230,16 @@ export default function Offers() {
                     {o.usageLimit ? ` / ${o.usageLimit}` : ''}
                   </span>,
                   <span className="text-ink-700">{o.endsOn || '—'}</span>,
-                  <Badge tone={o.status === 'Live' ? 'success' : o.status === 'Paused' ? 'warning' : 'neutral'}>
-                    {o.status}
-                  </Badge>,
+                  <span className="flex flex-col items-start gap-1">
+                    <Badge tone={o.status === 'Live' ? 'success' : o.status === 'Paused' ? 'warning' : 'neutral'}>
+                      {o.status}
+                    </Badge>
+                    {onWebsite(o) ? (
+                      <span className="text-[11px] font-semibold text-rose-600">Not on website: {onWebsite(o)}</span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-emerald-600">On the website</span>
+                    )}
+                  </span>,
                   <div className="flex justify-end gap-2">
                     <button
                       className="btn-ghost btn-sm"
